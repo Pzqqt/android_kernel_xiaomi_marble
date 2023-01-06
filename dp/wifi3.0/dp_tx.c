@@ -4585,8 +4585,11 @@ uint32_t dp_tx_comp_handler(struct dp_intr *int_ctx, struct dp_soc *soc,
 	bool force_break = false;
 	struct dp_srng *tx_comp_ring = &soc->tx_comp_ring[ring_id];
 	int max_reap_limit, ring_near_full;
+	uint32_t num_entries;
 
 	DP_HIST_INIT();
+
+	num_entries = hal_srng_get_num_entries(soc->hal_soc, hal_ring_hdl);
 
 more_data:
 	/* Re-initialize local variables to be re-used */
@@ -4603,7 +4606,9 @@ more_data:
 		return 0;
 	}
 
-	num_avail_for_reap = hal_srng_dst_num_valid(soc->hal_soc, hal_ring_hdl, 0);
+	if (!num_avail_for_reap)
+		num_avail_for_reap = hal_srng_dst_num_valid(soc->hal_soc,
+							    hal_ring_hdl, 0);
 
 	if (num_avail_for_reap >= quota)
 		num_avail_for_reap = quota;
@@ -4790,9 +4795,21 @@ next_desc:
 		    hal_srng_dst_peek_sync_locked(soc->hal_soc,
 						  hal_ring_hdl)) {
 			DP_STATS_INC(soc, tx.hp_oos2, 1);
+
 			if (!hif_exec_should_yield(soc->hif_handle,
 						   int_ctx->dp_intr_id))
 				goto more_data;
+
+			num_avail_for_reap =
+				hal_srng_dst_num_valid_locked(soc->hal_soc,
+							      hal_ring_hdl,
+							      true);
+			if (qdf_unlikely(num_entries &&
+					 (num_avail_for_reap >=
+					  num_entries >> 1))) {
+				DP_STATS_INC(soc, tx.near_full, 1);
+				goto more_data;
+			}
 		}
 	}
 	DP_TX_HIST_STATS_PER_PDEV();

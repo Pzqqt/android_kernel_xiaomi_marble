@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2014, 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -543,6 +543,7 @@ static ssize_t ath_procfs_diag_write(struct file *file,
 static const struct proc_ops athdiag_fops = {
 	.proc_read = ath_procfs_diag_read,
 	.proc_write = ath_procfs_diag_write,
+	.proc_lseek = default_llseek,
 };
 #else
 static const struct file_operations athdiag_fops = {
