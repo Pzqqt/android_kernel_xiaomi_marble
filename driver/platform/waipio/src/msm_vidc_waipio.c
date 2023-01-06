@@ -555,7 +555,9 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		0, MAX_BASE_LAYER_PRIORITY_ID, 1, 0,
 		V4L2_CID_MPEG_VIDEO_BASELAYER_PRIORITY_ID,
 		HFI_PROP_BASELAYER_PRIORITYID,
-		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT},
+		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT,
+		{0}, {0},
+		NULL, msm_vidc_set_u32},
 
 	{IR_RANDOM, ENC, H264|HEVC,
 		0, INT_MAX, 1, 0,
@@ -2179,7 +2181,9 @@ static struct msm_platform_inst_capability instance_data_tofino[] = {
 		0, MAX_BASE_LAYER_PRIORITY_ID, 1, 0,
 		V4L2_CID_MPEG_VIDEO_BASELAYER_PRIORITY_ID,
 		HFI_PROP_BASELAYER_PRIORITYID,
-		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT},
+		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT,
+		{0}, {0},
+		NULL, msm_vidc_set_u32},
 
 	{IR_RANDOM, ENC, H264 | HEVC,
 		0, INT_MAX, 1, 0,
