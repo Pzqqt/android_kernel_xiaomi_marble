@@ -1359,6 +1359,14 @@ bool ucfg_pmo_get_moddtim_user_active(struct wlan_objmgr_vdev *vdev);
 uint32_t ucfg_pmo_get_moddtim_user(struct wlan_objmgr_vdev *vdev);
 
 /*
+ * ucfg_pmo_get_ssr_frequency_on_pagefault: get ssr frequency on pagefault
+ * @psoc: objmgr psoc
+ *
+ * Return: SSR frequency on pagefault
+ */
+uint32_t ucfg_pmo_get_ssr_frequency_on_pagefault(struct wlan_objmgr_psoc *psoc);
+
+/*
  * ucfg_pmo_get_disconnect_sap_tdls_in_wow: get if disconnect sap/p2p_go
  * or tdls in wow
  * @psoc: objmgr psoc
@@ -2103,6 +2111,12 @@ ucfg_pmo_get_moddtim_user_active(struct wlan_objmgr_vdev *vdev)
 
 static inline uint32_t
 ucfg_pmo_get_moddtim_user(struct wlan_objmgr_vdev *vdev)
+{
+	return 0;
+}
+
+static inline uint32_t
+ucfg_pmo_get_ssr_frequency_on_pagefault(struct wlan_objmgr_psoc *psoc)
 {
 	return 0;
 }

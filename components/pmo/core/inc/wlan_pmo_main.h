@@ -383,6 +383,40 @@ pmo_intersect_packet_filter(struct pmo_psoc_priv_obj *psoc_ctx)
 		psoc_ctx->caps.packet_filter;
 }
 
+/*
+ * pmo_enable_ssr_on_page_fault: Enable/disable ssr on pagefault
+ * @psoc: objmgr psoc
+ *
+ * Return: True if SSR is enabled on pagefault
+ */
+bool pmo_enable_ssr_on_page_fault(struct wlan_objmgr_psoc *psoc);
+
+/*
+ * pmo_get_max_pagefault_wakeups_for_ssr: get pagefault wakeups for ssr
+ * @psoc: objmgr psoc
+ *
+ * Return: SSR interval for pagefault
+ */
+uint8_t
+pmo_get_max_pagefault_wakeups_for_ssr(struct wlan_objmgr_psoc *psoc);
+
+/*
+ * pmo_get_interval_for_pagefault_wakeup_counts: get ssr interval for pagefault
+ * @psoc: objmgr psoc
+ *
+ * Return: SSR interval for pagefault
+ */
+uint32_t
+pmo_get_interval_for_pagefault_wakeup_counts(struct wlan_objmgr_psoc *psoc);
+
+/*
+ * pmo_get_ssr_frequency_on_pagefault: get ssr frequency on pagefault
+ * @psoc: objmgr psoc
+ *
+ * Return: SSR frequency on pagefault
+ */
+uint32_t pmo_get_ssr_frequency_on_pagefault(struct wlan_objmgr_psoc *psoc);
+
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 #endif /* end  of _WLAN_PMO_MAIN_H_ */
