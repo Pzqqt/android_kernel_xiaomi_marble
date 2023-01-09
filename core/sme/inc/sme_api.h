@@ -823,6 +823,25 @@ QDF_STATUS sme_neighbor_report_request(mac_handle_t mac_handle,
 		tpRrmNeighborReq pRrmNeighborReq,
 		tpRrmNeighborRspCallbackInfo callbackInfo);
 
+/**
+ * sme_register_ssr_on_pagefault_cb() - Register cb to trigger SSR on pagefault
+ * @mac_handle: Opaque handle to the global MAC context.
+ * @hdd_ssr_on_pagefault_cb: Callback which needs to be registered
+ *
+ * Return: None
+ */
+void sme_register_ssr_on_pagefault_cb(mac_handle_t mac_handle,
+				      void (*hdd_ssr_on_pagefault_cb)(void));
+
+/**
+ * sme_deregister_ssr_on_pagefault_cb() - Deregister cb to trigger SSR on
+ * pagefault
+ * @mac_handle: Opaque handle to the global MAC context.
+ *
+ * Return: None
+ */
+void sme_deregister_ssr_on_pagefault_cb(mac_handle_t mac_handle);
+
 #ifdef FEATURE_OEM_DATA
 /**
  * sme_oem_data_cmd() - the wrapper to send oem data cmd to wma
