@@ -450,10 +450,9 @@ static int damon_young_pmd_entry(pmd_t *pmd, unsigned long addr,
 			goto huge_out;
 		if (pmd_young(*pmd) || !page_is_idle(page) ||
 					mmu_notifier_test_young(walk->mm,
-						addr)) {
-			*priv->page_sz = HPAGE_PMD_SIZE;
+						addr))
 			priv->young = true;
-		}
+		*priv->page_sz = HPAGE_PMD_SIZE;
 		put_page(page);
 huge_out:
 		spin_unlock(ptl);
@@ -472,10 +471,9 @@ regular_page:
 	if (!page)
 		goto out;
 	if (pte_young(*pte) || !page_is_idle(page) ||
-			mmu_notifier_test_young(walk->mm, addr)) {
-		*priv->page_sz = PAGE_SIZE;
+			mmu_notifier_test_young(walk->mm, addr))
 		priv->young = true;
-	}
+	*priv->page_sz = PAGE_SIZE;
 	put_page(page);
 out:
 	pte_unmap_unlock(pte, ptl);
@@ -502,10 +500,9 @@ static int damon_young_hugetlb_entry(pte_t *pte, unsigned long hmask,
 	get_page(page);
 
 	if (pte_young(entry) || !page_is_idle(page) ||
-	    mmu_notifier_test_young(walk->mm, addr)) {
-		*priv->page_sz = huge_page_size(h);
+	    mmu_notifier_test_young(walk->mm, addr))
 		priv->young = true;
-	}
+	*priv->page_sz = huge_page_size(h);
 
 	put_page(page);
 
