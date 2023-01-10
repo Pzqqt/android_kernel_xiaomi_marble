@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -605,7 +605,7 @@ static const struct sde_format sde_format_map_tile[] = {
 static const struct sde_format sde_format_map_fsc_tile[] = {
 	PLANAR_RGB_FMT_TILED(C8,
 		COLOR_8BIT, COLOR_8BIT, COLOR_8BIT, COLOR_8BIT,
-		C1_B_Cb, C2_R_Cr, C0_G_Y, 0, 3,
+		C1_B_Cb, C0_G_Y, C2_R_Cr, 0, 3,
 		false, 1, (SDE_FORMAT_FLAG_FSC | SDE_FORMAT_FLAG_COMPRESSED),
 		SDE_FETCH_UBWC, 2, SDE_TILE_HEIGHT_TILED),
 };
@@ -613,7 +613,7 @@ static const struct sde_format sde_format_map_fsc_tile[] = {
 static const struct sde_format sde_format_map_fsc_tile_linear[] = {
 	PLANAR_RGB_FMT_TILED(C8,
 		COLOR_8BIT, COLOR_8BIT, COLOR_8BIT, COLOR_8BIT,
-		C1_B_Cb, C2_R_Cr, C0_G_Y, 0, 3,
+		C1_B_Cb, C0_G_Y, C2_R_Cr, 0, 3,
 		false, 1, SDE_FORMAT_FLAG_FSC,
 		SDE_FETCH_LINEAR, 1, SDE_TILE_HEIGHT_TILED),
 };
