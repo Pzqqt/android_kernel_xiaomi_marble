@@ -1413,6 +1413,7 @@ enum qdf_suspend_type {
  * when already connected
  * @QDF_STATS_REQ_TIMEDOUT: Stats request timedout
  * @QDF_RSO_STOP_RSP_TIMEOUT: Firmware hasn't sent RSO stop response
+ * @QDF_HOST_WAKEUP_REASON_PAGEFAULT: Host wakeup because of pagefault
  */
 enum qdf_hang_reason {
 	QDF_REASON_UNSPECIFIED,
@@ -1445,6 +1446,7 @@ enum qdf_hang_reason {
 	QDF_STATS_REQ_TIMEDOUT,
 	QDF_TX_DESC_LEAK,
 	QDF_RSO_STOP_RSP_TIMEOUT,
+	QDF_HOST_WAKEUP_REASON_PAGEFAULT,
 };
 
 /**
