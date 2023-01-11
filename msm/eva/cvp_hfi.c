@@ -2846,7 +2846,7 @@ static int __response_handler(struct iris_hfi_device *device)
 	int packet_count = 0;
 	u8 *raw_packet = NULL;
 	bool requeue_pm_work = true;
-
+	//u32 reg_val = 0;
 	if (!device || device->state != IRIS_STATE_INIT)
 		return 0;
 
@@ -2861,7 +2861,14 @@ static int __response_handler(struct iris_hfi_device *device)
 		return 0;
 	}
 
-	if (device->intr_status & CVP_FATAL_INTR_BMSK) {
+	//reg_val = __read_register(device, CVP_CPU_CS_SCIACMD);
+	//dprintk(CVP_INFO, "reg: %x, reg value %x\n",
+	//	CVP_CPU_CS_SCIACMD, reg_val);
+	//reg_val = __read_register(device, CVP_CPU_CS_SCIACMDARG0);
+	//dprintk(CVP_INFO, "reg: %x, reg value %x\n",
+	//	CVP_CPU_CS_SCIACMDARG0, reg_val);
+	//
+	if (device->intr_status & CVP_WRAPPER_INTR_MASK_A2HWD_BMSK) {
 		struct cvp_hfi_sfr_struct *vsfr = (struct cvp_hfi_sfr_struct *)
 			device->sfr.align_virtual_addr;
 		struct msm_cvp_cb_info info = {
