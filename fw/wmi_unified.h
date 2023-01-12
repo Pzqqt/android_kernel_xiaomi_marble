@@ -315,6 +315,7 @@ typedef enum {
     WMI_GRP_SAWF,           /* 0x49 SAWF (Service Aware WiFi) */
     WMI_GRP_QUIET_OFL,      /* 0x4a Quiet offloads */
     WMI_GRP_ODD,            /* 0x4b ODD */
+    WMI_GRP_TDMA,           /* 0x4c TDMA */
 } WMI_GRP_ID;
 
 #define WMI_CMD_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
@@ -1551,6 +1552,8 @@ typedef enum {
     /* WMI commands specific to ODD */
     WMI_ODD_LIVEDUMP_REQUEST_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_ODD),
 
+    /* WMI commands specific to TDMA */
+    WMI_TDMA_SCHEDULE_REQUEST_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_TDMA),
 } WMI_CMD_ID;
 
 typedef enum {
@@ -33133,6 +33136,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VENDOR_PEER_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_SET_TWT_EDCA_PARAMS_CMDID); /* XPAN TWT */
         WMI_RETURN_STRING(WMI_ESL_EGID_CMDID);
+        WMI_RETURN_STRING(WMI_TDMA_SCHEDULE_REQUEST_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -41337,6 +41341,81 @@ typedef struct {
      */
 } wmi_peer_sched_mode_disable_fixed_param;
 
+/** Coordinated-AP TDMA **/
+
+#define WMI_TDMA_MAX_ACTIVE_SCHEDULES  10
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_tdma_schedule_request_cmd_fixed_param **/
+    /** pdev_id
+     * PDEV ID for identifying the MAC for which this schedule
+     * is being requested.
+     */
+    A_UINT32 pdev_id;
+    /** schedule_type
+     * 0 = Reserved
+     * 1 = Restricted
+     * UINT32_MAX = Cancel all TDMA schedules and ignore other parameters below.
+     */
+    A_UINT32 schedule_type;
+    /** schedule_handle_id
+     * Unique ID to identify this TDMA schedule
+     */
+    A_UINT32 schedule_handle_id;
+    /** owner_bssid
+     * The BSSID this TDMA schedule is reserved for
+     */
+    wmi_mac_addr owner_bssid;
+    /** start_time_tsf_low
+     * Lower 32-bits of Synchronized Start time for the first busy slot
+     * in this TDMA schedule.
+     * It should be a PMM global FW TSF reference
+     */
+    A_UINT32 start_time_tsf_low;
+    /** start_time_tsf_high
+     * Higher 32-bits of Synchronized Start time for the first busy slot
+     * in this TDMA schedule.
+     * It should be a PMM global FW TSF reference
+     */
+    A_UINT32 start_time_tsf_high;
+    /** num_busy_slots
+     * Number of busy periods in this schedule
+     */
+    A_UINT32 num_busy_slots;
+    /** busy_slot_dur_ms
+     * The fixed duration of each busy slot in milliseconds
+     */
+    A_UINT32 busy_slot_dur_ms;
+    /** busy_slot_intvl_ms
+     * The fixed interval between the start of two consecutive busy slots
+     * in milliseconds.
+     */
+    A_UINT32 busy_slot_intvl_ms;
+    /** edca_params_valid
+     * Indicates whether the following EDCA fields aifsn, ecwmin, ecwmax
+     * are valid or not
+     * 1 = Valid. 0 = Not Valid.
+     */
+    A_UINT32 edca_params_valid;
+    /** aifsn
+     * Arbitration inter frame spacing number for this schedule type.
+     * Range: 2-15.
+     * For voice, video, best-effort, background ACs
+     */
+    A_UINT32 aifsn[WMI_AC_MAX];
+    /** ecwmin
+     * Exponent form of Contention Window minimum value for this schedule type.
+     * Range: 2 - 1024.
+     * For voice, video, best-effort, background ACs
+     */
+    A_UINT32 ecwmin[WMI_AC_MAX];
+    /** ecwmax
+     * Exponent form of Contention Window maximum value for this schedule type.
+     * Range: 2 - 1024.
+     * For voice, video, best-effort, background ACs
+     */
+    A_UINT32 ecwmax[WMI_AC_MAX];
+} wmi_tdma_schedule_request_cmd_fixed_param;
 
 
 /* ADD NEW DEFS HERE */
