@@ -55,6 +55,9 @@ extern unsigned int nr_cpu_ids;
  *     cpu_present_mask - has bit 'cpu' set iff cpu is populated
  *     cpu_online_mask  - has bit 'cpu' set iff cpu available to scheduler
  *     cpu_active_mask  - has bit 'cpu' set iff cpu available to migration
+ *     cpu_lp_mask      - has bit 'cpu' set iff cpu is part of little cluster
+ *     cpu_perf_mask    - has bit 'cpu' set iff cpu is part of big cluster
+ *     cpu_prime_mask   - has bit 'cpu' set iff cpu is part of prime cluster
  *
  *  If !CONFIG_HOTPLUG_CPU, present == possible, and active == online.
  *
@@ -91,6 +94,9 @@ extern struct cpumask __cpu_possible_mask;
 extern struct cpumask __cpu_online_mask;
 extern struct cpumask __cpu_present_mask;
 extern struct cpumask __cpu_active_mask;
+extern const struct cpumask *const cpu_lp_mask;
+extern const struct cpumask *const cpu_perf_mask;
+extern const struct cpumask *const cpu_prime_mask;
 #define cpu_possible_mask ((const struct cpumask *)&__cpu_possible_mask)
 #define cpu_online_mask   ((const struct cpumask *)&__cpu_online_mask)
 #define cpu_present_mask  ((const struct cpumask *)&__cpu_present_mask)
