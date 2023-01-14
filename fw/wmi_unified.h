@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2010-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -38355,7 +38355,15 @@ typedef struct {
 #define WMI_EHTCAP_MAC_TXOP_RETURN_SUPP_IN_SHARINGMODE2_GET(eht_cap_mac) WMI_GET_BITS(eht_cap_mac[0], 10, 1)
 #define WMI_EHTCAP_MAC_TXOP_RETURN_SUPP_IN_SHARINGMODE2_SET(eht_cap_mac, value) WMI_SET_BITS(eht_cap_mac[0], 10, 1, value)
 
-/* Bit 11-15: reserved */
+/* Bit 11: two BQRs support */
+#define WMI_EHTCAP_MAC_TWO_BQRS_SUPP_GET(eht_cap_mac) WMI_GET_BITS(eht_cap_mac[0], 11, 1)
+#define WMI_EHTCAP_MAC_TWO_BQRS_SUPP_SET(eht_cap_mac, value) WMI_SET_BITS(eht_cap_mac[0], 11, 1, value)
+
+/* Bit 12-13: EHT link adaptation support */
+#define WMI_EHTCAP_MAC_EHT_LINK_ADAPTATION_SUPP_GET(eht_cap_mac) WMI_GET_BITS(eht_cap_mac[0], 12, 2)
+#define WMI_EHTCAP_MAC_EHT_LINK_ADAPTATION_SUPP_SET(eht_cap_mac, value) WMI_SET_BITS(eht_cap_mac[0], 12, 2, value)
+
+/* Bit 14-15: reserved */
 
 /****** End of 11BE EHT MAC Capabilities Information field ******/
 
