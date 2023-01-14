@@ -69,6 +69,9 @@ static bool migrate_one_irq(struct irq_desc *desc)
 		return false;
 	}
 
+	if (irqd_has_set(d, IRQD_PERF_CRITICAL))
+		return false;
+
 	/*
 	 * No move required, if:
 	 * - Interrupt is per cpu
@@ -170,6 +173,9 @@ void irq_migrate_all_off_this_cpu(void)
 					    irq, smp_processor_id());
 		}
 	}
+	
+	if (!cpumask_test_cpu(smp_processor_id(), cpu_lp_mask))
+		reaffine_perf_irqs(true);
 }
 
 static bool hk_should_isolate(struct irq_data *data, unsigned int cpu)
@@ -190,6 +196,9 @@ static void irq_restore_affinity_of_irq(struct irq_desc *desc, unsigned int cpu)
 {
 	struct irq_data *data = irq_desc_get_irq_data(desc);
 	const struct cpumask *affinity = irq_data_get_affinity_mask(data);
+
+	if (irqd_has_set(data, IRQD_PERF_CRITICAL))
+		return;
 
 	if (!irqd_affinity_is_managed(data) || !desc->action ||
 	    !irq_data_get_irq_chip(data) || !cpumask_test_cpu(cpu, affinity))
@@ -228,6 +237,9 @@ int irq_affinity_online_cpu(unsigned int cpu)
 		raw_spin_unlock_irq(&desc->lock);
 	}
 	irq_unlock_sparse();
+
+	if (!cpumask_test_cpu(cpu, cpu_lp_mask))
+		reaffine_perf_irqs(true);
 
 	return 0;
 }
