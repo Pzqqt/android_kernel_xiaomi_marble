@@ -1222,6 +1222,9 @@ typedef enum {
     /* WMI cmd used to start/stop XGAP (XPAN Green AP) */
     WMI_XGAP_ENABLE_CMDID,
 
+    /* H2T HPA message */
+    WMI_HPA_CMDID,
+
     /*  Offload 11k related requests */
     WMI_11K_OFFLOAD_REPORT_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_11K_OFFLOAD),
     /* invoke neighbor report from FW */
@@ -2180,6 +2183,9 @@ typedef enum {
 
     /* WMI XGAP enable command response event ID */
     WMI_XGAP_ENABLE_COMPLETE_EVENTID,
+
+    /* T2H HPA message */
+    WMI_HPA_EVENTID,
 
 
     /* GPIO Event */
@@ -33137,6 +33143,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_SET_TWT_EDCA_PARAMS_CMDID); /* XPAN TWT */
         WMI_RETURN_STRING(WMI_ESL_EGID_CMDID);
         WMI_RETURN_STRING(WMI_TDMA_SCHEDULE_REQUEST_CMDID);
+        WMI_RETURN_STRING(WMI_HPA_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -39014,6 +39021,38 @@ typedef struct {
     /** enable/disable OCL, 1 - enable, 0 - disable*/
     A_UINT32 en_dis_chain;
 } wmi_set_ocl_cmd_fixed_param;
+
+typedef enum {
+    /* HPA Handshake Stages */
+    WMI_HPA_SMCK_REQUEST = 0,
+    WMI_HPA_SMCK_RESPONSE = 1,
+    WMI_HPA_SIGN_REQUEST = 2,
+    WMI_HPA_SIGN_RESPONSE = 3,
+    WMI_HPA_HANDSHAKE_STAGE_MAX,
+} WMI_HPA_STAGE_TYPE;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_hpa_cmd_fixed_param */
+    /* stage:
+     * HPA Handshake Stage, filled with a WMI_HPA_STAGE_TYPE enum value
+     */
+    A_UINT32 stage;
+
+    /* the base address and length of data on host memory */
+    A_UINT32 base_paddr_low;  /* bits 31:0 */
+    A_UINT32 base_paddr_high; /* bits 63:32 */
+    A_UINT32 len;             /* units = bytes */
+} wmi_hpa_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_hpa_evt_fixed_param */
+    /* stage:
+     * HPA Handshake Stage, filled with a WMI_HPA_STAGE_TYPE enum value
+     */
+    A_UINT32 stage;
+
+    A_UINT32 nonce;
+} wmi_hpa_evt_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_audio_sync_qtimer */

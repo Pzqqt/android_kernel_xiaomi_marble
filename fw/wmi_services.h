@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -610,7 +610,7 @@ typedef  enum  {
     WMI_SERVICE_SUPPORT_11D_FOR_HOST_SCAN = 357,
     WMI_SERVICE_DETERMINISTIC_SCHEDULER_LEVEL0 = 358, /* FW supports 12.2 level scheduler mode disable commands and stats */
     WMI_SERVICE_COORDINATED_AP_TDMA = 359, /* Support for Coordinated-AP TDMA feature */
-
+    WMI_SERVICE_HPA_SUPPORT = 360, /* Support for Host Platform Authentication */
 
     WMI_MAX_EXT2_SERVICE
 
