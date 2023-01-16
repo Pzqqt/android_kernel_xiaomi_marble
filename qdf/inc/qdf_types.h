@@ -1415,6 +1415,9 @@ enum qdf_suspend_type {
  * @QDF_RSO_STOP_RSP_TIMEOUT: Firmware hasn't sent RSO stop response
  * @QDF_HOST_WAKEUP_REASON_PAGEFAULT: Host wakeup because of pagefault
  * @QDF_SCHED_TIMEOUT: Scheduler watchdog timedout
+ * @QDF_SELF_PEER_DEL_FAILED: Failed to send self peer deletion cmd to fw
+ * @QDF_DEL_SELF_STA_FAILED: Received del self sta without del bss
+ * @QDF_FLUSH_LOGS : Recovery needed when sending flush completion to userspace
  */
 enum qdf_hang_reason {
 	QDF_REASON_UNSPECIFIED,
@@ -1449,6 +1452,9 @@ enum qdf_hang_reason {
 	QDF_RSO_STOP_RSP_TIMEOUT,
 	QDF_HOST_WAKEUP_REASON_PAGEFAULT,
 	QDF_SCHED_TIMEOUT,
+	QDF_SELF_PEER_DEL_FAILED,
+	QDF_DEL_SELF_STA_FAILED,
+	QDF_FLUSH_LOGS,
 };
 
 /**

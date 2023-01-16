@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -777,7 +777,7 @@ static void send_flush_completion_to_user(uint8_t ring_id)
 	wlan_report_log_completion(is_fatal, indicator, reason_code, ring_id);
 
 	if (recovery_needed)
-		cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
+		cds_trigger_recovery(QDF_FLUSH_LOGS);
 }
 #endif
 
