@@ -893,6 +893,28 @@ enum qca_wlan_vendor_hang_reason {
 	QCA_WLAN_HANG_BUS_FAILURE = 26,
 	/* tasklet/credit latency found */
 	QCA_WLAN_HANG_TASKLET_CREDIT_LATENCY_DETECT = 27,
+	/* MSDU buffers received in REO error ring, exceeding certain
+	 * threshold
+	 */
+	QCA_WLAN_HANG_RX_MSDU_BUF_RCVD_IN_ERR_RING = 28,
+	/* Vdev SM is out of sync and connect req received
+	 * when already connected
+	 */
+	QCA_WLAN_HANG_VDEV_SM_OUT_OF_SYNC = 29,
+	/* Stats request timeout */
+	QCA_WLAN_HANG_STATS_REQ_TIMEOUT = 30,
+	/* Leak in TX descriptor for a packet */
+	QCA_WLAN_HANG_TX_DESC_LEAK = 31,
+	/* Scheduler watchdog timeout */
+	QCA_WLAN_HANG_SCHED_TIMEOUT = 32,
+	/* Failed to send self peer deletion cmd to firmware */
+	QCA_WLAN_HANG_SELF_PEER_DEL_FAIL = 33,
+	/* Received del self sta without del bss */
+	QCA_WLAN_HANG_DEL_SELF_STA_FAIL = 34,
+	/* Recovery needed when sending flush completion to userspace */
+	QCA_WLAN_HANG_FLUSH_LOGS = 35,
+	/* Host wakeup because of page fault */
+	QCA_WLAN_HANG_HOST_WAKEUP_REASON_PAGE_FAULT = 36,
 };
 
 /**
