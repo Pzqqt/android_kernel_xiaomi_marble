@@ -387,7 +387,7 @@ reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
 {
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
 
-	*pwr_type_6g = REG_INDOOR_AP;
+	*pwr_type_6g = ap_pwr_type;
 	pdev_priv_obj = reg_get_pdev_obj(pdev);
 	if (!pdev_priv_obj) {
 		reg_err("pdev priv obj null");
