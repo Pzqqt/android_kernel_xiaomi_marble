@@ -1336,6 +1336,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_tdma_schedule_request_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_hpa_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_hpa_evt_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_set_tgtr2p_table_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_set_tgtr2p_table_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1854,6 +1856,7 @@ typedef enum {
     OP(WMI_ESL_EGID_CMDID) \
     OP(WMI_TDMA_SCHEDULE_REQUEST_CMDID) \
     OP(WMI_HPA_CMDID) \
+    OP(WMI_PDEV_SET_TGTR2P_TABLE_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2153,6 +2156,7 @@ typedef enum {
     OP(WMI_MLO_AP_VDEV_TID_TO_LINK_MAP_EVENTID) \
     OP(WMI_TAS_POWER_HISTORY_EVENTID) \
     OP(WMI_HPA_EVENTID) \
+    OP(WMI_PDEV_SET_TGTR2P_TABLE_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -5270,6 +5274,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_TDMA_SCHEDULE_REQUEST_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, data, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_HPA_CMDID);
 
+/* WMI cmd to set target rate to power table */
+#define WMITLV_TABLE_WMI_PDEV_SET_TGTR2P_TABLE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_tgtr2p_table_cmd_fixed_param, wmi_pdev_set_tgtr2p_table_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_INT8, r2p_array, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_TGTR2P_TABLE_CMDID);
+
 
 
 /************************** TLV definitions of WMI events *******************************/
@@ -7146,6 +7156,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_AP_VDEV_TID_TO_LINK_MAP_EVENTID);
 #define WMITLV_TABLE_WMI_HPA_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_hpa_evt_fixed_param, wmi_hpa_evt_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_HPA_EVENTID);
+
+/* WMI target rate to power table return status event */
+#define WMITLV_TABLE_WMI_PDEV_SET_TGTR2P_TABLE_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_tgtr2p_table_event_fixed_param, wmi_pdev_set_tgtr2p_table_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_TGTR2P_TABLE_EVENTID);
 
 
 

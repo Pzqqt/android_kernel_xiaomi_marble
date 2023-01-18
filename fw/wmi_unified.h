@@ -515,6 +515,8 @@ typedef enum {
     WMI_PDEV_FEATURESET_CMDID,
     /** tag as Filter Pass category and the filters set for FP mode */
     WMI_PDEV_MESH_RX_FILTER_ENABLE_CMDID,
+    /* WMI cmd to set Target rate to power table */
+    WMI_PDEV_SET_TGTR2P_TABLE_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -1714,6 +1716,9 @@ typedef enum {
 
     /* Event to indicate Schedule tid queue suspended info */
     WMI_PDEV_SCHED_TIDQ_SUSP_INFO_EVENTID,
+
+    /* Event to send target rate to power table update status */
+    WMI_PDEV_SET_TGTR2P_TABLE_EVENTID,
 
 
     /* VDEV specific events */
@@ -33144,6 +33149,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_ESL_EGID_CMDID);
         WMI_RETURN_STRING(WMI_TDMA_SCHEDULE_REQUEST_CMDID);
         WMI_RETURN_STRING(WMI_HPA_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_SET_TGTR2P_TABLE_CMDID); /* To set target rate to power table */
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -41463,6 +41469,66 @@ typedef struct {
      */
     A_UINT32 ecwmax[WMI_AC_MAX];
 } wmi_tdma_schedule_request_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_tgtr2p_table _fixed_param */
+    A_UINT32 pdev_id;
+    /* freq_band:
+     * Indicates the intended FreqBand for updating targetPowerR2PTable.
+     *     0: 5G
+     *     1: 2G
+     *     2: 6G
+     */
+    A_UINT32 freq_band;
+    /* sub_band:
+     * Denotes band defined in targetPowerR2PFreqRangexG BDF fields.
+     * Valid values for each target is listed below
+     * For 11AX targets,
+     * 2G - 0
+     * 5G/6G - 0/1/2
+     *
+     * For 11BE targets,
+     * 2G - 0
+     * 5G/6G - 0/1
+     */
+    A_UINT32 sub_band;
+    /* is_ext:
+     * Applicable only for 11BE targets
+     * 0 - Default targetPowerR2PTable
+     * 1 - To update targetPowerR2PTable in extension fields
+     * For 11AX targets, value is expected to be 0.
+     */
+    A_UINT32 is_ext;
+    A_UINT32 target_type; /* 0 - IPQ95xx, 1 - QCN90xx, 0x10 - QCN92xx */
+    A_UINT32 r2p_array_len; /* length of targetPowerR2PTable */
+    /* end_of_r2ptable_update:
+     * This field can be used to indicate FW to trigger update of SW structures
+     * once user has updated for all the sub-bands of the Frequency band.
+     * This would be used when there are multiple sub-bands.
+     */
+    A_UINT32 end_of_r2ptable_update;
+/*
+ * Following this structure is the TLV containing targetPowerR2PTablexG
+ * of type INT8 and with a unit of 0.25dBm.
+ */
+} wmi_pdev_set_tgtr2p_table_cmd_fixed_param;
+
+typedef enum {
+    WMI_PDEV_TGTR2P_SUCCESS = 0,
+    WMI_PDEV_TGTR2P_SUCCESS_WAITING_FOR_END_OF_UPDATE,
+    WMI_PDEV_TGTR2P_ERROR_INVALID_FREQ_BAND,
+    WMI_PDEV_TGTR2P_ERROR_INVALID_SUB_BAND,
+    WMI_PDEV_TGTR2P_ERROR_EXTENSION_FIELDS_NOT_ENABLED_IN_BDF,
+    WMI_PDEV_TGTR2P_ERROR_INVALID_TARGET_TPYE,
+    WMI_PDEV_TGTR2P_ERROR_R2P_ARRAY_LEN_MISMATCH,
+} wmi_pdev_set_tgtr2p_event_status_type;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_tgtr2p_table_event_fixed_param */
+    A_UINT32 status;   /* enum wmi_pdev_set_tgtr2p_event_status_type to indicate the status code/result */
+} wmi_pdev_set_tgtr2p_table_event_fixed_param;
+
+
 
 
 /* ADD NEW DEFS HERE */
