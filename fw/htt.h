@@ -770,6 +770,7 @@ typedef enum {
     HTT_STATS_TXBF_OFDMA_BE_STEER_MPDU_STATS_TAG   = 173, /* htt_txbf_ofdma_be_steer_mpdu_stats_tlv */
     HTT_STATS_PEER_AX_OFDMA_STATS_TAG              = 174, /* htt_peer_ax_ofdma_stats_tlv */
     HTT_STATS_TX_PDEV_MU_EDCA_PARAMS_STATS_TAG     = 175, /* htt_tx_pdev_mu_edca_params_stats_tlv_v */
+    HTT_STATS_PDEV_MBSSID_CTRL_FRAME_STATS_TAG     = 176, /* htt_pdev_mbssid_ctrl_frame_stats_tlv */
 
 
     HTT_STATS_MAX_TAG,

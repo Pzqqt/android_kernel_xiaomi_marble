@@ -3267,6 +3267,11 @@ typedef struct {
 #define WMI_TARGET_CAP_MAX_ML_BSS_NUM_SET(target_cap_flags, value) \
     WMI_SET_BITS(target_cap_flags, 8, 3, value)
 
+#define WMI_TARGET_CAP_CONCURRENCE_SUPPORT_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 11, 2)
+#define WMI_TARGET_CAP_CONCURRENCE_SUPPORT_SET(target_cap_flags, value) \
+    WMI_SET_BITS(target_cap_flags, 11, 2, value)
+
 /*
  * wmi_htt_msdu_idx_to_htt_msdu_qtype GET/SET APIs
  */
@@ -3406,7 +3411,10 @@ typedef struct {
      * Bit 6 - UL MUMIMO Rx support on 6 GHz (AP Mode)
      * Bit 7 - UL MUMIMO Tx support on 6 GHz (STA Mode)
      * Bits 10:8 - max ML BSS number supported, range [0-7]
-     * Bits 31:11 - Reserved
+     * Bits 12:11  concurrence support capability
+     *      Bit11 - [ML-STA + SL-STA]  0: not supported; 1:supported
+     *      Bit12 - [ML-STA + SL-SAP]  0: not supported; 1:supported
+     * Bits 31:13 - Reserved
      */
     A_UINT32 target_cap_flags;
 
@@ -4945,6 +4953,7 @@ typedef enum {
     WMI_VENDOR1_REQ1_VERSION_3_01   = 1,
     WMI_VENDOR1_REQ1_VERSION_3_20   = 2,
     WMI_VENDOR1_REQ1_VERSION_3_30   = 3,
+    WMI_VENDOR1_REQ1_VERSION_3_40   = 4,
 } WMI_VENDOR1_REQ1_VERSION;
 
 typedef enum {
@@ -8915,6 +8924,14 @@ typedef enum {
      * optimizations.
      */
     WMI_PDEV_PARAM_DISABLE_LPI_ANT_OPTIMIZATION,
+
+    /*
+     * Param to configure exclusive RSID range for 11az TB ranging.
+     * RSID's are subset of total AID space and must not be used
+     * for any other purpose by Host. FW uses these IDs for trigger
+     * based ranging.
+     */
+    WMI_PDEV_PARAM_RTT_11AZ_RSID_RANGE,
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
@@ -20415,6 +20432,7 @@ typedef struct wow_event_info_s {
     A_UINT32 flag; /*This is current reserved.*/
     A_INT32 wake_reason;
     A_UINT32 data_len;
+    A_UINT32 delayed_pkt_count;
 } WOW_EVENT_INFO_fixed_param;
 
 typedef struct wow_initial_wakeup_event_s {
@@ -21553,6 +21571,12 @@ typedef enum
      * for specific customer
      */
     WMI_VENDOR_OUI_ACTION_ALLOW_11BE = 9,
+
+    /*
+     * Turn off FW's dynamic qos null tx rate if specific vendor OUI
+     * received in beacon.
+     */
+    WMI_VENDOR_OUI_ACTION_DISABLE_DYNAMIC_QOS_NULL_TX_RATE = 10,
 
     /* Add any action before this line */
     WMI_VENDOR_OUI_ACTION_MAX_ACTION_ID
@@ -34910,6 +34934,15 @@ typedef struct {
 #define WMI_CHAN_RF_CHARACTERIZATION_FREQ_GET(dword) \
             WMI_F_MS((dword)->freq_info,WMI_CHAN_RF_CHARACTERIZATION_FREQ_INFO_FREQ)
 
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_COEX_FIX_CHANNEL_CAPABILITIES */
+    /**************************************************************************
+    * 1: SAP fix channel has higher priority than ACS
+    * 0: SAP fix channel has lower priority than ACS
+    **************************************************************************/
+    A_UINT32 fix_channel_priority;
+} WMI_COEX_FIX_CHANNEL_CAPABILITIES;
+
 
 
 #define WMI_DMA_RING_PADDR_LO_S 0
@@ -35390,8 +35423,6 @@ typedef struct {
     A_UINT32 preauth_status;
     /* AP BSSID for which pre-authentication is completed */
     wmi_mac_addr candidate_ap_bssid;
-    /* AKM suite type (as defined in the IEEE 802.11 spec) */
-    A_UINT32 akm_suite_type;
     /**
      * This fixed_param TLV is followed by the below TLVs:
      *
@@ -35414,6 +35445,8 @@ typedef struct {
      * in MLO case.  In non MLO cases, transmit_addr will be filled with 0x0.
      */
     wmi_mac_addr transmit_addr;
+    /* AKM suite type (as defined in the IEEE 802.11 spec) */
+    A_UINT32 akm_suite_type;
 } wmi_roam_preauth_start_event_fixed_param;
 
 typedef struct {
@@ -35756,6 +35789,13 @@ typedef struct {
     A_UINT32 roam_abort_reason; /* Detail reason for roam scan not start, from WMI_ROAM_FAIL_SUB_REASON_ID */
 } wmi_roam_result;
 
+#define WMI_ROAM_NEIGHBOR_REPORT_INFO_REQUEST_TOKEN_GET(detail)         WMI_GET_BITS(detail, 0, 8)
+#define WMI_ROAM_NEIGHBOR_REPORT_INFO_REQUEST_TOKEN_SET(detail,val)     WMI_SET_BITS(detail, 0, 8, val)
+#define WMI_ROAM_NEIGHBOR_REPORT_INFO_RESPONSE_TOKEN_GET(detail)        WMI_GET_BITS(detail, 8, 8)
+#define WMI_ROAM_NEIGHBOR_REPORT_INFO_RESPONSE_TOKEN_SET(detail,val)    WMI_SET_BITS(detail, 8, 8, val)
+#define WMI_ROAM_NEIGHBOR_REPORT_INFO_NUM_OF_NRIE_GET(detail)           WMI_GET_BITS(detail, 16, 8)
+#define WMI_ROAM_NEIGHBOR_REPORT_INFO_NUM_OF_NRIE_SET(detail,val)       WMI_SET_BITS(detail, 16, 8, val)
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_neighbor_report_info_tlv_param */
     /* request_type:
@@ -35781,6 +35821,15 @@ typedef struct {
      * of the 802.11v spec.
      */
     A_UINT32 btm_query_reason_code;
+    /* neighbor_report_detail:
+     * [7:0]     : neighbor report request token
+     * [15:8]    : neighbor report response token
+     * [23:16]   : the number of neighbor report elements in response frame
+     * [31:24]   : reserved
+     * Refer to the above WMI_ROAM_NEIGHBOR_REPORT_INFO_*_GET,_SET macros for
+     * reading and writing these bitfields.
+     */
+    A_UINT32 neighbor_report_detail;
 } wmi_roam_neighbor_report_info;
 
 typedef struct {
