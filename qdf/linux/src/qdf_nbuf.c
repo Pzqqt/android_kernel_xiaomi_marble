@@ -41,6 +41,7 @@
 #include <qdf_types.h>
 #include <net/ieee80211_radiotap.h>
 #include <pld_common.h>
+#include <qdf_crypto.h>
 
 #if defined(FEATURE_TSO)
 #include <net/ipv6.h>
@@ -1327,42 +1328,56 @@ __qdf_nbuf_data_get_dhcp_subtype(uint8_t *data)
 	return subtype;
 }
 
+#define EAPOL_WPA_KEY_INFO_ACK BIT(7)
+#define EAPOL_WPA_KEY_INFO_MIC BIT(8)
+#define EAPOL_WPA_KEY_INFO_ENCR_KEY_DATA BIT(12) /* IEEE 802.11i/RSN only */
+
 /**
- * __qdf_nbuf_data_get_eapol_subtype() - get the subtype
- *            of EAPOL packet.
+ * __qdf_nbuf_data_get_eapol_subtype() - get the subtype of EAPOL packet.
  * @data: Pointer to EAPOL packet data buffer
  *
  * This func. returns the subtype of EAPOL packet.
+ *
+ * We can distinguish M1/M3 from M2/M4 by the ack bit in the keyinfo field
+ * The ralationship between the ack bit and EAPOL type is as follows:
+ *
+ *  EAPOL type  |   M1    M2   M3  M4
+ * --------------------------------------
+ *     Ack      |   1     0    1   0
+ * --------------------------------------
+ *
+ * Then, we can differentiate M1 from M3, M2 from M4 by below methods:
+ * M2/M4: by keyDataLength being AES_BLOCK_SIZE for FILS and 0 otherwise.
+ * M1/M3: by the mic/encrKeyData bit in the keyinfo field.
  *
  * Return: subtype of the EAPOL packet.
  */
 enum qdf_proto_subtype
 __qdf_nbuf_data_get_eapol_subtype(uint8_t *data)
 {
-	uint16_t eapol_key_info;
-	enum qdf_proto_subtype subtype = QDF_PROTO_INVALID;
-	uint16_t mask;
+	uint16_t key_info, key_data_length;
+	enum qdf_proto_subtype subtype;
 
-	eapol_key_info = (uint16_t)(*(uint16_t *)
-			(data + EAPOL_KEY_INFO_OFFSET));
+	key_info = qdf_ntohs((uint16_t)(*(uint16_t *)
+			(data + EAPOL_KEY_INFO_OFFSET)));
 
-	mask = eapol_key_info & EAPOL_MASK;
-	switch (mask) {
-	case EAPOL_M1_BIT_MASK:
-		subtype = QDF_PROTO_EAPOL_M1;
-		break;
-	case EAPOL_M2_BIT_MASK:
-		subtype = QDF_PROTO_EAPOL_M2;
-		break;
-	case EAPOL_M3_BIT_MASK:
-		subtype = QDF_PROTO_EAPOL_M3;
-		break;
-	case EAPOL_M4_BIT_MASK:
-		subtype = QDF_PROTO_EAPOL_M4;
-		break;
-	default:
-		break;
-	}
+	key_data_length = qdf_ntohs((uint16_t)(*(uint16_t *)
+				(data + EAPOL_KEY_DATA_LENGTH_OFFSET)));
+
+	if (key_info & EAPOL_WPA_KEY_INFO_ACK)
+		if (key_info &
+		    (EAPOL_WPA_KEY_INFO_MIC | EAPOL_WPA_KEY_INFO_ENCR_KEY_DATA))
+			subtype = QDF_PROTO_EAPOL_M3;
+		else
+			subtype = QDF_PROTO_EAPOL_M1;
+	else
+		if (key_data_length == 0 ||
+		    (!(key_info & EAPOL_WPA_KEY_INFO_MIC) &&
+		     (key_info & EAPOL_WPA_KEY_INFO_ENCR_KEY_DATA) &&
+		     key_data_length == AES_BLOCK_SIZE))
+			subtype = QDF_PROTO_EAPOL_M4;
+		else
+			subtype = QDF_PROTO_EAPOL_M2;
 
 	return subtype;
 }
