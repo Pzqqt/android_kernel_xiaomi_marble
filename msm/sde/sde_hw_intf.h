@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -215,12 +215,6 @@ struct sde_hw_intf_ops {
 	int (*check_and_reset_tearcheck)(struct sde_hw_intf *intf,
 			struct intf_tear_status *status);
 
-	/**
-	 * On idle pc exit commit, reset the tear_init_count_val from 0 to
-	 * tear_init_val. This ensures spurious rd_ptr_irq is not triggered.
-	 */
-	void (*reset_tear_init_line_val)(struct sde_hw_intf *intf,
-			u32 tear_init_val);
 	/**
 	 * Reset the interface frame & line counter
 	 */
