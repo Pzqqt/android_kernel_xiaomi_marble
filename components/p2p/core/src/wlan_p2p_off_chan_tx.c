@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -513,6 +513,7 @@ static uint8_t p2p_get_noa_attr_stream(
  * @p2p_ie:       pointer to p2p ie
  * @noa_attr:     pointer to noa attr
  * @total_len:    pointer to total length of ie
+ * @noa_stream:   noa stream
  *
  * This function updates noa stream.
  *
@@ -921,9 +922,9 @@ static QDF_STATUS p2p_rx_update_connection_status(
 
 	if (rx_frame_info->public_action_type !=
 		P2P_PUBLIC_ACTION_NOT_SUPPORT)
-		p2p_info("%s <--- OTA from " QDF_MAC_ADDR_FMT,
-			  p2p_get_frame_type_str(rx_frame_info),
-			  QDF_MAC_ADDR_REF(mac_from));
+		p2p_info_rl("%s <--- OTA from " QDF_MAC_ADDR_FMT,
+			    p2p_get_frame_type_str(rx_frame_info),
+			    QDF_MAC_ADDR_REF(mac_from));
 
 	if ((rx_frame_info->public_action_type ==
 			P2P_PUBLIC_ACTION_PROV_DIS_REQ) ||
@@ -932,7 +933,7 @@ static QDF_STATUS p2p_rx_update_connection_status(
 	    (rx_frame_info->public_action_type ==
 			P2P_PUBLIC_ACTION_NEG_RSP)) {
 		p2p_status_update(p2p_soc_obj, P2P_GO_NEG_PROCESS);
-		p2p_info("[P2P State]Inactive state to GO negotiation progress state");
+		p2p_info_rl("[P2P State]Inactive state to GO negotiation progress state");
 	} else if (((rx_frame_info->public_action_type ==
 		     P2P_PUBLIC_ACTION_NEG_CNF) ||
 		   (rx_frame_info->public_action_type ==
@@ -940,12 +941,12 @@ static QDF_STATUS p2p_rx_update_connection_status(
 		   (p2p_soc_obj->connection_status ==
 		    P2P_GO_NEG_PROCESS)) {
 		p2p_status_update(p2p_soc_obj, P2P_GO_NEG_COMPLETED);
-		p2p_info("[P2P State]GO negotiation progress to GO negotiation completed state");
+		p2p_info_rl("[P2P State]GO negotiation progress to GO negotiation completed state");
 	} else if ((rx_frame_info->public_action_type ==
 		    P2P_PUBLIC_ACTION_INVIT_REQ) &&
 		   (p2p_soc_obj->connection_status == P2P_NOT_ACTIVE)) {
 		p2p_status_update(p2p_soc_obj, P2P_GO_NEG_COMPLETED);
-		p2p_info("[P2P State]Inactive state to GO negotiation completed state Autonomous GO formation");
+		p2p_info_rl("[P2P State]Inactive state to GO negotiation completed state Autonomous GO formation");
 	}
 
 	return QDF_STATUS_SUCCESS;
