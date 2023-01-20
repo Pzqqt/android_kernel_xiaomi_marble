@@ -241,9 +241,10 @@
  * 3.114 Add HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_SOC_START_PRE_RESET def.
  * 3.115 Add HTT_H2T_MSG_TYPE_RX_CCE_SUPER_RULE_SETUP and
  *       HTT_T2H_MSG_TYPE_RX_CCE_SUPER_RULE_SETUP_DONE msg defs.
+ * 3.116 Add HTT_TX_MONITOR_CFG_WORD_MASK_COMPACTION_ENABLE flag.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 115
+#define HTT_CURRENT_VERSION_MINOR 116
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -7141,7 +7142,8 @@ PREPACK struct htt_tx_monitor_cfg_t {
              filter_in_tx_msdu_end_mgmt:             1,
              filter_in_tx_msdu_end_ctrl:             1,
              filter_in_tx_msdu_end_data:             1,
-             rsvd3:                                 17;
+             word_mask_compaction_enable:            1,
+             rsvd3:                                 16;
     A_UINT32 tlv_filter_mask_in0;
     A_UINT32 tlv_filter_mask_in1;
     A_UINT32 tlv_filter_mask_in2;
@@ -7410,6 +7412,18 @@ PREPACK struct htt_tx_monitor_cfg_t {
                 HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_DATA, _val); \
                 ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_DATA_S)); \
             } while (0)
+
+#define HTT_TX_MONITOR_CFG_WORD_MASK_COMPACTION_ENABLE_M         0x00008000
+#define HTT_TX_MONITOR_CFG_WORD_MASK_COMPACTION_ENABLE_S         15
+#define HTT_TX_MONITOR_CFG_WORD_MASK_COMPACTION_ENABLE_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_WORD_MASK_COMPACTION_ENABLE_M) >> \
+                    HTT_TX_MONITOR_CFG_WORD_MASK_COMPACTION_ENABLE_S)
+#define HTT_TX_MONITOR_CFG_WORD_MASK_COMPACTION_ENABLE_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_WORD_MASK_COMPACTION_ENABLE, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_WORD_MASK_COMPACTION_ENABLE_S)); \
+            } while (0)
+
 
 #define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_M            0xffffffff
 #define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_S            0
