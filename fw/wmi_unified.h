@@ -9003,6 +9003,13 @@ typedef enum {
      * 4..31 | RESERVED
      */
     WMI_PDEV_PARAM_SET_DISABLED_SCHED_MODES,
+
+    /*
+     * Override default FW behavior and explicitly enable / disable
+     * to allow frames without encryption when no encryption is set.
+     *
+     */
+    WMI_PDEV_PARAM_BYPASS_ENCRYPTION,
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
