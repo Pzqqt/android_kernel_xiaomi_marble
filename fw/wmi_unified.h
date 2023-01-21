@@ -25336,10 +25336,15 @@ typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_key_material_ext */
     A_UINT32 tlv_header;
     /*
-     * key_buffer contains kck,kck2,kek,kek2,replay counter, in order
-     * The split between kck vs. kek should be known to host based on akmp.
+     * key_buffer contains kck,kck2,kek,kek2,replay counter, in order.
+     * If both the below kck_len and kek_len fields are 0x0, the split
+     * between kck vs. kek should be inferred based on akmp.
      */
     A_UINT8  key_buffer[GTK_OFFLOAD_KEK_EXTENDED_BYTES+GTK_OFFLOAD_KCK_EXTENDED_BYTES+GTK_REPLAY_COUNTER_BYTES];
+    /* length of kck in key_buffer */
+    A_UINT32 kck_len;
+    /* length of kek in key_buffer */
+    A_UINT32 kek_len;
 } wmi_key_material_ext;
 
 typedef struct {
