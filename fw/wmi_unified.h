@@ -745,6 +745,8 @@ typedef enum {
     /* Set disabled scheduler modes for one or more peers */
     WMI_PEER_SCHED_MODE_DISABLE_CMDID,
 
+    /* Group SET cmd for PEERS */
+ 	WMI_PEER_BULK_SET_CMDID,
 
     /* beacon/management specific commands */
 
@@ -17124,6 +17126,9 @@ typedef struct {
  *             Bit value: 0 - 20 MHz channel is punctured, 1 - not punctured
  */
 #define WMI_PEER_CHWIDTH_PUNCTURE_20MHZ_BITMAP         0x27
+
+#define WMI_PEER_SET_TX_POWER                          0x28
+
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_set_param_cmd_fixed_param */
@@ -37043,6 +37048,36 @@ typedef struct {
      * struct wmi_chan_width_peer_list chan_width_peer_info[num_peers];
      */
 } wmi_peer_chan_width_switch_cmd_fixed_param;
+
+#define WMI_PEER_BULK_SET_VDEV_ID(comp, value) WMI_SET_BITS(comp, 0, 8, value)
+#define WMI_PEER_BULK_GET_VDEV_ID(comp) WMI_GET_BITS(comp, 0, 8)
+/* bits 30:8 currently unused */
+#define WMI_PEER_BULK_SET_VALID_VDEV_ID(comp) WMI_SET_BITS(comp, 31, 1, 1)
+#define WMI_PEER_BULK_GET_VALID_VDEV_ID(comp) WMI_GET_BITS(comp, 31, 1)
+
+typedef struct {
+     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUCT_wmi_peer_list */
+     wmi_mac_addr peer_macaddr;
+     /** parameter id */
+     A_UINT32 param_id;
+     A_UINT32 param_value;
+} wmi_peer_list;
+
+/* WMI_PEER_BULK_SET_CMDID */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_bulk_set_cmd_fixed_param */
+    /* vdev_var:
+     * The MSb (bit 31) indicates that the vdev_id is valid.
+     * The LSB (bits 0-7) is used to infer the actual vdev_id.
+     * The other bits can be used for future enhancements.
+     */
+    A_UINT32 vdev_var;
+
+    /*
+     * Following this structure is the TLV array:
+     *     struct wmi_peer_list peer_info[];
+     */
+} wmi_peer_bulk_set_cmd_fixed_param;
 
 typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_he_tb_action_frm_cmd_fixed_param */
