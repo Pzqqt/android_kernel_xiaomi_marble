@@ -791,6 +791,11 @@ static int msm_vidc_setup_context_bank(struct msm_vidc_core *core,
 	}
 
 	cb->domain = iommu_get_domain_for_dev(cb->dev);
+	if (IS_ERR_OR_NULL(cb->domain)) {
+		d_vpr_e("%s: failed to get domain\n", __func__);
+		rc = PTR_ERR(cb->domain) ? PTR_ERR(cb->domain) : -ENODEV;
+		goto remove_cb;
+	}
 
 	/*
 	 * When memory is fragmented, below configuration increases the
