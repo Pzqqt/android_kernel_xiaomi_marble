@@ -237,9 +237,11 @@
  * 3.110 Add more word_mask fields in htt_tx_monitor_cfg_t.
  * 3.111 Add RXPCU filter enable flag in RX_RING_SELECTION_CFG msg.
  * 3.112 Add logical_link_id field in rx_peer_metadata_v1.
+ * 3.113 Add add rx msdu,mpdu,ppdu fields in rx_ring_selection_cfg_t
+ * 3.114 Add HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_SOC_START_PRE_RESET def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 112
+#define HTT_CURRENT_VERSION_MINOR 114
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -768,6 +770,7 @@ typedef enum {
     HTT_STATS_TXBF_OFDMA_BE_STEER_MPDU_STATS_TAG   = 173, /* htt_txbf_ofdma_be_steer_mpdu_stats_tlv */
     HTT_STATS_PEER_AX_OFDMA_STATS_TAG              = 174, /* htt_peer_ax_ofdma_stats_tlv */
     HTT_STATS_TX_PDEV_MU_EDCA_PARAMS_STATS_TAG     = 175, /* htt_tx_pdev_mu_edca_params_stats_tlv_v */
+    HTT_STATS_PDEV_MBSSID_CTRL_FRAME_STATS_TAG     = 176, /* htt_pdev_mbssid_ctrl_frame_stats_tlv */
 
 
     HTT_STATS_MAX_TAG,
@@ -837,6 +840,7 @@ enum htt_h2t_msg_type {
     HTT_H2T_MSG_TYPE_MSI_SETUP             = 0x1f,
     HTT_H2T_MSG_TYPE_STREAMING_STATS_REQ   = 0x20,
     HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP = 0x21,
+    HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_SOC_START_PRE_RESET = 0x22,
 
     /* keep this last */
     HTT_H2T_NUM_MSGS
@@ -5815,6 +5819,15 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
     A_UINT32 en_rx_tlv_pkt_offset:   1,
              rx_pkt_tlv_offset:      15,
              rsvd6:                  16;
+    A_UINT32 rx_mpdu_start_word_mask_v2:         20,
+             rx_mpdu_end_word_mask_v2:            8,
+             rsvd8:                               4;
+    A_UINT32 rx_msdu_end_word_mask_v2:           20,
+             rsvd9:                              12;
+    A_UINT32 rx_ppdu_end_usr_stats_word_mask_v2: 20,
+             rsvd10:                             12;
+    A_UINT32 packet_type_enable_fpmo_flags0;
+    A_UINT32 packet_type_enable_fpmo_flags1;
 } POSTPACK;
 
 #define HTT_RX_RING_SELECTION_CFG_SZ    (sizeof(struct htt_rx_ring_selection_cfg_t))
@@ -6318,6 +6331,71 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
         ((_var) |= ((_val) <<  HTT_RX_RING_SELECTION_CFG_RX_PKT_TLV_OFFSET_S)); \
     } while (0)
 
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_V2_M          0x000FFFFF
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_V2_S          0
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_V2_GET(_var) \
+       (((_var) & HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_V2_M)>> \
+        HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_V2_S)
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_V2_SET(_var, _val) \
+       do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_V2, _val);\
+         ((_var) |= ((_val) <<  HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_V2_S)); \
+       } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_V2_M            0x0FF00000
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_V2_S            20
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_V2_GET(_var) \
+       (((_var) & HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_V2_M)>> \
+        HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_V2_S)
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_V2_SET(_var, _val) \
+       do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_V2, _val);\
+         ((_var) |= ((_val) <<  HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_V2_S)); \
+       } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_WORD_MASK_V2_M            0x000FFFFF
+#define HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_WORD_MASK_V2_S            0
+#define HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_WORD_MASK_V2_GET(_var) \
+       (((_var) & HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_WORD_MASK_V2_M)>> \
+        HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_WORD_MASK_V2_S)
+#define HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_WORD_MASK_V2_SET(_var, _val) \
+       do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_WORD_MASK_V2, _val);\
+         ((_var) |= ((_val) <<  HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_WORD_MASK_V2_S)); \
+       } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_RX_PPDU_END_USR_STATS_WORD_MASK_V2_M  0x000FFFFF
+#define HTT_RX_RING_SELECTION_CFG_RX_PPDU_END_USR_STATS_WORD_MASK_V2_S  0
+#define HTT_RX_RING_SELECTION_CFG_RX_PPDU_END_USR_STATS_WORD_MASK_V2_GET(_var) \
+       (((_var) & HTT_RX_RING_SELECTION_CFG_RX_PPDU_END_USR_STATS_WORD_MASK_V2_M)>> \
+        HTT_RX_RING_SELECTION_CFG_RX_PPDU_END_USR_STATS_WORD_MASK_V2_S)
+#define HTT_RX_RING_SELECTION_CFG_RX_PPDU_END_USR_STATS_WORD_MASK_V2_SET(_var, _val) \
+       do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_RX_PPDU_END_USR_STATS_WORD_MASK_V2, _val);\
+         ((_var) |= ((_val) <<  HTT_RX_RING_SELECTION_CFG_RX_PPDU_END_USR_STATS_WORD_MASK_V2_S)); \
+       } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_PACKET_TYPE_ENABLE_FPMO_FLAGS0_M      0xFFFFFFFF
+#define HTT_RX_RING_SELECTION_CFG_PACKET_TYPE_ENABLE_FPMO_FLAGS0_S      0
+#define HTT_RX_RING_SELECTION_CFG_PACKET_TYPE_ENABLE_FPMO_FLAGS0_GET(_var) \
+    (((_var) & HTT_RX_RING_SELECTION_CFG_PACKET_TYPE_ENABLE_FPMO_FLAGS0_M)>> \
+        HTT_RX_RING_SELECTION_CFG_PACKET_TYPE_ENABLE_FPMO_FLAGS0_S)
+#define HTT_RX_RING_SELECTION_CFG_PACKET_TYPE_ENABLE_FPMO_FLAGS0_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_PACKET_TYPE_ENABLE_FPMO_FLAGS0, _val); \
+         ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_PACKET_TYPE_ENABLE_FPMO_FLAGS0_S)); \
+     } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_PACKET_TYPE_ENABLE_FPMO_FLAGS1_M      0xFFFFFFFF
+#define HTT_RX_RING_SELECTION_CFG_PACKET_TYPE_ENABLE_FPMO_FLAGS1_S      0
+#define HTT_RX_RING_SELECTION_CFG_PACKET_TYPE_ENABLE_FPMO_FLAGS1_GET(_var) \
+    (((_var) & HTT_RX_RING_SELECTION_CFG_PACKET_TYPE_ENABLE_FPMO_FLAGS1_M)>> \
+        HTT_RX_RING_SELECTION_CFG_PACKET_TYPE_ENABLE_FPMO_FLAGS1_S)
+#define HTT_RX_RING_SELECTION_CFG_PACKET_TYPE_ENABLE_FPMO_FLAGS1_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_PACKET_TYPE_ENABLE_FPMO_FLAGS1, _val); \
+         ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_PACKET_TYPE_ENABLE_FPMO_FLAGS1_S)); \
+     } while (0)
 
 /*
  * Subtype based MGMT frames enable bits.
@@ -6676,6 +6754,87 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
 
 #define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG3_MO_DATA_NULL_M 0x04000000
 #define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG3_MO_DATA_NULL_S 26
+
+/* FPMO mode flags */
+/* MGMT */
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_0000_M 0x00000001
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_0000_S 0
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_0001_M 0x00000002
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_0001_S 1
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_0010_M 0x00000004
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_0010_S 2
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_0011_M 0x00000008
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_0011_S 3
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_0100_M 0x00000010
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_0100_S 4
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_0101_M 0x00000020
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_0101_S 5
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_0110_M 0x00000040
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_0110_S 6
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_0111_M 0x00000080
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_0111_S 7
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_1000_M 0x00000100
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_1000_S 8
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_1001_M 0x00000200
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_1001_S 9
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_1010_M 0x00000400
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_1010_S 10
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_1011_M 0x00000800
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_1011_S 11
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_1100_M 0x00001000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_1100_S 12
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_1101_M 0x00002000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_1101_S 13
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_1110_M 0x00004000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_1110_S 14
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_1111_M 0x00008000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_MGMT_1111_S 15
+
+/* CTRL */
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_0000_M 0x00010000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_0000_S 16
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_0001_M 0x00020000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_0001_S 17
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_0010_M 0x00040000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_0010_S 18
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_0011_M 0x00080000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_0011_S 19
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_0100_M 0x00100000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_0100_S 20
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_0101_M 0x00200000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_0101_S 21
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_0110_M 0x00400000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_0110_S 22
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_0111_M 0x00800000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_0111_S 23
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_1000_M 0x01000000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_1000_S 24
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_1001_M 0x02000000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_1001_S 25
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_1010_M 0x04000000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_1010_S 26
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_1011_M 0x08000000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_1011_S 27
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_1100_M 0x10000000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_1100_S 28
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_1101_M 0x20000000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_1101_S 29
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_1110_M 0x40000000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_1110_S 30
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_1111_M 0x80000000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG0_FPMO_CTRL_1111_S 31
+
+/* DATA */
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG1_FPMO_DATA_MCAST_M 0x00000001
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG1_FPMO_DATA_MCAST_S 0
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG1_FPMO_DATA_UCAST_M 0x00000002
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG1_FPMO_DATA_UCAST_S 1
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG1_FPMO_DATA_NULL_M 0x00000004
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG1_FPMO_DATA_NULL_S 2
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG1_FPMO_DATA_QOS_NULL_DATA_M 0x00000008
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG1_FPMO_DATA_QOS_NULL_DATA_S 3
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG1_FPMO_DATA_QOS_NULL_TB_M 0x00000010
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG1_FPMO_DATA_QOS_NULL_TB_S 4
 
 #define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_SET(word, httsym, value) \
             do { \
@@ -9727,6 +9886,9 @@ PREPACK struct htt_h2t_sawf_def_queues_map_report_req {
  * @details
  *  This is shared memory between Host and Target allocated
  *  and used in chips where UMAC hang recovery feature is supported.
+ *  This shared memory is allocated per SOC level by Host since each
+ *  SOC's target Q6FW needs to communicate independently to the Host
+ *  through its own shared memory.
  *  If target sets a bit in t2h_msg (provided it's valid bit offset)
  *  then host interprets it as a new message from target.
  *  Host clears that particular read bit in t2h_msg after each read
@@ -9740,11 +9902,13 @@ PREPACK struct htt_h2t_sawf_def_queues_map_report_req {
  * dword1 - b'0     - do_pre_reset
  *          b'1     - do_post_reset_start
  *          b'2     - do_post_reset_complete
- *          b'3:31  - rsvd_t2h
+ *          b'3     - initiate_umac_recovery
+ *          b'4:31  - rsvd_t2h
  * dword2 - b'0     - pre_reset_done
  *          b'1     - post_reset_start_done
  *          b'2     - post_reset_complete_done
- *          b'3:31  - rsvd_h2t
+ *          b'3     - start_pre_reset
+ *          b'4:31  - rsvd_h2t
  */
 PREPACK typedef struct {
     /** Magic number added for debuggability. */
@@ -9754,14 +9918,18 @@ PREPACK typedef struct {
          * BIT [0]        :- T2H msg to do pre-reset
          * BIT [1]        :- T2H msg to do post-reset start
          * BIT [2]        :- T2H msg to do post-reset complete
-         * BIT [31 : 3]   :- reserved
+         * BIT [3]        :- T2H msg to initiate UMAC recovery sequence.
+         *                   This is needed to synchronize UMAC recovery
+         *                   across all SOCs.
+         * BIT [31 : 4]   :- reserved
          */
         A_UINT32 t2h_msg;
         struct {
             A_UINT32 do_pre_reset             :      1, /* BIT [0]      */
                      do_post_reset_start      :      1, /* BIT [1]      */
                      do_post_reset_complete   :      1, /* BIT [2]      */
-                     rsvd_t2h                 :     29; /* BIT [31 : 3] */
+                     initiate_umac_recovery   :      1, /* BIT [3]      */
+                     rsvd_t2h                 :     28; /* BIT [31 : 4] */
         };
     };
 
@@ -9770,14 +9938,19 @@ PREPACK typedef struct {
          * BIT [0]        :- H2T msg to send pre-reset done
          * BIT [1]        :- H2T msg to send post-reset start done
          * BIT [2]        :- H2T msg to send post-reset complete done
-         * BIT [31 : 3]   :- reserved
+         * BIT [3]        :- H2T msg to start pre-reset.
+         *                   This is expected only after T2H
+         *                   initiate_umac_recovery was received by Host
+         *                   from one of the SOCs.
+         * BIT [31 : 4]   :- reserved
          */
         A_UINT32 h2t_msg;
         struct {
             A_UINT32 pre_reset_done           :      1, /* BIT [0]      */
                      post_reset_start_done    :      1, /* BIT [1]      */
                      post_reset_complete_done :      1, /* BIT [2]      */
-                     rsvd_h2t                 :     29; /* BIT [31 : 3] */
+                     start_pre_reset          :      1, /* BIT [3]      */
+                     rsvd_h2t                 :     28; /* BIT [31 : 4] */
         };
     };
 } POSTPACK htt_umac_hang_recovery_msg_shmem_t;
@@ -9823,6 +9996,18 @@ PREPACK typedef struct {
         ((word1) |= ((_val) << HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_POST_RESET_COMPLETE_S));\
     } while (0)
 
+/* dword1 - b'3 - initiate_umac_recovery */
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_UMAC_RECOVERY_M 0x00000008
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_UMAC_RECOVERY_S 3
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_UMAC_RECOVERY_GET(word1) \
+	    (((word1) & HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_UMAC_RECOVERY_M) >> \
+     HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_UMAC_RECOVERY_S)
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_UMAC_RECOVERY_SET(word1, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_UMAC_RECOVERY, _val); \
+        ((word1) |= ((_val) << HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_UMAC_RECOVERY_S));\
+    } while (0)
+
 /* dword2 - b'0 - pre_reset_done */
 #define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_PRE_RESET_DONE_M 0x00000001
 #define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_PRE_RESET_DONE_S 0
@@ -9859,6 +10044,18 @@ PREPACK typedef struct {
         ((word2) |= ((_val) << HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_POST_RESET_COMPLETE_DONE_S));\
     } while (0)
 
+/* dword2 - b'3 - start_pre_reset */
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_START_PRE_RESET_M 0x00000008
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_START_PRE_RESET_S 3
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_START_PRE_RESET_GET(word2) \
+    (((word2) & HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_START_PRE_RESET_M) >> \
+     HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_START_PRE_RESET_S)
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_START_PRE_RESET_SET(word2, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_START_PRE_RESET, _val); \
+        ((word2) |= ((_val) << HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_START_PRE_RESET_S));\
+    } while (0)
+
 /**
  * @brief HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP message
  *
@@ -9887,7 +10084,8 @@ PREPACK typedef struct {
  * |--------------------------------------------------------------------------|
  *
  * The message is interpreted as follows:
- * dword0 - b'0:7   - msg_type (= HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_SETUP)
+ * dword0 - b'0:7   - msg_type
+ *                    (HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP)
  *          b'8:11  - t2h_msg_method: indicates method to be used for
  *                    T2H communication in UMAC hang recovery mode.
  *                    Value zero indicates MSI interrupt (default method).
@@ -9951,6 +10149,65 @@ PREPACK typedef struct {
     do { \
         HTT_CHECK_SET_VAL(HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_H2T_MSG_METHOD, _val); \
         ((word0) |= ((_val) << HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_H2T_MSG_METHOD_S));\
+    } while (0)
+
+/**
+ * @brief HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_SOC_START_PRE_RESET message
+ *
+ * @details
+ *  The HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_SOC_START_PRE_RESET is a SOC level
+ *  HTT message sent by the host to indicate that the target needs to start the
+ *  UMAC hang recovery feature from the point of pre-reset routine.
+ *  The purpose of this H2T message is to have host synchronize and trigger
+ *  UMAC recovery across all targets.
+ *  The info sent in this H2T message is the flag to indicate whether the
+ *  target needs to execute UMAC-recovery in context of the Initiator or
+ *  Non-Initiator.
+ *  This H2T message is expected to be sent as response to the
+ *  initiate_umac_recovery indication from the Initiator target attached to
+ *  this same host.
+ *  This H2T message is expected to be only sent if the WMI service bit
+ *  WMI_SERVICE_UMAC_HANG_RECOVERY_SUPPORT was firstly indicated by the target
+ *  and HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP was sent
+ *  beforehand.
+ *
+ * |31                                       9|8|7            0|
+ * |-----------------------------------------------------------|
+ * |                 reserved                 |I|   msg_type   |
+ * |-----------------------------------------------------------|
+ * Where:
+ *     I = is_initiator
+ *
+ * The message is interpreted as follows:
+ * dword0 - b'0:7   - msg_type
+ *                    (HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_SOC_START_PRE_RESET)
+ *          b'8     - is_initiator: indicates whether the target needs to
+ *                    execute the UMAC-recovery in context of the Initiator or
+ *                    Non-Initiator.
+ *                    The value zero indicates this target is Non-Initiator.
+ *          b'9:31  - reserved.
+ */
+
+PREPACK typedef struct {
+    A_UINT32 msg_type       : 8,
+             is_initiator   : 1,
+             reserved       : 23;
+} POSTPACK htt_h2t_umac_hang_recovery_start_pre_reset_t;
+
+#define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_BYTES \
+    (sizeof(htt_h2t_umac_hang_recovery_start_pre_reset_t))
+#define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_DWORDS \
+    (HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_BYTES >> 2)
+
+#define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_INITIATOR_M 0x00000100
+#define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_INITIATOR_S 8
+#define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_INITIATOR_GET(word0) \
+    (((word0) & HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_INITIATOR_M) >> \
+     HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_INITIATOR_S)
+#define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_INITIATOR_SET(word0, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_INITIATOR, _val); \
+        ((word0) |= ((_val) << HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_INITIATOR_S));\
     } while (0)
 
 

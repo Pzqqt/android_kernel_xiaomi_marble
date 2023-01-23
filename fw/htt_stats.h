@@ -511,6 +511,14 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_STATS_PDEV_BW_MGR = 53,
 
+    /** HTT_DBG_PDEV_MBSSID_CTRL_FRAME_STATS
+     * PARAMS:
+     *   - No Params
+     * RESP MSG:
+     *   - htt_pdev_mbssid_ctrl_frame_stats
+     */
+    HTT_DBG_PDEV_MBSSID_CTRL_FRAME_STATS = 54,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -1865,6 +1873,9 @@ typedef struct {
      */
     A_UINT32 is_airtime_large_for_dl_ofdma[2];
     A_UINT32 is_airtime_large_for_ul_ofdma[2];
+    /* Last updated value of DL and UL queue depths for each peer per AC */
+    A_UINT32 last_updated_dl_qdepth[HTT_NUM_AC_WMM];
+    A_UINT32 last_updated_ul_qdepth[HTT_NUM_AC_WMM];
 } htt_peer_ax_ofdma_stats_tlv;
 
 /* config_param0 */
@@ -2373,6 +2384,7 @@ typedef struct {
     A_UINT32 su_sw_rts_flushed;
     /** CTS (RTS response) received in different BW */
     A_UINT32 su_sw_rts_rcvd_cts_diff_bw;
+/* START DEPRECATED FIELDS */
     /** 11AX HE MU Combined Freq. BSRP Trigger frame sent over the air */
     A_UINT32 combined_ax_bsr_trigger_tried[HTT_NUM_AC_WMM];
     /** 11AX HE MU Combined Freq. BSRP Trigger completed with error(s) */
@@ -2381,6 +2393,7 @@ typedef struct {
     A_UINT32 standalone_ax_bsr_trigger_tried[HTT_NUM_AC_WMM];
     /** 11AX HE MU Standalone Freq. BSRP Trigger completed with error(s) */
     A_UINT32 standalone_ax_bsr_trigger_err[HTT_NUM_AC_WMM];
+/* END DEPRECATED FIELDS */
 } htt_tx_selfgen_cmn_stats_tlv;
 
 typedef struct {
@@ -2464,6 +2477,14 @@ typedef struct {
      * successfully sent over the air
      */
     A_UINT32 ax_ul_mumimo_trigger[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
+    /** 11AX HE MU Combined Freq. BSRP Trigger frame sent over the air */
+    A_UINT32 combined_ax_bsr_trigger_tried[HTT_NUM_AC_WMM];
+    /** 11AX HE MU Combined Freq. BSRP Trigger completed with error(s) */
+    A_UINT32 combined_ax_bsr_trigger_err[HTT_NUM_AC_WMM];
+    /** 11AX HE MU Standalone Freq. BSRP Trigger frame sent over the air */
+    A_UINT32 standalone_ax_bsr_trigger_tried[HTT_NUM_AC_WMM];
+    /** 11AX HE MU Standalone Freq. BSRP Trigger completed with error(s) */
+    A_UINT32 standalone_ax_bsr_trigger_err[HTT_NUM_AC_WMM];
 } htt_tx_selfgen_ax_stats_tlv;
 
 typedef struct {
@@ -2503,6 +2524,14 @@ typedef struct {
      * successfully sent over the air
      */
     A_UINT32 be_ul_mumimo_trigger[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
+    /** 11BE EHT MU Combined Freq. BSRP Trigger frame sent over the air */
+    A_UINT32 combined_be_bsr_trigger_tried[HTT_NUM_AC_WMM];
+    /** 11BE EHT MU Combined Freq. BSRP Trigger completed with error(s) */
+    A_UINT32 combined_be_bsr_trigger_err[HTT_NUM_AC_WMM];
+    /** 11BE EHT MU Standalone Freq. BSRP Trigger frame sent over the air */
+    A_UINT32 standalone_be_bsr_trigger_tried[HTT_NUM_AC_WMM];
+    /** 11BE EHT MU Standalone Freq. BSRP Trigger completed with error(s) */
+    A_UINT32 standalone_be_bsr_trigger_err[HTT_NUM_AC_WMM];
 } htt_tx_selfgen_be_stats_tlv;
 
 typedef struct { /* DEPRECATED */
@@ -8572,6 +8601,25 @@ typedef struct {
     /** Num of instances where dl ofdma is disabled because there are consecutive mpdu failure */
     A_UINT32 dlofdma_disabled_consec_no_mpdus_success[HTT_NUM_AC_WMM];
 } htt_pdev_sched_algo_ofdma_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /** mac_id__word:
+     * BIT [ 7 :  0]   :- mac_id
+     *                    Use the HTT_STATS_CMN_MAC_ID_GET,_SET macros to
+     *                    read/write this bitfield.
+     * BIT [31 :  8]   :- reserved
+     */
+    A_UINT32 mac_id__word;
+    A_UINT32 basic_trigger_across_bss;
+    A_UINT32 basic_trigger_within_bss;
+    A_UINT32 bsr_trigger_across_bss;
+    A_UINT32 bsr_trigger_within_bss;
+    A_UINT32 mu_rts_across_bss;
+    A_UINT32 mu_rts_within_bss;
+    A_UINT32 ul_mumimo_trigger_across_bss;
+    A_UINT32 ul_mumimo_trigger_within_bss;
+} htt_pdev_mbssid_ctrl_frame_stats_tlv;
 
 /*======= Bandwidth Manager stats ====================*/
 
