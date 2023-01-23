@@ -301,6 +301,16 @@ static int fts_ts_populate_vm_info(struct fts_ts_data *fts_data)
 		vm_info->irq_label = GH_IRQ_LABEL_TRUSTED_TOUCH_SECONDARY;
 	}
 
+#ifdef CONFIG_ARCH_QTI_VM
+	rc = of_property_read_u32(np, "focaltech,reset-gpio-base", &vm_info->reset_gpio_base);
+	if (rc)
+		pr_err("Failed to read reset gpio base:%d\n", rc);
+
+	rc = of_property_read_u32(np, "focaltech,intr-gpio-base", &vm_info->intr_gpio_base);
+	if (rc)
+		pr_err("Failed to read intr gpio base:%d\n", rc);
+#endif
+
 	return 0;
 }
 
@@ -349,7 +359,12 @@ static void fts_ts_trusted_touch_reset_gpio_toggle(struct fts_ts_data *fts_data)
 	if (fts_data->bus_type != BUS_TYPE_I2C)
 		return;
 
-	base = ioremap(TOUCH_RESET_GPIO_BASE, TOUCH_RESET_GPIO_SIZE);
+	if (!fts_data->vm_info->reset_gpio_base) {
+		pr_err("reset_gpio_base is not valid\n");
+		return;
+	}
+
+	base = ioremap(fts_data->vm_info->reset_gpio_base, TOUCH_RESET_GPIO_SIZE);
 	writel_relaxed(0x1, base + TOUCH_RESET_GPIO_OFFSET);
 	/* wait until toggle to finish*/
 	wmb();
@@ -368,8 +383,13 @@ static void fts_trusted_touch_intr_gpio_toggle(struct fts_ts_data *fts_data,
 	if (fts_data->bus_type != BUS_TYPE_I2C)
 		return;
 
-	base = ioremap(TOUCH_INTR_GPIO_BASE, TOUCH_INTR_GPIO_SIZE);
-	val = readl_relaxed(base + TOUCH_RESET_GPIO_OFFSET);
+	if (!fts_data->vm_info->intr_gpio_base) {
+		pr_err("intr_gpio_base is not valid\n");
+		return;
+	}
+
+	base = ioremap(fts_data->vm_info->intr_gpio_base, TOUCH_INTR_GPIO_SIZE);
+	val = readl_relaxed(base + TOUCH_INTR_GPIO_OFFSET);
 	if (enable) {
 		val |= BIT(0);
 		writel_relaxed(val, base + TOUCH_INTR_GPIO_OFFSET);
@@ -3038,6 +3058,11 @@ static int fts_ts_suspend(struct device *dev)
 				FTS_ERROR("power enter suspend fail");
 			}
 #endif
+		} else {
+#if FTS_PINCTRL_EN
+			fts_pinctrl_select_suspend(ts_data);
+#endif
+			gpio_direction_output(ts_data->pdata->reset_gpio, 0);
 		}
 	}
 
@@ -3086,8 +3111,13 @@ static int fts_ts_resume(struct device *dev)
 #if FTS_POWER_SOURCE_CUST_EN
 		fts_power_source_resume(ts_data);
 #endif
-		fts_reset_proc(200);
+	} else {
+#if FTS_PINCTRL_EN
+		fts_pinctrl_select_normal(ts_data);
+#endif
 	}
+
+	fts_reset_proc(200);
 
 	fts_wait_tp_to_valid();
 	fts_ex_mode_recovery(ts_data);
