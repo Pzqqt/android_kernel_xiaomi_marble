@@ -2676,7 +2676,6 @@ done:
 	return res;
 }
 
-#ifdef IPA_IOCTL_SET_EXT_ROUTER_MODE
 /**
  * ipa3_send_ext_router_info() - Pass ext_router_info to the IPACM
  * @info: pointer to the ext router info
@@ -2717,7 +2716,6 @@ int ipa3_send_ext_router_info(struct ipa_ioc_ext_router_info *info)
 done:
 	return res;
 }
-#endif
 
 static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
@@ -2739,9 +2737,7 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	struct ipa_ioc_eogre_info eogre_info;
 	struct ipa_ioc_macsec_info macsec_info;
 	struct ipa_macsec_map *macsec_map;
-#ifdef IPA_IOCTL_SET_EXT_ROUTER_MODE
 	struct ipa_ioc_ext_router_info *ext_router_info;
-#endif
 	bool send2uC, send2ipacm;
 	size_t sz;
 	int pre_entry;
@@ -4182,7 +4178,6 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			macsec_map);
 		break;
 
-#ifdef IPA_IOCTL_SET_EXT_ROUTER_MODE
 	case IPA_IOC_SET_EXT_ROUTER_MODE:
 		IPADBG("Got IPA_IOC_SET_EXT_ROUTER_MODE\n");
 
@@ -4206,7 +4201,6 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			retval = -EFAULT;
 		}
 		break;
-#endif
 
 	default:
 		IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
