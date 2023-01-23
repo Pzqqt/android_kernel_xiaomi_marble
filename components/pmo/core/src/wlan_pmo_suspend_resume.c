@@ -884,6 +884,9 @@ pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 
 	hif_latency_detect_timer_stop(pmo_core_psoc_get_hif_handle(psoc));
 
+	if (hif_pm_runtime_get_delay(hif_ctx) == WOW_LARGE_RX_RTPM_DELAY)
+		hif_pm_runtime_restore_delay(hif_ctx);
+
 	pmo_core_update_wow_enable_cmd_sent(psoc_ctx, true);
 
 out:
