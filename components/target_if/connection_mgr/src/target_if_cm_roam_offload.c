@@ -272,6 +272,39 @@ target_if_cm_roam_full_scan_6ghz_on_disc(struct wlan_objmgr_vdev *vdev,
 	return status;
 }
 
+/**
+ * target_if_cm_roam_rssi_diff_6ghz() - Send the roam RSSI diff value to FW
+ * which is used to decide how better the RSSI of the new/roamable 6GHz AP
+ * should be for roaming.
+ * @vdev: vdev object
+ * @roam_rssi_diff_6ghz: RSSI diff value to be used for roaming to 6 GHz AP
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+target_if_cm_roam_rssi_diff_6ghz(struct wlan_objmgr_vdev *vdev,
+				 uint8_t roam_rssi_diff_6ghz)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	uint8_t vdev_id;
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = target_if_cm_roam_get_wmi_handle_from_vdev(vdev);
+	if (!wmi_handle)
+		return status;
+
+	vdev_id = wlan_vdev_get_id(vdev);
+	status = target_if_roam_set_param(
+				wmi_handle, vdev_id,
+				WMI_ROAM_PARAM_ROAM_RSSI_BOOST_FOR_6GHZ_CAND_AP,
+				roam_rssi_diff_6ghz);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		target_if_err("Failed to set WMI_ROAM_PARAM_ROAM_RSSI_BOOST_FOR_6GHZ_CAND_AP");
+
+	return status;
+}
+
 static void
 target_if_cm_roam_register_lfr3_ops(struct wlan_cm_roam_tx_ops *tx_ops)
 {
@@ -314,6 +347,13 @@ target_if_cm_exclude_rm_partial_scan_freq(struct wlan_objmgr_vdev *vdev,
 static QDF_STATUS
 target_if_cm_roam_full_scan_6ghz_on_disc(struct wlan_objmgr_vdev *vdev,
 					 uint8_t roam_full_scan_6ghz_on_disc)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static QDF_STATUS
+target_if_cm_roam_rssi_diff_6ghz(struct wlan_objmgr_vdev *vdev,
+				 uint8_t roam_rssi_diff_6ghz)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
@@ -1229,6 +1269,11 @@ target_if_cm_roam_send_start(struct wlan_objmgr_vdev *vdev,
 	if (req->wlan_roam_full_scan_6ghz_on_disc)
 		target_if_cm_roam_full_scan_6ghz_on_disc(
 				vdev, req->wlan_roam_full_scan_6ghz_on_disc);
+
+	if (req->wlan_roam_rssi_diff_6ghz)
+		target_if_cm_roam_rssi_diff_6ghz(vdev,
+						 req->wlan_roam_rssi_diff_6ghz);
+
 	/* add other wmi commands */
 end:
 	return status;
@@ -1607,6 +1652,10 @@ target_if_cm_roam_send_update_config(struct wlan_objmgr_vdev *vdev,
 		if (req->wlan_roam_full_scan_6ghz_on_disc)
 			target_if_cm_roam_full_scan_6ghz_on_disc(
 				vdev, req->wlan_roam_full_scan_6ghz_on_disc);
+
+		if (req->wlan_roam_rssi_diff_6ghz)
+			target_if_cm_roam_rssi_diff_6ghz(
+					vdev, req->wlan_roam_rssi_diff_6ghz);
 	}
 end:
 	return status;
