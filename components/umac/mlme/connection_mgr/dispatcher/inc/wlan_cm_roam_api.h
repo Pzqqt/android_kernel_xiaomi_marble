@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1076,6 +1076,26 @@ cm_roam_candidate_event_handler(struct wlan_objmgr_psoc *psoc,
  */
 bool wlan_cm_is_roam_sync_in_progress(struct wlan_objmgr_psoc *psoc,
 				      uint8_t vdev_id);
+
+/**
+ * wlan_cm_roam_set_ho_delay_config() - Set roam hand-off delay
+ * @psoc: PSOC pointer
+ * @roam_ho_delay: vendor configured roam HO delay value
+ *
+ * Return: none
+ */
+void
+wlan_cm_roam_set_ho_delay_config(struct wlan_objmgr_psoc *psoc,
+				 uint16_t roam_ho_delay);
+
+/**
+ * wlan_cm_roam_get_ho_delay_config() - Get roam hand-off delay
+ * @psoc: PSOC pointer
+ *
+ * Return: Roam HO delay value
+ */
+uint16_t
+wlan_cm_roam_get_ho_delay_config(struct wlan_objmgr_psoc *psoc);
 #else
 static inline
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
@@ -1248,6 +1268,12 @@ wlan_cm_is_roam_sync_in_progress(struct wlan_objmgr_psoc *psoc,
 				 uint8_t vdev_id)
 {
 	return false;
+}
+
+static inline uint16_t
+wlan_cm_roam_get_ho_delay_config(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 

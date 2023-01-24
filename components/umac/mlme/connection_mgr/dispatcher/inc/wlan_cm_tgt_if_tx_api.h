@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -48,6 +48,19 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_cm_tgt_send_roam_rt_stats_config(struct wlan_objmgr_psoc *psoc,
 						 struct roam_disable_cfg *req);
+
+/**
+ * wlan_cm_tgt_send_roam_ho_delay_config() - Send roam HO delay config command
+ * to FW
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @roam_ho_delay: roam hand-off delay value
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_tgt_send_roam_ho_delay_config(struct wlan_objmgr_psoc *psoc,
+						 uint8_t vdev_id,
+						 uint16_t roam_ho_delay);
 #else
 static inline QDF_STATUS
 wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
@@ -59,6 +72,13 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 static inline QDF_STATUS
 wlan_cm_tgt_send_roam_rt_stats_config(struct wlan_objmgr_psoc *psoc,
 				      struct roam_disable_cfg *req)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline QDF_STATUS
+wlan_cm_tgt_send_roam_ho_delay_config(struct wlan_objmgr_psoc *psoc,
+				      uint8_t vdev_id, uint16_t roam_ho_delay)
 {
 	return QDF_STATUS_E_FAILURE;
 }

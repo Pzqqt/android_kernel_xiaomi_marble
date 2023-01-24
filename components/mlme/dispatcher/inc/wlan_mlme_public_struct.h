@@ -1827,6 +1827,7 @@ struct fw_scan_channels {
  * @sae_single_pmk_feature_enabled: Contains value of ini
  * sae_single_pmk_feature_enabled
  * @rso_user_config: RSO user config
+ * @roam_ho_delay_config: Roam HO delay value
  */
 struct wlan_mlme_lfr_cfg {
 	bool mawc_roam_enabled;
@@ -1946,6 +1947,7 @@ struct wlan_mlme_lfr_cfg {
 #endif
 	struct rso_config_params rso_user_config;
 	bool enable_ft_over_ds;
+	uint16_t roam_ho_delay_config;
 };
 
 /**
