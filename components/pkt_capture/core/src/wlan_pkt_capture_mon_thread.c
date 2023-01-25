@@ -252,7 +252,7 @@ static int pkt_capture_mon_thread(void *arg)
 	mon_ctx = (struct pkt_capture_mon_context *)arg;
 	set_user_nice(current, -1);
 #ifdef MSM_PLATFORM
-	set_wake_up_idle(true);
+	qdf_set_wake_up_idle(true);
 #endif
 
 	/**
