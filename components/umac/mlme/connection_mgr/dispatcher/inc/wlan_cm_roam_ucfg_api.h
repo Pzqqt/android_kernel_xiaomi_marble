@@ -351,6 +351,21 @@ ucfg_cm_roam_send_ho_delay_config(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS
 ucfg_cm_exclude_rm_partial_scan_freq(struct wlan_objmgr_pdev *pdev,
 				     uint8_t vdev_id, uint8_t param_value);
+
+/**
+ * ucfg_cm_roam_full_scan_6ghz_on_disc() - Include the 6 GHz channels in roam
+ * full scan only on prior discovery of any 6 GHz support in the environment.
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ * @param_value: Include the 6 GHz channels in roam full scan:
+ * 1 - Include only on prior discovery of any 6 GHz support in the environment
+ * 0 - Include all the supported 6 GHz channels by default
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_cm_roam_full_scan_6ghz_on_disc(struct wlan_objmgr_pdev *pdev,
+					       uint8_t vdev_id,
+					       uint8_t param_value);
 #else
 static inline void
 ucfg_cm_reset_key(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id) {}
@@ -372,6 +387,13 @@ ucfg_cm_roam_send_ho_delay_config(struct wlan_objmgr_pdev *pdev,
 static inline QDF_STATUS
 ucfg_cm_exclude_rm_partial_scan_freq(struct wlan_objmgr_pdev *pdev,
 				     uint8_t vdev_id, uint8_t param_value)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_cm_roam_full_scan_6ghz_on_disc(struct wlan_objmgr_pdev *pdev,
+				    uint8_t vdev_id, uint8_t param_value)
 {
 	return QDF_STATUS_SUCCESS;
 }

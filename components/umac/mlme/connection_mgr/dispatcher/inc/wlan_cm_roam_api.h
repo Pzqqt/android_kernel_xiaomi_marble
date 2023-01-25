@@ -1119,6 +1119,33 @@ wlan_cm_set_exclude_rm_partial_scan_freq(struct wlan_objmgr_psoc *psoc,
  */
 uint8_t
 wlan_cm_get_exclude_rm_partial_scan_freq(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_cm_roam_set_full_scan_6ghz_on_disc() - set value to include the 6 GHz
+ * channels in roam full scan only on prior discovery of any 6 GHz support in
+ * the environment.
+ * @psoc: PSOC pointer
+ * @roam_full_scan_6ghz_on_disc: Include the 6 GHz channels in roam full scan:
+ * 1 - Include only on prior discovery of any 6 GHz support in the environment
+ * 0 - Include all the supported 6 GHz channels by default
+ *
+ * Return: none
+ */
+void
+wlan_cm_roam_set_full_scan_6ghz_on_disc(struct wlan_objmgr_psoc *psoc,
+					uint8_t roam_full_scan_6ghz_on_disc);
+
+/**
+ * wlan_cm_roam_get_full_scan_6ghz_on_disc() - Get value to include the 6 GHz
+ * channels in roam full scan only on prior discovery of any 6 GHz support in
+ * the environment.
+ * @psoc: PSOC pointer
+ *
+ * Return:
+ * 1 - Include only on prior discovery of any 6 GHz support in the environment
+ * 0 - Include all the supported 6 GHz channels by default
+ */
+uint8_t wlan_cm_roam_get_full_scan_6ghz_on_disc(struct wlan_objmgr_psoc *psoc);
 #else
 static inline
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
@@ -1301,6 +1328,12 @@ wlan_cm_roam_get_ho_delay_config(struct wlan_objmgr_psoc *psoc)
 
 static inline uint8_t
 wlan_cm_get_exclude_rm_partial_scan_freq(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint8_t
+wlan_cm_roam_get_full_scan_6ghz_on_disc(struct wlan_objmgr_psoc *psoc)
 {
 	return 0;
 }

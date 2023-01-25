@@ -513,4 +513,13 @@ ucfg_cm_exclude_rm_partial_scan_freq(struct wlan_objmgr_pdev *pdev,
 
 	return cm_exclude_rm_partial_scan_freq(psoc, vdev_id, param_value);
 }
+
+QDF_STATUS ucfg_cm_roam_full_scan_6ghz_on_disc(struct wlan_objmgr_pdev *pdev,
+					       uint8_t vdev_id,
+					       uint8_t param_value)
+{
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+
+	return cm_roam_full_scan_6ghz_on_disc(psoc, vdev_id, param_value);
+}
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */

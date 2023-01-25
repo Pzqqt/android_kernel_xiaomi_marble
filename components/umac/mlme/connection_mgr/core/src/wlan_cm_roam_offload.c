@@ -353,6 +353,21 @@ cm_exclude_rm_partial_scan_freq(struct wlan_objmgr_psoc *psoc,
 
 	return status;
 }
+
+QDF_STATUS cm_roam_full_scan_6ghz_on_disc(struct wlan_objmgr_psoc *psoc,
+					  uint8_t vdev_id,
+					  uint8_t param_value)
+{
+	QDF_STATUS status;
+
+	wlan_cm_roam_set_full_scan_6ghz_on_disc(psoc, param_value);
+	status = wlan_cm_tgt_send_roam_full_scan_6ghz_on_disc(psoc, vdev_id,
+							      param_value);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_debug("fail to send 6 GHz channels inclusion in full scan");
+
+	return status;
+}
 #else
 static inline void
 cm_update_rso_adaptive_11r(struct wlan_rso_11r_params *dst,
@@ -2817,6 +2832,9 @@ cm_roam_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	start_req->wlan_exclude_rm_partial_scan_freq =
 				wlan_cm_get_exclude_rm_partial_scan_freq(psoc);
 
+	start_req->wlan_roam_full_scan_6ghz_on_disc =
+				wlan_cm_roam_get_full_scan_6ghz_on_disc(psoc);
+
 	status = wlan_cm_tgt_send_roam_start_req(psoc, vdev_id, start_req);
 	if (QDF_IS_STATUS_ERROR(status))
 		mlme_debug("fail to send roam start");
@@ -2906,6 +2924,9 @@ cm_roam_update_config_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 
 	update_req->wlan_exclude_rm_partial_scan_freq =
 				wlan_cm_get_exclude_rm_partial_scan_freq(psoc);
+
+	update_req->wlan_roam_full_scan_6ghz_on_disc =
+				wlan_cm_roam_get_full_scan_6ghz_on_disc(psoc);
 
 	status = wlan_cm_tgt_send_roam_update_req(psoc, vdev_id, update_req);
 	if (QDF_IS_STATUS_ERROR(status))

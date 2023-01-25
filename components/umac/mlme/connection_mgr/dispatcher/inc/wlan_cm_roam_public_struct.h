@@ -1713,6 +1713,8 @@ enum roam_rt_stats_params {
  * @wlan_roam_ho_delay_config: roam HO delay value
  * @wlan_exclude_rm_partial_scan_freq: Include/exclude the channels in roam full
  * scan that are already scanned as part of partial scan.
+ * @wlan_roam_full_scan_6ghz_on_disc: Include the 6 GHz channels in roam full
+ * scan only on prior discovery of any 6 GHz support in the environment.
  */
 struct wlan_roam_start_config {
 	struct wlan_roam_offload_scan_rssi_params rssi_params;
@@ -1734,6 +1736,7 @@ struct wlan_roam_start_config {
 	uint8_t wlan_roam_rt_stats_config;
 	uint16_t wlan_roam_ho_delay_config;
 	uint8_t wlan_exclude_rm_partial_scan_freq;
+	uint8_t wlan_roam_full_scan_6ghz_on_disc;
 	/* other wmi cmd structures */
 };
 
@@ -1786,6 +1789,8 @@ struct wlan_roam_stop_config {
  * @wlan_roam_ho_delay_config: roam HO delay value
  * @wlan_exclude_rm_partial_scan_freq: Include/exclude the channels in roam full
  * scan that are already scanned as part of partial scan.
+ * @wlan_roam_full_scan_6ghz_on_disc: Include the 6 GHz channels in roam full
+ * scan only on prior discovery of any 6 GHz support in the environment.
  */
 struct wlan_roam_update_config {
 	struct wlan_roam_beacon_miss_cnt beacon_miss_cnt;
@@ -1802,6 +1807,7 @@ struct wlan_roam_update_config {
 	uint8_t wlan_roam_rt_stats_config;
 	uint16_t wlan_roam_ho_delay_config;
 	uint8_t wlan_exclude_rm_partial_scan_freq;
+	uint8_t wlan_roam_full_scan_6ghz_on_disc;
 };
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
@@ -2270,6 +2276,8 @@ struct roam_pmkid_req_event {
  * @send_roam_ho_delay_config: Send roam Hand-off delay value to FW
  * @send_exclude_rm_partial_scan_freq: Include/exclude the channels in roam full
  * scan that are already scanned as part of partial scan.
+ * @send_roam_full_scan_6ghz_on_disc: Include the 6 GHz channels in roam full
+ * scan only on prior discovery of any 6 GHz support in the environment.
  */
 struct wlan_cm_roam_tx_ops {
 	QDF_STATUS (*send_vdev_set_pcl_cmd)(struct wlan_objmgr_vdev *vdev,
@@ -2304,6 +2312,9 @@ struct wlan_cm_roam_tx_ops {
 						uint8_t vdev_id,
 						uint16_t value);
 	QDF_STATUS (*send_exclude_rm_partial_scan_freq)(
+						struct wlan_objmgr_vdev *vdev,
+						uint8_t value);
+	QDF_STATUS (*send_roam_full_scan_6ghz_on_disc)(
 						struct wlan_objmgr_vdev *vdev,
 						uint8_t value);
 #endif
