@@ -921,6 +921,34 @@ bool wlan_cm_get_ese_assoc(struct wlan_objmgr_pdev *pdev,
 
 	return ese_assoc;
 }
+
+void
+wlan_cm_set_exclude_rm_partial_scan_freq(struct wlan_objmgr_psoc *psoc,
+					 uint8_t exclude_rm_partial_scan_freq)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return;
+
+	mlme_obj->cfg.lfr.exclude_rm_partial_scan_freq =
+						exclude_rm_partial_scan_freq;
+}
+
+uint8_t
+wlan_cm_get_exclude_rm_partial_scan_freq(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		mlme_legacy_err("Failed to get MLME Obj");
+		return 0;
+	}
+
+	return mlme_obj->cfg.lfr.exclude_rm_partial_scan_freq;
+}
 #endif
 
 static QDF_STATUS
