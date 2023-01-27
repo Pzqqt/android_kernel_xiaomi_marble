@@ -106,7 +106,7 @@
 int drm_irq_install(struct drm_device *dev, int irq)
 {
 	int ret;
-	unsigned long sh_flags = 0;
+	unsigned long sh_flags = IRQF_PERF_AFFINE;
 
 	if (irq == 0)
 		return -EINVAL;
