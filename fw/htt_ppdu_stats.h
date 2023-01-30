@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1796,6 +1796,19 @@ typedef enum HTT_PPDU_STATS_RESP_PPDU_TYPE HTT_PPDU_STATS_RESP_PPDU_TYPE;
         ((_var) |= ((_val) << HTT_PPDU_STATS_USER_RATE_TLV_PUNC_PATTERN_BITMAP_S)); \
     } while (0)
 
+#define HTT_PPDU_STATS_USER_RATE_TLV_EXTRA_EHT_LTF_M  0x00010000
+#define HTT_PPDU_STATS_USER_RATE_TLV_EXTRA_EHT_LTF_S          16
+
+#define HTT_PPDU_STATS_USER_RATE_TLV_EXTRA_EHT_LTF_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USER_RATE_TLV_EXTRA_EHT_LTF_M) >> \
+    HTT_PPDU_STATS_USER_RATE_TLV_EXTRA_EHT_LTF_S)
+
+#define HTT_PPDU_STATS_USER_RATE_TLV_EXTRA_EHT_LTF_SET (_var , _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_RATE_TLV_EXTRA_EHT_LTF, _val); \
+        ((_var) |= ((_val) << HTT_PPDU_STATS_USER_RATE_TLV_EXTRA_EHT_LTF_S)); \
+    } while (0)
+
 typedef enum HTT_PPDU_STATS_RU_SIZE {
     HTT_PPDU_STATS_RU_26,
     HTT_PPDU_STATS_RU_52,
@@ -1981,9 +1994,12 @@ typedef struct {
     /*
      * BIT [15:0]  :- Punctured BW bitmap pattern to indicate which BWs are
      *                punctured.
+     * BIT 16      :- flag showing whether EHT extra LTF is applied
+     *                for current PPDU
      */
     A_UINT32 punc_pattern_bitmap: 16,
-             reserved4:           16;
+             extra_eht_ltf:       1,
+             reserved4:           15;
 } htt_ppdu_stats_user_rate_tlv;
 
 #define HTT_PPDU_STATS_USR_RATE_VALID_M     0x80000000
