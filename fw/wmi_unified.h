@@ -32134,6 +32134,10 @@ typedef struct {
     A_UINT32 phy_id;
     /* regdomain value specified in EEPROM */
     A_UINT32 wireless_modes_ext;
+    A_UINT32 low_2ghz_chan_ext;  /* freq in MHz */
+    A_UINT32 high_2ghz_chan_ext; /* freq in MHz */
+    A_UINT32 low_5ghz_chan_ext;  /* freq in MHz */
+    A_UINT32 high_5ghz_chan_ext; /* freq in MHz */
 } WMI_HAL_REG_CAPABILITIES_EXT2;
 
 /*
@@ -40573,7 +40577,7 @@ typedef struct {
      * Following this structure is the TLV:
      *   - struct wmi_tid_to_link_map tid_to_link_map[];
      *   - struct wmi_peer_preferred_link_map peer_preferred_link_map[];
- 	 *     Note - TLV array of peer_preferred_link_map has either 0 or 1
+     *     Note - TLV array of peer_preferred_link_map has either 0 or 1
      *     entries, not multiple entries.
      */
 } wmi_peer_tid_to_link_map_fixed_param;
