@@ -40486,6 +40486,31 @@ typedef struct {
     A_UINT32 tid_to_link_map_info;
 } wmi_tid_to_link_map;
 
+#define WMI_MAX_NUM_PREFERRED_LINKS 4
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_preferred_link_map */
+    A_UINT32 tlv_header;
+
+    /* num_preferred_links:
+     * If it is 0, all links are equally preferred and which link to be used
+     *  in each schedule is decided by FW.
+     */
+    A_UINT32 num_preferred_links;
+
+    /* [0] - highest preferred link, [1] - 2nd preferred link, etc. */
+    A_UINT32 preferred_link_order[WMI_MAX_NUM_PREFERRED_LINKS];
+
+    /* expected_max_latency_ms:
+     * 0     - Expected Max Latency to be estimated in Firmware
+     * Non 0 - Firmware should try to achieve given max latency
+     *         in first preferred link.
+     *         If unable to meet in first preferred link, start scheduling
+     *         in next preferred link and so on.
+     */
+    A_UINT32 expected_max_latency_ms[WLAN_MAX_AC];
+} wmi_peer_preferred_link_map;
+
 typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_tid_to_link_map_fixed_param */
     A_UINT32 tlv_header;
@@ -40497,7 +40522,10 @@ typedef struct {
 
     /**
      * Following this structure is the TLV:
-     * struct wmi_tid_to_link_map tid_to_link_map[];
+     *   - struct wmi_tid_to_link_map tid_to_link_map[];
+     *   - struct wmi_peer_preferred_link_map peer_preferred_link_map[];
+ 	 *     Note - TLV array of peer_preferred_link_map has either 0 or 1
+     *     entries, not multiple entries.
      */
 } wmi_peer_tid_to_link_map_fixed_param;
 
