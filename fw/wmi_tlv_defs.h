@@ -1341,6 +1341,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_peer_bulk_set_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_preferred_link_map,
     WMITLV_TAG_STRUC_wmi_scan_blanking_params_info,
+    WMITLV_TAG_STRUC_wmi_peer_list,
 } WMITLV_TAG_ID;
 
 /*
