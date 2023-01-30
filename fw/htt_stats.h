@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -7505,13 +7505,13 @@ typedef struct {
     /** rx_pkt_cnt -
      * Received EOP (end-of-packet) count per packet type;
      * [0] = 11a; [1] = 11b; [2] = 11n; [3] = 11ac; [4] = 11ax; [5] = GF
-     * [6-7]=RSVD
+     * [6] = EHT; [7]=RSVD; [6] = Applicable only for BE
      */
     A_UINT32 rx_pkt_cnt[HTT_MAX_RX_PKT_CNT];
     /** rx_pkt_crc_pass_cnt -
      * Received EOP (end-of-packet) count per packet type;
      * [0] = 11a; [1] = 11b; [2] = 11n; [3] = 11ac; [4] = 11ax; [5] = GF
-     * [6-7]=RSVD
+     * [6] = EHT; [7]=RSVD; [6] = Applicable only for BE
      */
     A_UINT32 rx_pkt_crc_pass_cnt[HTT_MAX_RX_PKT_CRC_PASS_CNT];
     /** per_blk_err_cnt -
@@ -7533,12 +7533,12 @@ typedef struct {
     A_UINT32 rx_ota_err_cnt[HTT_MAX_RX_OTA_ERR_CNT];
     /** rx_pkt_cnt_ext -
      * Received EOP (end-of-packet) count per packet type for BE;
-     * [0] = EHT; [1] = WUR; [2] = AZ; [3]=RVSD
+     * [0] = WUR; [1] = AZ; [2-3]=RVSD
      */
     A_UINT32 rx_pkt_cnt_ext[HTT_MAX_RX_PKT_CNT_EXT];
     /** rx_pkt_crc_pass_cnt_ext -
      * Received EOP (end-of-packet) count per packet type for BE;
-     * [0] = EHT; [1] = WUR; [2] = AZ; [3]=RVSD
+     * [0] = WUR; [1] = AZ; [2-3]=RVSD
      */
     A_UINT32 rx_pkt_crc_pass_cnt_ext[HTT_MAX_RX_PKT_CRC_PASS_CNT_EXT];
     /** rx_pkt_mu_cnt -
