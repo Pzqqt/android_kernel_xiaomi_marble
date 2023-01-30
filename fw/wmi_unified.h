@@ -41068,6 +41068,15 @@ typedef struct {
     A_UINT32 cust_bdf_ver_minor;
 } wmi_cust_bdf_version_capabilities;
 
+enum WMI_CODEL_ENABLE_VALUES {
+    WMI_CODEL_DISABLED,
+    WMI_CODEL_ENABLED,
+    /* WMI_CODEL_DEBUG:
+     * partly enabled – track interval and check target, but don’t drop
+     */
+    WMI_CODEL_DEBUG,
+};
+
 typedef enum {
     WMI_SAWF_SVC_CLASS_PARAM_DEFAULT_MIN_THRUPUT    = 0,
     WMI_SAWF_SVC_CLASS_PARAM_DEFAULT_MAX_THRUPUT    = 0xffffffff,
@@ -41079,7 +41088,13 @@ typedef enum {
     WMI_SAWF_SVC_CLASS_PARAM_DEFAULT_TID            = 0xffffffff,
     WMI_SAWF_SVC_CLASS_PARAM_DEFAULT_MSDU_LOSS_RATE = 0,
     WMI_SAWF_SVC_CLASS_PARAM_DEFAULT_DISABLED_SCHED_MODE = 0,
+    WMI_SAWF_SVC_CLASS_PARAM_DEFAULT_CODEL_ENABLED  = WMI_CODEL_DISABLED,
+    WMI_SAWF_SVC_CLASS_PARAM_DEFAULT_CODEL_LATENCY_TARGET_MS = 0xffffffff,
+    WMI_SAWF_SVC_CLASS_PARAM_DEFAULT_CODEL_INTERVAL_MS       = 0xffffffff,
 } WMI_SAWF_SVC_CLASS_PARAM_DEFAULTS;
+
+#define WMI_CODEL_INTERVAL_MAX_MS       0x0000ffff
+#define WMI_CODEL_LATENCY_TARGET_MAX_MS 0x00003fff
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_sawf_svc_class_cfg_cmd_fixed_param */
@@ -41171,6 +41186,33 @@ typedef struct {
      * The WMI_SCHED_MODE_FLAGS enum defines the bit positions for each mode.
      */
     A_UINT32 disabled_sched_modes;
+
+    A_UINT32 codel_enabled; /* contains a WMI_CODEL_ENABLE_VALUES enum value */
+    /* codel_latency_target_ms:
+     * The codel_latency_target_ms field specifies the latency target for
+     * MSDU queues belonging to this service class.
+     * The latency of each such MSDU queue will periodically be checked
+     * (with the periodicity controlled by the code_interval_ms parameter).
+     * If the MSDU queue's latency is above this target latency, a MSDU will
+     * be dropped from the head of the queue, to attempt to get the flow's
+     * producer to scale down its rate of MSDU production.
+     * This value should be roughly 10% to 30% of the codel_interval_ms value.
+     * This value must be <= WMI_CODEL_LATENCY_TARGET_MAX_MS (or must equal
+     * WMI_SAWF_SVC_CLASS_PARAM_DEFAULT_CODEL_LATENCY_TARGET_MS).
+     */
+    A_UINT32 codel_latency_target_ms;
+    /* codel_interval_ms:
+     * The codel_interval_ms field specifies the baseline interval between
+     * successive checks that a given MSDU queue's latency is under the
+     * CoDel target latency.
+     * If in a given interval a MSDU queue has a latency exceeding the target,
+     * the duration of the subsequent interval for that MSDU queue will be
+     * reduced.  The interval will get reset to the baseline interval when
+     * the MSDU queue's latency is again under the CoDel target latency.
+     * This value must be <= WMI_CODEL_INTERVAL_MAX_MS (or must equal
+     * WMI_SAWF_SVC_CLASS_PARAM_DEFAULT_CODEL_INTERVAL_MS).
+     */
+    A_UINT32 codel_interval_ms;
 } wmi_sawf_svc_class_cfg_cmd_fixed_param;
 
 typedef struct {
