@@ -1340,6 +1340,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_pdev_set_tgtr2p_table_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_bulk_set_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_preferred_link_map,
+    WMITLV_TAG_STRUC_wmi_scan_blanking_params_info,
 } WMITLV_TAG_ID;
 
 /*
@@ -5470,7 +5471,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_GET_TX_POWER_EVENTID);
 
 /* Channel Info Event */
 #define WMITLV_TABLE_WMI_CHAN_INFO_EVENTID(id,op,buf,len) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_chan_info_event_fixed_param, wmi_chan_info_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_chan_info_event_fixed_param, wmi_chan_info_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_scan_blanking_params_info, scan_blanking_params, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_CHAN_INFO_EVENTID);
 
 /* RSSI dB to dBm conversion params info event to host */

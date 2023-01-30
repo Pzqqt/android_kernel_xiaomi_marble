@@ -9012,6 +9012,14 @@ typedef enum {
      *
      */
     WMI_PDEV_PARAM_BYPASS_ENCRYPTION,
+
+    /*
+     * Param to Enable/Disable scan blanking feature on the Scan Radio
+     * Host should ensure to send this param only for Scan Radio
+     * The WMI_SCAN_BLANKING_MODE enum specifies the possible values for this parameter.
+     * Based on the received input, the scan blanking feature will be carried out as explained in the enum WMI_SCAN_BLANKING_MODE
+     */
+    WMI_PDEV_PARAM_SET_SCAN_BLANKING_MODE,
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
@@ -17715,7 +17723,48 @@ typedef struct {
      * If per_chain_noise_floor value is 0 then it should be ignored.
      */
     A_UINT32 per_chain_noise_floor[WMI_MAX_CHAINS];
+
+/**
+ * Following this structure is the optional TLV:
+ * struct wmi_scan_blanking_params_info[0/1];
+ */
 } wmi_chan_info_event_fixed_param;
+
+/**
+ * The below structure contains parameters related to the scan radio
+ * blanking feature
+ */
+typedef struct {
+    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_scan_blanking_params_info */
+    A_UINT32 tlv_header;
+    /* scan_radio_blanking_duration:
+     * Cumulative scan disabled duration which indicates the total time in
+     * micro seconds where rx blanking was enabled on the scan radio due to
+     * simultaneous transmissions on the same band in the serving radio.
+     */
+    A_UINT32 scan_radio_blanking_duration;
+    /* scan_radio_blanking_count:
+     * Count of the number of times rx blanking was enabled on the scan radio
+     * due to simultaneous transmissions on the same band in the serving radio.
+     */
+    A_UINT32 scan_radio_blanking_count;
+} wmi_scan_blanking_params_info;
+
+typedef enum {
+    /* Blanking feature will be disabled */
+    WMI_SCAN_BLANKING_DISABLED = 0,
+
+    /* Blanking enabled only on current operating band */
+    WMI_SCAN_BLANKING_ENABLED,
+
+    /*
+     * Blanking enabled on both 5GHz and 6GHz bands when scan radio
+     * home channel is on either 5GHz or 6GHz bands
+     */
+    WMI_SCAN_BLANKING_ENABLED_NO_ISOLATION,
+
+    WMI_SCAN_BLANKING_MAX,
+} WMI_SCAN_BLANKING_MODE;
 
 /**
  * The below three structures are the params used for converting RSSI
