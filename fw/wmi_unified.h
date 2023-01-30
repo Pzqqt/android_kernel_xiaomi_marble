@@ -746,7 +746,7 @@ typedef enum {
     WMI_PEER_SCHED_MODE_DISABLE_CMDID,
 
     /* Group SET cmd for PEERS */
- 	WMI_PEER_BULK_SET_CMDID,
+    WMI_PEER_BULK_SET_CMDID,
 
     /* beacon/management specific commands */
 
@@ -29812,6 +29812,24 @@ typedef struct {
 #define WMI_LATENCY_SET_MSDUQ_ID(latency_tid_info,val) \
     WMI_SET_BITS(latency_tid_info, WMI_LATENCY_MSDUQ_ID_BIT_POS, WMI_LATENCY_MSDUQ_ID_NUM_BITS, val)
 
+#define WMI_LATENCY_DISABLE_UL_OFDMA_BIT_POS     18
+#define WMI_LATENCY_DISABLE_UL_OFDMA_NUM_BITS    1
+
+#define WMI_LATENCY_GET_DISABLE_UL_OFDMA(latency_tid_info) \
+    WMI_GET_BITS(latency_tid_info, WMI_LATENCY_DISABLE_UL_OFDMA_BIT_POS, WMI_LATENCY_DISABLE_UL_OFDMA_NUM_BITS)
+
+#define WMI_LATENCY_SET_DISABLE_UL_OFDMA(latency_tid_info,val) \
+    WMI_SET_BITS(latency_tid_info, WMI_LATENCY_DISABLE_UL_OFDMA_BIT_POS, WMI_LATENCY_DISABLE_UL_OFDMA_NUM_BITS, val)
+
+#define WMI_LATENCY_DISABLE_UL_MU_MIMO_BIT_POS     19
+#define WMI_LATENCY_DISABLE_UL_MU_MIMO_NUM_BITS    1
+
+#define WMI_LATENCY_GET_DISABLE_UL_MU_MIMO(latency_tid_info) \
+    WMI_GET_BITS(latency_tid_info, WMI_LATENCY_DISABLE_UL_MU_MIMO_BIT_POS, WMI_LATENCY_DISABLE_UL_MU_MIMO_NUM_BITS)
+
+#define WMI_LATENCY_SET_DISABLE_UL_MU_MIMO(latency_tid_info,val) \
+    WMI_SET_BITS(latency_tid_info, WMI_LATENCY_DISABLE_UL_MU_MIMO_BIT_POS, WMI_LATENCY_DISABLE_UL_MU_MIMO_NUM_BITS, val)
+
 typedef struct {
     /** TLV tag and len; tag equals
      *  WMITLV_TAG_STRUC_wmi_tid_latency_info
@@ -29855,7 +29873,13 @@ typedef struct {
      */
     A_UINT32 min_tput;
     /* latency_tid_info
-     *  Bits 18-31      - Reserved (Shall be zero)
+     *  Bits 20-31      - Reserved (Shall be zero)
+     *  Bit  19         - Disable UL MU-MIMO. If set, UL MU-MIMO is disabled
+     *                    for the specified AC. Note that TID level control is
+     *                    not possible for UL MU-MIMO (the granularity is AC).
+     *  Bit  18         - Disable UL OFDMA. If set, UL OFDMA is disabled for
+     *                    the specified AC. Note that TID level control is not
+     *                    possible for UL OFDMA (the granularity is AC).
      *  Bits 14-17      - MSDU queue flow id within the TID for configuring
      *                    latency info per MSDU flow queue
      *  Bit  12-13      - burst size sum. Bit to indicate whether to add or
