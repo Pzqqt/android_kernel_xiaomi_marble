@@ -242,9 +242,10 @@
  * 3.115 Add HTT_H2T_MSG_TYPE_RX_CCE_SUPER_RULE_SETUP and
  *       HTT_T2H_MSG_TYPE_RX_CCE_SUPER_RULE_SETUP_DONE msg defs.
  * 3.116 Add HTT_TX_MONITOR_CFG_WORD_MASK_COMPACTION_ENABLE flag.
+ * 3.117 Add HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_IND def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 116
+#define HTT_CURRENT_VERSION_MINOR 117
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -10552,6 +10553,7 @@ enum htt_t2h_msg_type {
     HTT_T2H_MSG_TYPE_RX_ADDBA_EXTN                 = 0x31,
     HTT_T2H_MSG_TYPE_RX_DELBA_EXTN                 = 0x32,
     HTT_T2H_MSG_TYPE_RX_CCE_SUPER_RULE_SETUP_DONE  = 0x33,
+    HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_IND    = 0x34,
 
 
     HTT_T2H_MSG_TYPE_TEST,
@@ -19914,5 +19916,81 @@ PREPACK struct htt_rx_cce_super_rule_setup_done_t {
             ((_var) |= ((_val) << HTT_RX_CCE_SUPER_RULE_SETUP_DONE_CFG_RESULT_1_S)); \
         } while (0)
 
+/**
+ * @brief target -> host CoDel MSDU queue latencies array configuration
+ *
+ * MSG_TYPE => HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_IND
+ *
+ * @details
+ * The HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_IND message is used
+ * by the target to inform the host of the location and size of the DDR array of
+ * per MSDU queue latency metrics.  This array is updated by the host and
+ * read by the target.  The target uses these metric values to determine
+ * which MSDU queues have latencies exceeding their CoDel latency target.
+ *
+ * |31                            16|15       8|7        0|
+ * |-------------------------------------------+----------|
+ * |    number of array elements    | reserved | MSG_TYPE |
+ * |-------------------------------------------+----------|
+ * |            array physical address, low bits          |
+ * |------------------------------------------------------|
+ * |            array physical address, high bits         |
+ * |------------------------------------------------------|
+ * Header fields:
+ *  - MSG_TYPE
+ *    Bits 7:0
+ *    Purpose: Identifies this as a CoDel MSDU queue latencies
+ *        array configuration message.
+ *    Value: (HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_IND)
+ *  - NUM_ELEM
+ *    Bits 31:16
+ *    Purpose: Inform the host of the length of the MSDU queue latencies array.
+ *    Value: Specifies the number of elements in the MSDU queue latency
+ *        metrics array.  This value is the same as the maximum number of
+ *        MSDU queues supported by the target.
+ *        Since each array element is 16 bits, the size in bytes of the
+ *        MSDU queue latency metrics array is twice the number of elements.
+ *  - PADDR_LOW
+ *    Bits 31:0
+ *    Purpose: Inform the host of the MSDU queue latencies array's location.
+ *    Value: Lower 32 bits of the physical address of the MSDU queue latency
+ *       metrics array.
+ *  - PADDR_HIGH
+ *    Bits 31:0
+ *    Purpose: Inform the host of the MSDU queue latencies array's location.
+ *    Value: Upper 32 bits of the physical address of the MSDU queue latency
+ *       metrics array.
+ */
+typedef struct {
+    A_UINT32 msg_type:  8, /* bits 7:0   */
+             reserved:  8, /* bits 15:8  */
+             num_elem: 16; /* bits 31:16 */
+    A_UINT32 paddr_low;
+    A_UINT32 paddr_high;
+} htt_t2h_codel_msduq_latencies_array_cfg_int_t;
+
+#define HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_SIZE 12 /* bytes */
+
+#define HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_INT_NUM_ELEM_M   0xffff0000
+#define HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_INT_NUM_ELEM_S   16
+
+#define HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_INT_NUM_ELEM_GET(_var) \
+    (((_var) & HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_INT_NUM_ELEM_M) >> \
+     HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_INT_NUM_ELEM_S)
+#define HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_INT_NUM_ELEM_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL( \
+            HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_INT_NUM_ELEM, _val); \
+        ((_var) |= ((_val) << \
+            HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_INT_NUM_ELEM_S)); \
+    } while (0)
+
+/*
+ * This CoDel MSDU queue latencies array whose location and number of
+ * elements are specified by this HTT_T2H message consists of 16-bit elements
+ * that each specify a statistical summary (min) of a MSDU queue's latency,
+ * using microseconds units.
+ */
+#define HTT_CODEL_MSDUQ_LATENCIES_ARRAY_ELEM_BYTES 2
 
 #endif
