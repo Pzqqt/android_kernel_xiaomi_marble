@@ -3798,13 +3798,12 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 
 	mgmt_rx_params = qdf_mem_malloc(sizeof(*mgmt_rx_params));
 	if (!mgmt_rx_params) {
-		wma_err("memory allocation failed");
 		return -ENOMEM;
 	}
 
 	if (wmi_extract_mgmt_rx_params(wma_handle->wmi_handle,
 			data, mgmt_rx_params, &bufp) != QDF_STATUS_SUCCESS) {
-		wma_err("Extraction of mgmt rx params failed");
+		wma_err_rl("Extraction of mgmt rx params failed");
 		qdf_mem_free(mgmt_rx_params);
 		return -EINVAL;
 	}
@@ -3812,8 +3811,8 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 	if (mgmt_rx_params->buf_len > data_len ||
 	    !mgmt_rx_params->buf_len ||
 	    !bufp) {
-		wma_err("Invalid data_len %u, buf_len %u bufp %pK",
-			data_len, mgmt_rx_params->buf_len, bufp);
+		wma_err_rl("Invalid data_len %u, buf_len %u bufp %pK",
+			   data_len, mgmt_rx_params->buf_len, bufp);
 		qdf_mem_free(mgmt_rx_params);
 		return -EINVAL;
 	}
