@@ -31183,6 +31183,7 @@ typedef enum {
     WMI_REQUEST_CTRL_PATH_AFC_STAT          = 11,
     WMI_REQUEST_CTRL_PATH_PMLO_STAT         = 12,
     WMI_REQUEST_CTRL_PATH_CFR_STAT          = 13,
+    WMI_REQUEST_CTRL_PATH_T2LM_STAT         = 14,
 } wmi_ctrl_path_stats_id;
 
 typedef enum {
@@ -40605,6 +40606,22 @@ typedef enum {
     /* Expected Duration Expired */
     WMI_EXPECTED_DUR_EXPIRED,
 } WMI_MLO_TID_TO_LINK_MAP_STATUS;
+
+#define WMI_BCAST_T2LM_MAX 16 /* max number of vdevs covered by T2LM stats */
+typedef struct {
+    /* TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_ctrl_path_t2lm_stats_struct
+     */
+    A_UINT32 tlv_header;
+    /*
+     * The below arrays store per-vdev counters, and are indexed by vdev ID.
+     * The number of valid elements is min(WMI_BCAST_T2LM_MAX, num vdevs).
+     */
+    A_UINT32 bcast_t2lm_wmi_cmd[WMI_BCAST_T2LM_MAX];
+    A_UINT32 bcast_t2lm_wmi_evt_map_swt_tme_tsf[WMI_BCAST_T2LM_MAX];
+    A_UINT32 bcast_t2lm_wmi_evt_map_swt_tme_exp[WMI_BCAST_T2LM_MAX];
+    A_UINT32 bcast_t2lm_wmi_evt_exp_dur_exp[WMI_BCAST_T2LM_MAX];
+} wmi_ctrl_path_t2lm_stats_struct;
 
 typedef struct{
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mlo_ap_vdev_tid_to_link_map_evt_fixed_param */

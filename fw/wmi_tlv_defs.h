@@ -1342,6 +1342,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_peer_preferred_link_map,
     WMITLV_TAG_STRUC_wmi_scan_blanking_params_info,
     WMITLV_TAG_STRUC_wmi_peer_list,
+    WMITLV_TAG_STRUC_wmi_ctrl_path_t2lm_stats_struct,
 } WMITLV_TAG_ID;
 
 /*
@@ -6727,7 +6728,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_STATS_INFO_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_odd_addr_read_struct, ctrl_path_odd_addr_read, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_afc_stats_struct,  ctrl_path_afc_stats, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_pmlo_stats_struct,  ctrl_path_pmlo_stats, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_cfr_stats_struct,  ctrl_path_cfr_stats, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_cfr_stats_struct,  ctrl_path_cfr_stats, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_t2lm_stats_struct,  ctrl_path_t2lm_stats, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_CTRL_PATH_STATS_EVENTID);
 
 /*
