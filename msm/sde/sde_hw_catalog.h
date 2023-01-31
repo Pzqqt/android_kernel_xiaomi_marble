@@ -543,7 +543,8 @@ enum {
  * @SDE_INTF_WD_TIMER          INTF block has WD Timer support
  * @SDE_INTF_STATUS             INTF block has INTF_STATUS register
  * @SDE_INTF_RESET_COUNTER      INTF block has frame/line counter reset support
- * @SDE_INTF_VSYNC_TIMESTAMP    INTF block has vsync timestamp logged
+ * @SDE_INTF_PANEL_VSYNC_TS     INTF block has panel vsync timestamp logged
+ * @SDE_INTF_MDP_VSYNC_TS       INTF block has mdp vsync timestamp logged
  * @SDE_INTF_AVR_STATUS         INTF block has AVR_STATUS field in AVR_CONTROL register
  * @SDE_INTF_MAX
  */
@@ -554,7 +555,8 @@ enum {
 	SDE_INTF_WD_TIMER,
 	SDE_INTF_STATUS,
 	SDE_INTF_RESET_COUNTER,
-	SDE_INTF_VSYNC_TIMESTAMP,
+	SDE_INTF_PANEL_VSYNC_TS,
+	SDE_INTF_MDP_VSYNC_TS,
 	SDE_INTF_AVR_STATUS,
 	SDE_INTF_MAX
 };
