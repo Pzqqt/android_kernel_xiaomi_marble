@@ -451,8 +451,19 @@ void hif_unconfig_ce(struct hif_softc *scn);
 void hif_ce_prepare_config(struct hif_softc *scn);
 QDF_STATUS hif_ce_open(struct hif_softc *scn);
 void hif_ce_close(struct hif_softc *scn);
+#if defined(CONFIG_ATH_PROCFS_DIAG_SUPPORT)
 int athdiag_procfs_init(void *scn);
 void athdiag_procfs_remove(void);
+#else
+static inline int athdiag_procfs_init(void *scn)
+{
+        return 0;
+}
+
+static inline void athdiag_procfs_remove(void)
+{
+}
+#endif
 /* routine to modify the initial buffer count to be allocated on an os
  * platform basis. Platform owner will need to modify this as needed
  */
