@@ -260,8 +260,6 @@ static int qcom_dload_reboot(struct notifier_block *this, unsigned long event,
 			      void *ptr)
 {
 	char *cmd = ptr;
-	struct qcom_dload *poweroff = container_of(this, struct qcom_dload,
-						     reboot_nb);
 
 	/* Clean shutdown, disable dump mode to allow normal restart */
 	set_download_mode(QCOM_DOWNLOAD_NODUMP);
