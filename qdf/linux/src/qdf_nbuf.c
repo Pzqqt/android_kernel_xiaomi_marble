@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -73,6 +73,10 @@
 #define RADIOTAP_VHT_BW_40	1
 #define RADIOTAP_VHT_BW_80	4
 #define RADIOTAP_VHT_BW_160	11
+
+/* tx status */
+#define RADIOTAP_TX_STATUS_FAIL		1
+#define RADIOTAP_TX_STATUS_NOACK	2
 
 /* channel number to freq conversion */
 #define CHANNEL_NUM_14 14
@@ -4759,6 +4763,41 @@ static unsigned int qdf_nbuf_update_radiotap_ampdu_flags(
 #endif
 
 /**
+ * qdf_nbuf_update_radiotap_tx_flags() - Update radiotap header tx flags
+ * @rx_status: Pointer to rx_status.
+ * @rtap_buf: Buf to which tx info has to be updated.
+ * @rtap_len: Current length of radiotap buffer
+ *
+ * Return: Length of radiotap after tx flags updated.
+ */
+static unsigned int qdf_nbuf_update_radiotap_tx_flags(
+						struct mon_rx_status *rx_status,
+						uint8_t *rtap_buf,
+						uint32_t rtap_len)
+{
+	/*
+	 * IEEE80211_RADIOTAP_TX_FLAGS u16
+	 */
+
+	uint16_t tx_flags = 0;
+
+	rtap_len = qdf_align(rtap_len, 2);
+
+	switch (rx_status->tx_status) {
+	case RADIOTAP_TX_STATUS_FAIL:
+		tx_flags |= IEEE80211_RADIOTAP_F_TX_FAIL;
+		break;
+	case RADIOTAP_TX_STATUS_NOACK:
+		tx_flags |= IEEE80211_RADIOTAP_F_TX_NOACK;
+		break;
+	}
+	put_unaligned_le16(tx_flags, &rtap_buf[rtap_len]);
+	rtap_len += 2;
+
+	return rtap_len;
+}
+
+/**
  * qdf_nbuf_update_radiotap() - Update radiotap header from rx_status
  * @rx_status: Pointer to rx_status.
  * @nbuf:      nbuf pointer to which radiotap has to be updated
@@ -4856,6 +4895,21 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	if ((rtap_len - length) > RADIOTAP_FIXED_HEADER_LEN) {
 		qdf_print("length is greater than RADIOTAP_FIXED_HEADER_LEN");
 		return 0;
+	}
+
+	/* update tx flags for pkt capture*/
+	if (rx_status->add_rtap_ext) {
+		length = rtap_len;
+		rthdr->it_present |=
+			cpu_to_le32(1 << IEEE80211_RADIOTAP_TX_FLAGS);
+		rtap_len = qdf_nbuf_update_radiotap_tx_flags(rx_status,
+							     rtap_buf,
+							     rtap_len);
+
+		if ((rtap_len - length) > RADIOTAP_TX_FLAGS_LEN) {
+			qdf_print("length is greater than RADIOTAP_TX_FLAGS_LEN");
+			return 0;
+		}
 	}
 
 	if (rx_status->ht_flags) {
