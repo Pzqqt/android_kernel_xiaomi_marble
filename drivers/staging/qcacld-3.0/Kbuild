@@ -2992,7 +2992,8 @@ INCS +=		$(COAP_DISPATCHER_INC)
 INCS +=		$(COAP_CORE_INC)
 INCS +=		$(COAP_WMI_INC)
 
-ccflags-y += $(INCS)
+ccflags-y += $(INCS) \
+		-Wno-unused-variable -Wno-unused-function
 
 cppflags-y +=	-DANI_OS_TYPE_ANDROID=6 \
 		-Wall\
