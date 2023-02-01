@@ -6972,6 +6972,7 @@ typedef enum {
     HTT_STATS_RC_MODE_DLMUMIMO = 1,
     HTT_STATS_RC_MODE_DLOFDMA  = 2,
     HTT_STATS_RC_MODE_ULMUMIMO = 3,
+    HTT_STATS_RC_MODE_ULOFDMA  = 4,
 } htt_stats_rc_mode;
 
 typedef struct {
