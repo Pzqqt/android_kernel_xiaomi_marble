@@ -15204,17 +15204,19 @@ typedef enum {
         WMI_VDEV_PARAM_MCAST_STEERING,                        /* 0x800E */
 
         /*
-         * 0 - XPAN disabled
-         * 1 - XPAN Lossless audio profile
-         * 2 - XPAN Gaming profile
+         * bit 0: 0 - XR SAP profile disabled
+         *        1 - XR SAP profile enabled
+         * bit 1: 0 - XPAN profile disabled
+         *        1 - XPAN profile enabled
+         * bits 31:2 - reserved
          */
-        WMI_VDEV_PARAM_XPAN_PROFILE,                          /* 0x800F */
+        WMI_VDEV_PARAM_SET_PROFILE,                           /* 0x800F */
 
         /*
          * for valid vdev id
          * for vdev offload stats
          */
-        WMI_VDEV_PARAM_VDEV_STATS_ID_UPDATE,                 /* 0x8010 */
+        WMI_VDEV_PARAM_VDEV_STATS_ID_UPDATE,                  /* 0x8010 */
 
         /*
          * Enable or disable Extra LTF capability in Auto rate and
