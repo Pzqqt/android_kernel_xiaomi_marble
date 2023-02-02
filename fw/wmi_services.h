@@ -611,6 +611,7 @@ typedef  enum  {
     WMI_SERVICE_DETERMINISTIC_SCHEDULER_LEVEL0 = 358, /* FW supports 12.2 level scheduler mode disable commands and stats */
     WMI_SERVICE_COORDINATED_AP_TDMA = 359, /* Support for Coordinated-AP TDMA feature */
     WMI_SERVICE_HPA_SUPPORT = 360, /* Support for Host Platform Authentication */
+    WMI_SERVICE_WMSK_COMPACTION_RX_TLVS = 361, /* Support word mask subscription for rx tlv compaction */
 
     WMI_MAX_EXT2_SERVICE
 
