@@ -149,7 +149,7 @@ typedef enum {
     MODE_11AX_HE80_2G = 23,
 #endif
 
-#if defined(SUPPORT_11BE) && SUPPORT_11BE
+#if (defined(SUPPORT_11BE) && SUPPORT_11BE) || defined(SUPPORT_11BE_ROM)
     MODE_11BE_EHT20 = 24,
     MODE_11BE_EHT40 = 25,
     MODE_11BE_EHT80 = 26,
@@ -248,7 +248,7 @@ typedef enum {
         ((mode) == MODE_11AX_HE80_2G))
 #endif /* SUPPORT_11AX */
 
-#if defined(SUPPORT_11BE) && SUPPORT_11BE
+#if (defined(SUPPORT_11BE) && SUPPORT_11BE) || defined(SUPPORT_11BE_ROM)
 #define IS_MODE_EHT(mode) (((mode) == MODE_11BE_EHT20) || \
         ((mode) == MODE_11BE_EHT40)     || \
         ((mode) == MODE_11BE_EHT80)     || \
