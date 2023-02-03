@@ -34594,12 +34594,15 @@ typedef struct {
  * requester and broadcast requester. Same way for RESPONDER.
  *
  */
+/* 0: requester; 1: responder */
 #define TWT_EN_DIS_FLAGS_GET_REQ_RESP(flag)      WMI_GET_BITS(flag, 4, 1)
 #define TWT_EN_DIS_FLAGS_SET_REQ_RESP(flag, val) WMI_SET_BITS(flag, 4, 1, val)
 
+/* 0: iTWT; 1: bTWT */
 #define TWT_EN_DIS_FLAGS_GET_I_B_TWT(flag)      WMI_GET_BITS(flag, 5, 1)
 #define TWT_EN_DIS_FLAGS_SET_I_B_TWT(flag, val) WMI_SET_BITS(flag, 5, 1, val)
 
+/* 0: bTWT; 1: rTWT */
 #define TWT_EN_DIS_FLAGS_GET_B_R_TWT(flag)      WMI_GET_BITS(flag, 6, 1)
 #define TWT_EN_DIS_FLAGS_SET_B_R_TWT(flag, val) WMI_SET_BITS(flag, 6, 1, val)
 
@@ -34859,6 +34862,8 @@ typedef enum _WMI_ADD_TWT_STATUS_T {
     WMI_ADD_TWT_STATUS_CHAN_SW_IN_PROGRESS, /* Channel switch in progress */
     WMI_ADD_TWT_STATUS_SCAN_IN_PROGRESS,    /* Scan in progress */
     WMI_ADD_TWT_STATUS_DIALOG_ID_BUSY,      /* FW is in the process of handling this dialog */
+    WMI_ADD_TWT_STATUS_BTWT_NOT_ENBABLED,   /* Broadcast TWT is not enabled */
+    WMI_ADD_TWT_STATUS_RTWT_NOT_ENBABLED,   /* Restricted TWT is not enabled */
 } WMI_ADD_TWT_STATUS_T;
 
 typedef struct {
