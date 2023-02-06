@@ -93,6 +93,7 @@ struct wcd937x_priv {
 	struct snd_info_entry *variant_entry;
 	int ear_rx_path;
 	int ana_clk_count;
+	int adc_count;
 	struct mutex ana_tx_clk_lock;
 	u8 tx_master_ch_map[WCD937X_MAX_SLAVE_CH_TYPES];
 	bool usbc_hs_status;
