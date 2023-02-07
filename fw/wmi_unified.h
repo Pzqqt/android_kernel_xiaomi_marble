@@ -2071,8 +2071,11 @@ typedef enum {
 
     /** GTK offload failed to rekey event */
     WMI_GTK_REKEY_FAIL_EVENTID,
-    /* CSA IE received event */
+
+    /* CSA handling event */
     WMI_CSA_HANDLING_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_CSA_OFL),
+    /* CSA IE received event */
+    WMI_CSA_IE_RECEIVED_EVENTID,
 
     /*chatter query reply event*/
     WMI_CHATTER_PC_QUERY_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_CHATTER),

@@ -2163,6 +2163,7 @@ typedef enum {
     OP(WMI_TAS_POWER_HISTORY_EVENTID) \
     OP(WMI_HPA_EVENTID) \
     OP(WMI_PDEV_SET_TGTR2P_TABLE_EVENTID) \
+    OP(WMI_CSA_IE_RECEIVED_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -7177,6 +7178,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_HPA_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_tgtr2p_table_event_fixed_param, wmi_pdev_set_tgtr2p_table_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_TGTR2P_TABLE_EVENTID);
 
+/* CSA IE Received Event */
+#define WMITLV_TABLE_WMI_CSA_IE_RECEIVED_EVENTID(id,op,buf,len)\
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_csa_event_fixed_param, wmi_csa_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_CSA_IE_RECEIVED_EVENTID);
 
 
 #ifdef __cplusplus
