@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -303,7 +303,7 @@ void scm_add_all_valid_6g_channels(struct wlan_objmgr_pdev *pdev,
 
 	freq_idx =
 		wlan_reg_get_chan_enum_for_freq(wlan_reg_min_6ghz_chan_freq());
-	if (freq_idx == INVALID_CHANNEL)
+	if (reg_is_chan_enum_invalid(freq_idx))
 		return;
 
 	scm_debug("freq_idx:%d", freq_idx);

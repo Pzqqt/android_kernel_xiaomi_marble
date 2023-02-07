@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -57,7 +57,7 @@ bool reg_chan_has_dfs_attribute_for_freq(struct wlan_objmgr_pdev *pdev,
 
 	ch_idx = reg_get_chan_enum_for_freq(freq);
 
-	if (ch_idx == INVALID_CHANNEL)
+	if (reg_is_chan_enum_invalid(ch_idx))
 		return false;
 
 	pdev_priv_obj = reg_get_pdev_obj(pdev);
