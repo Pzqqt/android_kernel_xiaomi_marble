@@ -3799,8 +3799,8 @@ void lim_update_sta_run_time_ht_switch_chnl_params(struct mac_context *mac,
 	chan_freq = wlan_reg_legacy_chan_to_freq(mac->pdev,
 						 pHTInfo->primaryChannel);
 
-	if (wlan_reg_get_chan_enum_for_freq(chan_freq) ==
-	    INVALID_CHANNEL) {
+	if (reg_is_chan_enum_invalid(
+				wlan_reg_get_chan_enum_for_freq(chan_freq))) {
 		pe_debug("Ignore Invalid channel in HT info");
 		return;
 	}
