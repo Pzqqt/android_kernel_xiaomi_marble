@@ -180,7 +180,7 @@ static void msm_set_upd_config(struct snd_soc_pcm_runtime *rtd)
 	int val1 = 0, val2 = 0, ret = 0;
 	u8  dev_num = 0;
 	struct snd_soc_component *component = NULL;
-	struct snd_soc_card *card = rtd->card;
+	struct snd_soc_card *card = NULL;
 	struct msm_asoc_mach_data *pdata = NULL;
 
 	if (!rtd) {
@@ -188,6 +188,7 @@ static void msm_set_upd_config(struct snd_soc_pcm_runtime *rtd)
 		return;
 	}
 
+	card = rtd->card;
 	pdata = snd_soc_card_get_drvdata(rtd->card);
 	if (!pdata) {
 		pr_err("%s: pdata is NULL\n", __func__);
@@ -1843,7 +1844,8 @@ static int waipio_ssr_enable(struct device *dev, void *data)
 		goto err;
 	}
 
-	msm_set_upd_config(rtd);
+	if (rtd)
+		msm_set_upd_config(rtd);
 
 err:
 	return ret;
