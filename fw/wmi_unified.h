@@ -22618,7 +22618,8 @@ typedef struct {
 
 enum wmi_tdls_offchan_mode {
     WMI_TDLS_ENABLE_OFFCHANNEL,
-    WMI_TDLS_DISABLE_OFFCHANNEL
+    WMI_TDLS_DISABLE_OFFCHANNEL, /* passive offchannel disable */
+    WMI_TDLS_ACTIVE_DISABLE_OFFCHANNEL,
 };
 
 typedef struct {
@@ -22640,6 +22641,9 @@ typedef struct {
     A_UINT32 offchan_oper_class;
     /* off channel frequency in MHz */
     A_UINT32 offchan_freq;
+/** This fixed_param TLV is followed by the below additional TLVs:
+ *    - wmi_channel peer_chan_info[]: optional per-peer chan_info
+ */
 } wmi_tdls_set_offchan_mode_cmd_fixed_param;
 
 

@@ -613,6 +613,7 @@ typedef  enum  {
     WMI_SERVICE_HPA_SUPPORT = 360, /* Support for Host Platform Authentication */
     WMI_SERVICE_WMSK_COMPACTION_RX_TLVS = 361, /* Support word mask subscription for rx tlv compaction */
     WMI_SERVICE_PRE_RX_TO = 362, /* Support for Pre RX timeout */
+    WMI_SERVICE_TDLS_CONCURRENCY_SUPPORT = 363, /* Support for TDLS concurrency in FW */
 
     WMI_MAX_EXT2_SERVICE
 
