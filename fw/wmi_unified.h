@@ -10453,6 +10453,35 @@ typedef struct {
 #define WMI_VDEV_ID_INFO_GET_VALIDATE(vdev_id_info)            WMI_GET_BITS(vdev_id_info, 31, 1)
 #define WMI_VDEV_ID_INFO_SET_VALIDATE(vdev_id_info, value)     WMI_SET_BITS(vdev_id_info, 31, 1, value)
 
+typedef struct {
+    union {
+        struct {
+            A_UINT32
+                id: 8, /* the vdev ID */
+                /* validate:
+                 * validate bit, the vdev ID (id and link_status) is only valid
+                 * if this bit set as 1.
+                 */
+                validate: 1,
+                /* link_status:
+                 * 0 -> link inactive
+                 * 1 -> link active
+                 */
+                link_status: 1,
+                reserved:22;
+        };
+        A_UINT32 vdev_info_word0;
+    };
+} wmi_vdev_id_info_v2;
+
+#define WMI_VDEV_ID_INFO_V2_GET_VDEV_ID(vdev_id_info_v2)             WMI_GET_BITS(vdev_id_info_v2, 0, 8)
+#define WMI_VDEV_ID_INFO_V2_SET_VDEV_ID(vdev_id_info_v2, value)      WMI_SET_BITS(vdev_id_info_v2, 0, 8, value)
+#define WMI_VDEV_ID_INFO_V2_GET_VALIDATE(vdev_id_info_v2)            WMI_GET_BITS(vdev_id_info_v2, 8, 1)
+#define WMI_VDEV_ID_INFO_V2_SET_VALIDATE(vdev_id_info_v2, value)     WMI_SET_BITS(vdev_id_info_v2, 8, 1, value)
+#define WMI_VDEV_ID_INFO_V2_GET_LINK_STATUS(vdev_id_info_v2)         WMI_GET_BITS(vdev_id_info_v2, 9, 1)
+#define WMI_VDEV_ID_INFO_V2_SET_LINK_STATUS(vdev_id_info_v2, value)  WMI_SET_BITS(vdev_id_info_v2, 9, 1, value)
+
+
 /*
  * Each step represents 0.5 dB.  The starting value is 0 dBm.
  * Thus the TPC levels cover 0 dBm to 31.5 dBm inclusive in 0.5 dB steps.
@@ -11016,6 +11045,8 @@ typedef struct {
     A_UINT32 num_mib_extd_stats;
     /** Indicates the vdev id of the stats for MLO stats query */
     wmi_vdev_id_info vdev_id_info;
+    /** Indicates the vdev id of the stats for MLO stats query v2 */
+    wmi_vdev_id_info_v2 vdev_id_info_v2;
 
 /* This TLV is followed by another TLV of array of bytes
  *   A_UINT8 data[];
