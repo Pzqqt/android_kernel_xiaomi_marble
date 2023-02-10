@@ -8874,37 +8874,69 @@ QDF_STATUS lim_util_get_type_subtype(void *pkt, uint8_t *type,
 	return QDF_STATUS_SUCCESS;
 }
 
-enum rateid lim_get_min_session_txrate(struct pe_session *session)
+static void lim_get_min_rate(uint8_t *min_rate, tSirMacRateSet *rateset)
 {
-	enum rateid rid = RATEID_DEFAULT;
-	uint8_t min_rate = SIR_MAC_RATE_54, curr_rate, i;
-	tSirMacRateSet *rateset = &session->rateSet;
-	bool enable_he_mcs0_for_6ghz_mgmt = false;
-	qdf_freq_t op_freq;
-
-	if (!session)
-		return rid;
-	else {
-		op_freq = wlan_get_operation_chan_freq(session->vdev);
-		/*
-		 * For 6GHz freq and if enable_he_mcs0_for_mgmt_6ghz INI is
-		 * enabled then FW will use rate of MCS0 for 11AX and configured
-		 * via WMI_MGMT_TX_SEND_CMDID
-		 */
-		wlan_mlme_get_mgmt_6ghz_rate_support(
-				session->mac_ctx->psoc,
-				&enable_he_mcs0_for_6ghz_mgmt);
-		if (op_freq && wlan_reg_is_6ghz_chan_freq(op_freq) &&
-		    enable_he_mcs0_for_6ghz_mgmt)
-			return rid;
-	}
+	uint8_t curr_rate, i;
 
 	for (i = 0; i < rateset->numRates; i++) {
 		/* Ignore MSB - set to indicate basic rate */
 		curr_rate = rateset->rate[i] & 0x7F;
-		min_rate =  (curr_rate < min_rate) ? curr_rate : min_rate;
+		*min_rate = (curr_rate < *min_rate) ? curr_rate :
+			    *min_rate;
 	}
-	pe_debug("supported min_rate: %0x(%d)", min_rate, min_rate);
+
+	pe_debug("supported min_rate: %0x(%d)", *min_rate, *min_rate);
+}
+
+static bool lim_is_enable_he_mcs0_for_6ghz_mgmt(struct pe_session *session,
+						qdf_freq_t freq)
+{
+	bool enable_he_mcs0_for_6ghz_mgmt = false;
+
+	if (!wlan_reg_is_6ghz_chan_freq(freq))
+		return enable_he_mcs0_for_6ghz_mgmt;
+
+	/*
+	 * For 6GHz freq and if enable_he_mcs0_for_mgmt_6ghz INI is
+	 * enabled then FW will use rate of MCS0 for 11AX and configured
+	 * via WMI_MGMT_TX_SEND_CMDID
+	 */
+	wlan_mlme_get_mgmt_6ghz_rate_support(
+			session->mac_ctx->psoc,
+			&enable_he_mcs0_for_6ghz_mgmt);
+
+	return enable_he_mcs0_for_6ghz_mgmt;
+}
+
+enum rateid lim_get_min_session_txrate(struct pe_session *session,
+				       qdf_freq_t *pre_auth_freq)
+{
+	enum rateid rid = RATEID_DEFAULT;
+	uint8_t min_rate = SIR_MAC_RATE_54;
+	tSirMacRateSet *rateset;
+	qdf_freq_t op_freq;
+
+	if (!session)
+		return rid;
+
+	rateset = &session->rateSet;
+
+	if (pre_auth_freq) {
+		pe_debug("updated rateset to pre auth freq %d",
+			 *pre_auth_freq);
+		if (*pre_auth_freq &&
+		    !lim_is_enable_he_mcs0_for_6ghz_mgmt(session,
+							*pre_auth_freq))
+				lim_get_basic_rates(rateset, *pre_auth_freq);
+		else
+			return rid;
+	}
+
+	op_freq = wlan_get_operation_chan_freq(session->vdev);
+	if (lim_is_enable_he_mcs0_for_6ghz_mgmt(session, op_freq))
+		return rid;
+
+	lim_get_min_rate(&min_rate, rateset);
 
 	switch (min_rate) {
 	case SIR_MAC_RATE_1:

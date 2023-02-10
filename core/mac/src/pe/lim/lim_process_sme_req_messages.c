@@ -2708,7 +2708,7 @@ lim_fill_ese_params(struct mac_context *mac_ctx, struct pe_session *session,
 }
 #endif
 
-static void lim_get_basic_rates(tSirMacRateSet *b_rates, uint32_t chan_freq)
+void lim_get_basic_rates(tSirMacRateSet *b_rates, uint32_t chan_freq)
 {
 	/*
 	 * Some IOT APs don't send supported rates in
