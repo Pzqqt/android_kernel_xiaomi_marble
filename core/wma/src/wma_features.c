@@ -2910,6 +2910,11 @@ wma_wow_wakeup_host_trigger_ssr(t_wma_handle *wma, uint32_t reason)
 	if (!wlan_pmo_enable_ssr_on_page_fault(wma->psoc))
 		return;
 
+	if (wmi_get_runtime_pm_inprogress(wma->wmi_handle)) {
+		wma_debug("Ignore run time pm wakeup");
+		return;
+	}
+
 	pagefault_wakeups_for_ssr =
 			wlan_pmo_get_max_pagefault_wakeups_for_ssr(wma->psoc);
 
