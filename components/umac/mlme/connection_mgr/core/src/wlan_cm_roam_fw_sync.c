@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -168,6 +168,10 @@ cm_fw_roam_sync_start_ind(struct wlan_objmgr_vdev *vdev,
 	wlan_blm_update_bssid_connect_params(pdev,
 					     connected_bssid,
 					     BLM_AP_DISCONNECTED);
+
+	/* Notify TDLS STA about disconnection due to roaming */
+	wlan_tdls_notify_sta_disconnect(vdev_id, true, false, vdev);
+
 	if (IS_ROAM_REASON_STA_KICKOUT(sync_ind->roam_reason)) {
 		struct reject_ap_info ap_info;
 
