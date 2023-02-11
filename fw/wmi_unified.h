@@ -41800,7 +41800,13 @@ typedef enum {
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_tgtr2p_table_event_fixed_param */
-    A_UINT32 status;   /* enum wmi_pdev_set_tgtr2p_event_status_type to indicate the status code/result */
+
+    /* status:
+     * enum wmi_pdev_set_tgtr2p_event_status_type to indicate the status
+     * code/result
+     */
+    A_UINT32 status;
+    A_UINT32 pdev_id; /* to identify for which pdev the response is received */
 } wmi_pdev_set_tgtr2p_table_event_fixed_param;
 
 
