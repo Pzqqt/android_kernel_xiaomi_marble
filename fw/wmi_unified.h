@@ -9232,6 +9232,7 @@ typedef enum {
     WMI_HALPHY_TPC_STATS_SUPPORT_AX_EXTRA_MCS,
     WMI_HALPHY_TPC_STATS_SUPPORT_BE,
     WMI_HALPHY_TPC_STATS_SUPPORT_BE_PUNC,
+    WMI_HALPHY_TPC_STATS_SUPPORT_CTL_DESIGN_1,
 } WMI_HALPHY_TPC_STATS_SUPPORT_BITF; /* support bit fields */
 
 typedef struct {
@@ -9282,6 +9283,7 @@ typedef struct {
      * Refer to enum WMI_HALPHY_TPC_STATS_SUPPORT_BITF.
      */
     A_UINT32 support_bits;
+    A_UINT32 nss; /* target specific NUM_SPATIAL_STREAM flag */
 } wmi_tpc_configs;
 
 typedef struct {
