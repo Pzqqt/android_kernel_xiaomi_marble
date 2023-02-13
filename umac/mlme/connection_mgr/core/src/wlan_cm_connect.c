@@ -756,7 +756,8 @@ static void cm_get_vdev_id_with_active_vdev_op(struct wlan_objmgr_pdev *pdev,
 		return;
 	}
 
-	if (opmode == QDF_SAP_MODE || opmode == QDF_P2P_GO_MODE) {
+	if (opmode == QDF_SAP_MODE || opmode == QDF_P2P_GO_MODE ||
+	    opmode == QDF_NDI_MODE) {
 		/* Check if START/STOP AP OP is in progress */
 		if (wlan_ser_is_non_scan_cmd_type_in_vdev_queue(vdev,
 					WLAN_SER_CMD_VDEV_START_BSS) ||
@@ -816,7 +817,7 @@ cm_is_any_other_vdev_connecting_disconnecting(struct cnx_mgr *cm_ctx,
 	 */
 	if (cm_req->connect_req.cur_candidate &&
 	    vdev_arg.sap_go_vdev_id != WLAN_INVALID_VDEV_ID) {
-		mlme_info(CM_PREFIX_FMT "Avoid next candidate as SAP/GO vdev %d has pending vdev op",
+		mlme_info(CM_PREFIX_FMT "Avoid next candidate as SAP/GO/NDI vdev %d has pending vdev op",
 			  CM_PREFIX_REF(cur_vdev_id, cm_req->cm_id),
 			  vdev_arg.sap_go_vdev_id);
 		return true;
