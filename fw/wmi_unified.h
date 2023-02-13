@@ -24847,6 +24847,10 @@ typedef struct {
     A_UINT32 tlv_header;
     /** NDP instance id */
     A_UINT32 ndp_instance_id;
+    /** vdev_id valid flag */
+    A_UINT32 vdev_id_valid;
+    /** vdev id */
+    A_UINT32 vdev_id;
 } wmi_ndp_end_req_PROTOTYPE;
 
 #define wmi_ndp_end_req wmi_ndp_end_req_PROTOTYPE
