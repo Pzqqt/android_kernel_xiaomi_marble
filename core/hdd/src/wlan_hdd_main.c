@@ -6239,7 +6239,6 @@ hdd_alloc_station_adapter(struct hdd_context *hdd_ctx, tSirMacAddr mac_addr,
 
 	qdf_mem_copy(dev->dev_addr, mac_addr, sizeof(tSirMacAddr));
 	qdf_mem_copy(adapter->mac_addr.bytes, mac_addr, sizeof(tSirMacAddr));
-	qdf_mem_copy(adapter->mld_addr.bytes, mac_addr, sizeof(tSirMacAddr));
 	dev->watchdog_timeo = HDD_TX_TIMEOUT;
 
 	if (wlan_hdd_is_session_type_monitor(session_type)) {
@@ -7888,8 +7887,12 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx,
 		return NULL;
 	}
 
-	if (params->is_ml_adapter)
+	if (params->is_ml_adapter) {
 		hdd_adapter_set_ml_adapter(adapter);
+		qdf_mem_copy(adapter->mld_addr.bytes, adapter->mac_addr.bytes,
+			     QDF_MAC_ADDR_SIZE);
+	}
+
 	status = hdd_adapter_feature_update_work_init(adapter);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto err_cleanup_adapter;

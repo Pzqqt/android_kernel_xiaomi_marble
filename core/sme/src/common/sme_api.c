@@ -16240,6 +16240,7 @@ QDF_STATUS sme_update_vdev_mac_addr(struct wlan_objmgr_psoc *psoc,
 		wlan_vdev_mlme_set_mldaddr(vdev, mac_addr.bytes);
 	} else {
 		wlan_vdev_mlme_set_macaddr(vdev, mac_addr.bytes);
+		wlan_vdev_mlme_set_linkaddr(vdev, mac_addr.bytes);
 	}
 
 p2p_self_peer_create:
