@@ -1492,3 +1492,6 @@ endif
 ifeq ($(CONFIG_LITHIUM), y)
 CONFIG_DP_TX_TRACKING := y
 endif
+
+#Flag to enable Dynamic MAC address update
+CONFIG_WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE := y
