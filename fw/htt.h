@@ -244,9 +244,10 @@
  * 3.116 Add HTT_TX_MONITOR_CFG_WORD_MASK_COMPACTION_ENABLE flag.
  * 3.117 Add HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_IND def.
  * 3.118 Add HTT_T2H_MSG_TYPE_RX_DATA_IND and _SOFT_UMAC_TX_COMPL_IND defs.
+ * 3.119 Add RX_PEER_META_DATA V1A and V1B defs.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 118
+#define HTT_CURRENT_VERSION_MINOR 119
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -19589,6 +19590,195 @@ PREPACK struct htt_rx_peer_metadata_v1 {
         HTT_CHECK_SET_VAL(HTT_RX_PEER_META_DATA_V1_CHIP_ID, _val);  \
         ((_var) |= ((_val) << HTT_RX_PEER_META_DATA_V1_CHIP_ID_S)); \
     } while (0)
+
+/**
+ * @brief target -> RX PEER METADATA V1A format
+ * Host will know the peer metadata version from the wmi_service_ready_ext2
+ * message from target, WMI_SERVICE_PEER_METADATA_V1A_V1B_SUPPORT WMI service,
+ * and will confirm to the target which peer metadata version to use in the
+ * wmi_init message.
+ *
+ * The following diagram shows the format of the RX PEER METADATA V1A format.
+ *
+ * |31 29|28   26|25           22|21   14|   13  |12                  0|
+ * |-------------------------------------------------------------------|
+ * |Rsvd2|CHIP ID|logical_link_id|VDEV ID|ML PEER|SW PEER ID/ML PEER ID|
+ * |-------------------------------------------------------------------|
+ */
+PREPACK struct htt_rx_peer_metadata_v1a {
+    A_UINT32
+        peer_id:         13,
+        ml_peer_valid:   1,
+        vdev_id:         8,
+        logical_link_id: 4,
+        chip_id:         3,
+        reserved2:       3;
+} POSTPACK;
+
+#define HTT_RX_PEER_META_DATA_V1A_PEER_ID_S    0
+#define HTT_RX_PEER_META_DATA_V1A_PEER_ID_M    0x00001fff
+#define HTT_RX_PEER_META_DATA_V1A_PEER_ID_GET(_var) \
+    (((_var) & HTT_RX_PEER_META_DATA_V1A_PEER_ID_M) >> HTT_RX_PEER_META_DATA_V1A_PEER_ID_S)
+
+#define HTT_RX_PEER_META_DATA_V1A_PEER_ID_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_META_DATA_V1A_PEER_ID, _val);  \
+        ((_var) |= ((_val) << HTT_RX_PEER_META_DATA_V1A_PEER_ID_S)); \
+    } while (0)
+
+#define HTT_RX_PEER_META_DATA_V1A_ML_PEER_VALID_S    13
+#define HTT_RX_PEER_META_DATA_V1A_ML_PEER_VALID_M    0x00002000
+#define HTT_RX_PEER_META_DATA_V1A_ML_PEER_VALID_GET(_var) \
+    (((_var) & HTT_RX_PEER_META_DATA_V1A_ML_PEER_VALID_M) >> HTT_RX_PEER_META_DATA_V1A_ML_PEER_VALID_S)
+
+#define HTT_RX_PEER_META_DATA_V1A_ML_PEER_VALID_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_META_DATA_V1A_ML_PEER_VALID, _val);  \
+        ((_var) |= ((_val) << HTT_RX_PEER_META_DATA_V1A_ML_PEER_VALID_S)); \
+    } while (0)
+
+#define HTT_RX_PEER_META_DATA_V1A_VDEV_ID_S    14
+#define HTT_RX_PEER_META_DATA_V1A_VDEV_ID_M    0x003fc000
+#define HTT_RX_PEER_META_DATA_V1A_VDEV_ID_GET(_var) \
+    (((_var) & HTT_RX_PEER_META_DATA_V1A_VDEV_ID_M) >> HTT_RX_PEER_META_DATA_V1A_VDEV_ID_S)
+
+#define HTT_RX_PEER_META_DATA_V1A_VDEV_ID_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_META_DATA_V1A_VDEV_ID, _val);  \
+        ((_var) |= ((_val) << HTT_RX_PEER_META_DATA_V1A_VDEV_ID_S)); \
+    } while (0)
+
+#define HTT_RX_PEER_META_DATA_V1A_LOGICAL_LINK_ID_S    22
+#define HTT_RX_PEER_META_DATA_V1A_LOGICAL_LINK_ID_M    0x03C00000
+#define HTT_RX_PEER_META_DATA_V1A_LOGICAL_LINK_ID_GET(_var) \
+    (((_var) & HTT_RX_PEER_META_DATA_V1A_LOGICAL_LINK_ID_M) >> HTT_RX_PEER_META_DATA_V1A_LOGICAL_LINK_ID_S)
+
+#define HTT_RX_PEER_META_DATA_V1A_LOGICAL_LINK_ID_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_META_DATA_V1A_LOGICAL_LINK_ID, _val);  \
+        ((_var) |= ((_val) << HTT_RX_PEER_META_DATA_V1A_LOGICAL_LINK_ID_S)); \
+    } while (0)
+
+#define HTT_RX_PEER_META_DATA_V1A_CHIP_ID_S    26
+#define HTT_RX_PEER_META_DATA_V1A_CHIP_ID_M    0x1c000000
+#define HTT_RX_PEER_META_DATA_V1A_CHIP_ID_GET(_var) \
+    (((_var) & HTT_RX_PEER_META_DATA_V1A_CHIP_ID_M) >> HTT_RX_PEER_META_DATA_V1A_CHIP_ID_S)
+
+#define HTT_RX_PEER_META_DATA_V1A_CHIP_ID_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_META_DATA_V1A_CHIP_ID, _val);  \
+        ((_var) |= ((_val) << HTT_RX_PEER_META_DATA_V1A_CHIP_ID_S)); \
+    } while (0)
+
+
+/**
+ * @brief target -> RX PEER METADATA V1B format
+ * Host will know the peer metadata version from the wmi_service_ready_ext2
+ * message from target, WMI_SERVICE_PEER_METADATA_V1A_V1B_SUPPORT WMI service,
+ * and will confirm to the target which peer metadata version to use in the
+ * wmi_init message.
+ *
+ * The following diagram shows the format of the RX PEER METADATA V1B format.
+ *
+ * |31 29|28   26|25      22|21   14|   13  |12                  0|
+ * |--------------------------------------------------------------|
+ * |Rsvd2|CHIP ID|hw_link_id|VDEV ID|ML PEER|SW PEER ID/ML PEER ID|
+ * |--------------------------------------------------------------|
+ */
+PREPACK struct htt_rx_peer_metadata_v1b {
+    A_UINT32
+        peer_id:         13,
+        ml_peer_valid:   1,
+        vdev_id:         8,
+        hw_link_id:      4,
+        chip_id:         3,
+        reserved2:       3;
+} POSTPACK;
+
+#define HTT_RX_PEER_META_DATA_V1B_PEER_ID_S    0
+#define HTT_RX_PEER_META_DATA_V1B_PEER_ID_M    0x00001fff
+#define HTT_RX_PEER_META_DATA_V1B_PEER_ID_GET(_var) \
+    (((_var) & HTT_RX_PEER_META_DATA_V1B_PEER_ID_M) >> HTT_RX_PEER_META_DATA_V1B_PEER_ID_S)
+
+#define HTT_RX_PEER_META_DATA_V1B_PEER_ID_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_META_DATA_V1B_PEER_ID, _val);  \
+        ((_var) |= ((_val) << HTT_RX_PEER_META_DATA_V1B_PEER_ID_S)); \
+    } while (0)
+
+#define HTT_RX_PEER_META_DATA_V1B_ML_PEER_VALID_S    13
+#define HTT_RX_PEER_META_DATA_V1B_ML_PEER_VALID_M    0x00002000
+#define HTT_RX_PEER_META_DATA_V1B_ML_PEER_VALID_GET(_var) \
+    (((_var) & HTT_RX_PEER_META_DATA_V1B_ML_PEER_VALID_M) >> HTT_RX_PEER_META_DATA_V1B_ML_PEER_VALID_S)
+
+#define HTT_RX_PEER_META_DATA_V1B_ML_PEER_VALID_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_META_DATA_V1B_ML_PEER_VALID, _val);  \
+        ((_var) |= ((_val) << HTT_RX_PEER_META_DATA_V1B_ML_PEER_VALID_S)); \
+    } while (0)
+
+#define HTT_RX_PEER_META_DATA_V1B_VDEV_ID_S    14
+#define HTT_RX_PEER_META_DATA_V1B_VDEV_ID_M    0x003fc000
+#define HTT_RX_PEER_META_DATA_V1B_VDEV_ID_GET(_var) \
+    (((_var) & HTT_RX_PEER_META_DATA_V1B_VDEV_ID_M) >> HTT_RX_PEER_META_DATA_V1B_VDEV_ID_S)
+
+#define HTT_RX_PEER_META_DATA_V1B_VDEV_ID_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_META_DATA_V1B_VDEV_ID, _val);  \
+        ((_var) |= ((_val) << HTT_RX_PEER_META_DATA_V1B_VDEV_ID_S)); \
+    } while (0)
+
+#define HTT_RX_PEER_META_DATA_V1B_HW_LINK_ID_S    22
+#define HTT_RX_PEER_META_DATA_V1B_HW_LINK_ID_M    0x03C00000
+#define HTT_RX_PEER_META_DATA_V1B_HW_LINK_ID_GET(_var) \
+    (((_var) & HTT_RX_PEER_META_DATA_V1B_HW_LINK_ID_M) >> HTT_RX_PEER_META_DATA_V1B_HW_LINK_ID_S)
+
+#define HTT_RX_PEER_META_DATA_V1B_HW_LINK_ID_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_META_DATA_V1B_HW_LINK_ID, _val);  \
+        ((_var) |= ((_val) << HTT_RX_PEER_META_DATA_V1B_HW_LINK_ID_S)); \
+    } while (0)
+
+#define HTT_RX_PEER_META_DATA_V1B_CHIP_ID_S    26
+#define HTT_RX_PEER_META_DATA_V1B_CHIP_ID_M    0x1c000000
+#define HTT_RX_PEER_META_DATA_V1B_CHIP_ID_GET(_var) \
+    (((_var) & HTT_RX_PEER_META_DATA_V1B_CHIP_ID_M) >> HTT_RX_PEER_META_DATA_V1B_CHIP_ID_S)
+
+#define HTT_RX_PEER_META_DATA_V1B_CHIP_ID_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_META_DATA_V1B_CHIP_ID, _val);  \
+        ((_var) |= ((_val) << HTT_RX_PEER_META_DATA_V1B_CHIP_ID_S)); \
+    } while (0)
+
+/* generic variables for masks and shifts for various fields */
+extern A_UINT32 HTT_RX_PEER_META_DATA_PEER_ID_S;
+extern A_UINT32 HTT_RX_PEER_META_DATA_PEER_ID_M;
+
+extern A_UINT32 HTT_RX_PEER_META_DATA_ML_PEER_VALID_S;
+extern A_UINT32 HTT_RX_PEER_META_DATA_ML_PEER_VALID_M;
+
+/* generic function pointers to get/set values from rx peer metadata v0/v1/v1a/v1b */
+extern A_UINT32 (*HTT_RX_PEER_META_DATA_PEER_ID_GET) (A_UINT32 var);
+extern void (*HTT_RX_PEER_META_DATA_PEER_ID_SET) (A_UINT32 *var, A_UINT32 val);
+
+extern A_UINT32 (*HTT_RX_PEER_META_DATA_VDEV_ID_GET) (A_UINT32 var);
+extern void (*HTT_RX_PEER_META_DATA_VDEV_ID_SET) (A_UINT32 *var, A_UINT32 val);
+
+extern A_UINT32 (*HTT_RX_PEER_META_DATA_ML_PEER_VALID_GET) (A_UINT32 var);
+extern void (*HTT_RX_PEER_META_DATA_ML_PEER_VALID_SET) (A_UINT32 *var, A_UINT32 val);
+
+extern A_UINT32 (*HTT_RX_PEER_META_DATA_LOGICAL_LINK_ID_GET) (A_UINT32 var);
+extern void (*HTT_RX_PEER_META_DATA_LOGICAL_LINK_ID_SET) (A_UINT32 *var, A_UINT32 val);
+
+extern A_UINT32 (*HTT_RX_PEER_META_DATA_LMAC_ID_GET) (A_UINT32 var);
+extern void (*HTT_RX_PEER_META_DATA_LMAC_ID_SET) (A_UINT32 *var, A_UINT32 val);
+
+extern A_UINT32 (*HTT_RX_PEER_META_DATA_CHIP_ID_GET) (A_UINT32 var);
+extern void (*HTT_RX_PEER_META_DATA_CHIP_ID_SET) (A_UINT32 *var, A_UINT32 val);
+
+extern A_UINT32 (*HTT_RX_PEER_META_DATA_HW_LINK_ID_GET) (A_UINT32 var);
+extern void (*HTT_RX_PEER_META_DATA_HW_LINK_ID_SET) (A_UINT32 *var, A_UINT32 val);
+
 
 /*
  * In some systems, the host SW wants to specify priorities between
