@@ -10248,7 +10248,7 @@ PREPACK typedef struct {
  *    The message would appear as follows:
  *    |31             24|23             16|15              8|7               0|
  *    |-----------------+-----------------+-----------------+-----------------|
- *    |     reserved    |    operation    |     vdev_id     |     msg_type    |
+ *    |     reserved    |    operation    |     pdev_id     |     msg_type    |
  *    |-----------------------------------------------------------------------|
  *    |                         cce_super_rule_param[0]                       |
  *    |-----------------------------------------------------------------------|
@@ -10258,7 +10258,7 @@ PREPACK typedef struct {
  * The message is interpreted as follows:
  * dword0  - b'0:7   - msg_type: This will be set to
  *                     0x23 (HTT_H2T_MSG_TYPE_RX_CCE_SUPER_RULE_SETUP)
- *           b'8:15  - vdev_id: Identify which vdev RX_CCE_SUPER_RULE is for
+ *           b'8:15  - pdev_id: Identify which pdev RX_CCE_SUPER_RULE is for
  *           b'16:23 - operation: Identify operation to be taken,
  *                     0: HTT_RX_CCE_SUPER_RULE_SETUP_REQUEST
  *                     1: HTT_RX_CCE_SUPER_RULE_INSTALL
@@ -10387,7 +10387,7 @@ typedef struct {
 
 PREPACK struct htt_rx_cce_super_rule_setup_t {
     A_UINT32 msg_type:   8,
-             vdev_id:    8,
+             pdev_id:    8,
              operation:  8,
              reserved:   8;
     htt_rx_cce_super_rule_param_t
@@ -10397,15 +10397,15 @@ PREPACK struct htt_rx_cce_super_rule_setup_t {
 #define HTT_RX_CCE_SUPER_RULE_SETUP_SZ \
     (sizeof(struct htt_rx_cce_super_rule_setup_t))
 
-#define HTT_RX_CCE_SUPER_RULE_SETUP_VDEV_ID_M 0x0000ff00
-#define HTT_RX_CCE_SUPER_RULE_SETUP_VDEV_ID_S 8
-#define HTT_RX_CCE_SUPER_RULE_SETUP_VDEV_ID_GET(_var) \
-        (((_var) & HTT_RX_CCE_SUPER_RULE_SETUP_VDEV_ID_M) >> \
-        HTT_RX_CCE_SUPER_RULE_SETUP_VDEV_ID_S)
-#define HTT_RX_CCE_SUPER_RULE_SETUP_VDEV_ID_SET(_var, _val) \
+#define HTT_RX_CCE_SUPER_RULE_SETUP_PDEV_ID_M 0x0000ff00
+#define HTT_RX_CCE_SUPER_RULE_SETUP_PDEV_ID_S 8
+#define HTT_RX_CCE_SUPER_RULE_SETUP_PDEV_ID_GET(_var) \
+        (((_var) & HTT_RX_CCE_SUPER_RULE_SETUP_PDEV_ID_M) >> \
+        HTT_RX_CCE_SUPER_RULE_SETUP_PDEV_ID_S)
+#define HTT_RX_CCE_SUPER_RULE_SETUP_PDEV_ID_SET(_var, _val) \
         do { \
-            HTT_CHECK_SET_VAL(HTT_RX_CCE_SUPER_RULE_SETUP_VDEV_ID, _val); \
-            ((_var) |= ((_val) << HTT_RX_CCE_SUPER_RULE_SETUP_VDEV_ID_S)); \
+            HTT_CHECK_SET_VAL(HTT_RX_CCE_SUPER_RULE_SETUP_PDEV_ID, _val); \
+            ((_var) |= ((_val) << HTT_RX_CCE_SUPER_RULE_SETUP_PDEV_ID_S)); \
         } while (0)
 
 #define HTT_RX_CCE_SUPER_RULE_SETUP_OPERATION_M 0x00ff0000
@@ -20692,13 +20692,13 @@ typedef struct {
  *
  *     |31             24|23             16|15             8|7              0|
  *     |-----------------+-----------------+----------------+----------------|
- *     |      result     |  response_type  |     vdev_id    |     msg_type   |
+ *     |      result     |  response_type  |     pdev_id    |     msg_type   |
  *     |---------------------------------------------------------------------|
  *
  * The message is interpreted as follows:
  * dword0 - b'0:7   - msg_type: This will be set to 0x33
  *                    (HTT_T2H_MSG_TYPE_RX_CCE_SUPER_RULE_SETUP_DONE)
- *          b'8:15  - vdev_id: Identify which vdev RX_CCE_SUPER_RULE is setup on
+ *          b'8:15  - pdev_id: Identify which pdev RX_CCE_SUPER_RULE is setup on
  *          b'16:23 - response_type: Indicate the response type of this setup
  *                    done msg
  *                    0: HTT_RX_CCE_SUPER_RULE_SETUP_REQ_RESPONSE,
@@ -20749,7 +20749,7 @@ enum htt_rx_cce_super_rule_setup_done_response_type {
 
 PREPACK struct htt_rx_cce_super_rule_setup_done_t {
     A_UINT8 msg_type;
-    A_UINT8 vdev_id;
+    A_UINT8 pdev_id;
     A_UINT8 response_type;
     union {
         struct {
@@ -20771,15 +20771,15 @@ PREPACK struct htt_rx_cce_super_rule_setup_done_t {
 
 #define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_SZ (sizeof(struct htt_rx_cce_super_rule_setup_done_t))
 
-#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_VDEV_ID_M 0x0000ff00
-#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_VDEV_ID_S 8
-#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_VDEV_ID_GET(_var) \
-        (((_var) & HTT_RX_CCE_SUPER_RULE_SETUP_DONE_VDEV_ID_M) >> \
-        HTT_RX_CCE_SUPER_RULE_SETUP_DONE_VDEV_ID_S)
-#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_VDEV_ID_SET(_var, _val) \
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_PDEV_ID_M 0x0000ff00
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_PDEV_ID_S 8
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_PDEV_ID_GET(_var) \
+        (((_var) & HTT_RX_CCE_SUPER_RULE_SETUP_DONE_PDEV_ID_M) >> \
+        HTT_RX_CCE_SUPER_RULE_SETUP_DONE_PDEV_ID_S)
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_PDEV_ID_SET(_var, _val) \
         do { \
-            HTT_CHECK_SET_VAL(HTT_RX_CCE_SUPER_RULE_SETUP_DONE_VDEV_ID, _val); \
-            ((_var) |= ((_val) << HTT_RX_CCE_SUPER_RULE_SETUP_DONE_VDEV_ID_S)); \
+            HTT_CHECK_SET_VAL(HTT_RX_CCE_SUPER_RULE_SETUP_DONE_PDEV_ID, _val); \
+            ((_var) |= ((_val) << HTT_RX_CCE_SUPER_RULE_SETUP_DONE_PDEV_ID_S)); \
         } while (0)
 
 #define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_RESPONSE_TYPE_M 0x00ff0000
