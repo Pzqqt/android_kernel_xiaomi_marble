@@ -688,9 +688,11 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 						&is_power_constraint_abs);
 
 			if (mac_ctx->rrm.rrmPEContext.rrmEnable &&
-			    bcn->powerConstraintPresent)
+			    bcn->powerConstraintPresent) {
 				local_constraint =
 				bcn->localPowerConstraint.localPowerConstraints;
+				is_power_constraint_abs = false;
+			}
 		}
 
 		if (local_constraint !=
@@ -728,6 +730,8 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 				local_constraint = regMax;
 				local_constraint -=
 				bcn->localPowerConstraint.localPowerConstraints;
+				is_power_constraint_abs = false;
+
 			}
 		}
 		mlme_obj->reg_tpc_obj.is_power_constraint_abs =
