@@ -29185,6 +29185,42 @@ typedef struct {
     A_UINT32 antenna_series;
 } wmi_peer_smart_ant_set_tx_antenna_series;
 
+#define WMI_PER_VALID_BIT_POS     0
+#define WMI_PER_VALID_NUM_BITS    1
+
+#define WMI_GET_PER_VALID(per_threshold) \
+    WMI_GET_BITS(per_threshold, WMI_PER_VALID_BIT_POS, WMI_PER_VALID_NUM_BITS)
+
+#define WMI_PER_VALID_SET(per_threshold, value) \
+    WMI_SET_BITS(per_threshold, WMI_PER_VALID_BIT_POS, WMI_PER_VALID_NUM_BITS, value)
+
+#define WMI_PER_THRESHOLD_BIT_POS     1
+#define WMI_PER_THRESHOLD_NUM_BITS    8
+
+#define WMI_GET_PER_THRESHOLD(per_threshold) \
+    WMI_GET_BITS(per_threshold, WMI_PER_THRESHOLD_BIT_POS, WMI_PER_THRESHOLD_NUM_BITS)
+
+#define WMI_PER_THRESHOLD_SET(per_threshold, value) \
+    WMI_SET_BITS(per_threshold, WMI_PER_THRESHOLD_BIT_POS, WMI_PER_THRESHOLD_NUM_BITS, value)
+
+#define WMI_PER_MIN_TX_PKTS_BIT_POS     9
+#define WMI_PER_MIN_TX_PKTS_NUM_BITS    16
+
+#define WMI_GET_PER_MIN_TX_PKTS(per_threshold) \
+    WMI_GET_BITS(per_threshold, WMI_PER_MIN_TX_PKTS_BIT_POS, WMI_PER_MIN_TX_PKTS_NUM_BITS)
+
+#define WMI_PER_MIN_TX_PKTS_SET(per_threshold, value) \
+    WMI_SET_BITS(per_threshold, WMI_PER_MIN_TX_PKTS_BIT_POS, WMI_PER_MIN_TX_PKTS_NUM_BITS, value)
+
+#define WMI_RATE_SERIES_320_BIT_POS     0
+#define WMI_RATE_SERIES_320_NUM_BITS    16
+
+#define WMI_GET_RATE_SERIES_320(train_rate_series_ext) \
+    WMI_GET_BITS(train_rate_series_ext, WMI_RATE_SERIES_320_BIT_POS, WMI_RATE_SERIES_320_NUM_BITS)
+
+#define WMI_SET_RATE_SERIES_320(train_rate_series_ext) \
+    WMI_SET_BITS(train_rate_series_ext, WMI_RATE_SERIES_320_BIT_POS, WMI_RATE_SERIES_320_NUM_BITS, value)
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_smart_ant_set_train_antenna_param */
     /* rate array */
@@ -29206,6 +29242,11 @@ typedef struct {
     A_UINT32 rc_flags;
     /* rate array -- continued */
     A_UINT32 train_rate_series_hi; /* Higher 32 bits of rate array */
+    /* train_rate_series_ext:
+     * 15:0 - 320Mhz rate
+     * 31:16 - Reserved
+     */
+    A_UINT32 train_rate_series_ext; /* For 320Mhz and Reserved for other */
 } wmi_peer_smart_ant_set_train_antenna_param;
 
 typedef struct {
@@ -29216,10 +29257,19 @@ typedef struct {
     wmi_mac_addr peer_macaddr;
     /* num packets; 0-stop training */
     A_UINT32 num_pkts;
-   /*
-    * Following this structure is the TLV:
-    * wmi_peer_smart_ant_set_train_antenna_param
-    */
+    /* per_threshold:
+     * bits  | interpretation
+     * ------+--------------------------
+     *    0  | PER Threshold is valid
+     *  1:8  | Per Threshold
+     *  9:24 | min_tx_pkts Minimum number of pkts need to be checked
+     * 25:31 | Reserved
+     */
+    A_UINT32 per_threshold;
+/*
+ * Following this structure is the TLV:
+ * wmi_peer_smart_ant_set_train_antenna_param
+ */
 } wmi_peer_smart_ant_set_train_antenna_cmd_fixed_param;
 
 typedef struct {
@@ -30157,9 +30207,11 @@ typedef struct {
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_mcs_rate_info */
-    A_UINT32 ratecode_20; /* Rate code for 20MHz BW */
-    A_UINT32 ratecode_40; /* Rate code for 40MHz BW */
-    A_UINT32 ratecode_80; /* Rate code for 80MHz BW */
+    A_UINT32 ratecode_20;  /* Rate code for 20MHz BW */
+    A_UINT32 ratecode_40;  /* Rate code for 40MHz BW */
+    A_UINT32 ratecode_80;  /* Rate code for 80MHz BW */
+    A_UINT32 ratecode_160; /* Rate code for 160MHz BW */
+    A_UINT32 ratecode_320; /* Rate code for 320MHz BW */
 } wmi_peer_mcs_rate_info;
 
 typedef struct {
@@ -30168,6 +30220,7 @@ typedef struct {
     A_UINT32 ratecount; /* Max Rate count for each mode */
     A_UINT32 vdev_id; /* ID of the vdev this peer belongs to */
     A_UINT32 pdev_id; /* ID of the pdev this peer belongs to */
+    A_UINT32 ratecount_ext; /* Max Rate count for 160, 320MHz */
     /*
      * Following this structure are the TLV:
      * struct wmi_peer_cck_ofdm_rate_info;
@@ -35912,9 +35965,9 @@ typedef struct {
     /* btm_req_dialog_token: dialog token number in BTM request frame */
     A_UINT32 btm_req_dialog_token;
     /* data RSSI in dBm when abort to roam scan */
-    A_UINT32 data_rssi;
+    A_INT32 data_rssi;
     /* data RSSI threshold in dBm */
-    A_UINT32 data_rssi_threshold;
+    A_INT32 data_rssi_threshold;
     /* rx linkspeed status, 0:good linkspeed, 1:bad */
     A_UINT32 rx_linkspeed_status;
 } wmi_roam_trigger_reason;
