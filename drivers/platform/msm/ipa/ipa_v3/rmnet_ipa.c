@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2014-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 /*
@@ -3943,7 +3944,7 @@ static int ipa3_lcl_mdm_ssr_notifier_cb(struct notifier_block *this,
 		atomic_set(&rmnet_ipa3_ctx->is_ssr, 1);
 		ipa3_q6_pre_shutdown_cleanup();
 		if (IPA_NETDEV())
-			netif_stop_queue(IPA_NETDEV());
+			netif_device_detach(IPA_NETDEV());
 		ipa3_qmi_stop_workqueues();
 		ipa3_wan_ioctl_stop_qmi_messages();
 		ipa_stop_polling_stats();
