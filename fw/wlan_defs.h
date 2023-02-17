@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2016, 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -458,6 +458,10 @@ typedef struct {
     A_UINT32 low_5ghz_chan;
     A_UINT32 high_5ghz_chan;
     A_UINT32 wireless_modes_ext; /* REGDMN MODE ext */
+    A_UINT32 low_2ghz_chan_ext;
+    A_UINT32 high_2ghz_chan_ext;
+    A_UINT32 low_5ghz_chan_ext;
+    A_UINT32 high_5ghz_chan_ext;
 } HAL_REG_CAPABILITIES;
 
 #ifdef NUM_SPATIAL_STREAM
@@ -972,8 +976,7 @@ struct wlan_dbg_mem_stats {
 };
 
 struct wlan_dbg_peer_stats {
-
-	A_INT32 dummy; /* REMOVE THIS ONCE REAL PEER STAT COUNTERS ARE ADDED */
+    A_INT32 dummy; /* REMOVE THIS ONCE REAL PEER STAT COUNTERS ARE ADDED */
 };
 
 /*
@@ -1017,7 +1020,7 @@ typedef struct {
  * TEMPORARY: leave rssi_chain3 in place for AR900B builds until code using
  * rssi_chain3 has been converted to use wlan_dbg_rx_rate_info_v2_t.
  */
-	A_UINT32 rssi_chain3;
+    A_UINT32 rssi_chain3;
 } wlan_dbg_rx_rate_info_v1b_t;
 
 #if defined(AR900B)

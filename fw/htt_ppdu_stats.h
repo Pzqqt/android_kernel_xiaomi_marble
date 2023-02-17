@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -612,6 +612,58 @@ typedef enum HTT_PPDU_STATS_SPATIAL_REUSE HTT_PPDU_STATS_SPATIAL_REUSE;
             ((_var) |= ((_val) << HTT_PPDU_STATS_COMMON_TLV_BSS_COLOR_ID_S)); \
     } while (0)
 
+#define HTT_PPDU_STATS_COMMON_TLV_BACKOFF_AC_VALID_M     0x00020000
+#define HTT_PPDU_STATS_COMMON_TLV_BACKOFF_AC_VALID_S             17
+
+#define HTT_PPDU_STATS_COMMON_TLV_BACKOFF_AC_VALID_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_COMMON_TLV_BACKOFF_AC_VALID_M) >> \
+    HTT_PPDU_STATS_COMMON_TLV_BACKOFF_AC_VALID_S)
+
+#define HTT_PPDU_STATS_COMMON_TLV_BACKOFF_AC_VALID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_PPDU_STATS_COMMON_TLV_BACKOFF_AC_VALID, _val); \
+        ((_var) |= ((_val) << HTT_PPDU_STATS_COMMON_TLV_BACKOFF_AC_VALID_S)); \
+    } while (0)
+
+#define HTT_PPDU_STATS_COMMON_TLV_BACKOFF_AC_M     0x000c0000
+#define HTT_PPDU_STATS_COMMON_TLV_BACKOFF_AC_S             18
+
+#define HTT_PPDU_STATS_COMMON_TLV_BACKOFF_AC_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_COMMON_TLV_BACKOFF_AC_M) >> \
+    HTT_PPDU_STATS_COMMON_TLV_BACKOFF_AC_S)
+
+#define HTT_PPDU_STATS_COMMON_TLV_BACKOFF_AC_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_PPDU_STATS_COMMON_TLV_AC_VALID, _val); \
+        ((_var) |= ((_val) << HTT_PPDU_STATS_COMMON_TLV_BACKOFF_AC_S)); \
+    } while (0)
+
+#define HTT_PPDU_STATS_COMMON_TLV_NUM_UL_USER_RESPONSES_VALID_M     0x00100000
+#define HTT_PPDU_STATS_COMMON_TLV_NUM_UL_USER_RESPONSES_VALID_S             20
+
+#define HTT_PPDU_STATS_COMMON_TLV_NUM_UL_USER_RESPONSES_VALID_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_COMMON_TLV_NUM_UL_USER_RESPONSES_VALID_M) >> \
+    HTT_PPDU_STATS_COMMON_TLV_NUM_UL_USER_RESPONSES_VALID_S)
+
+#define HTT_PPDU_STATS_COMMON_TLV_NUM_UL_USER_RESPONSES_VALID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_PPDU_STATS_COMMON_TLV_NUM_UL_USER_RESPONSES_VALID, _val); \
+        ((_var) |= ((_val) << HTT_PPDU_STATS_COMMON_TLV_NUM_UL_USER_RESPONSES_VALID_S)); \
+    } while (0)
+
+#define HTT_PPDU_STATS_COMMON_TLV_NUM_UL_USER_RESPONSES_M     0x1fe00000
+#define HTT_PPDU_STATS_COMMON_TLV_NUM_UL_USER_RESPONSES_S             21
+
+#define HTT_PPDU_STATS_COMMON_TLV_NUM_UL_USER_RESPONSES_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_COMMON_TLV_NUM_UL_USER_RESPONSES_M) >> \
+    HTT_PPDU_STATS_COMMON_TLV_NUM_UL_USER_RESPONSES_S)
+
+#define HTT_PPDU_STATS_COMMON_TLV_NUM_UL_USER_RESPONSES_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_PPDU_STATS_COMMON_TLV_NUM_UL_USER_RESPONSES_VALID, _val); \
+        ((_var) |= ((_val) << HTT_PPDU_STATS_COMMON_TLV_NUM_UL_USER_RESPONSES_S)); \
+    } while (0)
+
 #define HTT_PPDU_STATS_COMMON_TRIG_COOKIE_M    0x0000ffff
 #define HTT_PPDU_STATS_COMMON_TRIG_COOKIE_S    0
 
@@ -760,19 +812,36 @@ typedef struct {
      *               by which SRG/Non-SRG based spatial reuse opportunity
      *               was created.
      * BIT [16:16] - PPDU transmitted using PSR opportunity
-     * BIT [31:17] - reserved
+     * BIT [17:17] - backoff_ac_valid
+     * BIT [19:18] - backoff_ac: WMM ACI Value of the backoff engine used for
+     *               this transmission. Only valid if backoff_ac_valid is set
+     *               to 1. Typically this would match the default tid
+     *               number -> AC mapping. For frames in the middle of a SIFS
+     *               burst, the backoff_ac_valid will be 0.
+     * BIT [20:20] - num_ul_user_responses_valid
+     * BIT [21:28] - num_ul_user_responses: The number of user responses
+     *               detected by the MAC layer. This value can be compared with
+     *               the "num_ul_expected_users" field to see whether this frame
+     *               had a complete or partial response failure. Only valid if
+     *               num_ul_user_responses_valid is set to 1.
+     * BIT [31:29] - reserved
      */
     union {
+        A_UINT32 reserved__num_ul_user_responses__num_ul_user_responses_valid__backoff_ac__backoff_ac_valid__psr_tx__aborted_obss_rssi__srg_tx__non_srg_tx__bss_color_id;
         A_UINT32 reserved__psr_tx__aborted_obss_rssi__srg_tx__non_srg_tx___bss_color_id;
         A_UINT32 reserved__aborted_obss_rssi__srg_tx__non_srg_tx___bss_color_id;
         A_UINT32 reserved__bss_color_id;
         struct {
-            A_UINT32 bss_color_id:       6,
-                     non_srg_tx:         1,
-                     srg_tx:             1,
-                     aborted_obss_rssi:  8,
-                     psr_tx:             1,
-                     reserved2:         15;
+            A_UINT32 bss_color_id:                6,
+                     non_srg_tx:                  1,
+                     srg_tx:                      1,
+                     aborted_obss_rssi:           8,
+                     psr_tx:                      1,
+                     backoff_ac_valid:            1,
+                     backoff_ac:                  2,
+                     num_ul_user_responses_valid: 1,
+                     num_ul_user_responses:       8,
+                     reserved2:                   3;
         };
     };
 
@@ -787,16 +856,18 @@ typedef struct {
     };
 
     /*
-     * htt_seq_type field is added for backward compatibility with
-     * pktlog decoder, host driver or any third party tool interpreting
-     * ppdu sequence type. If field 'htt_seq_type'is not present or is
-     * present but set to WAL_PPDU_SEQ_TYPE, decoder should interpret
-     * the seq type as WAL_TXSEND_PPDU_SEQUENCE.
-     * If the new field htt_seq_type is present and is set to
-     * HTT_PPDU_SEQ_TYPE then decoder should interpret the seq type as
-     * HTT_PPDU_STATS_SEQ_TYPE. htt_seq_type field will be set to
-     * HTT_PPDU_SEQ_TYPE in firmware versions where this field is
-     * defined.
+     * BIT [0 : 0] - htt_seq_type field is added for backward compatibility
+     *               with pktlog decoder, host driver or any third party tool
+     *               interpreting ppdu sequence type. If field 'htt_seq_type'
+     *               is not present or is present but set to WAL_PPDU_SEQ_TYPE,
+     *               decoder should interpret the seq type as
+     *               WAL_TXSEND_PPDU_SEQUENCE.
+     *               If the new field htt_seq_type is present and is set to
+     *               HTT_PPDU_SEQ_TYPE then decoder should interpret the
+     *               seq type as HTT_PPDU_STATS_SEQ_TYPE.
+     *               htt_seq_type field will be set to HTT_PPDU_SEQ_TYPE in
+     *               firmware versions where this field is defined.
+     * BIT [31: 1] - reserved
      */
     union {
         A_UINT32 reserved__htt_seq_type;
@@ -1169,6 +1240,19 @@ typedef struct {
      * value is larger than A_INT8.
      */
     A_UINT32 alt_tx_pwr[HTT_STATS_MAX_CHAINS / HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_CHAINS_PER_U32];
+
+    /*
+     * A bitmap indicating the MSDUQs that the scheduler is attempting to
+     * transmit in this PPDU. Note that in some cases, the scheduler's notion
+     * of what MSDUQs are being transmitted from may not be fully accurate,
+     * such as when MPDUs are retried, or when some previously generated MPDUs
+     * that were not attempted OTA yet are tried.
+     *
+     * The valid bit indices for this bitmap are defined by the HTT_MSDUQ_INDEX
+     * enum (in htt.h). For example, (1 << HTT_MSDUQ_INDEX_UDP) would
+     * correspond to the default UDP msduq.
+     */
+    A_UINT32 msduq_bitmap;
 } htt_ppdu_stats_user_common_tlv;
 
 #define HTT_PPDU_STATS_USER_RATE_TLV_TID_NUM_M     0x000000ff
@@ -1712,6 +1796,19 @@ typedef enum HTT_PPDU_STATS_RESP_PPDU_TYPE HTT_PPDU_STATS_RESP_PPDU_TYPE;
         ((_var) |= ((_val) << HTT_PPDU_STATS_USER_RATE_TLV_PUNC_PATTERN_BITMAP_S)); \
     } while (0)
 
+#define HTT_PPDU_STATS_USER_RATE_TLV_EXTRA_EHT_LTF_M  0x00010000
+#define HTT_PPDU_STATS_USER_RATE_TLV_EXTRA_EHT_LTF_S          16
+
+#define HTT_PPDU_STATS_USER_RATE_TLV_EXTRA_EHT_LTF_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USER_RATE_TLV_EXTRA_EHT_LTF_M) >> \
+    HTT_PPDU_STATS_USER_RATE_TLV_EXTRA_EHT_LTF_S)
+
+#define HTT_PPDU_STATS_USER_RATE_TLV_EXTRA_EHT_LTF_SET (_var , _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_RATE_TLV_EXTRA_EHT_LTF, _val); \
+        ((_var) |= ((_val) << HTT_PPDU_STATS_USER_RATE_TLV_EXTRA_EHT_LTF_S)); \
+    } while (0)
+
 typedef enum HTT_PPDU_STATS_RU_SIZE {
     HTT_PPDU_STATS_RU_26,
     HTT_PPDU_STATS_RU_52,
@@ -1897,9 +1994,12 @@ typedef struct {
     /*
      * BIT [15:0]  :- Punctured BW bitmap pattern to indicate which BWs are
      *                punctured.
+     * BIT 16      :- flag showing whether EHT extra LTF is applied
+     *                for current PPDU
      */
     A_UINT32 punc_pattern_bitmap: 16,
-             reserved4:           16;
+             extra_eht_ltf:       1,
+             reserved4:           15;
 } htt_ppdu_stats_user_rate_tlv;
 
 #define HTT_PPDU_STATS_USR_RATE_VALID_M     0x80000000
