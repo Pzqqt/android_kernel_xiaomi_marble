@@ -16516,6 +16516,39 @@ QDF_STATUS hdd_md_bl_evt_cb(void *ctx, struct sir_md_bl_evt *event)
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
 
 /**
+ * hdd_ssr_on_pagefault_cb - Callback to trigger SSR because
+ * of host wake up by firmware with reason pagefault
+ *
+ * Return: None
+ */
+static void hdd_ssr_on_pagefault_cb(void)
+{
+	uint32_t ssr_frequency_on_pagefault;
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	qdf_time_t curr_time;
+
+	hdd_enter();
+
+	if (!hdd_ctx)
+		return;
+
+	ssr_frequency_on_pagefault =
+		ucfg_pmo_get_ssr_frequency_on_pagefault(hdd_ctx->psoc);
+
+	curr_time = qdf_get_time_of_the_day_ms();
+
+	if (!hdd_ctx->last_pagefault_ssr_time ||
+		(curr_time - hdd_ctx->last_pagefault_ssr_time) >=
+					ssr_frequency_on_pagefault) {
+		hdd_info("curr_time %lu last_pagefault_ssr_time %lu ssr_frequency %d",
+			curr_time, hdd_ctx->last_pagefault_ssr_time,
+			ssr_frequency_on_pagefault);
+		hdd_ctx->last_pagefault_ssr_time = curr_time;
+		cds_trigger_recovery(QDF_HOST_WAKEUP_REASON_PAGEFAULT);
+	}
+}
+
+/**
  * hdd_register_cb - Register HDD callbacks.
  * @hdd_ctx: HDD context
  *
@@ -16623,6 +16656,8 @@ int hdd_register_cb(struct hdd_context *hdd_ctx)
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err_rl("Register beacon latency event callback failed");
 
+	sme_register_ssr_on_pagefault_cb(mac_handle, hdd_ssr_on_pagefault_cb);
+
 	hdd_exit();
 
 	return ret;
@@ -16649,6 +16684,8 @@ void hdd_deregister_cb(struct hdd_context *hdd_ctx)
 	}
 
 	mac_handle = hdd_ctx->mac_handle;
+
+	sme_deregister_ssr_on_pagefault_cb(mac_handle);
 
 	sme_deregister_tx_queue_cb(mac_handle);
 

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -329,10 +329,72 @@ cm_roam_send_disable_config(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 cm_roam_send_rt_stats_config(struct wlan_objmgr_psoc *psoc,
 			     uint8_t vdev_id, uint8_t param_value);
+
+/**
+ * cm_roam_send_ho_delay_config() - Send HO delay value to FW to delay
+ * hand-off (in msec) by the specified duration to receive pending rx frames
+ * from current BSS.
+ * @psoc: PSOC pointer
+ * @vdev_id: vdev id
+ * @param_value: HO delay value
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_send_ho_delay_config(struct wlan_objmgr_psoc *psoc,
+			     uint8_t vdev_id, uint16_t param_value);
+
+/**
+ * cm_exclude_rm_partial_scan_freq() - Exclude the channels in roam full scan
+ * that are already scanned as part of partial scan.
+ * @psoc: PSOC pointer
+ * @vdev_id: vdev id
+ * @param_value: include/exclude the partial scan channels in roam full scan
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_exclude_rm_partial_scan_freq(struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id, uint8_t param_value);
+
+/**
+ * cm_roam_full_scan_6ghz_on_disc() - Include the 6 GHz channels in roam full
+ * scan only on prior discovery of any 6 GHz support in the environment
+ * @psoc: PSOC pointer
+ * @vdev_id: vdev id
+ * @param_value: Include the 6 GHz channels in roam full scan:
+ * 1 - Include only on prior discovery of any 6 GHz support in the environment
+ * 0 - Include all the supported 6 GHz channels by default
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_roam_full_scan_6ghz_on_disc(struct wlan_objmgr_psoc *psoc,
+					  uint8_t vdev_id, uint8_t param_value);
 #else
 static inline QDF_STATUS
 cm_roam_send_rt_stats_config(struct wlan_objmgr_psoc *psoc,
 			     uint8_t vdev_id, uint8_t param_value)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+cm_roam_send_ho_delay_config(struct wlan_objmgr_psoc *psoc,
+			     uint8_t vdev_id, uint16_t param_value)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+cm_exclude_rm_partial_scan_freq(struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id, uint8_t param_value)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline
+QDF_STATUS cm_roam_full_scan_6ghz_on_disc(struct wlan_objmgr_psoc *psoc,
+					  uint8_t vdev_id, uint8_t param_value)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }

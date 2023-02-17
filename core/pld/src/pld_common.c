@@ -3253,6 +3253,31 @@ void pld_thermal_unregister(struct device *dev, int mon_id)
 	}
 }
 
+int pld_set_wfc_mode(struct device *dev, enum pld_wfc_mode wfc_mode)
+{
+	int errno = -ENOTSUPP;
+	enum pld_bus_type type;
+
+	type = pld_get_bus_type(dev);
+	switch (type) {
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
+	case PLD_BUS_TYPE_SNOC_FW_SIM:
+	case PLD_BUS_TYPE_IPCI:
+	case PLD_BUS_TYPE_PCIE_FW_SIM:
+		break;
+	case PLD_BUS_TYPE_PCIE:
+		errno = pld_pcie_set_wfc_mode(dev, wfc_mode);
+		break;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		break;
+	}
+
+	return errno;
+}
 const char *pld_bus_width_type_to_str(enum pld_bus_width_type level)
 {
 	switch (level) {

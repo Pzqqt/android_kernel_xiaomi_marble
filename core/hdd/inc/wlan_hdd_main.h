@@ -2013,6 +2013,8 @@ struct hdd_rtpm_tput_policy_context {
  * @twt_en_dis_work: work to send twt enable/disable cmd on MCC/SCC concurrency
  * @dump_in_progress: Stores value of dump in progress
  * @hdd_dual_sta_policy: Concurrent STA policy configuration
+ * @last_pagefault_ssr_time: Time when last recovery was triggered because of
+ * @host wakeup from fw with reason as pagefault
  */
 struct hdd_context {
 	struct wlan_objmgr_psoc *psoc;
@@ -2392,6 +2394,7 @@ struct hdd_context {
 #ifdef CONFIG_WLAN_FREQ_LIST
 	uint8_t power_type;
 #endif
+	qdf_time_t last_pagefault_ssr_time;
 };
 
 /**

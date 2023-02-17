@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -324,6 +324,48 @@ void ucfg_cm_reset_key(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
 QDF_STATUS
 ucfg_cm_roam_send_rt_stats_config(struct wlan_objmgr_pdev *pdev,
 				  uint8_t vdev_id, uint8_t param_value);
+
+/**
+ * ucfg_cm_roam_send_ho_delay_config() - Send the HO delay value to Firmware
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ * @param_value: Value will be from range 20 to 1000 in msec.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_cm_roam_send_ho_delay_config(struct wlan_objmgr_pdev *pdev,
+				  uint8_t vdev_id, uint16_t param_value);
+
+/**
+ * ucfg_cm_exclude_rm_partial_scan_freq() - Exclude the channels in roam full
+ * scan that are already scanned as part of partial scan.
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ * @param_value: Include/exclude the partial scan channel in roam full scan
+ * 1 - Exclude
+ * 0 - Include
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_cm_exclude_rm_partial_scan_freq(struct wlan_objmgr_pdev *pdev,
+				     uint8_t vdev_id, uint8_t param_value);
+
+/**
+ * ucfg_cm_roam_full_scan_6ghz_on_disc() - Include the 6 GHz channels in roam
+ * full scan only on prior discovery of any 6 GHz support in the environment.
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ * @param_value: Include the 6 GHz channels in roam full scan:
+ * 1 - Include only on prior discovery of any 6 GHz support in the environment
+ * 0 - Include all the supported 6 GHz channels by default
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_cm_roam_full_scan_6ghz_on_disc(struct wlan_objmgr_pdev *pdev,
+					       uint8_t vdev_id,
+					       uint8_t param_value);
 #else
 static inline void
 ucfg_cm_reset_key(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id) {}
@@ -331,6 +373,27 @@ ucfg_cm_reset_key(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id) {}
 static inline QDF_STATUS
 ucfg_cm_roam_send_rt_stats_config(struct wlan_objmgr_pdev *pdev,
 				  uint8_t vdev_id, uint8_t param_value)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_cm_roam_send_ho_delay_config(struct wlan_objmgr_pdev *pdev,
+				  uint8_t vdev_id, uint16_t param_value)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_cm_exclude_rm_partial_scan_freq(struct wlan_objmgr_pdev *pdev,
+				     uint8_t vdev_id, uint8_t param_value)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_cm_roam_full_scan_6ghz_on_disc(struct wlan_objmgr_pdev *pdev,
+				    uint8_t vdev_id, uint8_t param_value)
 {
 	return QDF_STATUS_SUCCESS;
 }

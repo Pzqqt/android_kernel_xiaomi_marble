@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -6134,12 +6134,15 @@ static int drv_cmd_set_channel_switch(struct hdd_adapter *adapter,
 		return status;
 	}
 
-	if ((chan_bw != 20) && (chan_bw != 40) && (chan_bw != 80)) {
+	if ((chan_bw != 20) && (chan_bw != 40) && (chan_bw != 80) &&
+	    (chan_bw != 160)) {
 		hdd_err("BW %d is not allowed for CHANNEL_SWITCH", chan_bw);
 		return -EINVAL;
 	}
 
-	if (chan_bw == 80)
+	if (chan_bw == 160)
+		width = CH_WIDTH_160MHZ;
+	else if (chan_bw == 80)
 		width = CH_WIDTH_80MHZ;
 	else if (chan_bw == 40)
 		width = CH_WIDTH_40MHZ;

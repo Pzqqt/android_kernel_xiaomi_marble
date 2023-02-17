@@ -165,6 +165,16 @@ enum pld_platform_cap_flag {
 };
 
 /**
+ * enum pld_wfc_mode - WFC Mode
+ * @PLD_WFC_MODE_OFF: WFC Inactive
+ * @PLD_WFC_MODE_ON: WFC Active
+ */
+enum pld_wfc_mode {
+	PLD_WFC_MODE_OFF,
+	PLD_WFC_MODE_ON,
+};
+
+/**
  * struct pld_platform_cap - platform capabilities
  * @cap_flag: capabilities flag
  *
@@ -1115,6 +1125,15 @@ int pld_thermal_register(struct device *dev, unsigned long state, int mon_id);
  * Return: None
  */
 void pld_thermal_unregister(struct device *dev, int mon_id);
+
+/**
+ * pld_set_wfc_mode() - Sent WFC mode to FW via platform driver
+ * @dev: The device structure
+ * @wfc_mode: WFC Modes (0 => Inactive, 1 => Active)
+ *
+ * Return: Error code on error
+ */
+int pld_set_wfc_mode(struct device *dev, enum pld_wfc_mode wfc_mode);
 
 /**
  * pld_bus_width_type_to_str() - Helper function to convert PLD bandwidth level
