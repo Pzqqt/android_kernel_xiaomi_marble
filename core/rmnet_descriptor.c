@@ -1,5 +1,5 @@
 /* Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -336,12 +336,13 @@ int rmnet_frag_descriptor_add_frags_from(struct rmnet_frag_descriptor *to,
 EXPORT_SYMBOL(rmnet_frag_descriptor_add_frags_from);
 
 int rmnet_frag_ipv6_skip_exthdr(struct rmnet_frag_descriptor *frag_desc,
-				int start, u8 *nexthdrp, __be16 *fragp)
+				int start, u8 *nexthdrp, __be16 *frag_offp,
+				bool *frag_hdrp)
 {
 	u8 nexthdr = *nexthdrp;
 
-	*fragp = 0;
-
+	*frag_offp = 0;
+	*frag_hdrp = false;
 	while (ipv6_ext_hdr(nexthdr)) {
 		struct ipv6_opt_hdr *hp, __hp;
 		int hdrlen;
@@ -363,8 +364,9 @@ int rmnet_frag_ipv6_skip_exthdr(struct rmnet_frag_descriptor *frag_desc,
 			if (!fp)
 				return -EINVAL;
 
-			*fragp = *fp;
-			if (ntohs(*fragp) & ~0x7)
+			*frag_offp = *fp;
+			*frag_hdrp = true;
+			if (ntohs(*frag_offp) & ~0x7)
 				break;
 			hdrlen = 8;
 		} else if (nexthdr == NEXTHDR_AUTH) {
@@ -1264,6 +1266,7 @@ rmnet_frag_segment_coal_data(struct rmnet_frag_descriptor *coal_desc,
 		struct ipv6hdr *ip6h, __ip6h;
 		int ip_len;
 		__be16 frag_off;
+		bool frag_hdr;
 		u8 protocol;
 
 		ip6h = rmnet_frag_header_ptr(coal_desc, 0, sizeof(*ip6h),
@@ -1276,16 +1279,25 @@ rmnet_frag_segment_coal_data(struct rmnet_frag_descriptor *coal_desc,
 		ip_len = rmnet_frag_ipv6_skip_exthdr(coal_desc,
 						     sizeof(*ip6h),
 						     &protocol,
-						     &frag_off);
+						     &frag_off,
+						     &frag_hdr);
 		coal_desc->trans_proto = protocol;
 
-		/* If we run into a problem, or this has a fragment header
+		/* If we run into a problem, or this is fragmented packet
 		 * (which should technically not be possible, if the HW
 		 * works as intended...), bail.
 		 */
 		if (ip_len < 0 || frag_off) {
 			priv->stats.coal.coal_ip_invalid++;
 			return;
+		}
+
+		if (frag_hdr) {
+			/* There is a fragment header, but this is not a
+			 * fragmented packet. We can handle this, but it
+			 * cannot be coalesced because of kernel limitations.
+			 */
+			gro = false;
 		}
 
 		coal_desc->ip_len = (u16)ip_len;
@@ -1573,6 +1585,7 @@ static int rmnet_frag_checksum_pkt(struct rmnet_frag_descriptor *frag_desc)
 		struct ipv6hdr *ip6h, __ip6h;
 		int ip_len;
 		__be16 frag_off;
+		bool frag_hdr;
 		u8 protocol;
 
 		ip6h = rmnet_frag_header_ptr(frag_desc, offset, sizeof(*ip6h),
@@ -1584,7 +1597,8 @@ static int rmnet_frag_checksum_pkt(struct rmnet_frag_descriptor *frag_desc)
 		protocol = ip6h->nexthdr;
 		ip_len = rmnet_frag_ipv6_skip_exthdr(frag_desc,
 						     offset + sizeof(*ip6h),
-						     &protocol, &frag_off);
+						     &protocol, &frag_off,
+						     &frag_hdr);
 		if (ip_len < 0 || frag_off)
 			return -EINVAL;
 
