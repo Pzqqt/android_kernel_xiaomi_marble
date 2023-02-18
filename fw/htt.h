@@ -245,9 +245,10 @@
  * 3.117 Add HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_IND def.
  * 3.118 Add HTT_T2H_MSG_TYPE_RX_DATA_IND and _SOFT_UMAC_TX_COMPL_IND defs.
  * 3.119 Add RX_PEER_META_DATA V1A and V1B defs.
+ * 3.120 Add HTT_H2T_MSG_TYPE_PRIMARY_LINK_PEER_MIGRATE_IND, _RESP defs.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 119
+#define HTT_CURRENT_VERSION_MINOR 120
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -851,6 +852,7 @@ enum htt_h2t_msg_type {
     HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP = 0x21,
     HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_SOC_START_PRE_RESET = 0x22,
     HTT_H2T_MSG_TYPE_RX_CCE_SUPER_RULE_SETUP = 0x23,
+    HTT_H2T_MSG_TYPE_PRIMARY_LINK_PEER_MIGRATE_RESP = 0x24,
 
     /* keep this last */
     HTT_H2T_NUM_MSGS
@@ -10493,6 +10495,139 @@ PREPACK struct htt_rx_cce_super_rule_setup_t {
         } while (0)
 
 
+/**
+ * htt_h2t_primary_link_peer_status_type -
+ * Unique number for each status or reasons
+ * The status reasons can go up to 255 max
+ */
+enum htt_h2t_primary_link_peer_status_type {
+    /* Host Primary Link Peer migration Success */
+    HTT_H2T_PRIMARY_LINK_PEER_MIGRATION_OK         = 0,
+
+
+    /* keep this last */
+    /* Host Primary Link Peer migration Fail */
+    HTT_H2T_PRIMARY_LINK_PEER_MIGRATION_FAIL       = 254,
+    HTT_H2T_PRIMARY_LINK_PEER_MIGRATION_NUM_STATUS = 255
+};
+
+
+/**
+ * @brief host -> Primary peer migration completion message from host
+ *
+ * MSG_TYPE => HTT_H2T_MSG_TYPE_PRIMARY_LINK_PEER_MIGRATE_RESP
+ *
+ * @details
+ *    HTT_H2T_MSG_TYPE_PRIMARY_PEER_MIGRATE_RESP message is sent by host to
+ *    target Confirming that primary link peer migration has completed,
+ *    in response to a HTT_T2H_MSG_TYPE_PRIMARY_LINK_PEER_MIGRATE_IND
+ *    message from the target.
+ *
+ *    The message would appear as follows:
+ *
+ *    |31                        16|15      12|11      8|7            0|
+ *    |----------------------------+----------+---------+--------------|
+ *    |            vdev ID         | pdev ID  | chip ID |   msg type   |
+ *    |----------------------------+----------+---------+--------------|
+ *    |            ML peer ID      |               SW peer ID          |
+ *    |----------------------------+--------------------+--------------|
+ *    |                   reserved                      |    status    |
+ *    |-------------------------------------------------+--------------|
+ *
+ * The message is interpreted as follows:
+ * dword0 - b'0:7   - msg_type: This will be set to 0x24
+ *                    (HTT_H2T_MSG_TYPE_PRIMARY_LINK_PEER_MIGRATE_RESP)
+ *          b'8:11  - chip_id: Indicate which chip has been chosen as primary
+ *          b'12:15 - pdev_id: Indicate which pdev in the chip is chosen
+ *                    as primary
+ *          b'16:31 - vdev_id: Indicate which vdev in the pdev is chosen
+ *                    as primary
+ *
+ * dword1 - b'0:15  - sw_link_peer_id: Indicate the sw_peer_id of the peer
+ *                    chosen as primary
+ *          b'16:31 - ml_peer_id: Indicate the ml_peer_id to which the
+ *                    primary peer belongs.
+ */
+
+typedef struct {
+    A_UINT32 msg_type:            8, /* bits 7:0   */
+             chip_id:             4, /* bits 11:8  */
+             pdev_id:             4, /* bits 15:12 */
+             vdev_id:            16; /* bits 31:16 */
+    A_UINT32 sw_link_peer_id:    16, /* bits 15:0  */
+             ml_peer_id:         16; /* bits 31:16 */
+    A_UINT32 status:             8,  /* bits 7:0   */
+             reserved:           24; /* bits 31:8  */
+} htt_h2t_primary_link_peer_migrate_resp_t;
+
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_CHIP_ID_M 0x00000F00
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_CHIP_ID_S 8
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_CHIP_ID_GET(_var) \
+        (((_var) & HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_CHIP_ID_M) >> \
+        HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_CHIP_ID_S)
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_CHIP_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_CHIP_ID, _val); \
+            ((_var) |= ((_val) << HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_CHIP_ID_S));\
+        } while (0)
+
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_PDEV_ID_M 0x0000F000
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_PDEV_ID_S 12
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_PDEV_ID_GET(_var) \
+        (((_var) & HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_PDEV_ID_M) >> \
+        HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_PDEV_ID_S)
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_PDEV_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_PDEV_ID, _val); \
+            ((_var) |= ((_val) << HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_PDEV_ID_S));\
+        } while (0)
+
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_VDEV_ID_M 0xFFFF0000
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_VDEV_ID_S 16
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_VDEV_ID_GET(_var) \
+        (((_var) & HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_VDEV_ID_M) >> \
+        HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_VDEV_ID_S)
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_VDEV_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_VDEV_ID, _val); \
+            ((_var) |= ((_val) << HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_VDEV_ID_S));\
+        } while (0)
+
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_SW_LINK_PEER_ID_M 0x0000FFFF
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_SW_LINK_PEER_ID_S 0
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_SW_LINK_PEER_ID_GET(_var) \
+        (((_var) & HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_SW_LINK_PEER_ID_M) >> \
+        HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_SW_LINK_PEER_ID_S)
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_SW_LINK_PEER_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_SW_LINK_PEER_ID, _val); \
+            ((_var) |= ((_val) << HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_SW_LINK_PEER_ID_S));\
+        } while (0)
+
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_ML_PEER_ID_M 0xFFFF0000
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_ML_PEER_ID_S 16
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_ML_PEER_ID_GET(_var) \
+        (((_var) & HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_ML_PEER_ID_M) >> \
+        HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_ML_PEER_ID_S)
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_ML_PEER_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_ML_PEER_ID, _val); \
+            ((_var) |= ((_val) << HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_ML_PEER_ID_S));\
+        } while (0)
+
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_STATUS_M 0x000000FF
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_STATUS_S 0
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_STATUS_GET(_var) \
+        (((_var) & HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_STATUS_M) >> \
+        HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_STATUS_S)
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_STATUS_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_STATUS, _val); \
+            ((_var) |= ((_val) << HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_STATUS_S));\
+        } while (0)
+
+
+
 /*=== target -> host messages ===============================================*/
 
 
@@ -10559,6 +10694,7 @@ enum htt_t2h_msg_type {
     HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_IND    = 0x34,
     HTT_T2H_MSG_TYPE_RX_DATA_IND                   = 0x35,
     HTT_T2H_MSG_TYPE_SOFT_UMAC_TX_COMPL_IND        = 0x36,
+    HTT_T2H_MSG_TYPE_PRIMARY_LINK_PEER_MIGRATE_IND = 0x37,
 
 
     HTT_T2H_MSG_TYPE_TEST,
@@ -21321,6 +21457,104 @@ struct htt_t2h_rx_data_msdu_info
     } while (0)
 #define HTT_RX_DATA_MSDU_INFO_ERROR_INFO_GET(word) \
     (((word) & HTT_RX_DATA_MSDU_INFO_ERROR_INFO_M) >> HTT_RX_DATA_MSDU_INFO_ERROR_INFO_S)
+
+
+/**
+ * @brief target -> Primary peer migration message to host
+ *
+ * MSG_TYPE => HTT_T2H_MSG_TYPE_PRIMARY_LINK_PEER_MIGRATE_IND
+ *
+ * @details
+ *    HTT_T2H_MSG_TYPE_PRIMARY_LINK_PEER_MIGRATE_IND message is sent by target
+ *    to host to flush & set-up the RX rings to new primary peer
+ *
+ *    The message would appear as follows:
+ *
+ *    |31                           16|15     12|11      8|7            0|
+ *    |-------------------------------+---------+---------+--------------|
+ *    |            vdev ID            | pdev ID | chip ID |   msg type   |
+ *    |-------------------------------+---------+---------+--------------|
+ *    |            ML peer ID         |               SW peer ID         |
+ *    |-------------------------------+----------------------------------|
+ *
+ * The message is interpreted as follows:
+ * dword0 - b'0:7   - msg_type: This will be set to 0x37
+ *                    (HTT_T2H_MSG_TYPE_PRIMARY_LINK_PEER_MIGRATE_IND)
+ *          b'8:11  - chip_id: Indicate which chip has been chosen as primary
+ *          b'12:15 - pdev_id: Indicate which pdev in the chip is chosen
+ *                    as primary
+ *          b'16:31 - vdev_id: Indicate which vdev in the pdev is chosen
+ *                    as primary
+ *
+ * dword1 - b'0:15  - sw_link_peer_id: Indicate the sw_peer_id of the peer
+ *                    chosen as primary
+ *          b'16:31 - ml_peer_id: Indicate the ml_peer_id to which the
+ *                    primary peer belongs.
+ */
+typedef struct {
+    A_UINT32 msg_type:            8, /* bits 7:0   */
+             chip_id:             4, /* bits 11:8  */
+             pdev_id:             4, /* bits 15:12 */
+             vdev_id:            16; /* bits 31:16 */
+    A_UINT32 sw_link_peer_id:    16, /* bits 15:0  */
+             ml_peer_id:         16; /* bits 31:16 */
+} htt_t2h_primary_link_peer_migrate_ind_t;
+
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_CHIP_ID_M 0x00000F00
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_CHIP_ID_S 8
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_CHIP_ID_GET(_var) \
+        (((_var) & HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_CHIP_ID_M) >> \
+        HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_CHIP_ID_S)
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_CHIP_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_CHIP_ID, _val); \
+            ((_var) |= ((_val) << HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_CHIP_ID_S));\
+        } while (0)
+
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_PDEV_ID_M 0x0000F000
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_PDEV_ID_S 12
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_PDEV_ID_GET(_var) \
+        (((_var) & HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_PDEV_ID_M) >> \
+        HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_PDEV_ID_S)
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_PDEV_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_PDEV_ID, _val); \
+            ((_var) |= ((_val) << HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_PDEV_ID_S));\
+        } while (0)
+
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_VDEV_ID_M 0xFFFF0000
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_VDEV_ID_S 16
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_VDEV_ID_GET(_var) \
+        (((_var) & HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_VDEV_ID_M) >> \
+        HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_VDEV_ID_S)
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_VDEV_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_VDEV_ID, _val); \
+            ((_var) |= ((_val) << HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_VDEV_ID_S));\
+        } while (0)
+
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_SW_LINK_PEER_ID_M 0x0000FFFF
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_SW_LINK_PEER_ID_S 0
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_SW_LINK_PEER_ID_GET(_var) \
+        (((_var) & HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_SW_LINK_PEER_ID_M) >> \
+        HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_SW_LINK_PEER_ID_S)
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_SW_LINK_PEER_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_SW_LINK_PEER_ID, _val); \
+            ((_var) |= ((_val) << HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_SW_LINK_PEER_ID_S));\
+        } while (0)
+
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_ML_PEER_ID_M 0xFFFF0000
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_ML_PEER_ID_S 16
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_ML_PEER_ID_GET(_var) \
+        (((_var) & HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_ML_PEER_ID_M) >> \
+        HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_ML_PEER_ID_S)
+#define HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_ML_PEER_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_ML_PEER_ID, _val); \
+            ((_var) |= ((_val) << HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_ML_PEER_ID_S));\
+        } while (0)
+
 
 
 #endif
