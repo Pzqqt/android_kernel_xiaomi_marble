@@ -29997,6 +29997,16 @@ typedef struct {
 #define WMI_LATENCY_SET_DISABLE_UL_MU_MIMO(latency_tid_info,val) \
     WMI_SET_BITS(latency_tid_info, WMI_LATENCY_DISABLE_UL_MU_MIMO_BIT_POS, WMI_LATENCY_DISABLE_UL_MU_MIMO_NUM_BITS, val)
 
+#define WMI_LATENCY_SAWF_UL_PARAMS_FLAG_POS         20
+#define WMI_LATENCY_SAWF_UL_PARAMS_FLAG_NUM_BITS    1
+
+#define WMI_LATENCY_GET_SAWF_UL_PARAMS_BIT(latency_tid_info) \
+    WMI_GET_BITS(latency_tid_info, WMI_LATENCY_SAWF_UL_PARAMS_FLAG_POS, WMI_LATENCY_SAWF_UL_PARAMS_FLAG_NUM_BITS)
+
+#define WMI_LATENCY_SET_SAWF_UL_PARAMS_BIT(latency_tid_info, val) \
+    WMI_SET_BITS(latency_tid_info, WMI_LATENCY_SAWF_UL_PARAMS_FLAG_POS, WMI_LATENCY_SAWF_UL_PARAMS_FLAG_NUM_BITS, val)
+
+
 typedef struct {
     /** TLV tag and len; tag equals
      *  WMITLV_TAG_STRUC_wmi_tid_latency_info
@@ -30040,7 +30050,8 @@ typedef struct {
      */
     A_UINT32 min_tput;
     /* latency_tid_info
-     *  Bits 20-31      - Reserved (Shall be zero)
+     *  Bits 21-31      - Reserved (Shall be zero)
+     *  Bit  20         - Flag to indicate SAWF UL params (and not mesh latency)
      *  Bit  19         - Disable UL MU-MIMO. If set, UL MU-MIMO is disabled
      *                    for the specified AC. Note that TID level control is
      *                    not possible for UL MU-MIMO (the granularity is AC).
