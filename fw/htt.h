@@ -246,9 +246,10 @@
  * 3.118 Add HTT_T2H_MSG_TYPE_RX_DATA_IND and _SOFT_UMAC_TX_COMPL_IND defs.
  * 3.119 Add RX_PEER_META_DATA V1A and V1B defs.
  * 3.120 Add HTT_H2T_MSG_TYPE_PRIMARY_LINK_PEER_MIGRATE_IND, _RESP defs.
+ * 3.121 Add HTT_T2H_MSG_TYPE_PEER_AST_OVERRIDE_INDEX_IND def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 120
+#define HTT_CURRENT_VERSION_MINOR 121
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -10695,6 +10696,7 @@ enum htt_t2h_msg_type {
     HTT_T2H_MSG_TYPE_RX_DATA_IND                   = 0x35,
     HTT_T2H_MSG_TYPE_SOFT_UMAC_TX_COMPL_IND        = 0x36,
     HTT_T2H_MSG_TYPE_PRIMARY_LINK_PEER_MIGRATE_IND = 0x37,
+    HTT_T2H_MSG_TYPE_PEER_AST_OVERRIDE_INDEX_IND   = 0x38,
 
 
     HTT_T2H_MSG_TYPE_TEST,
@@ -21057,7 +21059,7 @@ typedef struct {
  * This CoDel MSDU queue latencies array whose location and number of
  * elements are specified by this HTT_T2H message consists of 16-bit elements
  * that each specify a statistical summary (min) of a MSDU queue's latency,
- * using microseconds units.
+ * using milliseconds units.
  */
 #define HTT_CODEL_MSDUQ_LATENCIES_ARRAY_ELEM_BYTES 2
 
@@ -21554,6 +21556,131 @@ typedef struct {
             HTT_CHECK_SET_VAL(HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_ML_PEER_ID, _val); \
             ((_var) |= ((_val) << HTT_H2T_PRIMARY_LINK_PEER_MIGRATE_ML_PEER_ID_S));\
         } while (0)
+
+/**
+ * @brief target -> host rx peer AST override message defenition
+ *
+ * MSG_TYPE => HTT_T2H_MSG_TYPE_PEER_AST_OVERRIDE_INDEX_IND
+ *
+ * @details
+ * Format inherits parts of the HTT_T2H_MSG_TYPE_PEER_MAP_V3 published above
+ * where in the dummy ast index is provided to the host.
+ * This new message below is sent to the host at run time from the TX_DE
+ * exception path when a SAWF flow is detected for a peer.
+ * This is sent up once per SAWF peer.
+ * This layout assumes the target operates as little-endian.
+ *
+ * |31             24|23                16|15              8|7               0|
+ * |--------------------------------------+-----------------+-----------------|
+ * |              SW peer ID              |     vdev ID     |     msg type    |
+ * |-----------------+--------------------+-----------------+-----------------|
+ * |    MAC addr 3   |    MAC addr 2      |    MAC addr 1   |    MAC addr 0   |
+ * |-----------------+--------------------+-----------------+-----------------|
+ * |          dummy AST Index #1          |    MAC addr 5   |    MAC addr 4   |
+ * |--------------------------------------+-----------------+-----------------|
+ * |              reserved                |      dummy AST Index #2           |
+ * |--------------------------------------+-----------------------------------|
+ *
+ * The following field definitions describe the format of the peer ast override
+ * index  messages sent from the target to the host.
+ *   - MSG_TYPE
+ *     Bits 7:0
+ *     Purpose: identifies this as a peer map v3 message
+ *     Value: 0x38 (HTT_T2H_MSG_TYPE_PEER_AST_OVERRIDE_INDEX_IND)
+ *   - VDEV_ID
+ *     Bits 15:8
+ *     Purpose: Indicates which virtual device the peer is associated with.
+ *   - SW_PEER_ID
+ *     Bits 31:16
+ *     Purpose: The peer ID (index) that WAL has allocated for this peer.
+ *   - MAC_ADDR_L32
+ *     Bits 31:0
+ *     Purpose: Identifies which peer node the peer ID is for.
+ *     Value: lower 4 bytes of peer node's MAC address
+ *   - MAC_ADDR_U16
+ *     Bits 15:0
+ *     Purpose: Identifies which peer node the peer ID is for.
+ *     Value: upper 2 bytes of peer node's MAC address
+ *   - AST_INDEX1
+ *     Bits 31:16
+ *     Purpose: The 1st extra AST index used to identify user defined MSDUQ
+ *   - AST_INDEX2
+ *     Bits 15:0
+ *     Purpose: The 2nd extra AST index used to identify user defined MSDUQ
+*/
+
+/* dword 0 */
+#define HTT_PEER_AST_OVERRIDE_SW_PEER_ID_M   0xffff0000
+#define HTT_PEER_AST_OVERRIDE_SW_PEER_ID_S   16
+#define HTT_PEER_AST_OVERRIDE_VDEV_ID_M      0x0000ff00
+#define HTT_PEER_AST_OVERRIDE_VDEV_ID_S      8
+/* dword 1 */
+#define HTT_PEER_AST_OVERRIDE_MAC_ADDR_L32_M 0xffffffff
+#define HTT_PEER_AST_OVERRIDE_MAC_ADDR_L32_S 0
+/* dword 2 */
+#define HTT_PEER_AST_OVERRIDE_MAC_ADDR_U16_M 0x0000ffff
+#define HTT_PEER_AST_OVERRIDE_MAC_ADDR_U16_S 0
+#define HTT_PEER_AST_OVERRIDE_AST_INDEX1_M   0xffff0000
+#define HTT_PEER_AST_OVERRIDE_AST_INDEX1_S   16
+/* dword 3 */
+#define HTT_PEER_AST_OVERRIDE_AST_INDEX2_M   0x0000ffff
+#define HTT_PEER_AST_OVERRIDE_AST_INDEX2_S   0
+
+#define HTT_PEER_AST_OVERRIDE_VDEV_ID_SET(word, value)           \
+    do {                                                      \
+        HTT_CHECK_SET_VAL(HTT_PEER_AST_OVERRIDE_VDEV_ID, value); \
+        (word) |= (value)  << HTT_PEER_AST_OVERRIDE_VDEV_ID_S;   \
+    } while (0)
+#define HTT_PEER_AST_OVERRIDE_VDEV_ID_GET(word) \
+    (((word) & HTT_PEER_AST_OVERRIDE_VDEV_ID_M) >> HTT_PEER_AST_OVERRIDE_VDEV_ID_S)
+
+#define HTT_PEER_AST_OVERRIDE_SW_PEER_ID_SET(word, value)            \
+    do {                                                          \
+        HTT_CHECK_SET_VAL(HTT_PEER_AST_OVERRIDE_SW_PEER_ID, value);  \
+        (word) |= (value)  << HTT_PEER_AST_OVERRIDE_SW_PEER_ID_S;    \
+    } while (0)
+#define HTT_PEER_AST_OVERRIDE_SW_PEER_ID_GET(word) \
+    (((word) & HTT_PEER_AST_OVERRIDE_SW_PEER_ID_M) >> HTT_PEER_AST_OVERRIDE_SW_PEER_ID_S)
+
+#define HTT_PEER_AST_OVERRIDE_MAC_ADDR_L32_SET(word, value)            \
+    do {                                                          \
+        HTT_CHECK_SET_VAL(HTT_PEER_AST_OVERRIDE_MAC_ADDR_L32, value);  \
+        (word) |= (value)  << HTT_PEER_AST_OVERRIDE_MAC_ADDR_L32_S;    \
+    } while (0)
+#define HTT_PEER_AST_OVERRIDE_MAC_ADDR_L32_GET(word) \
+    (((word) & HTT_PEER_AST_OVERRIDE_MAC_ADDR_L32_M) >> HTT_PEER_AST_OVERRIDE_MAC_ADDR_L32_S)
+
+#define HTT_PEER_AST_OVERRIDE_MAC_ADDR_U16_SET(word, value)            \
+    do {                                                          \
+        HTT_CHECK_SET_VAL(HTT_PEER_AST_OVERRIDE_MAC_ADDR_U16, value);  \
+        (word) |= (value)  << HTT_PEER_AST_OVERRIDE_MAC_ADDR_U16_S;    \
+    } while (0)
+#define HTT_PEER_AST_OVERRIDE_MAC_ADDR_U16_GET(word) \
+    (((word) & HTT_PEER_AST_OVERRIDE_MAC_ADDR_U16_M) >> HTT_PEER_AST_OVERRIDE_MAC_ADDR_U16_S)
+
+#define HTT_PEER_AST_OVERRIDE_AST_INDEX1_SET(word, value)            \
+    do {                                                           \
+        HTT_CHECK_SET_VAL(HTT_PEER_AST_OVERRIDE_AST_INDEX1, value);  \
+        (word) |= (value)  << HTT_PEER_AST_OVERRIDE_AST_INDEX1_S;    \
+    } while (0)
+#define HTT_PEER_AST_OVERRIDE_AST_INDEX1_GET(word) \
+    (((word) & HTT_PEER_AST_OVERRIDE_AST_INDEX1_M) >> HTT_PEER_AST_OVERRIDE_AST_INDEX1_S)
+
+
+#define HTT_PEER_AST_OVERRIDE_AST_INDEX2_SET(word, value)            \
+    do {                                                           \
+        HTT_CHECK_SET_VAL(HTT_PEER_AST_OVERRIDE_AST_INDEX2, value);  \
+        (word) |= (value)  << HTT_PEER_AST_OVERRIDE_AST_INDEX2_S;    \
+    } while (0)
+#define HTT_PEER_AST_OVERRIDE_AST_INDEX2_GET(word) \
+    (((word) & HTT_PEER_AST_OVERRIDE_AST_INDEX2_M) >> HTT_PEER_AST_OVERRIDE_AST_INDEX2_S)
+
+
+#define HTT_PEER_AST_OVERRIDE_MAC_ADDR_WORD_BASE_OFFSET    4  /* bytes */
+#define HTT_PEER_AST_OVERRIDE_DUMMY_AST1_WORD_BASE_OFFSET  8  /* bytes */
+#define HTT_PEER_AST_OVERRIDE_DUMMY_AST2_WORD_BASE_OFFSET 12  /* bytes */
+
+#define HTT_PEER_AST_OVERRIDE_INDEX_IND_BYTES             16
 
 
 
