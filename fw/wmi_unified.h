@@ -12787,6 +12787,14 @@ typedef struct {
     A_UINT32 tx_bcn_outage_cnt; /* Total number of failed beacons */
 } wmi_bcn_stats;
 
+#define WMI_VDEV_STATS_FLAGS_LINK_ACTIVE_FLAG_IS_VALID_BIT 0
+#define WMI_VDEV_STATS_FLAGS_LINK_ACTIVE_FLAG_IS_VALID_MASK \
+    (1 << WMI_VDEV_STATS_FLAGS_LINK_ACTIVE_FLAG_IS_VALID_BIT)
+
+#define WMI_VDEV_STATS_FLAGS_IS_LINK_ACTIVE_BIT 1
+#define WMI_VDEV_STATS_FLAGS_IS_LINK_ACTIVE_MASK \
+    (1 << WMI_VDEV_STATS_FLAGS_IS_LINK_ACTIVE_BIT)
+
 /**
  *  vdev extension statistics
  */
@@ -12802,6 +12810,15 @@ typedef struct {
     A_UINT32 unsolicited_prb_succ_cnt;
     /* Total number of unsolicited probe response frames failed */
     A_UINT32 unsolicited_prb_fail_cnt;
+    /* vdev info flags:
+     * bit 0: WMI_VDEV_STATS_FLAGS_LINK_ACTIVE_FLAG_IS_VALID,
+     *     0: the "is link active" flag is not valid
+     *     1: the "is link active" flag is valid
+     * bit 1: WMI_VDEV_STATS_FLAGS_IS_LINK_ACTIVE,
+     *     1:link_active; 0:link_inactive
+     * Refer to WMI_VDEV_STATS_FLAGS_ defs.
+     */
+    A_UINT32 flags;
 } wmi_vdev_extd_stats;
 
 /**
