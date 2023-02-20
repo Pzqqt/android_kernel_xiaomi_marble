@@ -5320,6 +5320,7 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_3d_merge_reset = true;
 		sde_cfg->skip_inline_rot_threshold = true;
 		sde_cfg->true_inline_rot_rev = SDE_INLINE_ROT_VERSION_2_0_1;
+		sde_cfg->in_rot_maxheight = 1200;
 		sde_cfg->vbif_disable_inner_outer_shareable = true;
 		sde_cfg->dither_luma_mode_support = true;
 		sde_cfg->mdss_hw_block_size = 0x158;
