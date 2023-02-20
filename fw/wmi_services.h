@@ -616,6 +616,7 @@ typedef  enum  {
     WMI_SERVICE_TDLS_CONCURRENCY_SUPPORT = 363, /* Support for TDLS concurrency in FW */
     WMI_SERVICE_SELF_MLD_ROAM_BETWEEN_DBS_AND_HBS = 364, /* Suppport roam between DBS(2G+5G/6G) to HBS(5G+6G) with self AP MLD. */
     WMI_SERVICE_PEER_METADATA_V1A_V1B_SUPPORT = 365, /* Support rx peer meta data v1a and v1b */
+    WMI_SERVICE_CFR_CAPTURE_PDEV_ID_SOC = 366, /* Host can send PDEV_ID_SOC with CFR capture request and FW can derive pdev_id from TA address */
 
     WMI_MAX_EXT2_SERVICE
 
