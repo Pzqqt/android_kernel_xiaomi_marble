@@ -40555,6 +40555,7 @@ typedef enum {
     WMI_MLO_LINK_FORCE_REASON_NEW_CONNECT      = 1, /* Set force specific links because of new connection */
     WMI_MLO_LINK_FORCE_REASON_NEW_DISCONNECT   = 2, /* Set force specific links because of new dis-connection */
     WMI_MLO_LINK_FORCE_REASON_LINK_REMOVAL     = 3, /* Set force specific links because of AP-side link removal */
+    WMI_MLO_LINK_FORCE_REASON_TDLS             = 4, /* Set force specific links because of 11BE MLO TDLS setup/teardown */
 } WMI_MLO_LINK_FORCE_REASON;
 
 typedef struct wmi_mlo_link_set_active_cmd
