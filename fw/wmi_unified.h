@@ -9036,6 +9036,15 @@ typedef enum {
      *  1-31  | Reserved.
      */
     WMI_PDEV_PARAM_SET_CONC_LOW_LATENCY_MODE,
+
+    /*
+     * Parameter to enable/disable low power listen mode
+     * bit    | config_mode
+     * -----------------
+     *  0     | 0:disable, 1:enable.
+     *  1-31  | Reserved.
+     */
+    WMI_PDEV_PARAM_LPL_SETTING,
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
