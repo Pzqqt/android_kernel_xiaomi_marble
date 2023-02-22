@@ -9908,10 +9908,10 @@ PREPACK struct htt_h2t_sawf_def_queues_map_report_req {
 
 /**
  * @brief Format of shared memory between Host and Target
- *        for UMAC hang recovery feature messaging.
+ *        for UMAC recovery feature messaging.
  * @details
  *  This is shared memory between Host and Target allocated
- *  and used in chips where UMAC hang recovery feature is supported.
+ *  and used in chips where UMAC recovery feature is supported.
  *  This shared memory is allocated per SOC level by Host since each
  *  SOC's target Q6FW needs to communicate independently to the Host
  *  through its own shared memory.
@@ -9929,11 +9929,12 @@ PREPACK struct htt_h2t_sawf_def_queues_map_report_req {
  *          b'1     - do_post_reset_start
  *          b'2     - do_post_reset_complete
  *          b'3     - initiate_umac_recovery
- *          b'4:31  - rsvd_t2h
+ *          b'4     - initiate_target_recovery_sync_using_umac
+ *          b'5:31  - rsvd_t2h
  * dword2 - b'0     - pre_reset_done
  *          b'1     - post_reset_start_done
  *          b'2     - post_reset_complete_done
- *          b'3     - start_pre_reset
+ *          b'3     - start_pre_reset (deprecated)
  *          b'4:31  - rsvd_h2t
  */
 PREPACK typedef struct {
@@ -9944,18 +9945,23 @@ PREPACK typedef struct {
          * BIT [0]        :- T2H msg to do pre-reset
          * BIT [1]        :- T2H msg to do post-reset start
          * BIT [2]        :- T2H msg to do post-reset complete
-         * BIT [3]        :- T2H msg to initiate UMAC recovery sequence.
-         *                   This is needed to synchronize UMAC recovery
-         *                   across all SOCs.
-         * BIT [31 : 4]   :- reserved
+         * BIT [3]        :- T2H msg to indicate to Host that
+         *                   a trigger request for MLO UMAC Recovery
+         *                   is received for UMAC hang.
+         * BIT [4]        :- T2H msg to indicate to Host that
+         *                   a trigger request for MLO UMAC Recovery
+         *                   is received for Mode-1 Target Recovery.
+         * BIT [31 : 5]   :- reserved
          */
         A_UINT32 t2h_msg;
         struct {
-            A_UINT32 do_pre_reset             :      1, /* BIT [0]      */
-                     do_post_reset_start      :      1, /* BIT [1]      */
-                     do_post_reset_complete   :      1, /* BIT [2]      */
-                     initiate_umac_recovery   :      1, /* BIT [3]      */
-                     rsvd_t2h                 :     28; /* BIT [31 : 4] */
+            A_UINT32
+                do_pre_reset:                              1, /* BIT [0]    */
+                do_post_reset_start:                       1, /* BIT [1]    */
+                do_post_reset_complete:                    1, /* BIT [2]    */
+                initiate_umac_recovery:                    1, /* BIT [3]    */
+                initiate_target_recovery_sync_using_umac:  1, /* BIT [4]    */
+                rsvd_t2h:                                 27; /* BIT [31:5] */
         };
     };
 
@@ -9964,10 +9970,7 @@ PREPACK typedef struct {
          * BIT [0]        :- H2T msg to send pre-reset done
          * BIT [1]        :- H2T msg to send post-reset start done
          * BIT [2]        :- H2T msg to send post-reset complete done
-         * BIT [3]        :- H2T msg to start pre-reset.
-         *                   This is expected only after T2H
-         *                   initiate_umac_recovery was received by Host
-         *                   from one of the SOCs.
+         * BIT [3]        :- H2T msg to start pre-reset. This is deprecated.
          * BIT [31 : 4]   :- reserved
          */
         A_UINT32 h2t_msg;
@@ -10032,6 +10035,18 @@ PREPACK typedef struct {
     do { \
         HTT_CHECK_SET_VAL(HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_UMAC_RECOVERY, _val); \
         ((word1) |= ((_val) << HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_UMAC_RECOVERY_S));\
+    } while (0)
+
+/* dword1 - b'4 - initiate_target_recovery_sync_using_umac */
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_TARGET_RECOVERY_SYNC_USING_UMAC_M 0x00000010
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_TARGET_RECOVERY_SYNC_USING_UMAC_S 4
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_TARGET_RECOVERY_SYNC_USING_UMAC_GET(word1) \
+    (((word1) & HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_TARGET_RECOVERY_SYNC_USING_UMAC_M) >> \
+     HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_TARGET_RECOVERY_SYNC_USING_UMAC_S)
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_TARGET_RECOVERY_SYNC_USING_UMAC_SET(word1, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_TARGET_RECOVERY_SYNC_USING_UMAC, _val); \
+        ((word1) |= ((_val) << HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_TARGET_RECOVERY_SYNC_USING_UMAC_S));\
     } while (0)
 
 /* dword2 - b'0 - pre_reset_done */
