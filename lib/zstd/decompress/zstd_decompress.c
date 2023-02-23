@@ -223,7 +223,7 @@ size_t ZSTD_sizeof_DCtx (const ZSTD_DCtx* dctx)
 size_t ZSTD_estimateDCtxSize(void) { return sizeof(ZSTD_DCtx); }
 
 
-static size_t ZSTD_startingInputLength(ZSTD_format_e format)
+size_t ZSTD_startingInputLength(ZSTD_format_e format)
 {
     size_t const startingInputLength = ZSTD_FRAMEHEADERSIZE_PREFIX(format);
     /* only supports formats ZSTD_f_zstd1 and ZSTD_f_zstd1_magicless */

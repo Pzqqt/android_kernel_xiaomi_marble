@@ -2984,5 +2984,7 @@ ZSTDLIB_STATIC_API size_t ZSTD_decompressBlock(ZSTD_DCtx* dctx, void* dst, size_
 ZSTD_DEPRECATED("The block API is deprecated in favor of the normal compression API. See docs.")
 ZSTDLIB_STATIC_API size_t ZSTD_insertBlock    (ZSTD_DCtx* dctx, const void* blockStart, size_t blockSize);  /*< insert uncompressed block into `dctx` history. Useful for multi-blocks decompression. */
 
+ZSTDLIB_API size_t ZSTD_startingInputLength(ZSTD_format_e format);
+
 #endif   /* ZSTD_H_ZSTD_STATIC_LINKING_ONLY */
 

@@ -15,6 +15,8 @@
 #include <linux/zstd.h>
 
 #include "common/zstd_deps.h"
+#include "common/error_private.h"  /* error codes and messages */
+#include "decompress/zstd_decompress_internal.h"   /* ZSTD_DCtx */
 
 /* Common symbols. zstd_compress must depend on zstd_decompress. */
 
@@ -77,7 +79,8 @@ EXPORT_SYMBOL(zstd_init_dstream);
 
 size_t zstd_reset_dstream(zstd_dstream *dstream)
 {
-	return ZSTD_resetDStream(dstream);
+        FORWARD_IF_ERROR(ZSTD_DCtx_reset(dstream, ZSTD_reset_session_only), "");
+        return ZSTD_startingInputLength(dstream->format);
 }
 EXPORT_SYMBOL(zstd_reset_dstream);
 
