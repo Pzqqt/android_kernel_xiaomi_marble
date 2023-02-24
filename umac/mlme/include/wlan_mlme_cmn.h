@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,9 @@
 #include <include/wlan_pdev_mlme.h>
 #include <include/wlan_vdev_mlme.h>
 #include "wlan_cm_public_struct.h"
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#include "wlan_cm_roam_public_struct.h"
+#endif
 #include "wlan_twt_public_structs.h"
 
 /**
@@ -68,6 +71,10 @@
  * @mlme_cm_roam_cmpl_cb: Roam sync complete cb
  * @vdev: vdev pointer
  *
+ * @mlme_cm_roam_rt_stats_cb: Roam stats cb
+ * @roam_stats_event: roam_stats_event pointer
+ * @idx: TLV idx for roam_stats_event
+ *
  * @mlme_cm_ft_preauth_cmpl_cb: Roam ft preauth complete cb
  * @vdev: vdev pointer
  * @rsp: preauth response pointer
@@ -103,6 +110,8 @@ struct mlme_cm_ops {
 	QDF_STATUS (*mlme_cm_roam_start_cb)(struct wlan_objmgr_vdev *vdev);
 	QDF_STATUS (*mlme_cm_roam_abort_cb)(struct wlan_objmgr_vdev *vdev);
 	QDF_STATUS (*mlme_cm_roam_cmpl_cb)(struct wlan_objmgr_vdev *vdev);
+	void (*mlme_cm_roam_rt_stats_cb)(struct roam_stats_event *roam_stats,
+					 uint8_t idx);
 #endif
 #ifdef WLAN_FEATURE_PREAUTH_ENABLE
 	QDF_STATUS (*mlme_cm_ft_preauth_cmpl_cb)(
@@ -815,6 +824,15 @@ QDF_STATUS mlme_cm_osif_roam_abort_ind(struct wlan_objmgr_vdev *vdev);
  * Return: QDF_STATUS
  */
 QDF_STATUS mlme_cm_osif_roam_complete(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_cm_osif_roam_rt_stats() - osif Roam stats callback
+ * @roam_stats: roam_stats_event pointer
+ * @idx: TLV idx for roam_stats_event
+ *
+ * Return: void
+ */
+void mlme_cm_osif_roam_rt_stats(struct roam_stats_event *roam_stats, uint8_t idx);
 #endif
 
 #ifdef WLAN_FEATURE_PREAUTH_ENABLE
