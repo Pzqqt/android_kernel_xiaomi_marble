@@ -682,30 +682,6 @@ QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle,
  */
 QDF_STATUS sme_set_pmk_cache_ft(mac_handle_t mac_handle, uint8_t vdev_id,
 				struct wlan_crypto_pmksa *pmk_cache);
-
-/**
- * sme_roam_events_register_callback() - Register roam events callback
- * @mac_handle: Opaque handle to the MAC context
- * @roam_rt_stats_cb: Function to be invoked for roam events stats
- *
- * This function will register a callback for roams events stats.
- *
- * Return: void
- */
-void sme_roam_events_register_callback(mac_handle_t mac_handle,
-				       void (*roam_rt_stats_cb)(
-				hdd_handle_t hdd_handle, uint8_t idx,
-				struct roam_stats_event *roam_stats));
-
-/**
- * sme_roam_events_deregister_callback() - DeRegister roam events callback
- * @mac_handle: Opaque handle to the MAC context
- *
- * This function will deregister the callback of roams events stats.
- *
- * Return: void
- */
-void sme_roam_events_deregister_callback(mac_handle_t mac_handle);
 #else
 static inline
 void sme_get_pmk_info(mac_handle_t mac_handle, uint8_t session_id,
@@ -741,16 +717,6 @@ QDF_STATUS sme_set_pmk_cache_ft(mac_handle_t mac_handle, uint8_t vdev_id,
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline void
-sme_roam_events_register_callback(mac_handle_t mac_handle,
-				  void (*roam_rt_stats_cb)(
-				hdd_handle_t hdd_handle, uint8_t idx,
-				struct roam_stats_event *roam_stats))
-{}
-
-static inline
-void sme_roam_events_deregister_callback(mac_handle_t mac_handle)
-{}
 #endif
 
 QDF_STATUS sme_get_config_param(mac_handle_t mac_handle,
