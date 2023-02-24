@@ -602,14 +602,18 @@ static void _sde_crtc_setup_blend_cfg(struct sde_crtc_mixer *mixer,
 	uint32_t blend_op, fg_alpha, bg_alpha;
 	uint32_t blend_type;
 	struct sde_hw_mixer *lm = mixer->hw_lm;
+	struct drm_plane_state *plane_state = &pstate->base;
 
 	/* default to opaque blending */
 	fg_alpha = sde_plane_get_property(pstate, PLANE_PROP_ALPHA);
-	bg_alpha = sde_plane_get_property(pstate, PLANE_PROP_BG_ALPHA);
+	bg_alpha = 0xFF - fg_alpha;
+	if (sde_plane_property_is_dirty(plane_state, PLANE_PROP_BG_ALPHA))
+		bg_alpha = sde_plane_get_property(pstate, PLANE_PROP_BG_ALPHA);
 	blend_op = SDE_BLEND_FG_ALPHA_FG_CONST | SDE_BLEND_BG_ALPHA_BG_CONST;
 	blend_type = sde_plane_get_property(pstate, PLANE_PROP_BLEND_OP);
 
-	SDE_DEBUG("blend type:0x%x blend alpha:0x%x\n", blend_type, fg_alpha);
+	SDE_DEBUG("blend type:0x%x blend alpha:0x%x bg_alpha:0x%x\n",
+			blend_type, fg_alpha, bg_alpha);
 
 	switch (blend_type) {
 
@@ -5386,10 +5390,14 @@ static int _sde_crtc_check_fsc_planes(struct drm_crtc *crtc,
 	struct sde_format *format = NULL;
 	struct drm_plane *plane = NULL;
 	struct drm_plane_state *plane_state = NULL;
+	struct sde_plane_state *pstate = NULL;
 	struct sde_crtc_state *cstate;
 	int fsc_plane_count = 0, non_fsc_plane_count = 0;
+	bool is_fsc_mode, is_dirty;
+	uint32_t bg_alpha;
 
 	cstate = to_sde_crtc_state(crtc_state);
+	is_fsc_mode = sde_crtc_is_connector_fsc(cstate);
 
 	drm_atomic_crtc_state_for_each_plane(plane, crtc_state) {
 		plane_state = drm_atomic_get_new_plane_state(
@@ -5397,12 +5405,23 @@ static int _sde_crtc_check_fsc_planes(struct drm_crtc *crtc,
 		if (!plane_state)
 			continue;
 
+		pstate = to_sde_plane_state(plane_state);
 		format = to_sde_format(msm_framebuffer_format(
 				plane_state->fb));
 		if (!format) {
 			SDE_ERROR("invalid format\n");
 			return -EINVAL;
 		} else if (SDE_FORMAT_IS_FSC(format)) {
+			is_dirty = sde_plane_property_is_dirty(
+					plane_state, PLANE_PROP_BG_ALPHA);
+			bg_alpha = sde_plane_get_property(pstate, PLANE_PROP_BG_ALPHA);
+			if (!is_fsc_mode && (!is_dirty || bg_alpha != 0xFF)) {
+				/* return if bg_alpha is not set or not equal to FF
+				 * for fsc to rgb use case
+				 */
+				SDE_ERROR("Invalid params is_dirty: %d\n", is_dirty);
+				return -EINVAL;
+			}
 			fsc_plane_count++;
 		} else {
 			non_fsc_plane_count++;

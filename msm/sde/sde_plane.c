@@ -3900,7 +3900,7 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 	msm_property_install_range(&psde->property_info, "alpha",
 		0x0, 0, 255, 255, PLANE_PROP_ALPHA);
 
-	msm_property_install_range(&psde->property_info, "bg_alpha",
+	msm_property_install_volatile_range(&psde->property_info, "bg_alpha",
 		0x0, 0, 255, 255, PLANE_PROP_BG_ALPHA);
 
 	/* linux default file descriptor range on each process */
@@ -4967,4 +4967,14 @@ void sde_plane_add_data_to_minidump_va(struct drm_plane *plane)
 	pstate = to_sde_plane_state(plane->state);
 	sde_mini_dump_add_va_region("sde_plane", sizeof(*sde_plane), sde_plane);
 	sde_mini_dump_add_va_region("plane_state", sizeof(*pstate), pstate);
+}
+
+bool sde_plane_property_is_dirty(struct drm_plane_state *plane_state,
+		uint32_t property_idx)
+{
+	struct sde_plane_state *pstate = to_sde_plane_state(plane_state);
+	struct sde_plane *psde = to_sde_plane(plane_state->plane);
+
+	return msm_property_is_dirty(&psde->property_info,
+			&pstate->property_state, property_idx);
 }
