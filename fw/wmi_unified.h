@@ -20247,6 +20247,8 @@ typedef enum wake_reason_e {
     WOW_REASON_SCHED_PM_TERMINATED,
     /* XGAP entry/exit response */
     WOW_REASON_XGAP,
+    /* COEX channel avoid event */
+    WOW_REASON_COEX_CHAVD,
 
     /* add new WOW_REASON_ defs before this line */
     WOW_REASON_MAX,
