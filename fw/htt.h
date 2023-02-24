@@ -782,6 +782,7 @@ typedef enum {
     HTT_STATS_TX_PDEV_MLO_ABORT_TAG                = 177, /* htt_tx_pdev_stats_mlo_abort_tlv_v */
     HTT_STATS_TX_PDEV_MLO_TXOP_ABORT_TAG           = 178, /* htt_tx_pdev_stats_mlo_txop_abort_tlv_v */
     HTT_STATS_UMAC_SSR_TAG                         = 179, /* htt_umac_ssr_stats_tlv */
+    HTT_STATS_PEER_BE_OFDMA_STATS_TAG              = 180, /* htt_peer_be_ofdma_stats_tlv */
 
 
     HTT_STATS_MAX_TAG,
@@ -19009,9 +19010,11 @@ struct htt_ul_ofdma_user_info_v0 {
 };
 
 #define HTT_UL_OFDMA_USER_INFO_V0_BITMAP_W0 \
-    A_UINT32 w0_fw_rsvd:30; \
+    A_UINT32 w0_fw_rsvd:29; \
+    A_UINT32 w0_manual_ulofdma_trig:1; \
     A_UINT32 w0_valid:1; \
     A_UINT32 w0_version:1;
+
 struct htt_ul_ofdma_user_info_v0_bitmap_w0 {
     HTT_UL_OFDMA_USER_INFO_V0_BITMAP_W0
 };
@@ -19100,6 +19103,9 @@ enum HTT_UL_OFDMA_TRIG_TYPE {
 
 #define HTT_UL_OFDMA_USER_INFO_V0_W0_FW_INTERNAL_M  0x0000ffff
 #define HTT_UL_OFDMA_USER_INFO_V0_W0_FW_INTERNAL_S  0
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W0_MANUAL_ULOFDMA_TRIG_M 0x20000000
+#define HTT_UL_OFDMA_USER_INFO_V0_W0_MANUAL_ULOFDMA_TRIG_S 29
 
 #define HTT_UL_OFDMA_USER_INFO_V0_W0_VALID_M 0x40000000
 #define HTT_UL_OFDMA_USER_INFO_V0_W0_VALID_S 30

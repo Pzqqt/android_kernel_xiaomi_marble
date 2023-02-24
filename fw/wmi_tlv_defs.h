@@ -1346,6 +1346,9 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_mlo_vdev_get_link_info_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_mlo_vdev_link_info_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_mlo_vdev_link_info,
+    WMITLV_TAG_STRUC_wmi_vdev_set_manual_su_trig_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_vdev_set_manual_mu_trig_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_manual_ul_ofdma_trig_feedback_evt_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1867,6 +1870,8 @@ typedef enum {
     OP(WMI_PDEV_SET_TGTR2P_TABLE_CMDID) \
     OP(WMI_PEER_BULK_SET_CMDID) \
     OP(WMI_MLO_VDEV_GET_LINK_INFO_CMDID) \
+    OP(WMI_VDEV_SET_ULOFDMA_MANUAL_SU_TRIG_CMDID) \
+    OP(WMI_VDEV_SET_ULOFDMA_MANUAL_MU_TRIG_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2169,6 +2174,7 @@ typedef enum {
     OP(WMI_PDEV_SET_TGTR2P_TABLE_EVENTID) \
     OP(WMI_CSA_IE_RECEIVED_EVENTID) \
     OP(WMI_MLO_VDEV_LINK_INFO_EVENTID) \
+    OP(WMI_MANUAL_UL_OFDMA_TRIG_FEEDBACK_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -5304,6 +5310,17 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_TGTR2P_TABLE_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_vdev_get_link_info_cmd_fixed_param, wmi_mlo_vdev_get_link_info_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_MLO_VDEV_GET_LINK_INFO_CMDID);
 
+/* WMI command to set Manual SU UL OFDMA Trigger params */
+#define WMITLV_TABLE_WMI_VDEV_SET_ULOFDMA_MANUAL_SU_TRIG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_vdev_set_manual_su_trig_cmd_fixed_param, wmi_vdev_set_manual_su_trig_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_ULOFDMA_MANUAL_SU_TRIG_CMDID);
+
+/* WMI command to set Manual MU UL OFDMA Trigger params */
+#define WMITLV_TABLE_WMI_VDEV_SET_ULOFDMA_MANUAL_MU_TRIG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_vdev_set_manual_mu_trig_cmd_fixed_param, wmi_vdev_set_manual_mu_trig_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_mac_addr, peer_macaddr, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_ULOFDMA_MANUAL_MU_TRIG_CMDID);
+
 
 
 /************************** TLV definitions of WMI events *******************************/
@@ -7197,6 +7214,13 @@ WMITLV_CREATE_PARAM_STRUC(WMI_CSA_IE_RECEIVED_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_vdev_link_info_event_fixed_param, wmi_mlo_vdev_link_info_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mlo_vdev_link_info, mlo_vdev_link_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_MLO_VDEV_LINK_INFO_EVENTID);
+
+/* Manual UL OFDMA Trigger Feedback Event */
+#define WMITLV_TABLE_WMI_MANUAL_UL_OFDMA_TRIG_FEEDBACK_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_manual_ul_ofdma_trig_feedback_evt_fixed_param, wmi_manual_ul_ofdma_trig_feedback_evt_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_mac_addr, peer_macaddr, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_MANUAL_UL_OFDMA_TRIG_FEEDBACK_EVENTID);
+
 
 
 #ifdef __cplusplus

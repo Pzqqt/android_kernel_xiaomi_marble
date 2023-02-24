@@ -316,6 +316,7 @@ typedef enum {
     WMI_GRP_QUIET_OFL,      /* 0x4a Quiet offloads */
     WMI_GRP_ODD,            /* 0x4b ODD */
     WMI_GRP_TDMA,           /* 0x4c TDMA */
+    WMI_GRP_MANUAL_UL_TRIG  /* 0x4d Manual UL OFDMA Trigger */
 } WMI_GRP_ID;
 
 #define WMI_CMD_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
@@ -1563,6 +1564,13 @@ typedef enum {
 
     /* WMI commands specific to TDMA */
     WMI_TDMA_SCHEDULE_REQUEST_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_TDMA),
+
+    /* WMI commands specific to manually-triggered UL */
+    /** WMI Command to set Manual SU UL OFDMA trigger parameters */
+    WMI_VDEV_SET_ULOFDMA_MANUAL_SU_TRIG_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_MANUAL_UL_TRIG),
+
+    /** WMI Command to set Manual MU UL OFDMA trigger parameters */
+    WMI_VDEV_SET_ULOFDMA_MANUAL_MU_TRIG_CMDID,
 } WMI_CMD_ID;
 
 typedef enum {
@@ -2375,6 +2383,12 @@ typedef enum {
 
     /* ODD events */
     WMI_ODD_LIVEDUMP_RESPONSE_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_ODD),
+
+    /** WMI events specific to manually-triggered UL */
+    /**
+     * WMI Event to send Manual UL OFDMA Trigger frame status feedback to Host
+     */
+    WMI_MANUAL_UL_OFDMA_TRIG_FEEDBACK_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_MANUAL_UL_TRIG),
 } WMI_EVT_ID;
 
 /* defines for OEM message sub-types */
@@ -33415,6 +33429,8 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_HPA_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_SET_TGTR2P_TABLE_CMDID); /* To set target rate to power table */
         WMI_RETURN_STRING(WMI_MLO_VDEV_GET_LINK_INFO_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_SET_ULOFDMA_MANUAL_SU_TRIG_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_SET_ULOFDMA_MANUAL_MU_TRIG_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -41990,6 +42006,80 @@ typedef struct {
     };
     A_UINT32 chan_freq;             /* Channel frequency in MHz */
 } wmi_mlo_vdev_link_info;
+
+/* Manual UL OFDMA trigger frame data structures */
+
+typedef enum {
+    WMI_UL_OFDMA_MANUAL_TRIG_TXERR_NONE,
+    WMI_UL_OFDMA_MANUAL_TRIG_TXERR_RESP,    /* response timeout, mismatch,
+                                             * BW mismatch, mimo ctrl mismatch,
+                                             * CRC error.. */
+    WMI_UL_OFDMA_MANUAL_TRIG_TXERR_FILT,    /* blocked by tx filtering */
+    WMI_UL_OFDMA_MANUAL_TRIG_TXERR_FIFO,    /* fifo, misc errors in HW */
+    WMI_UL_OFDMA_MANUAL_TRIG_TXERR_SWABORT, /* software initiated abort
+                                             * (TX_ABORT) */
+
+    WMI_UL_OFDMA_MANUAL_TRIG_TXERR_MAX     = 0xff,
+    WMI_UL_OFDMA_MANUAL_TRIG_TXERR_INVALID =
+        WMI_UL_OFDMA_MANUAL_TRIG_TXERR_MAX
+} wmi_ul_ofdma_manual_trig_txerr_t;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_manual_ul_ofdma_trig_feedback_evt_fixed_param  */
+    A_UINT32 tlv_header;
+
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
+
+    /* To indicate whether feedback event is for SU (0) or MU trigger (1) */
+    A_UINT32 feedback_trig_type;
+
+    /* Feedback Params */
+    A_UINT32 curr_su_manual_trig_count;
+    A_UINT32 remaining_su_manual_trig;
+    A_UINT32 remaining_mu_trig_peers;
+    A_UINT32 manual_trig_status;  /* holds a wmi_ul_ofdma_manual_trig_txerr_t */
+
+    /**
+     * This TLV is followed by TLVs below:
+     *    wmi_mac_addr peer_macaddr[];
+     *        Array length corresponds to the number of triggered peers
+     */
+} wmi_manual_ul_ofdma_trig_feedback_evt_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_set_manual_mu_trig_cmd_fixed_param  */
+    A_UINT32 tlv_header;
+
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
+
+    /* Configurable Parameters for manual UL OFDMA Multi-User Trigger frame */
+    A_UINT32 manual_trig_preferred_ac;
+    /**
+     * This TLV is followed by TLVs below:
+     *    wmi_mac_addr peer_macaddr[];
+     *        The array has one element for each peer to be included in the
+     *        manually-triggered UL MU transmission.
+     */
+} wmi_vdev_set_manual_mu_trig_cmd_fixed_param;
+
+typedef struct {
+   /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_set_manual_su_trig_cmd_fixed_param  */
+    A_UINT32 tlv_header;
+
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
+
+    /* Configurable Parameters for manual UL OFDMA Single-User Trigger frame */
+    wmi_mac_addr peer_macaddr;
+    A_UINT32 manual_trig_preferred_ac;
+    A_UINT32 num_su_manual_trig;
+    A_UINT32 manual_trig_length;
+    A_UINT32 manual_trig_mcs;
+    A_UINT32 manual_trig_nss;
+    A_INT32  manual_trig_target_rssi; /* units = dBm */
+} wmi_vdev_set_manual_su_trig_cmd_fixed_param;
 
 
 

@@ -876,6 +876,11 @@ typedef struct {
                      reserved3:     31;
         };
     };
+    /* is_manual_ulofdma_trigger:
+     * Flag to indicate if a given UL OFDMA trigger is manually triggered
+     * from the Host
+     */
+    A_UINT32 is_manual_ulofdma_trigger;
 } htt_ppdu_stats_common_tlv;
 
 #define HTT_PPDU_STATS_USER_COMMON_TLV_TID_NUM_M     0x000000ff
