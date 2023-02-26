@@ -1,5 +1,5 @@
 /* Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -129,6 +129,7 @@ static netdev_tx_t rmnet_vnd_start_xmit(struct sk_buff *skb,
 				tmp = skb->next;
 				skb->dev = dev;
 				priv->stats.ll_tso_segs++;
+				skb_mark_not_on_list(skb);
 				rmnet_egress_handler(skb, low_latency);
 			}
 		} else if (!low_latency && skb_is_gso(skb)) {
@@ -167,6 +168,7 @@ static netdev_tx_t rmnet_vnd_start_xmit(struct sk_buff *skb,
 						skb_shinfo(skb)->gso_type = orig_gso_type;
 
 						priv->stats.tso_segment_success++;
+						skb_mark_not_on_list(skb);
 						rmnet_egress_handler(skb, low_latency);
 					}
 				}
