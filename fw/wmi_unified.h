@@ -40742,6 +40742,10 @@ typedef struct {
 
 #define WMI_MAX_NUM_PREFERRED_LINKS 4
 
+/* NOTE:
+ * wmi_peer_preferred_link_map will be deprecated and replaced
+ * by wmi_mlo_peer_link_control_param.
+ */
 typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_preferred_link_map */
     A_UINT32 tlv_header;
@@ -40765,6 +40769,62 @@ typedef struct {
     A_UINT32 expected_max_latency_ms[WLAN_MAX_AC];
 } wmi_peer_preferred_link_map;
 
+#define WMI_MLO_PEER_LINK_CONTROL_PARAM_SET_TX_LINK_TUPLE_CONFIG(comp, value) \
+    WMI_SET_BITS(comp, 0, 1, value)
+#define WMI_MLO_PEER_LINK_CONTROL_PARAM_GET_TX_LINK_TUPLE_CONFIG(comp) \
+    WMI_GET_BITS(comp, 0, 1)
+
+#define WMI_MLO_PEER_LINK_CONTROL_PARAM_SET_PREFERRED_LINK_CONFIG(comp, value) \
+    WMI_SET_BITS(comp, 1, 1, value)
+#define WMI_MLO_PEER_LINK_CONTROL_PARAM_GET_PREFERRED_LINK_CONFIG(comp) \
+    WMI_GET_BITS(comp, 1, 1)
+
+#define WMI_MAX_NUM_MLO_LINKS 5
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_preferred_link_map */
+    A_UINT32 tlv_header;
+
+    /** flags:
+     * Bit0    : tx_link_tuple enable/disable.
+     *           When enabled, f/w picks the links in tx_link_tuple_bitmap
+     *           for TX scheduling.
+     * Bit1    : preferred_link enable/disable.
+     *           When enabled, f/w schedules the data on preferred link first.
+     *           If it fails to deliver within a timeout, it additionally
+     *           starts attempting TX on non-preferred links.
+     * Bit2-31 : reserved
+     */
+     A_UINT32 flags;
+
+    /* num_links: number of links present in link_priority_order array below.
+     * 0        - we dont have sorted list of link priority
+     * non zero - this should be the max number of links that the peer supports.
+     */
+    A_UINT32 num_links;
+
+    /* link_priority_order:
+     * [0] - ID of highest priority link,
+     * [1] - ID of 2nd highest priority link, etc.
+     */
+    A_UINT32 link_priority_order[WMI_MAX_NUM_MLO_LINKS];
+
+    /* tx_link_tuple_bitmap:
+     * bitmap of indices within link_priority_order array that needs to be
+     * selected in the TX link tuple.
+     * FW will not attempt scheduling on a link if it is not part of the
+     * tx_link_tuple.
+     */
+    A_UINT32 tx_link_tuple_bitmap;
+
+    /* max_timeout_ms: applicable only when preferred_link is enabled
+     * 0     - max_timeout_ms to be estimated in Firmware
+     * Non 0 - value beyond which, firmware should additionally start
+     *         scheduling on non preferred links
+     */
+    A_UINT32 max_timeout_ms[WLAN_MAX_AC];
+} wmi_mlo_peer_link_control_param;
+
 typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_tid_to_link_map_fixed_param */
     A_UINT32 tlv_header;
@@ -40780,6 +40840,8 @@ typedef struct {
      *   - struct wmi_peer_preferred_link_map peer_preferred_link_map[];
      *     Note - TLV array of peer_preferred_link_map has either 0 or 1
      *     entries, not multiple entries.
+     *   - struct wmi_mlo_peer_link_control_param[];
+     *     Note: can have 0 or 1 entry.
      */
 } wmi_peer_tid_to_link_map_fixed_param;
 
