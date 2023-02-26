@@ -25,6 +25,7 @@ qcom-pdc.ko
 qcom_tsens.ko
 thermal_pause.ko
 cpu_hotplug.ko
+gpucc-ravelin.ko
 arm_smmu.ko
 cmd-db.ko
 gh_msgq.ko
@@ -62,6 +63,7 @@ socinfo.ko
 stub-regulator.ko
 msm-geni-se.ko
 nvmem_qfprom.ko
+sdhci-msm-scaling.ko
 cqhci.ko
 sdhci-msm.ko
 phy-qcom-ufs.ko
