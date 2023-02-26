@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3046,6 +3046,7 @@ struct wmi_soc {
 	/* WMI service bitmap received from target */
 	uint32_t *wmi_service_bitmap;
 	uint32_t *wmi_ext_service_bitmap;
+	uint32_t wmi_ext2_service_bitmap_len;
 	uint32_t *wmi_ext2_service_bitmap;
 	uint32_t services[wmi_services_max];
 	uint16_t wmi_max_cmds;
