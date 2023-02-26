@@ -3101,6 +3101,15 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	}
 	wma_handle->psoc = psoc;
 
+	if (wlan_pmo_enable_ssr_on_page_fault(psoc)) {
+		wma_handle->pagefault_wakeups_ts =
+			qdf_mem_malloc(
+			wlan_pmo_get_max_pagefault_wakeups_for_ssr(psoc) *
+			sizeof(qdf_time_t));
+		if (!wma_handle->pagefault_wakeups_ts)
+			goto err_wma_handle;
+	}
+
 	wma_target_if_open(wma_handle);
 
 	/*
@@ -4503,6 +4512,9 @@ QDF_STATUS wma_close(void)
 	wmi_handle = wma_handle->wmi_handle;
 	if (wmi_validate_handle(wmi_handle))
 		return QDF_STATUS_E_INVAL;
+
+	if (wlan_pmo_enable_ssr_on_page_fault(wma_handle->psoc))
+		qdf_mem_free(wma_handle->pagefault_wakeups_ts);
 
 	qdf_atomic_set(&wma_handle->sap_num_clients_connected, 0);
 	qdf_atomic_set(&wma_handle->go_num_clients_connected, 0);

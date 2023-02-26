@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -5342,8 +5342,9 @@ void lim_calculate_tpc(struct mac_context *mac,
 	mlme_obj->reg_tpc_obj.eirp_power = reg_max;
 	mlme_obj->reg_tpc_obj.power_type_6g = ap_power_type_6g;
 
-	pe_debug("num_pwr_levels: %d, is_psd_power: %d, total eirp_power: %d, ap_pwr_type: %d",
-		 num_pwr_levels, is_psd_power, reg_max, ap_power_type_6g);
+	pe_debug("num_pwr_levels: %d, is_psd_power: %d, total eirp_power: %d, ap_pwr_type: %d tx_pwrlimit: %d",
+		 num_pwr_levels, is_psd_power, reg_max, ap_power_type_6g,
+		 mlme_obj->mgmt.generic.tx_pwrlimit);
 }
 
 bool send_disassoc_frame = 1;
@@ -6491,7 +6492,7 @@ __lim_process_sme_addts_req(struct mac_context *mac, uint32_t *msg_buf)
 	/* ship out the message now */
 	lim_send_addts_req_action_frame(mac, peerMac, &pSirAddts->req,
 					pe_session);
-	pe_err("Sent ADDTS request");
+	pe_debug("Sent ADDTS request");
 	/* start a timer to wait for the response */
 	if (pSirAddts->timeout)
 		timeout = pSirAddts->timeout;

@@ -557,7 +557,6 @@ typedef struct sSapDfsNolInfo {
 
 typedef struct sSapDfsInfo {
 	qdf_mc_timer_t sap_dfs_cac_timer;
-	uint8_t sap_radar_found_status;
 	/*
 	 * New channel frequency to move to when a  Radar is
 	 * detected on current Channel

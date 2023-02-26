@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -137,6 +137,7 @@ void sap_config_acs_result(mac_handle_t mac_handle,
 		wlan_sap_get_concurrent_bw(mac_ctx->pdev, mac_ctx->psoc,
 					   sap_ctx->acs_cfg->pri_ch_freq,
 					   ch_params.ch_width);
+	sap_debug("new_ch_width:%d", new_ch_width);
 	ch_params.ch_width = new_ch_width;
 
 	wlan_reg_set_channel_params_for_freq(
@@ -482,10 +483,8 @@ wlansap_roam_process_ch_change_success(struct mac_context *mac_ctx,
 	sap_ctx->chan_freq = target_chan_freq;
 	/* check if currently selected channel is a DFS channel */
 	if (is_ch_dfs && sap_ctx->pre_cac_complete) {
-		/* Start beaconing on the new pre cac channel */
-		wlansap_start_beacon_req(sap_ctx);
 		sap_ctx->fsm_state = SAP_STARTING;
-		mac_ctx->sap.SapDfsInfo.sap_radar_found_status = false;
+		sap_ctx->sap_radar_found_status = false;
 		sap_event.event = eSAP_MAC_START_BSS_SUCCESS;
 		sap_event.params = csr_roam_info;
 		sap_event.u1 = eCSR_ROAM_INFRA_IND;
@@ -504,10 +503,8 @@ wlansap_roam_process_ch_change_success(struct mac_context *mac_ctx,
 			sap_event.u1 = 0;
 			sap_event.u2 = 0;
 		} else {
-			/* Start beaconing on the new channel */
-			wlansap_start_beacon_req(sap_ctx);
 			sap_ctx->fsm_state = SAP_STARTING;
-			mac_ctx->sap.SapDfsInfo.sap_radar_found_status = false;
+			sap_ctx->sap_radar_found_status = false;
 			sap_event.event = eSAP_MAC_START_BSS_SUCCESS;
 			sap_event.params = csr_roam_info;
 			sap_event.u1 = eCSR_ROAM_INFRA_IND;
@@ -516,7 +513,7 @@ wlansap_roam_process_ch_change_success(struct mac_context *mac_ctx,
 	} else {
 		/* non-DFS channel */
 		sap_ctx->fsm_state = SAP_STARTING;
-		mac_ctx->sap.SapDfsInfo.sap_radar_found_status = false;
+		sap_ctx->sap_radar_found_status = false;
 		sap_event.event = eSAP_MAC_START_BSS_SUCCESS;
 		sap_event.params = csr_roam_info;
 		sap_event.u1 = eCSR_ROAM_INFRA_IND;
@@ -706,7 +703,7 @@ wlansap_roam_process_dfs_radar_found(struct mac_context *mac_ctx,
 			sap_err("sapdfs: DFS channel switch disabled");
 			return;
 		}
-		if (false == mac_ctx->sap.SapDfsInfo.sap_radar_found_status) {
+		if (!sap_ctx->sap_radar_found_status) {
 			sap_err("sapdfs: sap_radar_found_status is false");
 			return;
 		}

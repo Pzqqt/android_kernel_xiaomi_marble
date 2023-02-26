@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1778,6 +1778,7 @@ struct fw_scan_channels {
  * @roam_preauth_retry_count:       Configure the max number of preauth retry
  * @roam_preauth_no_ack_timeout:    Configure the no ack timeout period
  * @roam_rssi_diff:                 Enable roam based on rssi
+ * @roam_rssi_diff_6ghz: RSSI diff value to be used for roaming to 6 GHz AP.
  * @roam_scan_offload_enabled:      Enable Roam Scan Offload
  * @neighbor_scan_timer_period:     Neighbor scan timer period
  * @neighbor_scan_min_timer_period: Min neighbor scan timer period
@@ -1827,6 +1828,11 @@ struct fw_scan_channels {
  * @sae_single_pmk_feature_enabled: Contains value of ini
  * sae_single_pmk_feature_enabled
  * @rso_user_config: RSO user config
+ * @roam_ho_delay_config: Roam HO delay value
+ * @exclude_rm_partial_scan_freq: Exclude the channels in roam full scan that
+ * are already scanned as part of partial scan.
+ * @roam_full_scan_6ghz_on_disc: Include the 6 GHz channels in roam full scan
+ * only on prior discovery of any 6 GHz support in the environment.
  */
 struct wlan_mlme_lfr_cfg {
 	bool mawc_roam_enabled;
@@ -1863,8 +1869,8 @@ struct wlan_mlme_lfr_cfg {
 	uint8_t mawc_roam_rssi_low_adjust;
 	uint32_t roam_rssi_abs_threshold;
 	uint8_t rssi_threshold_offset_5g;
-	uint8_t early_stop_scan_min_threshold;
-	uint8_t early_stop_scan_max_threshold;
+	int8_t early_stop_scan_min_threshold;
+	int8_t early_stop_scan_max_threshold;
 	uint32_t roam_dense_traffic_threshold;
 	uint32_t roam_dense_rssi_thre_offset;
 	uint32_t roam_dense_min_aps;
@@ -1895,6 +1901,7 @@ struct wlan_mlme_lfr_cfg {
 	uint32_t roam_preauth_retry_count;
 	uint32_t roam_preauth_no_ack_timeout;
 	uint8_t roam_rssi_diff;
+	uint8_t roam_rssi_diff_6ghz;
 	uint8_t bg_rssi_threshold;
 	bool roam_scan_offload_enabled;
 	uint32_t neighbor_scan_timer_period;
@@ -1946,6 +1953,9 @@ struct wlan_mlme_lfr_cfg {
 #endif
 	struct rso_config_params rso_user_config;
 	bool enable_ft_over_ds;
+	uint16_t roam_ho_delay_config;
+	uint8_t exclude_rm_partial_scan_freq;
+	uint8_t roam_full_scan_6ghz_on_disc;
 };
 
 /**

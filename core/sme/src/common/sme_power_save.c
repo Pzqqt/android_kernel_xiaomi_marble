@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -515,8 +516,8 @@ void sme_set_tspec_uapsd_mask_per_session(struct mac_context *mac_ctx,
 	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
 	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
 
-	sme_err("Set UAPSD mask for AC: %d dir: %d action: %d",
-		ac, direction, ts_info->traffic.psb);
+	sme_debug("Set UAPSD mask for AC: %d dir: %d action: %d",
+		  ac, direction, ts_info->traffic.psb);
 
 	/* Converting AC to appropriate Uapsd Bit Mask
 	 * AC_BE(0) --> UAPSD_BITOFFSET_ACVO(3)

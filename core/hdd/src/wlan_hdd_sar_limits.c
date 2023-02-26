@@ -1229,10 +1229,11 @@ void wlan_hdd_sar_timers_reset(struct hdd_context *hdd_ctx)
 	if (QDF_IS_STATUS_SUCCESS(status))
 		hdd_nofl_debug("sar safety timer started");
 
+	qdf_event_set(&hdd_ctx->sar_safety_req_resp_event);
+
 	qdf_delayed_work_stop_sync(&hdd_ctx->sar_safety_unsolicited_work);
 	hdd_nofl_debug("sar safety unsolicited work stopped");
 
-	qdf_event_set(&hdd_ctx->sar_safety_req_resp_event);
 }
 
 void wlan_hdd_sar_timers_init(struct hdd_context *hdd_ctx)

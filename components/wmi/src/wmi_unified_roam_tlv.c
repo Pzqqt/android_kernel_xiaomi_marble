@@ -2249,6 +2249,7 @@ extract_roam_sync_event_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	uint32_t bcn_probe_rsp_len;
 	uint32_t reassoc_rsp_len;
 	uint32_t reassoc_req_len;
+	wmi_pdev_hw_mode_transition_event_fixed_param *hw_mode_trans_param;
 
 	if (!evt_buf) {
 		wmi_debug("Empty roam_sync_event param buf");
@@ -2264,6 +2265,15 @@ extract_roam_sync_event_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	synch_event = param_buf->fixed_param;
 	if (!synch_event) {
 		wmi_debug("received null event data from target");
+		return QDF_STATUS_E_FAILURE;
+	}
+	hw_mode_trans_param = param_buf->hw_mode_transition_fixed_param;
+	if (hw_mode_trans_param &&
+	    hw_mode_trans_param->num_vdev_mac_entries >
+	    param_buf->num_wmi_pdev_set_hw_mode_response_vdev_mac_mapping) {
+		wmi_debug("invalid vdev mac entries %d %d in roam sync",
+			  hw_mode_trans_param->num_vdev_mac_entries,
+			  param_buf->num_wmi_pdev_set_hw_mode_response_vdev_mac_mapping);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -2626,6 +2636,7 @@ extract_roam_event_tlv(wmi_unified_t wmi_handle, void *evt_buf, uint32_t len,
 	wmi_roam_event_fixed_param *wmi_event = NULL;
 	WMI_ROAM_EVENTID_param_tlvs *param_buf = NULL;
 	struct cm_hw_mode_trans_ind *hw_mode_trans_ind;
+	wmi_pdev_hw_mode_transition_event_fixed_param *hw_mode_trans_param;
 
 	if (!evt_buf) {
 		wmi_debug("Empty roam_sync_event param buf");
@@ -2652,6 +2663,15 @@ extract_roam_event_tlv(wmi_unified_t wmi_handle, void *evt_buf, uint32_t len,
 		wmi_err("Invalid vdev id from firmware: %u",
 			roam_event->vdev_id);
 		return -EINVAL;
+	}
+	hw_mode_trans_param = param_buf->hw_mode_transition_fixed_param;
+	if (hw_mode_trans_param &&
+	    hw_mode_trans_param->num_vdev_mac_entries >
+	    param_buf->num_wmi_pdev_set_hw_mode_response_vdev_mac_mapping) {
+		wmi_debug("invalid vdev mac entries %d %d",
+			  hw_mode_trans_param->num_vdev_mac_entries,
+			  param_buf->num_wmi_pdev_set_hw_mode_response_vdev_mac_mapping);
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	roam_event->reason =
