@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -1574,6 +1574,7 @@ struct sde_perf_cfg {
 
  * @min_display_width   minimum display width support.
  * @min_display_height  minimum display height support.
+ * @in_rot_maxheight    max pre rotated height for inline rotation.
  * @csc_type           csc or csc_10bit support.
  * @smart_dma_rev      Supported version of SmartDMA feature.
  * @ctl_rev            supported version of control path.
@@ -1669,6 +1670,7 @@ struct sde_mdss_cfg {
 	u32 max_display_height;
 	u32 min_display_width;
 	u32 min_display_height;
+	u32 in_rot_maxheight;
 
 	u32 csc_type;
 	u32 smart_dma_rev;
