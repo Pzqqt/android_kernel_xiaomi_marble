@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -52,12 +52,12 @@ static struct msm_platform_core_capability core_data_parrot_v0[] = {
 	{ENC_CODECS, H264|HEVC|HEIC},
 	{DEC_CODECS, H264|HEVC|VP9|HEIC},
 	{MAX_SESSION_COUNT, 16},
-	{MAX_NUM_720P_SESSIONS, 16},
-	{MAX_NUM_1080P_SESSIONS, 8},
+	{MAX_NUM_720P_SESSIONS, 8},
+	{MAX_NUM_1080P_SESSIONS, 4},
 	{MAX_NUM_4K_SESSIONS, 2},
 	{MAX_SECURE_SESSION_COUNT, 3},
-	{MAX_RT_MBPF, 97920}, /* ((3840x2176)/256) x 3 */
-	{MAX_MBPF, 104448}, /* ((4096x2176)/256) x 3 */
+	{MAX_RT_MBPF, 69362}, /* ((4096x2176)/256) x 2 */
+	{MAX_MBPF, 77522}, /* ((4096x2176)/256) x 2 + (1920x1088)/256 */
 	/* Concurrency: UHD@30 decode + 1080p@30 encode */
 	{MAX_MBPS, 2088960}, /* max_load 4096x2176@60fps */
 	{MAX_IMAGE_MBPF, 1048576},  /* (16384x16384)/256 */
@@ -104,12 +104,12 @@ static struct msm_platform_core_capability core_data_parrot_v1[] = {
 	{ENC_CODECS, H264|HEVC|HEIC},
 	{DEC_CODECS, H264|HEVC|VP9|HEIC},
 	{MAX_SESSION_COUNT, 16},
-	{MAX_NUM_720P_SESSIONS, 16},
-	{MAX_NUM_1080P_SESSIONS, 8},
-	{MAX_NUM_4K_SESSIONS, 2},
+	{MAX_NUM_720P_SESSIONS, 4},
+	{MAX_NUM_1080P_SESSIONS, 2},
+	{MAX_NUM_4K_SESSIONS, 1},
 	{MAX_SECURE_SESSION_COUNT, 3},
-	{MAX_RT_MBPF, 97920}, /* ((3840x2176)/256) x 3 */
-	{MAX_MBPF, 104448}, /* ((4096x2176)/256) x 3 */
+	{MAX_RT_MBPF, 40800}, /* ((3840x2176)/256) + (1920x1088)/256 */
+	{MAX_MBPF, 42976}, /* ((4096x2176)/256) + (1920x1088)/256 */
 	/* max_load 4096x2176@30fps */
 	{MAX_MBPS, 1044480}, /* Concurrency: UHD@30 decode + 1080p@30 encode */
 	{MAX_IMAGE_MBPF, 1048576},  /* (16384x16384)/256 */
@@ -156,12 +156,12 @@ static struct msm_platform_core_capability core_data_parrot_v2[] = {
 	{ENC_CODECS, H264|HEVC|HEIC},
 	{DEC_CODECS, H264|HEVC|VP9|HEIC},
 	{MAX_SESSION_COUNT, 16},
-	{MAX_NUM_720P_SESSIONS, 16},
-	{MAX_NUM_1080P_SESSIONS, 8},
-	{MAX_NUM_4K_SESSIONS, 2},
+	{MAX_NUM_720P_SESSIONS, 4},
+	{MAX_NUM_1080P_SESSIONS, 2},
+	{MAX_NUM_4K_SESSIONS, 1},
 	{MAX_SECURE_SESSION_COUNT, 3},
-	{MAX_RT_MBPF, 97920}, /* ((3840x2176)/256) x 3 */
-	{MAX_MBPF, 104448}, /* ((4096x2176)/256) x 3 */
+	{MAX_RT_MBPF, 40800}, /* ((3840x2176)/256) + (1920x1088)/256 */
+	{MAX_MBPF, 42976}, /* ((4096x2176)/256) + (1920x1088)/256 */
 	/* max_load 4096x2176@30fps */
 	{MAX_MBPS, 1044480}, /* Concurrency: UHD@30 decode + 1080p@30 encode */
 	{MAX_IMAGE_MBPF, 1048576},  /* (16384x16384)/256 */
@@ -425,6 +425,16 @@ static struct msm_platform_inst_capability instance_data_parrot_v0[] = {
 		V4L2_MPEG_MSM_VIDC_ENABLE,
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_CID_MPEG_VIDEO_PREPEND_SPSPPS_TO_IDR},
+
+	{VUI_TIMING_INFO, ENC, CODECS_ALL,
+		V4L2_MPEG_MSM_VIDC_DISABLE,
+		V4L2_MPEG_MSM_VIDC_ENABLE,
+		1, V4L2_MPEG_MSM_VIDC_DISABLE,
+		V4L2_CID_MPEG_VIDC_VUI_TIMING_INFO,
+		HFI_PROP_DISABLE_VUI_TIMING_INFO,
+		CAP_FLAG_OUTPUT_PORT,
+		{0}, {0},
+		NULL, msm_vidc_set_vui_timing_info},
 
 	{META_SEQ_HDR_NAL, ENC, CODECS_ALL,
 		V4L2_MPEG_MSM_VIDC_DISABLE,
