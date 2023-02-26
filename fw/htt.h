@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -239,9 +239,13 @@
  * 3.112 Add logical_link_id field in rx_peer_metadata_v1.
  * 3.113 Add add rx msdu,mpdu,ppdu fields in rx_ring_selection_cfg_t
  * 3.114 Add HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_SOC_START_PRE_RESET def.
+ * 3.115 Add HTT_H2T_MSG_TYPE_RX_CCE_SUPER_RULE_SETUP and
+ *       HTT_T2H_MSG_TYPE_RX_CCE_SUPER_RULE_SETUP_DONE msg defs.
+ * 3.116 Add HTT_TX_MONITOR_CFG_WORD_MASK_COMPACTION_ENABLE flag.
+ * 3.117 Add HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_IND def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 114
+#define HTT_CURRENT_VERSION_MINOR 117
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -771,6 +775,8 @@ typedef enum {
     HTT_STATS_PEER_AX_OFDMA_STATS_TAG              = 174, /* htt_peer_ax_ofdma_stats_tlv */
     HTT_STATS_TX_PDEV_MU_EDCA_PARAMS_STATS_TAG     = 175, /* htt_tx_pdev_mu_edca_params_stats_tlv_v */
     HTT_STATS_PDEV_MBSSID_CTRL_FRAME_STATS_TAG     = 176, /* htt_pdev_mbssid_ctrl_frame_stats_tlv */
+    HTT_STATS_TX_PDEV_MLO_ABORT_TAG                = 177, /* htt_tx_pdev_stats_mlo_abort_tlv_v */
+    HTT_STATS_TX_PDEV_MLO_TXOP_ABORT_TAG           = 178, /* htt_tx_pdev_stats_mlo_txop_abort_tlv_v */
 
 
     HTT_STATS_MAX_TAG,
@@ -841,6 +847,7 @@ enum htt_h2t_msg_type {
     HTT_H2T_MSG_TYPE_STREAMING_STATS_REQ   = 0x20,
     HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP = 0x21,
     HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_SOC_START_PRE_RESET = 0x22,
+    HTT_H2T_MSG_TYPE_RX_CCE_SUPER_RULE_SETUP = 0x23,
 
     /* keep this last */
     HTT_H2T_NUM_MSGS
@@ -7136,7 +7143,8 @@ PREPACK struct htt_tx_monitor_cfg_t {
              filter_in_tx_msdu_end_mgmt:             1,
              filter_in_tx_msdu_end_ctrl:             1,
              filter_in_tx_msdu_end_data:             1,
-             rsvd3:                                 17;
+             word_mask_compaction_enable:            1,
+             rsvd3:                                 16;
     A_UINT32 tlv_filter_mask_in0;
     A_UINT32 tlv_filter_mask_in1;
     A_UINT32 tlv_filter_mask_in2;
@@ -7405,6 +7413,18 @@ PREPACK struct htt_tx_monitor_cfg_t {
                 HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_DATA, _val); \
                 ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_DATA_S)); \
             } while (0)
+
+#define HTT_TX_MONITOR_CFG_WORD_MASK_COMPACTION_ENABLE_M         0x00008000
+#define HTT_TX_MONITOR_CFG_WORD_MASK_COMPACTION_ENABLE_S         15
+#define HTT_TX_MONITOR_CFG_WORD_MASK_COMPACTION_ENABLE_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_WORD_MASK_COMPACTION_ENABLE_M) >> \
+                    HTT_TX_MONITOR_CFG_WORD_MASK_COMPACTION_ENABLE_S)
+#define HTT_TX_MONITOR_CFG_WORD_MASK_COMPACTION_ENABLE_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_WORD_MASK_COMPACTION_ENABLE, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_WORD_MASK_COMPACTION_ENABLE_S)); \
+            } while (0)
+
 
 #define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_M            0xffffffff
 #define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_S            0
@@ -10211,6 +10231,265 @@ PREPACK typedef struct {
     } while (0)
 
 
+/*
+ * @brief  host -> target  HTT RX_CCE_SUPER_RULE_SETUP message
+ *
+ * MSG_TYPE => HTT_H2T_MSG_TYPE_RX_CCE_SUPER_RULE_SETUP
+ *
+ * @details
+ * Host sends RX_CCE_SUPER_RULE setup message to target, in order to request,
+ * install or uninstall rx cce super rules to match certain kind of packets
+ * with specific parameters. Target sets up HW registers based on setup message
+ * and always confirms back to Host.
+ *
+ *    The message would appear as follows:
+ *    |31             24|23             16|15              8|7               0|
+ *    |-----------------+-----------------+-----------------+-----------------|
+ *    |     reserved    |    operation    |     vdev_id     |     msg_type    |
+ *    |-----------------------------------------------------------------------|
+ *    |                         cce_super_rule_param[0]                       |
+ *    |-----------------------------------------------------------------------|
+ *    |                         cce_super_rule_param[1]                       |
+ *    |-----------------------------------------------------------------------|
+ *
+ * The message is interpreted as follows:
+ * dword0  - b'0:7   - msg_type: This will be set to
+ *                     0x23 (HTT_H2T_MSG_TYPE_RX_CCE_SUPER_RULE_SETUP)
+ *           b'8:15  - vdev_id: Identify which vdev RX_CCE_SUPER_RULE is for
+ *           b'16:23 - operation: Identify operation to be taken,
+ *                     0: HTT_RX_CCE_SUPER_RULE_SETUP_REQUEST
+ *                     1: HTT_RX_CCE_SUPER_RULE_INSTALL
+ *                     2: HTT_RX_CCE_SUPER_RULE_RELEASE
+ *           b'24:31 - reserved
+ * dword1~10         - cce_super_rule_param[0]:
+ *                     contains parameters used to setup RX_CCE_SUPER_RULE_0
+ * dword11~20        - cce_super_rule_param[1]:
+ *                     contains parameters used to setup RX_CCE_SUPER_RULE_1
+ *
+ *    Each cce_super_rule_param structure would appear as follows:
+ *    |31             24|23             16|15              8|7               0|
+ *    |-----------------+-----------------+-----------------+-----------------|
+ *    |src_ipv6_addr[3] |src_ipv6_addr[2] |src_ipv6_addr[1] |src_ipv6_addr[0] |
+ *    |/src_ipv4_addr[3]|/src_ipv4_addr[2]|/src_ipv4_addr[1]|/src_ipv4_addr[0]|
+ *    |-----------------------------------------------------------------------|
+ *    |src_ipv6_addr[7] |src_ipv6_addr[6] |src_ipv6_addr[5] |src_ipv6_addr[4] |
+ *    |-----------------------------------------------------------------------|
+ *    |src_ipv6_addr[11]|src_ipv6_addr[10]|src_ipv6_addr[9] |src_ipv6_addr[8] |
+ *    |-----------------------------------------------------------------------|
+ *    |src_ipv6_addr[15]|src_ipv6_addr[14]|src_ipv6_addr[13]|src_ipv6_addr[12]|
+ *    |-----------------------------------------------------------------------|
+ *    |dst_ipv6_addr[3] |dst_ipv6_addr[2] |dst_ipv6_addr[1] |dst_ipv6_addr[0] |
+ *    |/dst_ipv4_addr[3]|/dst_ipv4_addr[2]|/dst_ipv4_addr[1]|/dst_ipv4_addr[0]|
+ *    |-----------------------------------------------------------------------|
+ *    |dst_ipv6_addr[7] |dst_ipv6_addr[6] |dst_ipv6_addr[5] |dst_ipv6_addr[4] |
+ *    |-----------------------------------------------------------------------|
+ *    |dst_ipv6_addr[11]|dst_ipv6_addr[10]|dst_ipv6_addr[9] |dst_ipv6_addr[8] |
+ *    |-----------------------------------------------------------------------|
+ *    |dst_ipv6_addr[15]|dst_ipv6_addr[14]|dst_ipv6_addr[13]|dst_ipv6_addr[12]|
+ *    |-----------------------------------------------------------------------|
+ *    |    is_valid     |     l4_type     |              l3_type              |
+ *    |-----------------------------------------------------------------------|
+ *    |           l4_dst_port             |            l4_src_port            |
+ *    |-----------------------------------------------------------------------|
+ *
+ * The cce_super_rule_param[0] structure is interpreted as follows:
+ * dword1  - b'0:7   - src_ipv6_addr[0]: b'120:127 of source ipv6 address
+ *                     (or src_ipv4_addr[0]: b'24:31 of source ipv4 address,
+ *                     in case of ipv4)
+ *           b'8:15  - src_ipv6_addr[1]: b'112:119 of source ipv6 address
+ *                     (or src_ipv4_addr[1]: b'16:23 of source ipv4 address,
+ *                     in case of ipv4)
+ *           b'16:23 - src_ipv6_addr[2]: b'104:111 of source ipv6 address
+ *                     (or src_ipv4_addr[2]: b'8:15 of source ipv4 address,
+ *                     in case of ipv4)
+ *           b'24:31 - src_ipv6_addr[3]: b'96:103 of source ipv6 address
+ *                     (or src_ipv4_addr[3]: b'0:7 of source ipv4 address,
+ *                     in case of ipv4)
+ * dword2  - b'0:7   - src_ipv6_addr[4]: b'88:95 of source ipv6 address
+ *           b'8:15  - src_ipv6_addr[5]: b'80:87 of source ipv6 address
+ *           b'16:23 - src_ipv6_addr[6]: b'72:79 of source ipv6 address
+ *           b'24:31 - src_ipv6_addr[7]: b'64:71 of source ipv6 address
+ * dword3  - b'0:7   - src_ipv6_addr[8]: b'56:63 of source ipv6 address
+ *           b'8:15  - src_ipv6_addr[9]: b'48:55 of source ipv6 address
+ *           b'16:23 - src_ipv6_addr[10]: b'40:47 of source ipv6 address
+ *           b'24:31 - src_ipv6_addr[11]: b'32:39 of source ipv6 address
+ * dword4  - b'0:7   - src_ipv6_addr[12]: b'24:31 of source ipv6 address
+ *           b'8:15  - src_ipv6_addr[13]: b'16:23 of source ipv6 address
+ *           b'16:23 - src_ipv6_addr[14]: b'8:15 of source ipv6 address
+ *           b'24:31 - src_ipv6_addr[15]: b'0:7 of source ipv6 address
+ * dword5  - b'0:7   - dst_ipv6_addr[0]: b'120:127 of destination ipv6 address
+ *                     (or dst_ipv4_addr[0]: b'24:31 of destination
+ *                     ipv4 address, in case of ipv4)
+ *           b'8:15  - dst_ipv6_addr[1]: b'112:119 of destination ipv6 address
+ *                     (or dst_ipv4_addr[1]: b'16:23 of destination
+ *                     ipv4 address, in case of ipv4)
+ *           b'16:23 - dst_ipv6_addr[2]: b'104:111 of destination ipv6 address
+ *                     (or dst_ipv4_addr[2]: b'8:15 of destination
+ *                     ipv4 address, in case of ipv4)
+ *           b'24:31 - dst_ipv6_addr[3]: b'96:103 of destination ipv6 address
+ *                     (or dst_ipv4_addr[3]: b'0:7 of destination
+ *                     ipv4 address, in case of ipv4)
+ * dword6  - b'0:7   - dst_ipv6_addr[4]: b'88:95 of destination ipv6 address
+ *           b'8:15  - dst_ipv6_addr[5]: b'80:87 of destination ipv6 address
+ *           b'16:23 - dst_ipv6_addr[6]: b'72:79 of destination ipv6 address
+ *           b'24:31 - dst_ipv6_addr[7]: b'64:71 of destination ipv6 address
+ * dword7  - b'0:7   - dst_ipv6_addr[8]: b'56:63 of destination ipv6 address
+ *           b'8:15  - dst_ipv6_addr[9]: b'48:55 of destination ipv6 address
+ *           b'16:23 - dst_ipv6_addr[10]: b'40:47 of destination ipv6 address
+ *           b'24:31 - dst_ipv6_addr[11]: b'32:39 of destination ipv6 address
+ * dword8  - b'0:7   - dst_ipv6_addr[12]: b'24:31 of destination ipv6 address
+ *           b'8:15  - dst_ipv6_addr[13]: b'16:23 of destination ipv6 address
+ *           b'16:23 - dst_ipv6_addr[14]: b'8:15 of destination ipv6 address
+ *           b'24:31 - dst_ipv6_addr[15]: b'0:7 of destination ipv6 address
+ * dword9  - b'0:15  - l3_type: type of L3 protocol, indicating L3 protocol used
+ *                     0x0008: ipv4
+ *                     0xdd86: ipv6
+ *           b'16:23 - l4_type: type of L4 protocol, indicating L4 protocol used
+ *                     6:  TCP
+ *                     17: UDP
+ *           b'24:31 - is_valid: indicate whether this parameter is valid
+ *                     0: invalid
+ *                     1: valid
+ * dword10 - b'0:15  - l4_src_port: TCP/UDP source port field
+ *           b'16:31 - l4_dst_port: TCP/UDP destination port field
+ *
+ * The cce_super_rule_param[1] structure is similar.
+ */
+#define HTT_RX_CCE_SUPER_RULE_SETUP_NUM 2
+
+enum htt_rx_cce_super_rule_setup_operation {
+    HTT_RX_CCE_SUPER_RULE_SETUP_REQUEST = 0,
+    HTT_RX_CCE_SUPER_RULE_INSTALL,
+    HTT_RX_CCE_SUPER_RULE_RELEASE,
+
+    /* All operation should be before this */
+    HTT_RX_CCE_SUPER_RULE_SETUP_INVALID_OPERATION,
+};
+
+typedef struct {
+    union {
+        A_UINT8 src_ipv4_addr[4];
+        A_UINT8 src_ipv6_addr[16];
+    };
+    union {
+        A_UINT8 dst_ipv4_addr[4];
+        A_UINT8 dst_ipv6_addr[16];
+    };
+    A_UINT32 l3_type:      16,
+             l4_type:       8,
+             is_valid:      8;
+    A_UINT32 l4_src_port:  16,
+             l4_dst_port:  16;
+} htt_rx_cce_super_rule_param_t;
+
+PREPACK struct htt_rx_cce_super_rule_setup_t {
+    A_UINT32 msg_type:   8,
+             vdev_id:    8,
+             operation:  8,
+             reserved:   8;
+    htt_rx_cce_super_rule_param_t
+        cce_super_rule_param[HTT_RX_CCE_SUPER_RULE_SETUP_NUM];
+} POSTPACK;
+
+#define HTT_RX_CCE_SUPER_RULE_SETUP_SZ \
+    (sizeof(struct htt_rx_cce_super_rule_setup_t))
+
+#define HTT_RX_CCE_SUPER_RULE_SETUP_VDEV_ID_M 0x0000ff00
+#define HTT_RX_CCE_SUPER_RULE_SETUP_VDEV_ID_S 8
+#define HTT_RX_CCE_SUPER_RULE_SETUP_VDEV_ID_GET(_var) \
+        (((_var) & HTT_RX_CCE_SUPER_RULE_SETUP_VDEV_ID_M) >> \
+        HTT_RX_CCE_SUPER_RULE_SETUP_VDEV_ID_S)
+#define HTT_RX_CCE_SUPER_RULE_SETUP_VDEV_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_CCE_SUPER_RULE_SETUP_VDEV_ID, _val); \
+            ((_var) |= ((_val) << HTT_RX_CCE_SUPER_RULE_SETUP_VDEV_ID_S)); \
+        } while (0)
+
+#define HTT_RX_CCE_SUPER_RULE_SETUP_OPERATION_M 0x00ff0000
+#define HTT_RX_CCE_SUPER_RULE_SETUP_OPERATION_S 16
+#define HTT_RX_CCE_SUPER_RULE_SETUP_OPERATION_GET(_var) \
+        (((_var) & HTT_RX_CCE_SUPER_RULE_SETUP_OPERATION_M) >> \
+        HTT_RX_CCE_SUPER_RULE_SETUP_OPERATION_S)
+#define HTT_RX_CCE_SUPER_RULE_SETUP_OPERATION_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_CCE_SUPER_RULE_SETUP_OPERATION, _val); \
+            ((_var) |= ((_val) << HTT_RX_CCE_SUPER_RULE_SETUP_OPERATION_S)); \
+        } while (0)
+
+#define HTT_RX_CCE_SUPER_RULE_SETUP_L3_TYPE_M 0x0000ffff
+#define HTT_RX_CCE_SUPER_RULE_SETUP_L3_TYPE_S 0
+#define HTT_RX_CCE_SUPER_RULE_SETUP_L3_TYPE_GET(_var) \
+        (((_var) & HTT_RX_CCE_SUPER_RULE_SETUP_L3_TYPE_M) >> \
+        HTT_RX_CCE_SUPER_RULE_SETUP_L3_TYPE_S)
+#define HTT_RX_CCE_SUPER_RULE_SETUP_L3_TYPE_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_CCE_SUPER_RULE_SETUP_L3_TYPE, _val); \
+            ((_var) |= ((_val) << HTT_RX_CCE_SUPER_RULE_SETUP_L3_TYPE_S)); \
+        } while (0)
+
+#define HTT_RX_CCE_SUPER_RULE_SETUP_L4_TYPE_M 0x00ff0000
+#define HTT_RX_CCE_SUPER_RULE_SETUP_L4_TYPE_S 16
+#define HTT_RX_CCE_SUPER_RULE_SETUP_L4_TYPE_GET(_var) \
+        (((_var) & HTT_RX_CCE_SUPER_RULE_SETUP_L4_TYPE_M) >> \
+        HTT_RX_CCE_SUPER_RULE_SETUP_L4_TYPE_S)
+#define HTT_RX_CCE_SUPER_RULE_SETUP_L4_TYPE_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_CCE_SUPER_RULE_SETUP_L4_TYPE, _val); \
+            ((_var) |= ((_val) << HTT_RX_CCE_SUPER_RULE_SETUP_L4_TYPE_S)); \
+        } while (0)
+
+#define HTT_RX_CCE_SUPER_RULE_SETUP_IS_VALID_M 0xff000000
+#define HTT_RX_CCE_SUPER_RULE_SETUP_IS_VALID_S 24
+#define HTT_RX_CCE_SUPER_RULE_SETUP_IS_VALID_GET(_var) \
+        (((_var) & HTT_RX_CCE_SUPER_RULE_SETUP_IS_VALID_M) >> \
+        HTT_RX_CCE_SUPER_RULE_SETUP_IS_VALID_S)
+#define HTT_RX_CCE_SUPER_RULE_SETUP_IS_VALID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_CCE_SUPER_RULE_SETUP_IS_VALID, _val); \
+            ((_var) |= ((_val) << HTT_RX_CCE_SUPER_RULE_SETUP_IS_VALID_S)); \
+        } while (0)
+
+#define HTT_RX_CCE_SUPER_RULE_SETUP_L4_SRC_PORT_M 0x0000ffff
+#define HTT_RX_CCE_SUPER_RULE_SETUP_L4_SRC_PORT_S 0
+#define HTT_RX_CCE_SUPER_RULE_SETUP_L4_SRC_PORT_GET(_var) \
+        (((_var) & HTT_RX_CCE_SUPER_RULE_SETUP_L4_SRC_PORT_M) >> \
+        HTT_RX_CCE_SUPER_RULE_SETUP_L4_SRC_PORT_S)
+#define HTT_RX_CCE_SUPER_RULE_SETUP_L4_SRC_PORT_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_CCE_SUPER_RULE_SETUP_L4_SRC_PORT, _val); \
+            ((_var) |= ((_val) << HTT_RX_CCE_SUPER_RULE_SETUP_L4_SRC_PORT_S)); \
+        } while (0)
+
+#define HTT_RX_CCE_SUPER_RULE_SETUP_L4_DST_PORT_M 0xffff0000
+#define HTT_RX_CCE_SUPER_RULE_SETUP_L4_DST_PORT_S 16
+#define HTT_RX_CCE_SUPER_RULE_SETUP_L4_DST_PORT_GET(_var) \
+        (((_var) & HTT_RX_CCE_SUPER_RULE_SETUP_L4_DST_PORT_M) >> \
+        HTT_RX_CCE_SUPER_RULE_SETUP_L4_DST_PORT_S)
+#define HTT_RX_CCE_SUPER_RULE_SETUP_L4_DST_PORT_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_CCE_SUPER_RULE_SETUP_L4_DST_PORT, _val); \
+            ((_var) |= ((_val) << HTT_RX_CCE_SUPER_RULE_SETUP_L4_DST_PORT_S)); \
+        } while (0)
+
+#define HTT_RX_CCE_SUPER_RULE_SETUP_IPV4_ADDR_ARRAY_GET(_ptr, _array) \
+        do { \
+            A_MEMCPY(_array, _ptr, 4); \
+        } while (0)
+#define HTT_RX_CCE_SUPER_RULE_SETUP_IPV4_ADDR_ARRAY_SET(_ptr, _array) \
+        do { \
+            A_MEMCPY(_ptr, _array, 4); \
+        } while (0)
+
+#define HTT_RX_CCE_SUPER_RULE_SETUP_IPV6_ADDR_ARRAY_GET(_ptr, _array) \
+        do { \
+            A_MEMCPY(_array, _ptr, 16); \
+        } while (0)
+#define HTT_RX_CCE_SUPER_RULE_SETUP_IPV6_ADDR_ARRAY_SET(_ptr, _array) \
+        do { \
+            A_MEMCPY(_ptr, _array, 16); \
+        } while (0)
+
+
 /*=== target -> host messages ===============================================*/
 
 
@@ -10273,6 +10552,8 @@ enum htt_t2h_msg_type {
     HTT_T2H_PPDU_ID_FMT_IND                        = 0x30,
     HTT_T2H_MSG_TYPE_RX_ADDBA_EXTN                 = 0x31,
     HTT_T2H_MSG_TYPE_RX_DELBA_EXTN                 = 0x32,
+    HTT_T2H_MSG_TYPE_RX_CCE_SUPER_RULE_SETUP_DONE  = 0x33,
+    HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_IND    = 0x34,
 
 
     HTT_T2H_MSG_TYPE_TEST,
@@ -19463,5 +19744,253 @@ typedef struct {
              rsvd9:               5; /* bits 31:27 */
 } htt_t2h_ppdu_id_fmt_ind_t;
 
+
+/**
+ * @brief target -> host RX_CCE_SUPER_RULE setup done message
+ *
+ * MSG_TYPE => HTT_T2H_MSG_TYPE_RX_CCE_SUPER_RULE_SETUP_DONE
+ *
+ * @details
+ *  HTT_T2H_MSG_TYPE_RX_CCE_SUPER_RULE_SETUP_DONE message is sent by the target
+ *  when RX_CCE_SUPER_RULE setup is done
+ *
+ *  This message shows the configuration results after the setup operation.
+ *  It will always be sent to host.
+ *  The message would appear as follows:
+ *
+ *     |31             24|23             16|15             8|7              0|
+ *     |-----------------+-----------------+----------------+----------------|
+ *     |      result     |  response_type  |     vdev_id    |     msg_type   |
+ *     |---------------------------------------------------------------------|
+ *
+ * The message is interpreted as follows:
+ * dword0 - b'0:7   - msg_type: This will be set to 0x33
+ *                    (HTT_T2H_MSG_TYPE_RX_CCE_SUPER_RULE_SETUP_DONE)
+ *          b'8:15  - vdev_id: Identify which vdev RX_CCE_SUPER_RULE is setup on
+ *          b'16:23 - response_type: Indicate the response type of this setup
+ *                    done msg
+ *                    0: HTT_RX_CCE_SUPER_RULE_SETUP_REQ_RESPONSE,
+ *                        response to HTT_RX_CCE_SUPER_RULE_SETUP_REQUEST
+ *                    1: HTT_RX_CCE_SUPER_RULE_INSTALL_RESPONSE,
+ *                        response to HTT_RX_CCE_SUPER_RULE_INSTALL
+ *                    2: HTT_RX_CCE_SUPER_RULE_RELEASE_RESPONSE,
+ *                        response to HTT_RX_CCE_SUPER_RULE_RELEASE
+ *          b'24:31 - result: Indicate result of setup operation
+ *                    For HTT_RX_CCE_SUPER_RULE_SETUP_REQ_RESPONSE:
+ *                        b'24    - is_rule_enough: indicate if there are
+ *                                  enough free cce rule slots
+ *                                  0: not enough
+ *                                  1: enough
+ *                        b'25:31 - avail_rule_num: indicate the number of
+ *                            remaining free cce rule slots, only makes sense
+ *                            when is_rule_enough = 0
+ *                    For HTT_RX_CCE_SUPER_RULE_INSTALL_RESPONSE:
+ *                        b'24    - cfg_result_0: indicate the config result
+ *                                  of RX_CCE_SUPER_RULE_0
+ *                                  0: Install/Uninstall fails
+ *                                  1: Install/Uninstall succeeds
+ *                        b'25    - cfg_result_1: indicate the config result
+ *                                  of RX_CCE_SUPER_RULE_1
+ *                                  0: Install/Uninstall fails
+ *                                  1: Install/Uninstall succeeds
+ *                        b'26:31 - reserved
+ *                    For HTT_RX_CCE_SUPER_RULE_RELEASE_RESPONSE:
+ *                        b'24    - cfg_result_0: indicate the config result
+ *                                  of RX_CCE_SUPER_RULE_0
+ *                                  0: Release fails
+ *                                  1: Release succeeds
+ *                        b'25    - cfg_result_1: indicate the config result
+ *                                  of RX_CCE_SUPER_RULE_1
+ *                                  0: Release fails
+ *                                  1: Release succeeds
+ *                        b'26:31 - reserved
+ */
+
+enum htt_rx_cce_super_rule_setup_done_response_type {
+    HTT_RX_CCE_SUPER_RULE_SETUP_REQ_RESPONSE = 0,
+    HTT_RX_CCE_SUPER_RULE_INSTALL_RESPONSE,
+    HTT_RX_CCE_SUPER_RULE_RELEASE_RESPONSE,
+
+    /*All reply type should be before this*/
+    HTT_RX_CCE_SUPER_RULE_SETUP_INVALID_RESPONSE,
+};
+
+PREPACK struct htt_rx_cce_super_rule_setup_done_t {
+    A_UINT8 msg_type;
+    A_UINT8 vdev_id;
+    A_UINT8 response_type;
+    union {
+        struct {
+            /* For HTT_RX_CCE_SUPER_RULE_SETUP_REQ_RESPONSE */
+            A_UINT8 is_rule_enough: 1,
+                    avail_rule_num: 7;
+        };
+        struct {
+            /*
+             * For HTT_RX_CCE_SUPER_RULE_INSTALL_RESPONSE and
+             * HTT_RX_CCE_SUPER_RULE_RELEASE_RESPONSE
+             */
+            A_UINT8 cfg_result_0:   1,
+                    cfg_result_1:   1,
+                    rsvd:           6;
+        };
+    } result;
+} POSTPACK;
+
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_SZ (sizeof(struct htt_rx_cce_super_rule_setup_done_t))
+
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_VDEV_ID_M 0x0000ff00
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_VDEV_ID_S 8
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_VDEV_ID_GET(_var) \
+        (((_var) & HTT_RX_CCE_SUPER_RULE_SETUP_DONE_VDEV_ID_M) >> \
+        HTT_RX_CCE_SUPER_RULE_SETUP_DONE_VDEV_ID_S)
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_VDEV_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_CCE_SUPER_RULE_SETUP_DONE_VDEV_ID, _val); \
+            ((_var) |= ((_val) << HTT_RX_CCE_SUPER_RULE_SETUP_DONE_VDEV_ID_S)); \
+        } while (0)
+
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_RESPONSE_TYPE_M 0x00ff0000
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_RESPONSE_TYPE_S 16
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_RESPONSE_TYPE_GET(_var) \
+        (((_var) & HTT_RX_CCE_SUPER_RULE_SETUP_DONE_RESPONSE_TYPE_M) >> \
+        HTT_RX_CCE_SUPER_RULE_SETUP_DONE_RESPONSE_TYPE_S)
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_RESPONSE_TYPE_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_CCE_SUPER_RULE_SETUP_DONE_RESPONSE_TYPE, _val); \
+            ((_var) |= ((_val) << HTT_RX_CCE_SUPER_RULE_SETUP_DONE_RESPONSE_TYPE_S)); \
+        } while (0)
+
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_RESULT_M 0xff000000
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_RESULT_S 24
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_RESULT_GET(_var) \
+        (((_var) & HTT_RX_CCE_SUPER_RULE_SETUP_DONE_RESULT_M) >> \
+        HTT_RX_CCE_SUPER_RULE_SETUP_DONE_RESULT_S)
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_RESULT_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_CCE_SUPER_RULE_SETUP_DONE_RESULT, _val); \
+            ((_var) |= ((_val) << HTT_RX_CCE_SUPER_RULE_SETUP_DONE_RESULT_S)); \
+        } while (0)
+
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_IS_RULE_ENOUGH_M 0x01000000
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_IS_RULE_ENOUGH_S 24
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_IS_RULE_ENOUGH_GET(_var) \
+        (((_var) & HTT_RX_CCE_SUPER_RULE_SETUP_DONE_IS_RULE_ENOUGH_M) >> \
+        HTT_RX_CCE_SUPER_RULE_SETUP_DONE_IS_RULE_ENOUGH_S)
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_IS_RULE_ENOUGH_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_CCE_SUPER_RULE_SETUP_DONE_IS_RULE_ENOUGH, _val); \
+            ((_var) |= ((_val) << HTT_RX_CCE_SUPER_RULE_SETUP_DONE_IS_RULE_ENOUGH_S)); \
+        } while (0)
+
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_AVAIL_RULE_NUM_M 0xFE000000
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_AVAIL_RULE_NUM_S 25
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_AVAIL_RULE_NUM_GET(_var) \
+        (((_var) & HTT_RX_CCE_SUPER_RULE_SETUP_DONE_AVAIL_RULE_NUM_M) >> \
+        HTT_RX_CCE_SUPER_RULE_SETUP_DONE_AVAIL_RULE_NUM_S)
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_AVAIL_RULE_NUM_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_CCE_SUPER_RULE_SETUP_DONE_AVAIL_RULE_NUM, _val); \
+            ((_var) |= ((_val) << HTT_RX_CCE_SUPER_RULE_SETUP_DONE_AVAIL_RULE_NUM_S)); \
+        } while (0)
+
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_CFG_RESULT_0_M 0x01000000
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_CFG_RESULT_0_S 24
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_CFG_RESULT_0_GET(_var) \
+        (((_var) & HTT_RX_CCE_SUPER_RULE_SETUP_DONE_CFG_RESULT_0_M) >> \
+        HTT_RX_CCE_SUPER_RULE_SETUP_DONE_CFG_RESULT_0_S)
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_CFG_RESULT_0_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_CCE_SUPER_RULE_SETUP_DONE_CFG_RESULT_0, _val); \
+            ((_var) |= ((_val) << HTT_RX_CCE_SUPER_RULE_SETUP_DONE_CFG_RESULT_0_S)); \
+        } while (0)
+
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_CFG_RESULT_1_M 0x02000000
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_CFG_RESULT_1_S 25
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_CFG_RESULT_1_GET(_var) \
+        (((_var) & HTT_RX_CCE_SUPER_RULE_SETUP_DONE_CFG_RESULT_1_M) >> \
+        HTT_RX_CCE_SUPER_RULE_SETUP_DONE_CFG_RESULT_1_S)
+#define HTT_RX_CCE_SUPER_RULE_SETUP_DONE_CFG_RESULT_1_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_CCE_SUPER_RULE_SETUP_DONE_CFG_RESULT_1, _val); \
+            ((_var) |= ((_val) << HTT_RX_CCE_SUPER_RULE_SETUP_DONE_CFG_RESULT_1_S)); \
+        } while (0)
+
+/**
+ * @brief target -> host CoDel MSDU queue latencies array configuration
+ *
+ * MSG_TYPE => HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_IND
+ *
+ * @details
+ * The HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_IND message is used
+ * by the target to inform the host of the location and size of the DDR array of
+ * per MSDU queue latency metrics.  This array is updated by the host and
+ * read by the target.  The target uses these metric values to determine
+ * which MSDU queues have latencies exceeding their CoDel latency target.
+ *
+ * |31                            16|15       8|7        0|
+ * |-------------------------------------------+----------|
+ * |    number of array elements    | reserved | MSG_TYPE |
+ * |-------------------------------------------+----------|
+ * |            array physical address, low bits          |
+ * |------------------------------------------------------|
+ * |            array physical address, high bits         |
+ * |------------------------------------------------------|
+ * Header fields:
+ *  - MSG_TYPE
+ *    Bits 7:0
+ *    Purpose: Identifies this as a CoDel MSDU queue latencies
+ *        array configuration message.
+ *    Value: (HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_IND)
+ *  - NUM_ELEM
+ *    Bits 31:16
+ *    Purpose: Inform the host of the length of the MSDU queue latencies array.
+ *    Value: Specifies the number of elements in the MSDU queue latency
+ *        metrics array.  This value is the same as the maximum number of
+ *        MSDU queues supported by the target.
+ *        Since each array element is 16 bits, the size in bytes of the
+ *        MSDU queue latency metrics array is twice the number of elements.
+ *  - PADDR_LOW
+ *    Bits 31:0
+ *    Purpose: Inform the host of the MSDU queue latencies array's location.
+ *    Value: Lower 32 bits of the physical address of the MSDU queue latency
+ *       metrics array.
+ *  - PADDR_HIGH
+ *    Bits 31:0
+ *    Purpose: Inform the host of the MSDU queue latencies array's location.
+ *    Value: Upper 32 bits of the physical address of the MSDU queue latency
+ *       metrics array.
+ */
+typedef struct {
+    A_UINT32 msg_type:  8, /* bits 7:0   */
+             reserved:  8, /* bits 15:8  */
+             num_elem: 16; /* bits 31:16 */
+    A_UINT32 paddr_low;
+    A_UINT32 paddr_high;
+} htt_t2h_codel_msduq_latencies_array_cfg_int_t;
+
+#define HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_SIZE 12 /* bytes */
+
+#define HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_INT_NUM_ELEM_M   0xffff0000
+#define HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_INT_NUM_ELEM_S   16
+
+#define HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_INT_NUM_ELEM_GET(_var) \
+    (((_var) & HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_INT_NUM_ELEM_M) >> \
+     HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_INT_NUM_ELEM_S)
+#define HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_INT_NUM_ELEM_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL( \
+            HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_INT_NUM_ELEM, _val); \
+        ((_var) |= ((_val) << \
+            HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_INT_NUM_ELEM_S)); \
+    } while (0)
+
+/*
+ * This CoDel MSDU queue latencies array whose location and number of
+ * elements are specified by this HTT_T2H message consists of 16-bit elements
+ * that each specify a statistical summary (min) of a MSDU queue's latency,
+ * using microseconds units.
+ */
+#define HTT_CODEL_MSDUQ_LATENCIES_ARRAY_ELEM_BYTES 2
 
 #endif
