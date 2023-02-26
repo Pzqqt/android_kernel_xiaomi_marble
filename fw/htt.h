@@ -247,9 +247,10 @@
  * 3.119 Add RX_PEER_META_DATA V1A and V1B defs.
  * 3.120 Add HTT_H2T_MSG_TYPE_PRIMARY_LINK_PEER_MIGRATE_IND, _RESP defs.
  * 3.121 Add HTT_T2H_MSG_TYPE_PEER_AST_OVERRIDE_INDEX_IND def.
+ * 3.122 Add is_umac_hang flag in H2T UMAC_HANG_RECOVERY_SOC_START_PRE_RESET msg
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 121
+#define HTT_CURRENT_VERSION_MINOR 122
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -10213,12 +10214,13 @@ PREPACK typedef struct {
  *  and HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP was sent
  *  beforehand.
  *
- * |31                                       9|8|7            0|
+ * |31                                    10|9|8|7            0|
  * |-----------------------------------------------------------|
- * |                 reserved                 |I|   msg_type   |
+ * |                 reserved               |U|I|   msg_type   |
  * |-----------------------------------------------------------|
  * Where:
  *     I = is_initiator
+ *     U = is_umac_hang
  *
  * The message is interpreted as follows:
  * dword0 - b'0:7   - msg_type
@@ -10227,13 +10229,16 @@ PREPACK typedef struct {
  *                    execute the UMAC-recovery in context of the Initiator or
  *                    Non-Initiator.
  *                    The value zero indicates this target is Non-Initiator.
- *          b'9:31  - reserved.
+ *          b'9     - is_umac_hang: indicates whether MLO UMAC recovery
+ *                    executed in context of UMAC hang or Target recovery.
+ *          b'10:31 - reserved.
  */
 
 PREPACK typedef struct {
     A_UINT32 msg_type       : 8,
              is_initiator   : 1,
-             reserved       : 23;
+             is_umac_hang   : 1,
+             reserved       : 22;
 } POSTPACK htt_h2t_umac_hang_recovery_start_pre_reset_t;
 
 #define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_BYTES \
@@ -10250,6 +10255,17 @@ PREPACK typedef struct {
     do { \
         HTT_CHECK_SET_VAL(HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_INITIATOR, _val); \
         ((word0) |= ((_val) << HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_INITIATOR_S));\
+    } while (0)
+
+#define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_UMAC_HANG_M 0x00000200
+#define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_UMAC_HANG_S 9
+#define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_UMAC_HANG_GET(word0) \
+    (((word0) & HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_UMAC_HANG_M) >> \
+     HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_UMAC_HANG_S)
+#define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_UMAC_HANG_SET(word0, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_UMAC_HANG, _val); \
+        ((word0) |= ((_val) << HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_UMAC_HANG_S));\
     } while (0)
 
 
