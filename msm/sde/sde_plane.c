@@ -1462,7 +1462,9 @@ static int _sde_plane_color_fill(struct sde_plane *psde,
 	const struct sde_format *fmt;
 	const struct drm_plane *plane;
 	struct sde_plane_state *pstate;
+	struct sde_crtc_state *cstate;
 	bool blend_enable = true;
+	u32 comp_color = 0;
 
 	if (!psde || !psde->base.state) {
 		SDE_ERROR("invalid plane\n");
@@ -1487,6 +1489,11 @@ static int _sde_plane_color_fill(struct sde_plane *psde,
 
 	blend_enable = (SDE_DRM_BLEND_OP_OPAQUE !=
 			sde_plane_get_property(pstate, PLANE_PROP_BLEND_OP));
+	/* read the property in FSC to RGB use case only */
+	cstate = to_sde_crtc_state(pstate->base.crtc->state);
+	if (SDE_FORMAT_IS_FSC(fmt) && !sde_crtc_is_connector_fsc(cstate))
+		comp_color = sde_plane_get_property(pstate,
+				PLANE_PROP_COLOR_COMPONENT);
 
 	/* update sspp */
 	if (fmt && psde->pipe_hw->ops.setup_solidfill) {
@@ -1505,7 +1512,8 @@ static int _sde_plane_color_fill(struct sde_plane *psde,
 			psde->pipe_hw->ops.setup_format(psde->pipe_hw,
 					fmt, blend_enable,
 					SDE_SSPP_SOLID_FILL,
-					pstate->multirect_index);
+					pstate->multirect_index,
+					comp_color);
 
 		if (psde->pipe_hw->ops.setup_rects)
 			psde->pipe_hw->ops.setup_rects(psde->pipe_hw,
@@ -3138,7 +3146,9 @@ static void _sde_plane_update_roi_config(struct drm_plane *plane,
 static void _sde_plane_update_format_and_rects(struct sde_plane *psde,
 	struct sde_plane_state *pstate, const struct sde_format *fmt)
 {
-	uint32_t src_flags = 0;
+	uint32_t src_flags = 0, comp_color = 0;
+	struct sde_crtc_state *cstate = to_sde_crtc_state(
+			pstate->base.crtc->state);
 
 	SDE_DEBUG_PLANE(psde, "rotation 0x%X\n", pstate->rotation);
 	if (pstate->rotation & DRM_MODE_REFLECT_X)
@@ -3148,10 +3158,15 @@ static void _sde_plane_update_format_and_rects(struct sde_plane *psde,
 	if (pstate->rotation & DRM_MODE_ROTATE_90)
 		src_flags |= SDE_SSPP_ROT_90;
 
+	/* read the property in FSC to RGB use case only */
+	if (SDE_FORMAT_IS_FSC(fmt) && !sde_crtc_is_connector_fsc(cstate))
+		comp_color = sde_plane_get_property(pstate,
+				PLANE_PROP_COLOR_COMPONENT);
+
 	/* update format */
 	psde->pipe_hw->ops.setup_format(psde->pipe_hw, fmt,
 	   pstate->const_alpha_en, src_flags,
-	   pstate->multirect_index);
+	   pstate->multirect_index, comp_color);
 
 	if (psde->pipe_hw->ops.setup_cdp) {
 		struct sde_hw_pipe_cdp_cfg *cdp_cfg = &pstate->cdp_cfg;

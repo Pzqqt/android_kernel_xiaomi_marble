@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -345,19 +345,51 @@ static void sde_hw_sspp_setup_ubwc(struct sde_hw_pipe *ctx, struct sde_hw_blk_re
 	}
 }
 
+static u32 _sde_hw_sspp_setup_unpack(const struct sde_format *fmt,
+		u32 comp_color, u8 *unpack_count)
+{
+	u32 unpack = 0;
+
+	switch (comp_color) {
+	case SDE_COMP_R:
+		unpack = (C3_ALPHA << 24) | (C3_ALPHA << 16) |
+				(C3_ALPHA << 8) | (C2_R_Cr << 0);
+		*unpack_count = 1;
+		break;
+	case SDE_COMP_G:
+		unpack = (C3_ALPHA << 24) | (C3_ALPHA << 16) |
+				(C0_G_Y << 8) | (C3_ALPHA << 0);
+		*unpack_count = 1;
+		break;
+	case SDE_COMP_B:
+		unpack = (C3_ALPHA << 24) | (C1_B_Cb << 16) |
+				(C3_ALPHA << 8) | (C3_ALPHA << 0);
+		*unpack_count = 1;
+		break;
+	default:
+		unpack = (fmt->element[3] << 24) | (fmt->element[2] << 16) |
+				(fmt->element[1] << 8) | (fmt->element[0] << 0);
+		*unpack_count = fmt->unpack_count;
+	}
+
+	return unpack;
+}
+
 /**
  * Setup source pixel format, flip,
  */
 static void sde_hw_sspp_setup_format(struct sde_hw_pipe *ctx,
 		const struct sde_format *fmt,
 		bool const_alpha_en, u32 flags,
-		enum sde_sspp_multirect_index rect_mode)
+		enum sde_sspp_multirect_index rect_mode,
+		u32 comp_color)
 {
 	struct sde_hw_blk_reg_map *c;
 	u32 chroma_samp, unpack, src_format;
 	u32 opmode = 0;
 	u32 op_mode_off, unpack_pat_off, format_off;
 	u32 idx;
+	u8 unpack_count;
 	bool const_color_en = true;
 
 	if (_sspp_subblk_offset(ctx, SDE_SSPP_SRC, &idx) || !fmt)
@@ -404,9 +436,9 @@ static void sde_hw_sspp_setup_format(struct sde_hw_pipe *ctx,
 	if (flags & SDE_SSPP_SOLID_FILL)
 		src_format |= BIT(22);
 
-	unpack = (fmt->element[3] << 24) | (fmt->element[2] << 16) |
-		(fmt->element[1] << 8) | (fmt->element[0] << 0);
-	src_format |= ((fmt->unpack_count - 1) << 12) |
+	unpack = _sde_hw_sspp_setup_unpack(fmt, comp_color, &unpack_count);
+
+	src_format |= ((unpack_count - 1) << 12) |
 		(fmt->unpack_tight << 17) |
 		(fmt->unpack_align_msb << 18);
 
