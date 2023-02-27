@@ -1239,6 +1239,12 @@ static int sde_encoder_virt_atomic_check(
 	SDE_EVT32(DRMID(drm_enc), crtc_state->mode_changed,
 		crtc_state->active_changed, crtc_state->connectors_changed);
 
+	if (sde_conn->connector_type == DRM_MODE_CONNECTOR_VIRTUAL)
+		sde_conn->is_fsc = sde_connector_get_property(conn_state,
+				CONNECTOR_PROP_WB_FSC_MODE);
+	else
+		sde_conn->is_fsc = msm_is_mode_fsc(&sde_conn_state->msm_mode);
+
 	ret = _sde_encoder_atomic_check_phys_enc(sde_enc, crtc_state,
 			conn_state);
 	if (ret)
