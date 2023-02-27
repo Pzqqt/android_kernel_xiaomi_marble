@@ -147,6 +147,7 @@ enum msm_mdp_plane_property {
 	PLANE_PROP_MULTIRECT_MODE,
 	PLANE_PROP_SYS_CACHE_TYPE,
 	PLANE_PROP_BUFFER_MODE,
+	PLANE_PROP_COLOR_COMPONENT,
 
 	/* total # of properties */
 	PLANE_PROP_COUNT

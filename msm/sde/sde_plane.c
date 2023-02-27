@@ -2912,6 +2912,7 @@ static void _sde_plane_map_prop_to_dirty_bits(void)
 
 	plane_prop_array[PLANE_PROP_MULTIRECT_MODE] =
 	plane_prop_array[PLANE_PROP_COLOR_FILL] =
+	plane_prop_array[PLANE_PROP_COLOR_COMPONENT] =
 		SDE_PLANE_DIRTY_ALL;
 
 	/* no special action required */
@@ -3847,6 +3848,13 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 		{SDE_SYSCACHE_LLCC_DISP_RIGHT,  "disp_right"},
 	};
 
+	static const struct drm_prop_enum_list e_comp_type[] = {
+		{SDE_COMP_NONE, "comp_none"},
+		{SDE_COMP_R, "comp_r"},
+		{SDE_COMP_G, "comp_g"},
+		{SDE_COMP_B, "comp_b"},
+	};
+
 	static const struct drm_prop_enum_list e_buffer_mode[] = {
 		{SDE_INDEPENDENT_BUFFER_MODE, "independent"},
 		{SDE_SINGLE_BUFFER_MODE, "single"},
@@ -3935,6 +3943,10 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 	msm_property_install_enum(&psde->property_info, "buffer_mode", 0x0,
 		0, e_buffer_mode, ARRAY_SIZE(e_buffer_mode), 0,
 		PLANE_PROP_BUFFER_MODE);
+
+	msm_property_install_enum(&psde->property_info, "color_comp", 0x0,
+		0, e_comp_type, ARRAY_SIZE(e_comp_type), 0,
+		PLANE_PROP_COLOR_COMPONENT);
 
 	if (psde->pipe_hw->ops.setup_solidfill)
 		msm_property_install_range(&psde->property_info, "color_fill",
