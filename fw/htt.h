@@ -248,9 +248,10 @@
  * 3.120 Add HTT_H2T_MSG_TYPE_PRIMARY_LINK_PEER_MIGRATE_IND, _RESP defs.
  * 3.121 Add HTT_T2H_MSG_TYPE_PEER_AST_OVERRIDE_INDEX_IND def.
  * 3.122 Add is_umac_hang flag in H2T UMAC_HANG_RECOVERY_SOC_START_PRE_RESET msg
+ * 3.123 Add HTT_OPTION_TLV_TCL_METADATA_V21 def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 122
+#define HTT_CURRENT_VERSION_MINOR 123
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -563,10 +564,21 @@ PREPACK struct htt_option_tlv_support_tx_msdu_desc_ext_t {
  * supported by the host.  If the target doesn't provide a
  * HTT_OPTION_TLV_TAG_TCL_METADATA_VER in the VERSION_CONF message, it
  * is implicitly understood that the V1 TCL metadata shall be used.
+ *
+ * Feb 2023: Added version HTT_OPTION_TLV_TCL_METADATA_V21 = 21
+ * read as version 2.1. We added support for Dynamic AST Index Allocation
+ * for Alder+Pine in version 2.1. For HTT_OPTION_TLV_TCL_METADATA_V2 = 2
+ * we will retain older behavior of making sure the AST Index for SAWF
+ * in Pine is allocated using wifitool ath2 setUnitTestCmd 0x48 2 536 1
+ * and the FW will crash in wal_tx_de_fast.c. For version 2.1 and
+ * above we will use htt_tx_tcl_svc_class_id_metadata.ast_index
+ * in TCLV2 command and do the dynamic AST allocations.
  */
 enum HTT_OPTION_TLV_TCL_METADATA_VER_VALUES {
     HTT_OPTION_TLV_TCL_METADATA_V1 = 1,
     HTT_OPTION_TLV_TCL_METADATA_V2 = 2,
+    /* values 3-20 reserved */
+    HTT_OPTION_TLV_TCL_METADATA_V21 = 21,
 };
 
 PREPACK struct htt_option_tlv_tcl_metadata_ver_t {
@@ -2571,7 +2583,8 @@ typedef struct {
         type:          2, /* vdev_id based or peer_id or svc_id or global seq based */
         valid_htt_ext: 1, /* If set, tcl_exit_base->host_meta_info is valid */
         svc_class_id:  8,
-        rsvd:          5,
+        ast_index:     3, /* Indicates to firmware the AST index to be used for Pine for AST Override */
+        rsvd:          2,
         padding:      16; /* These 16 bits cannot be used by FW for the tcl command */
 } htt_tx_tcl_svc_class_id_metadata;
 
