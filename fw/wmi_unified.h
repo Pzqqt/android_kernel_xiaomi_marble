@@ -15354,6 +15354,13 @@ typedef enum {
          */
         WMI_VDEV_PARAM_SET_DISABLED_SCHED_MODES,       /* 0x8012 */
 
+        /*
+         * SAP Power save with TWT vdev param command
+         *      0 - Disable SAP Power save TWT
+         *      1 - Enable SAP Power save TWT
+         */
+        WMI_VDEV_PARAM_SET_SAP_PS_WITH_TWT,            /* 0x8013 */
+
     /*=== END VDEV_PARAM_PROTOTYPE SECTION ===*/
 } WMI_VDEV_PARAM;
 
