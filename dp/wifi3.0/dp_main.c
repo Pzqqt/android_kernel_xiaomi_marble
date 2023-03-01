@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -9224,6 +9224,14 @@ static QDF_STATUS dp_get_pdev_param(struct cdp_soc_t *cdp_soc, uint8_t pdev_id,
 	case CDP_FILTER_UCAST_DATA:
 		val->cdp_pdev_param_fltr_ucast =
 				dp_monitor_pdev_get_filter_ucast_data(pdev);
+		break;
+	case CDP_MONITOR_CHANNEL:
+		val->cdp_pdev_param_monitor_chan =
+			((struct dp_pdev *)pdev)->monitor_pdev->mon_chan_num;
+		break;
+	case CDP_MONITOR_FREQUENCY:
+		val->cdp_pdev_param_mon_freq =
+			((struct dp_pdev *)pdev)->monitor_pdev->mon_chan_freq;
 		break;
 	default:
 		return QDF_STATUS_E_FAILURE;
