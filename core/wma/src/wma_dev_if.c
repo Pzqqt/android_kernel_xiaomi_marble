@@ -1686,6 +1686,7 @@ peer_detach:
 			cdp_peer_delete(soc, vdev_id, peer_addr, bitmap);
 	}
 
+	wlan_release_peer_key_wakelock(wma->pdev, peer_mac);
 	wma_remove_objmgr_peer(wma, wma->interfaces[vdev_id].vdev, peer_mac);
 
 	wma->interfaces[vdev_id].peer_count--;
