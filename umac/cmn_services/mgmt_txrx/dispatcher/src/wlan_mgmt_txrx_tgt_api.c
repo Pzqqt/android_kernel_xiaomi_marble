@@ -216,6 +216,9 @@ mgmt_get_public_action_subtype(uint8_t action_code)
 	case PUB_ACTION_FTM_RESPONSE:
 		frm_type = MGMT_ACTION_FTM_RESPONSE;
 		break;
+	case PUB_ACTION_FILS_DISCOVERY:
+		frm_type = MGMT_ACTION_FILS_DISCOVERY;
+		break;
 	default:
 		frm_type = MGMT_FRM_UNSPECIFIED;
 		break;
