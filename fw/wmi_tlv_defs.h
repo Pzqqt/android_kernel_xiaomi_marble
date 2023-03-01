@@ -1350,6 +1350,9 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_vdev_set_manual_mu_trig_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_manual_ul_ofdma_trig_feedback_evt_fixed_param,
     WMITLV_TAG_STRUC_wmi_mlo_peer_link_control_param,
+    WMITLV_TAG_STRUC_wmi_dma_buf_release_cv_upload_meta_data,
+    WMITLV_TAG_STRUC_wmi_standalone_sounding_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_standalone_sounding_evt_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1873,6 +1876,7 @@ typedef enum {
     OP(WMI_MLO_VDEV_GET_LINK_INFO_CMDID) \
     OP(WMI_VDEV_SET_ULOFDMA_MANUAL_SU_TRIG_CMDID) \
     OP(WMI_VDEV_SET_ULOFDMA_MANUAL_MU_TRIG_CMDID) \
+    OP(WMI_VDEV_STANDALONE_SOUND_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2176,6 +2180,7 @@ typedef enum {
     OP(WMI_CSA_IE_RECEIVED_EVENTID) \
     OP(WMI_MLO_VDEV_LINK_INFO_EVENTID) \
     OP(WMI_MANUAL_UL_OFDMA_TRIG_FEEDBACK_EVENTID) \
+    OP(WMI_VDEV_STANDALONE_SOUND_COMPLETE_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -5323,6 +5328,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_ULOFDMA_MANUAL_SU_TRIG_CMDID);
     WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_mac_addr, peer_macaddr, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_ULOFDMA_MANUAL_MU_TRIG_CMDID);
 
+/* Standalone Sound Cmd */
+#define WMITLV_TABLE_WMI_VDEV_STANDALONE_SOUND_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_standalone_sounding_cmd_fixed_param, wmi_standalone_sounding_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_mac_addr, peer_list, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_STANDALONE_SOUND_CMDID);
+
 
 
 /************************** TLV definitions of WMI events *******************************/
@@ -6834,7 +6845,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_DMA_RING_CFG_RSP_EVENTID);
 #define WMITLV_TABLE_WMI_PDEV_DMA_RING_BUF_RELEASE_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_dma_buf_release_fixed_param, wmi_dma_buf_release_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_dma_buf_release_entry, entries, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_dma_buf_release_spectral_meta_data, meta_data, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_dma_buf_release_spectral_meta_data, meta_data, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_dma_buf_release_cv_upload_meta_data, cv_meta_data, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_DMA_RING_BUF_RELEASE_EVENTID);
 
 /* ctl failsafe check event */
@@ -7222,6 +7234,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_VDEV_LINK_INFO_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_manual_ul_ofdma_trig_feedback_evt_fixed_param, wmi_manual_ul_ofdma_trig_feedback_evt_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_mac_addr, peer_macaddr, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_MANUAL_UL_OFDMA_TRIG_FEEDBACK_EVENTID);
+
+/* WMI standalone sound complete event */
+#define WMITLV_TABLE_WMI_VDEV_STANDALONE_SOUND_COMPLETE_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_standalone_sounding_evt_fixed_param, wmi_standalone_sounding_evt_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, snd_failed, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_STANDALONE_SOUND_COMPLETE_EVENTID);
 
 
 

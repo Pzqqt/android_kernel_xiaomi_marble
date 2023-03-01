@@ -1230,6 +1230,9 @@ typedef enum {
     /* H2T HPA message */
     WMI_HPA_CMDID,
 
+    /* WMI comamnd for standalone sounding */
+    WMI_VDEV_STANDALONE_SOUND_CMDID,
+
     /*  Offload 11k related requests */
     WMI_11K_OFFLOAD_REPORT_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_11K_OFFLOAD),
     /* invoke neighbor report from FW */
@@ -2206,6 +2209,9 @@ typedef enum {
 
     /* T2H HPA message */
     WMI_HPA_EVENTID,
+
+    /* WMI standalone command complete Event */
+    WMI_VDEV_STANDALONE_SOUND_COMPLETE_EVENTID,
 
 
     /* GPIO Event */
@@ -33440,6 +33446,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_MLO_VDEV_GET_LINK_INFO_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_SET_ULOFDMA_MANUAL_SU_TRIG_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_SET_ULOFDMA_MANUAL_MU_TRIG_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_STANDALONE_SOUND_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -35275,6 +35282,7 @@ typedef struct {
 typedef enum {
     WMI_DMA_RING_CONFIG_MODULE_SPECTRAL,
     WMI_DMA_RING_CONFIG_MODULE_RTT,
+    WMI_DMA_RING_CONFIG_MODULE_CV_UPLOAD,
 } WMI_DMA_RING_SUPPORTED_MODULE;
 
 typedef struct {
@@ -35433,6 +35441,7 @@ typedef struct {
     /* This TLV is followed by another TLV of array of structs.
      * wmi_dma_buf_release_entry entries[num_buf_release_entry];
      * wmi_dma_buf_release_spectral_meta_data meta_datat[num_meta_data_entry];
+     * wmi_dma_buf_release_cv_upload_meta_data cv_meta_data[num_meta_data_entry]
      */
 } wmi_dma_buf_release_fixed_param;
 
@@ -42151,6 +42160,142 @@ typedef struct {
     A_UINT32 manual_trig_nss;
     A_INT32  manual_trig_target_rssi; /* units = dBm */
 } wmi_vdev_set_manual_su_trig_cmd_fixed_param;
+
+
+#define WMI_DMA_BUF_RELEASE_CV_UPLOAD_SET_ASNR_LENGTH(asnr_params, value) \
+        WMI_SET_BITS(asnr_params, 0, 16, value)
+#define WMI_DMA_BUF_RELEASE_CV_UPLOAD_GET_ASNR_LENGTH(asnr_params) \
+        WMI_GET_BITS(asnr_params, 0, 16)
+
+#define WMI_DMA_BUF_RELEASE_CV_UPLOAD_SET_ASNR_OFFSET(asnr_params, value) \
+        WMI_SET_BITS(asnr_params, 16, 16, value)
+#define WMI_DMA_BUF_RELEASE_CV_UPLOAD_GET_ASNR_OFFSET(asnr_params) \
+        WMI_GET_BITS(asnr_params, 16, 16)
+
+#define WMI_DMA_BUF_RELEASE_CV_UPLOAD_SET_DSNR_LENGTH(dsnr_params, value) \
+        WMI_SET_BITS(dsnr_params, 0, 16, value)
+#define WMI_DMA_BUF_RELEASE_CV_UPLOAD_GET_DSNR_LENGTH(dsnr_params) \
+        WMI_GET_BITS(dsnr_params, 0, 16)
+
+#define WMI_DMA_BUF_RELEASE_CV_UPLOAD_SET_DSNR_OFFSET(dsnr_params, value) \
+        WMI_SET_BITS(dsnr_params, 16, 16, value)
+#define WMI_DMA_BUF_RELEASE_CV_UPLOAD_GET_DSNR_OFFSET(dsnr_params) \
+        WMI_GET_BITS(dsnr_params, 16, 16)
+
+#define WMI_DMA_BUF_RELEASE_CV_UPLOAD_SET_FB_PARAMS_NC(fb_params, value) \
+        WMI_SET_BITS(fb_params, 0, 2, value)
+#define WMI_DMA_BUF_RELEASE_CV_UPLOAD_GET_FB_PARAMS_NC(fb_params) \
+        WMI_GET_BITS(fb_params, 0, 2)
+
+#define WMI_DMA_BUF_RELEASE_CV_UPLOAD_SET_FB_PARAMS_NSS_NUM(fb_params, value) \
+        WMI_SET_BITS(fb_params, 2, 2, value)
+#define WMI_DMA_BUF_RELEASE_CV_UPLOAD_GET_FB_PARAMS_NSS_NUM(fb_params) \
+        WMI_GET_BITS(fb_params, 2, 2)
+
+
+#define WMI_SET_STANDALONE_SOUND_PARAMS_FB_TYPE(snd_params, value) \
+        WMI_SET_BITS(snd_params, 0, 1, value)
+#define WMI_GET_STANDALONE_SOUND_PARAMS_FB_TYPE(snd_params) \
+        WMI_GET_BITS(snd_params, 0, 1)
+
+#define WMI_SET_STANDALONE_SOUND_PARAMS_NG(snd_params, value) \
+        WMI_SET_BITS(snd_params, 1, 2, value)
+#define WMI_GET_STANDALONE_SOUND_PARAMS_NG(snd_params) \
+        WMI_GET_BITS(snd_params, 1, 2)
+
+#define WMI_SET_STANDALONE_SOUND_PARAMS_CB(snd_params, value) \
+        WMI_SET_BITS(snd_params, 3, 1, value)
+#define WMI_GET_STANDALONE_SOUND_PARAMS_CB(snd_params) \
+        WMI_GET_BITS(snd_params, 3, 1)
+
+#define WMI_SET_STANDALONE_SOUND_PARAMS_BW(snd_params, value) \
+        WMI_SET_BITS(snd_params, 4, 3, value)
+#define WMI_GET_STANDALONE_SOUND_PARAMS_BW(snd_params) \
+        WMI_GET_BITS(snd_params, 4, 3)
+
+
+typedef enum _WMI_STANDALONE_SOUND_STATUS_T {
+    WMI_STANDALONE_SOUND_STATUS_OK,
+    WMI_STANDALONE_SOUND_STATUS_ERR_NUM_PEERS_EXCEEDED,
+    WMI_STANDALONE_SOUND_STATUS_ERR_NG_INVALID,
+    WMI_STANDALONE_SOUND_STATUS_ERR_NUM_REPEAT_EXCEEDED,
+    WMI_STANDALONE_SOUND_STATUS_ERR_PEER_DOESNOT_SUPPORT_BW,
+    WMI_STANDALONE_SOUND_STATUS_ERR_INVALID_PEER,
+    WMI_STANDALONE_SOUND_STATUS_ERR_INVALID_VDEV,
+    WMI_STANDALONE_SOUND_STATUS_ERR_PEER_DOES_NOT_SUPPORT_MU_FB,
+    WMI_STANDALONE_SOUND_STATUS_ERR_DMA_NOT_CONFIGURED,
+    WMI_STANDALONE_SOUND_STATUS_ERR_COMPLETE_FAILURE,
+} WMI_STANDALONE_SOUND_STATUS_T;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_dma_buf_release_cv_upload_meta_data */
+    /** Set if the CV is valid */
+    A_UINT32 is_valid;
+     /** Feedback type */
+    A_UINT32 fb_type;
+    /**
+    * [15:0] ASNR length
+    * [31:16] ASNR offset
+    */
+    A_UINT32 asnr_params;
+    /**
+    * [15:0] DSNR length
+    * [31:16] DSNR offset
+    */
+    A_UINT32 dsnr_params;
+    /** Peer mac address */
+    wmi_mac_addr peer_mac_address;
+    /**
+    * [1:0] Nc
+    * [3:2] nss_num
+    */
+    A_UINT32 fb_params;
+} wmi_dma_buf_release_cv_upload_meta_data;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_standalone_sounding_cmd_fixed_param */
+    /** vdev identifier */
+    A_UINT32 vdev_id;
+    /** sounding_params:
+    * [0] Feedback type
+    * [2:1] Ng
+    * [3] Codebook
+    * [6:4] BW
+    *     0 = 20 MHz
+    *     1 = 40 MHz
+    *     2 = 80 MHz
+    *     3 = 160 MHz
+    *     4 = 320 MHz
+    * [31:7] Reserved
+    */
+    A_UINT32 sounding_params;
+    /** The number of sounding repeats */
+    A_UINT32 num_sounding_repeats;
+    /**
+    * TLV (tag length value) parameters follow the
+    * structure. The TLV's are:
+    * wmi_mac_addr peer_list[num_peers];
+    */
+} wmi_standalone_sounding_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_standalone_sounding_evt_fixed_param */
+    /** vdev identifier */
+    A_UINT32 vdev_id;
+    /** status:
+     * standalone sounding command status -
+     * refer to WMI_STANDALONE_SOUND_STATUS_T
+     */
+    A_UINT32 status;
+    /** number of CV buffers uploaded */
+    A_UINT32 buffer_uploaded;
+    /** TLV (tag length value) parameters follow the
+    * structure. The TLV's are:
+    * A_UINT32 snd_failed[num_sounding_repeats];
+    *     snd_failed[] array's elements hold the number of failures
+    *     for each sounding.
+    */
+} wmi_standalone_sounding_evt_fixed_param;
 
 
 
