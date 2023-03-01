@@ -1026,8 +1026,6 @@ util_scan_parse_vendor_ie(struct scan_cache_entry *scan_params,
 		scan_params->ie_list.p2p = (uint8_t *)ie;
 	} else if (is_qca_son_oui((uint8_t *)ie,
 				  QCA_OUI_WHC_AP_INFO_SUBTYPE)) {
-		if (ie->ie_len > WLAN_VENDOR_SON_IE_LEN)
-			return QDF_STATUS_E_INVAL;
 
 		scan_params->ie_list.sonadv = (uint8_t *)ie;
 	} else if (is_ht_cap((uint8_t *)ie)) {
