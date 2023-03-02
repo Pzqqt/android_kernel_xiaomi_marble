@@ -12576,6 +12576,24 @@ typedef struct {
 } wmi_ctrl_path_cfr_stats_struct;
 
 typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ctrl_path_cfr_stats_struct */
+    A_UINT32 tlv_header;
+    /* blanking_mode:
+     * blanking configuration. Refer to WMI_SCAN_BLANKING_MODE
+     */
+    A_UINT32 blanking_mode;
+    /* is_blanking_enabled:
+     * current blanking status. 0 = disabled, 1 = enabled
+     */
+    A_UINT32 is_blanking_enabled;
+    A_UINT32 gate_2g_enabled; /* 2.4GHZ gate pin state */
+    A_UINT32 gate_5g_enabled; /* 5GHz gate pin state */
+    A_UINT32 gate_6g_enabled; /* 6GHz gate pin state */
+    A_UINT32 blanking_count; /* scan radio blanking count */
+    A_UINT32 blanking_duration; /* scan radio blanking duration in us */
+} wmi_ctrl_path_blanking_stats_struct;
+
+typedef struct {
     /** TLV tag and len; tag equals
     *  WMITLV_TAG_STRUC_wmi_ctrl_path_stats_event_fixed_param */
     A_UINT32 tlv_header;
@@ -31375,6 +31393,7 @@ typedef enum {
     WMI_REQUEST_CTRL_PATH_PMLO_STAT         = 12,
     WMI_REQUEST_CTRL_PATH_CFR_STAT          = 13,
     WMI_REQUEST_CTRL_PATH_T2LM_STAT         = 14,
+    WMI_REQUEST_CTRL_PATH_BLANKING_STAT     = 15,
 } wmi_ctrl_path_stats_id;
 
 typedef enum {
