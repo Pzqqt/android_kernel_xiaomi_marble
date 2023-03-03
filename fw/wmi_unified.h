@@ -518,6 +518,9 @@ typedef enum {
     WMI_PDEV_MESH_RX_FILTER_ENABLE_CMDID,
     /* WMI cmd to set Target rate to power table */
     WMI_PDEV_SET_TGTR2P_TABLE_CMDID,
+    /* WMI cmd to set RF path for PHY */
+    WMI_PDEV_SET_RF_PATH_CMDID,
+
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -33466,6 +33469,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_SET_ULOFDMA_MANUAL_SU_TRIG_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_SET_ULOFDMA_MANUAL_MU_TRIG_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_STANDALONE_SOUND_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_SET_RF_PATH_CMDID); /* set RF path of PHY */
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -42315,6 +42319,21 @@ typedef struct {
     *     for each sounding.
     */
 } wmi_standalone_sounding_evt_fixed_param;
+
+typedef struct {
+    /*
+     * TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_rf_path_cmd_fixed_param
+     */
+    A_UINT32 tlv_header;
+    /* pdev_id for identifying the MAC */
+    A_UINT32 pdev_id;
+    /*
+     * rf_path :
+     * 0 - primary RF path
+     * 1 - secondary RF path
+     */
+    A_UINT32 rf_path;
+} wmi_pdev_set_rf_path_cmd_fixed_param;
 
 
 
