@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -203,6 +203,7 @@
  * increase this when we add more radiotap elements.
  * Number after '+' indicates maximum possible increase due to alignment
  */
+#define RADIOTAP_TX_FLAGS_LEN (2 + 1)
 #define RADIOTAP_VHT_FLAGS_LEN (12 + 1)
 #define RADIOTAP_HE_FLAGS_LEN (12 + 1)
 #define RADIOTAP_HE_MU_FLAGS_LEN (8 + 1)
@@ -223,6 +224,7 @@
 	(sizeof(struct qdf_radiotap_ext2))
 #define RADIOTAP_HEADER_LEN (RADIOTAP_BASE_HEADER_LEN + \
 				RADIOTAP_FIXED_HEADER_LEN + \
+				RADIOTAP_TX_FLAGS_LEN + \
 				RADIOTAP_HT_FLAGS_LEN + \
 				RADIOTAP_VHT_FLAGS_LEN + \
 				RADIOTAP_AMPDU_STATUS_LEN + \

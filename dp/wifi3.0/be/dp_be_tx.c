@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -257,9 +257,17 @@ void dp_tx_process_htt_completion_be(struct dp_soc *soc,
 		ts.tsf = htt_desc[4];
 		ts.first_msdu = 1;
 		ts.last_msdu = 1;
-		ts.status = (tx_status == HTT_TX_FW2WBM_TX_STATUS_OK ?
-			     HAL_TX_TQM_RR_FRAME_ACKED :
-			     HAL_TX_TQM_RR_REM_CMD_REM);
+		switch (tx_status) {
+		case HTT_TX_FW2WBM_TX_STATUS_OK:
+			ts.status = HAL_TX_TQM_RR_FRAME_ACKED;
+			break;
+		case HTT_TX_FW2WBM_TX_STATUS_DROP:
+			ts.status = HAL_TX_TQM_RR_REM_CMD_REM;
+			break;
+		case HTT_TX_FW2WBM_TX_STATUS_TTL:
+			ts.status = HAL_TX_TQM_RR_REM_CMD_TX;
+			break;
+		}
 		tid = ts.tid;
 		if (qdf_unlikely(tid >= CDP_MAX_DATA_TIDS))
 			tid = CDP_MAX_DATA_TIDS - 1;
