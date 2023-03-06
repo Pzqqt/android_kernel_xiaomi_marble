@@ -887,6 +887,7 @@ static inline unsigned int MMM_COLOR_FMT_Y_STRIDE(unsigned int color_fmt,
 	case MMM_COLOR_FMT_P010_512:
 		alignment = 512;
 		stride = MMM_COLOR_FMT_ALIGN(width * 2, alignment);
+		break;
 	default:
 		break;
 	}
