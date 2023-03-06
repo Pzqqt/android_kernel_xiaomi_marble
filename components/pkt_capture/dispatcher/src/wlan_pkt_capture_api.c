@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -16,25 +16,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef QWLAN_VERSION_H
-#define QWLAN_VERSION_H
-/*===========================================================================
+/**
+ * DOC: This file contains pkt_capture public API's exposed.
+ */
 
-   FILE:
-   qwlan_version.h
+#include "wlan_pkt_capture_api.h"
+#include "wlan_pkt_capture_main.h"
 
-   BRIEF DESCRIPTION:
-   WLAN Host Version file.
-   Build number automatically updated by build scripts.
-
-   ===========================================================================*/
-
-#define QWLAN_VERSION_MAJOR            2
-#define QWLAN_VERSION_MINOR            0
-#define QWLAN_VERSION_PATCH            9
-#define QWLAN_VERSION_EXTRA            "Y"
-#define QWLAN_VERSION_BUILD            16
-
-#define QWLAN_VERSIONSTR               "2.0.9.16Y"
-
-#endif /* QWLAN_VERSION_H */
+bool wlan_pkt_capture_is_tx_mgmt_enable(struct wlan_objmgr_pdev *pdev)
+{
+	return pkt_capture_is_tx_mgmt_enable(pdev);
+}

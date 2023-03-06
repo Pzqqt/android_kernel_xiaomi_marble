@@ -1322,6 +1322,7 @@ enum mlme_cfg_frame_type {
  * @disable_4way_hs_offload: enable/disable 4 way handshake offload to firmware
  * @as_enabled: antenna sharing enabled or not (FW capability)
  * @mgmt_retry_max: maximum retries for management frame
+ * @enable_he_mcs0_for_6ghz_mgmt: HE MCS0 rate for mgmt frames in 6GHz band
  * @bmiss_skip_full_scan: Decide if full scan can be skipped in firmware if no
  * candidate is found in partial scan based on channel map
  * @enable_ring_buffer: Decide to enable/disable ring buffer for bug report
@@ -1373,6 +1374,7 @@ struct wlan_mlme_generic {
 	uint32_t disable_4way_hs_offload;
 	bool as_enabled;
 	uint8_t mgmt_retry_max;
+	bool enable_he_mcs0_for_6ghz_mgmt;
 	bool bmiss_skip_full_scan;
 	bool enable_ring_buffer;
 	bool enable_peer_unmap_conf_support;

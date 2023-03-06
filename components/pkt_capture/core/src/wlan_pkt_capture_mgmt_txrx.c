@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020, 2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,6 +31,7 @@
 #include "wlan_mgmt_txrx_utils_api.h"
 #include "wlan_utility.h"
 #include "cds_ieee80211_common.h"
+#include "cdp_txrx_ctrl.h"
 
 enum pkt_capture_tx_status
 pkt_capture_mgmt_status_map(uint8_t status)
@@ -132,13 +134,107 @@ pkt_capture_mgmtpkt_process(struct wlan_objmgr_psoc *psoc,
 	struct wlan_objmgr_vdev *vdev;
 	struct pkt_capture_mon_pkt *pkt;
 	uint32_t headroom;
+	uint8_t type, sub_type;
+	struct ieee80211_frame *wh;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct wlan_objmgr_pdev *pdev;
+	cdp_config_param_type val;
+	tSirMacAuthFrameBody *auth;
+	struct pkt_capture_vdev_priv *vdev_priv;
 
 	vdev = wlan_objmgr_get_vdev_by_opmode_from_psoc(psoc,
 							QDF_STA_MODE,
 							WLAN_PKT_CAPTURE_ID);
+
 	if (!vdev) {
 		pkt_capture_err("vdev is NULL");
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	vdev_priv = pkt_capture_vdev_get_priv(vdev);
+	if (!vdev_priv) {
+		pkt_capture_err("packet capture vdev priv is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		pkt_capture_err("pdev is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wh = (struct ieee80211_frame *)(qdf_nbuf_data(nbuf));
+	type = (wh)->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
+	sub_type = (wh)->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
+
+	/*
+	 *  Update channel only if successful AUTH Resp is received.
+	 *  This is done so that EAPOL M1 data frame have correct
+	 *  channel
+	 */
+	if ((type == IEEE80211_FC0_TYPE_MGT) &&
+	    (sub_type == MGMT_SUBTYPE_AUTH)) {
+		uint8_t chan = wlan_freq_to_chan(txrx_status->chan_freq);
+
+		auth = (tSirMacAuthFrameBody *)(qdf_nbuf_data(nbuf) +
+			sizeof(tSirMacMgmtHdr));
+
+		if (auth->authTransactionSeqNumber == SIR_MAC_AUTH_FRAME_2 ||
+		    auth->authTransactionSeqNumber == SIR_MAC_AUTH_FRAME_4) {
+			if (auth->authStatusCode == STATUS_SUCCESS) {
+				val.cdp_pdev_param_monitor_chan = chan;
+				cdp_txrx_set_pdev_param(
+					soc, wlan_objmgr_pdev_get_pdev_id(pdev),
+					CDP_MONITOR_CHANNEL, val);
+
+				val.cdp_pdev_param_mon_freq =
+							txrx_status->chan_freq;
+				cdp_txrx_set_pdev_param(
+					soc, wlan_objmgr_pdev_get_pdev_id(pdev),
+					CDP_MONITOR_FREQUENCY, val);
+			}
+		}
+	}
+
+	/*
+	 *  Update channel to last connected channel in case of assoc/reassoc
+	 *  response failure and save current chan in case of success
+	 */
+	if ((type == IEEE80211_FC0_TYPE_MGT) &&
+	    ((sub_type == MGMT_SUBTYPE_ASSOC_RESP) ||
+	    (sub_type == MGMT_SUBTYPE_REASSOC_RESP))) {
+		if (qdf_nbuf_len(nbuf) < (sizeof(tSirMacMgmtHdr) +
+		   SIR_MAC_ASSOC_RSP_STATUS_CODE_OFFSET)) {
+			pkt_capture_err("Packet length is less than expected");
+			qdf_nbuf_free(nbuf);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		status = (uint16_t)(*(qdf_nbuf_data(nbuf) +
+			 sizeof(tSirMacMgmtHdr) +
+			 SIR_MAC_ASSOC_RSP_STATUS_CODE_OFFSET));
+
+		if (status == STATUS_SUCCESS) {
+			vdev_priv->last_freq = vdev_priv->curr_freq;
+			vdev_priv->curr_freq = txrx_status->chan_freq;
+		} else {
+			uint8_t chan_num;
+
+			chan_num = wlan_reg_freq_to_chan(pdev,
+							 vdev_priv->last_freq);
+
+			val.cdp_pdev_param_monitor_chan = chan_num;
+			cdp_txrx_set_pdev_param(
+				soc, wlan_objmgr_pdev_get_pdev_id(pdev),
+				CDP_MONITOR_CHANNEL, val);
+
+			val.cdp_pdev_param_mon_freq = vdev_priv->last_freq;
+			cdp_txrx_set_pdev_param(
+				soc, wlan_objmgr_pdev_get_pdev_id(pdev),
+				CDP_MONITOR_FREQUENCY, val);
+
+			vdev_priv->curr_freq = vdev_priv->last_freq;
+		}
 	}
 
 	/*
@@ -335,6 +431,7 @@ void pkt_capture_mgmt_tx(struct wlan_objmgr_pdev *pdev,
 	struct wlan_objmgr_vdev *vdev;
 	qdf_nbuf_t wbuf;
 	int nbuf_len;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!pdev) {
 		pkt_capture_err("pdev is NULL");
@@ -342,25 +439,27 @@ void pkt_capture_mgmt_tx(struct wlan_objmgr_pdev *pdev,
 	}
 
 	vdev = pkt_capture_get_vdev();
-	if (!vdev) {
-		pkt_capture_err("vdev is NULL");
+	status = pkt_capture_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pkt_capture_err("failed to get vdev ref");
 		return;
 	}
 
 	vdev_priv = pkt_capture_vdev_get_priv(vdev);
 	if (!vdev_priv) {
 		pkt_capture_err("packet capture vdev priv is NULL");
+		pkt_capture_vdev_put_ref(vdev);
 		return;
 	}
 
 	if (pfc->type == IEEE80211_FC0_TYPE_MGT &&
 	    !(vdev_priv->frame_filter.mgmt_tx_frame_filter &
 	    PKT_CAPTURE_MGMT_FRAME_TYPE_ALL))
-		return;
+		goto exit;
 
 	if (pfc->type == IEEE80211_FC0_TYPE_CTL &&
 	    !vdev_priv->frame_filter.ctrl_tx_frame_filter)
-		return;
+		goto exit;
 
 	nbuf_len = qdf_nbuf_len(nbuf);
 	wbuf = qdf_nbuf_alloc(NULL, roundup(nbuf_len + RESERVE_BYTES, 4),
@@ -368,7 +467,7 @@ void pkt_capture_mgmt_tx(struct wlan_objmgr_pdev *pdev,
 	if (!wbuf) {
 		pkt_capture_err("Failed to allocate wbuf for mgmt len(%u)",
 				nbuf_len);
-		return;
+		goto exit;
 	}
 
 	qdf_nbuf_put_tail(wbuf, nbuf_len);
@@ -396,6 +495,8 @@ void pkt_capture_mgmt_tx(struct wlan_objmgr_pdev *pdev,
 	if (QDF_STATUS_SUCCESS !=
 		pkt_capture_process_mgmt_tx_data(pdev, &params, wbuf, 0xFF))
 		qdf_nbuf_free(wbuf);
+exit:
+	pkt_capture_vdev_put_ref(vdev);
 }
 
 void
@@ -409,6 +510,7 @@ pkt_capture_mgmt_tx_completion(struct wlan_objmgr_pdev *pdev,
 	tpSirMacFrameCtl pfc;
 	qdf_nbuf_t wbuf, nbuf;
 	int nbuf_len;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if (!pdev) {
 		pkt_capture_err("pdev is NULL");
@@ -416,29 +518,32 @@ pkt_capture_mgmt_tx_completion(struct wlan_objmgr_pdev *pdev,
 	}
 
 	vdev = pkt_capture_get_vdev();
-	if (!vdev) {
-		pkt_capture_err("vdev is NULL");
+	ret = pkt_capture_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		pkt_capture_err("failed to get vdev ref");
 		return;
 	}
 
 	vdev_priv = pkt_capture_vdev_get_priv(vdev);
 	if (!vdev_priv) {
 		pkt_capture_err("packet capture vdev priv is NULL");
+		pkt_capture_vdev_put_ref(vdev);
 		return;
 	}
 
 	nbuf = mgmt_txrx_get_nbuf(pdev, desc_id);
 	if (!nbuf)
-		return;
+		goto exit;
+
 	pfc = (tpSirMacFrameCtl)(qdf_nbuf_data(nbuf));
 	if (pfc->type == IEEE80211_FC0_TYPE_MGT &&
 	    !(vdev_priv->frame_filter.mgmt_tx_frame_filter &
 	    PKT_CAPTURE_MGMT_FRAME_TYPE_ALL))
-		return;
+		goto exit;
 
 	if (pfc->type == IEEE80211_FC0_TYPE_CTL &&
 	    !vdev_priv->frame_filter.ctrl_tx_frame_filter)
-		return;
+		goto exit;
 
 	nbuf_len = qdf_nbuf_len(nbuf);
 	wbuf = qdf_nbuf_alloc(NULL, roundup(nbuf_len + RESERVE_BYTES, 4),
@@ -446,7 +551,7 @@ pkt_capture_mgmt_tx_completion(struct wlan_objmgr_pdev *pdev,
 	if (!wbuf) {
 		pkt_capture_err("Failed to allocate wbuf for mgmt len(%u)",
 				nbuf_len);
-		return;
+		goto exit;
 	}
 
 	qdf_nbuf_put_tail(wbuf, nbuf_len);
@@ -457,6 +562,9 @@ pkt_capture_mgmt_tx_completion(struct wlan_objmgr_pdev *pdev,
 					pdev, params, wbuf,
 					pkt_capture_mgmt_status_map(status)))
 		qdf_nbuf_free(wbuf);
+
+exit:
+	pkt_capture_vdev_put_ref(vdev);
 }
 
 /**
@@ -493,16 +601,25 @@ pkt_capture_is_beacon_forward_enable(struct wlan_objmgr_vdev *vdev,
 				 &connected_bssid))
 		my_beacon = true;
 
-	if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
-	    PKT_CAPTURE_MGMT_CONNECT_BEACON && !my_beacon)
-		return false;
+	if (((vdev_priv->frame_filter.mgmt_rx_frame_filter &
+	    PKT_CAPTURE_MGMT_CONNECT_BEACON) ||
+	    vdev_priv->frame_filter.connected_beacon_interval) && my_beacon)
+		return true;
 
 	if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
-	    PKT_CAPTURE_MGMT_CONNECT_SCAN_BEACON && my_beacon)
-		return false;
+	    PKT_CAPTURE_MGMT_CONNECT_SCAN_BEACON && !my_beacon)
+		return true;
 
-	return true;
+	return false;
 }
+
+#ifdef DP_MON_RSSI_IN_DBM
+#define PKT_CAPTURE_FILL_RSSI(rx_params) \
+((rx_params)->snr + NORMALIZED_TO_NOISE_FLOOR)
+#else
+#define PKT_CAPTURE_FILL_RSSI(rx_status) \
+((rx_params)->snr)
+#endif
 
 /**
  * process_pktcapture_mgmt_rx_data_cb() -  process management rx packets
@@ -526,10 +643,12 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 	int buf_len;
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_pdev *pdev;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	vdev = pkt_capture_get_vdev();
-	if (!vdev) {
-		pkt_capture_err("vdev is NULL");
+	status = pkt_capture_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pkt_capture_err("failed to get vdev ref");
 		qdf_nbuf_free(wbuf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -537,6 +656,7 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 	vdev_priv = pkt_capture_vdev_get_priv(vdev);
 	if (!vdev_priv) {
 		pkt_capture_err("packet capture vdev priv is NULL");
+		pkt_capture_vdev_put_ref(vdev);
 		qdf_nbuf_free(wbuf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -569,6 +689,7 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 				  buf_len + RESERVE_BYTES, 4),
 				  RESERVE_BYTES, 4, false);
 	if (!nbuf) {
+		pkt_capture_vdev_put_ref(vdev);
 		qdf_nbuf_free(wbuf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -582,6 +703,7 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 	wh = (struct ieee80211_frame *)qdf_nbuf_data(nbuf);
 
 	pdev = wlan_vdev_get_pdev(vdev);
+	pkt_capture_vdev_put_ref(vdev);
 
 	if ((pfc->type == IEEE80211_FC0_TYPE_MGT) &&
 	    (pfc->subType == SIR_MAC_MGMT_DISASSOC ||
@@ -603,13 +725,13 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 	/* rx_params->rate is in Kbps, convert into Mbps */
 	txrx_status.rate = (rx_params->rate / 1000);
 	txrx_status.ant_signal_db = rx_params->snr;
-	txrx_status.rssi_comb = rx_params->snr;
 	txrx_status.chan_noise_floor = NORMALIZED_TO_NOISE_FLOOR;
+	txrx_status.rssi_comb = PKT_CAPTURE_FILL_RSSI(rx_params);
 	txrx_status.nr_ant = 1;
 	txrx_status.rtap_flags |=
 		((txrx_status.rate == 6 /* Mbps */) ? BIT(1) : 0);
 
-	if (rx_params->phy_mode != WLAN_PHYMODE_11B)
+	if (rx_params->phy_mode != PKTCAPTURE_RATECODE_CCK)
 		txrx_status.ofdm_flag = 1;
 	else
 		txrx_status.cck_flag = 1;
@@ -627,6 +749,7 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 exit:
+	pkt_capture_vdev_put_ref(vdev);
 	qdf_nbuf_free(wbuf);
 	return QDF_STATUS_SUCCESS;
 }

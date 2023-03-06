@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -33,6 +34,7 @@
 #define RESERVE_BYTES			(100)
 #define RATE_LIMIT			(16)
 #define INVALID_RSSI_FOR_TX		(-128)
+#define PKTCAPTURE_RATECODE_CCK		(1)
 
 /**
  * pkt_capture_process_mgmt_tx_data() - process management tx packets

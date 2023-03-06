@@ -2708,7 +2708,7 @@ lim_fill_ese_params(struct mac_context *mac_ctx, struct pe_session *session,
 }
 #endif
 
-static void lim_get_basic_rates(tSirMacRateSet *b_rates, uint32_t chan_freq)
+void lim_get_basic_rates(tSirMacRateSet *b_rates, uint32_t chan_freq)
 {
 	/*
 	 * Some IOT APs don't send supported rates in
@@ -3141,7 +3141,8 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 		wlan_reg_read_current_country(mac_ctx->psoc,
 					      programmed_country);
 		status = wlan_reg_get_6g_power_type_for_ctry(
-				mac_ctx->psoc, ie_struct->Country.country,
+				mac_ctx->psoc, mac_ctx->pdev,
+				ie_struct->Country.country,
 				programmed_country, &power_type_6g,
 				&ctry_code_match, session->ap_power_type);
 		if (QDF_IS_STATUS_ERROR(status)) {
