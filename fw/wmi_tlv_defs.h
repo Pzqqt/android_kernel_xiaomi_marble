@@ -1342,6 +1342,10 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_peer_preferred_link_map,
     WMITLV_TAG_STRUC_wmi_scan_blanking_params_info,
     WMITLV_TAG_STRUC_wmi_peer_list,
+    WMITLV_TAG_STRUC_wmi_ctrl_path_t2lm_stats_struct,
+    WMITLV_TAG_STRUC_wmi_mlo_vdev_get_link_info_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_mlo_vdev_link_info_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_mlo_vdev_link_info,
 } WMITLV_TAG_ID;
 
 /*
@@ -1862,6 +1866,7 @@ typedef enum {
     OP(WMI_HPA_CMDID) \
     OP(WMI_PDEV_SET_TGTR2P_TABLE_CMDID) \
     OP(WMI_PEER_BULK_SET_CMDID) \
+    OP(WMI_MLO_VDEV_GET_LINK_INFO_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2162,6 +2167,8 @@ typedef enum {
     OP(WMI_TAS_POWER_HISTORY_EVENTID) \
     OP(WMI_HPA_EVENTID) \
     OP(WMI_PDEV_SET_TGTR2P_TABLE_EVENTID) \
+    OP(WMI_CSA_IE_RECEIVED_EVENTID) \
+    OP(WMI_MLO_VDEV_LINK_INFO_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -3518,7 +3525,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_TDLS_PEER_UPDATE_CMDID);
 /* Enable/Disable TDLS Offchannel Cmd */
 #define WMITLV_TABLE_WMI_TDLS_SET_OFFCHAN_MODE_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_tdls_set_offchan_mode_cmd_fixed_param, \
-            wmi_tdls_set_offchan_mode_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+            wmi_tdls_set_offchan_mode_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_channel, peer_chan_list, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_TDLS_SET_OFFCHAN_MODE_CMDID);
 
 
@@ -5292,6 +5300,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_HPA_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_INT8, r2p_array, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_TGTR2P_TABLE_CMDID);
 
+#define WMITLV_TABLE_WMI_MLO_VDEV_GET_LINK_INFO_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_vdev_get_link_info_cmd_fixed_param, wmi_mlo_vdev_get_link_info_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_MLO_VDEV_GET_LINK_INFO_CMDID);
+
 
 
 /************************** TLV definitions of WMI events *******************************/
@@ -6727,7 +6739,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_STATS_INFO_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_odd_addr_read_struct, ctrl_path_odd_addr_read, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_afc_stats_struct,  ctrl_path_afc_stats, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_pmlo_stats_struct,  ctrl_path_pmlo_stats, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_cfr_stats_struct,  ctrl_path_cfr_stats, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_cfr_stats_struct,  ctrl_path_cfr_stats, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_t2lm_stats_struct,  ctrl_path_t2lm_stats, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_CTRL_PATH_STATS_EVENTID);
 
 /*
@@ -7175,6 +7188,15 @@ WMITLV_CREATE_PARAM_STRUC(WMI_HPA_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_tgtr2p_table_event_fixed_param, wmi_pdev_set_tgtr2p_table_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_TGTR2P_TABLE_EVENTID);
 
+/* CSA IE Received Event */
+#define WMITLV_TABLE_WMI_CSA_IE_RECEIVED_EVENTID(id,op,buf,len)\
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_csa_event_fixed_param, wmi_csa_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_CSA_IE_RECEIVED_EVENTID);
+
+#define WMITLV_TABLE_WMI_MLO_VDEV_LINK_INFO_EVENTID(id,op,buf,len)  \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_vdev_link_info_event_fixed_param, wmi_mlo_vdev_link_info_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mlo_vdev_link_info, mlo_vdev_link_info, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_MLO_VDEV_LINK_INFO_EVENTID);
 
 
 #ifdef __cplusplus
