@@ -156,6 +156,7 @@ ktime_t sde_encoder_calc_last_vsync_timestamp(struct drm_encoder *drm_enc)
 	u64 vsync_counter, qtmr_counter, hw_diff, hw_diff_ns, frametime_ns;
 	ktime_t tvblank, cur_time;
 	struct intf_status intf_status = {0};
+	unsigned long features;
 	u32 fps;
 
 	sde_enc = to_sde_encoder_virt(drm_enc);
@@ -168,11 +169,14 @@ ktime_t sde_encoder_calc_last_vsync_timestamp(struct drm_encoder *drm_enc)
 			&& !sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_VIDEO_MODE)))
 		return 0;
 
+	features = cur_master->hw_intf->cap->features;
+
 	/*
-	 * avoid calculation and rely on ktime_get, if programmable fetch is enabled
-	 * as the HW VSYNC timestamp will be updated at panel vsync and not at MDP VSYNC
+	 * if MDP VSYNC HW timestamp is not supported and if programmable fetch is enabled,
+	 * avoid calculation and rely on ktime_get, as the HW vsync timestamp will be updated
+	 * at panel vsync and not at MDP VSYNC
 	 */
-	if (cur_master->hw_intf->ops.get_status) {
+	if (!test_bit(SDE_INTF_MDP_VSYNC_TS, &features) && cur_master->hw_intf->ops.get_status) {
 		cur_master->hw_intf->ops.get_status(cur_master->hw_intf, &intf_status);
 		if (intf_status.is_prog_fetch_en)
 			return 0;

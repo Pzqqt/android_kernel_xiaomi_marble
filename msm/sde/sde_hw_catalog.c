@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -2478,9 +2478,12 @@ static int sde_intf_parse_dt(struct device_node *np,
 				SDE_HW_MAJOR(SDE_HW_VER_810)) {
 			set_bit(SDE_INTF_WD_TIMER, &intf->features);
 			set_bit(SDE_INTF_RESET_COUNTER, &intf->features);
-			set_bit(SDE_INTF_VSYNC_TIMESTAMP, &intf->features);
+			set_bit(SDE_INTF_PANEL_VSYNC_TS, &intf->features);
 			set_bit(SDE_INTF_AVR_STATUS, &intf->features);
 		}
+
+		if (SDE_HW_MAJOR(sde_cfg->hwversion) >= SDE_HW_MAJOR(SDE_HW_VER_910))
+			set_bit(SDE_INTF_MDP_VSYNC_TS, &intf->features);
 	}
 
 end:
@@ -5317,6 +5320,7 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_3d_merge_reset = true;
 		sde_cfg->skip_inline_rot_threshold = true;
 		sde_cfg->true_inline_rot_rev = SDE_INLINE_ROT_VERSION_2_0_1;
+		sde_cfg->in_rot_maxheight = 1200;
 		sde_cfg->vbif_disable_inner_outer_shareable = true;
 		sde_cfg->dither_luma_mode_support = true;
 		sde_cfg->mdss_hw_block_size = 0x158;
