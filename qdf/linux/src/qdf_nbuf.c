@@ -4701,7 +4701,9 @@ qdf_nbuf_update_radiotap_eht_flags(struct mon_rx_status *rx_status,
 	put_unaligned_le32(rx_status->eht_data[5], &rtap_buf[rtap_len]);
 	rtap_len += 4;
 
-	for (user = 0; user < rx_status->num_eht_user_info_valid; user++) {
+	for (user = 0; user < EHT_USER_INFO_LEN &&
+	     rx_status->num_eht_user_info_valid &&
+	     user < rx_status->num_eht_user_info_valid; user++) {
 		put_unaligned_le32(rx_status->eht_user_info[user],
 				   &rtap_buf[rtap_len]);
 		rtap_len += 4;
