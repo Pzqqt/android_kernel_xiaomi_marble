@@ -196,6 +196,8 @@
 #define MAX_CHAIN 8
 #define QDF_MON_STATUS_MPDU_FCS_BMAP_NWORDS 8
 
+#define EHT_USER_INFO_LEN 4
+
 /**
  * This is the length for radiotap, combined length
  * (Mandatory part struct ieee80211_radiotap_header + RADIOTAP_HEADER_LEN)
@@ -420,7 +422,7 @@ struct mon_rx_status {
 	uint32_t usig_mask;
 	uint32_t eht_known;
 	uint32_t eht_data[6];
-	uint32_t eht_user_info[4];
+	uint32_t eht_user_info[EHT_USER_INFO_LEN];
 };
 
 /**
