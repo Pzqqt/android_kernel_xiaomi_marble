@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -1079,5 +1079,12 @@ struct drm_encoder *sde_crtc_get_src_encoder_of_clone(struct drm_crtc *crtc);
  * _sde_crtc_vm_release_notify- send event to usermode on vm release
  */
 void _sde_crtc_vm_release_notify(struct drm_crtc *crtc);
+
+/**
+ * sde_crtc_state_setup_connector - populate connectors in sde crtc state
+ * @state: Pointer to drm crtc state
+ * @dev: Pointer to drm device
+ */
+void sde_crtc_state_setup_connectors(struct drm_crtc_state *state, struct drm_device *dev);
 
 #endif /* _SDE_CRTC_H_ */

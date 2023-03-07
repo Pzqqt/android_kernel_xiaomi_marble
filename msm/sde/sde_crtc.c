@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -5405,18 +5405,33 @@ static int _sde_crtc_check_fsc_planes(struct drm_crtc *crtc,
 	return 0;
 }
 
+void sde_crtc_state_setup_connectors(struct drm_crtc_state *state, struct drm_device *dev)
+{
+	struct drm_connector_list_iter conn_iter;
+	struct drm_connector *conn;
+	struct sde_crtc_state *cstate = to_sde_crtc_state(state);
+
+	/* identify connectors attached to this crtc */
+	cstate->num_connectors = 0;
+
+	drm_connector_list_iter_begin(dev, &conn_iter);
+	drm_for_each_connector_iter(conn, &conn_iter)
+		if ((state->connector_mask & (1 << drm_connector_index(conn)))
+				&& cstate->num_connectors < MAX_CONNECTORS) {
+			cstate->connectors[cstate->num_connectors++] = conn;
+		}
+	drm_connector_list_iter_end(&conn_iter);
+}
+
 static int sde_crtc_atomic_check(struct drm_crtc *crtc,
 		struct drm_crtc_state *state)
 {
 	struct drm_device *dev;
 	struct sde_crtc *sde_crtc;
 	struct plane_state *pstates = NULL;
-	struct sde_crtc_state *cstate;
 	struct drm_display_mode *mode;
 	int rc = 0;
 	struct sde_multirect_plane_states *multirect_plane = NULL;
-	struct drm_connector *conn;
-	struct drm_connector_list_iter conn_iter;
 
 	if (!crtc) {
 		SDE_ERROR("invalid crtc\n");
@@ -5425,7 +5440,6 @@ static int sde_crtc_atomic_check(struct drm_crtc *crtc,
 
 	dev = crtc->dev;
 	sde_crtc = to_sde_crtc(crtc);
-	cstate = to_sde_crtc_state(state);
 
 	if (!state->enable || !state->active) {
 		SDE_DEBUG("crtc%d -> enable %d, active %d, skip atomic_check\n",
@@ -5451,17 +5465,6 @@ static int sde_crtc_atomic_check(struct drm_crtc *crtc,
 	/* force a full mode set if active state changed */
 	if (state->active_changed)
 		state->mode_changed = true;
-
-	/* identify connectors attached to this crtc */
-	cstate->num_connectors = 0;
-
-	drm_connector_list_iter_begin(dev, &conn_iter);
-	drm_for_each_connector_iter(conn, &conn_iter)
-		if ((state->connector_mask & (1 << drm_connector_index(conn)))
-				&& cstate->num_connectors < MAX_CONNECTORS) {
-			cstate->connectors[cstate->num_connectors++] = conn;
-		}
-	drm_connector_list_iter_end(&conn_iter);
 
 	rc = _sde_crtc_check_dest_scaler_data(crtc, state);
 	if (rc) {
