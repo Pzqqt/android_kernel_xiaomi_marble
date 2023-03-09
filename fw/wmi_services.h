@@ -620,6 +620,7 @@ typedef  enum  {
     WMI_SERVICE_11BE_MLO_TDLS_SUPPORT = 367, /* Indicates FW supports 11be MLO TDLS. Host should enable 11be on TDLS only when FW indicates the support. */
     WMI_SERVICE_MANUAL_ULOFDMA_TRIGGER_SUPPORT = 368, /* Support for Host triggered Manual UL OFDMA trigger frame feature */
     WMI_SERVICE_STANDALONE_SOUND = 369, /* FW supports standalone sounding */
+    WMI_SERVICE_AFC_RESP_BINARY_FORMAT_SUPPORTED = 370, /* Service bit to indicate the supported AFC payload response format */
 
     WMI_MAX_EXT2_SERVICE
 
