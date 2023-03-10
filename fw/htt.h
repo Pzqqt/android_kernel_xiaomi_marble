@@ -15407,7 +15407,7 @@ struct htt_t2h_tx_rate_stats_info { /* 2 words */
          *  dot11ba This field is the rate:
          *      0: LDR
          *      1: HDR
-         *      2: Q2Q proprietary rate
+         *      2: proprietary rate
          */
         transmit_mcs             :  4, /* [15:12] */
         /* ofdma_transmission:
