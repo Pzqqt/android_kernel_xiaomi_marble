@@ -41479,6 +41479,9 @@ typedef struct{
 #define WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_DUR_TIME_GET(_var)           WMI_GET_BITS(_var, 4, 1)
 #define WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_DUR_TIME_SET(_var, _val)     WMI_SET_BITS(_var, 4, 1, _val)
 
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_LINK_MAP_SIZE_GET(_var)       WMI_GET_BITS(_var, 5, 1)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_LINK_MAP_SIZE_SET(_var, _val) WMI_SET_BITS(_var, 5, 1, _val)
+
 #define WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_LINK_MAP_PRE_GET(_var)       WMI_GET_BITS(_var, 8, 8)
 #define WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_LINK_MAP_PRE_SET(_var, _val) WMI_SET_BITS(_var, 8, 8, _val)
 
@@ -41559,7 +41562,12 @@ typedef struct {
      *                                   // 0 - Expected Duration Field
      *                                   //     not Present
      *
-     *      reserved:3
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_LINK_MAP_SIZE_GET
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_LINK_MAP_SIZE_SET
+     *      link_mapping_size:1          // 1 - Link Mapping Size  1 Octets
+     *                                   // 0 - Link Mapping Size  2 Octets
+     *
+     *      reserved:2
      *
      *      WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_LINK_MAP_PRE_GET /
      *      WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_LINK_MAP_PRE_SET
