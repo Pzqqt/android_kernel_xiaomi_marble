@@ -2398,6 +2398,10 @@ typedef enum {
      * WMI Event to send Manual UL OFDMA Trigger frame status feedback to Host
      */
     WMI_MANUAL_UL_OFDMA_TRIG_FEEDBACK_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_MANUAL_UL_TRIG),
+    /**
+     * WMI Event to send Manual UL OFDMA Trigger frame RX PPDU info to Host
+     */
+    WMI_MANUAL_UL_OFDMA_TRIG_RX_PEER_USERINFO_EVENTID,
 } WMI_EVT_ID;
 
 /* defines for OEM message sub-types */
@@ -42873,6 +42877,93 @@ typedef struct {
      */
     A_UINT32 rf_path;
 } wmi_pdev_set_rf_path_cmd_fixed_param;
+
+#define WMI_SET_RX_PEER_STATS_RESP_TYPE(rx_params, value) \
+        WMI_SET_BITS(rx_params, 0, 1, value)
+#define WMI_GET_RX_PEER_STATS_RESP_TYPE(rx_params) \
+        WMI_GET_BITS(rx_params, 0, 1)
+
+#define WMI_SET_RX_PEER_STATS_MCS(rx_params, value) \
+        WMI_SET_BITS(rx_params, 1, 5, value)
+#define WMI_GET_RX_PEER_STATS_MCS(rx_params) \
+        WMI_GET_BITS(rx_params, 1, 5)
+
+#define WMI_SET_RX_PEER_STATS_NSS(rx_params, value) \
+        WMI_SET_BITS(rx_params, 6, 4, value)
+#define WMI_GET_RX_PEER_STATS_NSS(rx_params) \
+        WMI_GET_BITS(rx_params, 6, 4)
+
+#define WMI_SET_RX_PEER_STATS_GI_LTF_TYPE(rx_params, value) \
+        WMI_SET_BITS(rx_params, 10, 4, value)
+#define WMI_GET_RX_PEER_STATS_GI_LTF_TYPE(rx_params) \
+        WMI_GET_BITS(rx_params, 10, 4)
+
+typedef enum {
+    WMI_PEER_RX_RESP_SU    = 0,
+    WMI_PEER_RX_RESP_MIMO  = 1,
+    WMI_PEER_RX_RESP_OFDMA = 2,
+} WMI_PEER_RX_RESP_TYPE;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_manual_ul_ofdma_trig_rx_peer_userinfo  */
+    A_UINT32        tlv_header;
+
+    /* Peer mac address */
+    wmi_mac_addr    peer_macaddr;
+
+    /* Per peer RX parameters */
+    /* [0] - Flag to indicate if peer responded with QoS Data or QoS NULL.
+     *  0 -> indicates QoS NULL, 1-> indicates QoS Data response
+     * [5:1] - MCS - Peer response MCS
+     * [9:6] - NSS - Peer response NSS
+     * [13:10] - GI LTF Type - Peer response GI/LTF type
+     *     0 => gi == GI_1600 && ltf == 1x LTF
+     *     1 => gi == GI_1600 && ltf == 2x LTF
+     *     2 => gi == GI_3200 && ltf == 4x LTF
+     * [31:14] - Reserved
+     */
+    A_UINT32        rx_peer_stats;
+
+    /* Peer response per chain RSSI */
+    A_INT32         peer_per_chain_rssi[WMI_MAX_CHAINS];
+} wmi_manual_ul_ofdma_trig_rx_peer_userinfo;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_manual_ul_ofdma_trig_rx_peer_userinfo_evt_fixed_param  */
+    A_UINT32 tlv_header;
+
+    A_UINT32 vdev_id; /* VDEV identifier */
+
+    /* combined_rssi:
+     * RX Combined RSSI in dBm
+     * Value indicates the average RSSI per 20MHz by averaging the total RSSI
+     * across entire BW for each OFDMA STA
+     */
+    A_INT32 combined_rssi;
+
+    /* rx_ppdu_resp_type:
+     * RX PPDU Response Type
+     * Refer WMI_PEER_RX_RESP_TYPE for possible values
+     */
+    A_UINT32 rx_ppdu_resp_type;
+
+    /* rx_resp_bw:
+     * RX response bandwidth
+     *     0 = 20 MHz
+     *     1 = 40 MHz
+     *     2 = 80 MHz
+     *     3 = 160 MHz
+     *     4 = 320 MHz
+     */
+    A_UINT32 rx_resp_bw;
+
+    /**
+     * This TLV is followed by TLVs below:
+     *     wmi_manual_ul_ofdma_trig_rx_peer_userinfo rx_peer_userinfo[]
+     *         TLV length specified by number of peer responses for manual
+     *         UL OFDMA trigger
+     */
+} wmi_manual_ul_ofdma_trig_rx_peer_userinfo_evt_fixed_param;
 
 
 
