@@ -5667,6 +5667,12 @@ typedef struct {
 #define WMI_SCAN_FLAG_QUARTER_RATE_SUPPORT   0x40000
 #define WMI_SCAN_RANDOM_SEQ_NO_IN_PROBE_REQ 0x80000
 #define WMI_SCAN_ENABLE_IE_WHTELIST_IN_PROBE_REQ 0x100000
+/** pause home channel when scan channel is same as home channel */
+#define WMI_SCAN_FLAG_PAUSE_HOME_CHANNEL            0x200000
+/**
+ * report CCA busy for each possible 20Mhz subbands of the wideband scan channel
+ */
+#define WMI_SCAN_FLAG_REPORT_CCA_BUSY_FOREACH_20MHZ 0x400000
 
 /** for adaptive scan mode using 3 bits (21 - 23 bits) */
 #define WMI_SCAN_DWELL_MODE_MASK 0x00E00000
@@ -17795,7 +17801,8 @@ typedef struct {
 
 #define WMI_PEER_CHWIDTH_PUNCTURE_BITMAP_GET_CHWIDTH(value32)          WMI_GET_BITS(value32, 0x0, 8)
 #define WMI_PEER_CHWIDTH_PUNCTURE_BITMAP_GET_PUNCTURE_BMAP(value32)    WMI_GET_BITS(value32, 0x8, 16)
-/* peer channel bandwidth and puncture_bitmap
+/*
+ * peer channel bandwidth and puncture_bitmap
  * BIT 0-7  -  Peer channel width
  *             This bitfield holds a wmi_channel_width enum value.
  * BIT 8-23 -  Peer Puncture bitmap where each bit indicates whether
@@ -17808,6 +17815,13 @@ typedef struct {
 
 #define WMI_PEER_SET_TX_POWER                          0x28
 
+/*
+ * Param to update connected peer channel bandwidth.
+ * Target firmware should take care of notifying connected peer about
+ * change in bandwidth, through OMN/OMI notification before performing
+ * bandwidth update internally.
+ */
+#define WMI_PEER_CHWIDTH_WITH_NOTIFY                   0x29
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_set_param_cmd_fixed_param */
@@ -18400,8 +18414,17 @@ typedef struct {
 /**
  * Following this structure is the optional TLV:
  * struct wmi_scan_blanking_params_info[0/1];
+ * struct wmi_cca_busy_subband_info[];
+ *     Reporting subband CCA busy info in host requested manner.
  */
 } wmi_chan_info_event_fixed_param;
+
+typedef struct {
+    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_cca_busy_subband_info */
+    A_UINT32 tlv_header;
+    /** rx clear count */
+    A_UINT32 rx_clear_count;
+} wmi_cca_busy_subband_info;
 
 /**
  * The below structure contains parameters related to the scan radio

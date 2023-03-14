@@ -621,6 +621,7 @@ typedef  enum  {
     WMI_SERVICE_MANUAL_ULOFDMA_TRIGGER_SUPPORT = 368, /* Support for Host triggered Manual UL OFDMA trigger frame feature */
     WMI_SERVICE_STANDALONE_SOUND = 369, /* FW supports standalone sounding */
     WMI_SERVICE_AFC_RESP_BINARY_FORMAT_SUPPORTED = 370, /* Service bit to indicate the supported AFC payload response format */
+    WMI_SERVICE_CCA_BUSY_INFO_FOREACH_20MHZ = 371, /* FW supports reporting of CCA busy info for each 20Mhz subband of wideband scan channel */
 
     WMI_MAX_EXT2_SERVICE
 
