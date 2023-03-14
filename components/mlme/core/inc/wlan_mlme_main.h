@@ -38,6 +38,8 @@
 #define JOIN_PROBE_REQ_TIMER_MS              200
 #define MAX_JOIN_PROBE_REQ                   5
 
+#define MAX_WAKELOCK_FOR_BSS_COLOR_CHANGE    2000
+
 /*
  * Following time is used to program WOW_TIMER_PATTERN to FW so that FW will
  * wake host up to do graceful disconnect in case PEER remains un-authorized
@@ -447,6 +449,9 @@ struct mlme_ap_config {
  * @is_usr_ps_enabled: Is Power save enabled
  * @notify_co_located_ap_upt_rnr: Notify co located AP to update RNR or not
  * @mlme_ap: SAP related vdev private configurations
+ * @bss_color_change_wakelock: wakelock to complete bss color change
+ *				operation on bss color collision detection
+ * @bss_color_change_runtime_lock: runtime lock to complete bss color change
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
@@ -492,6 +497,8 @@ struct mlme_legacy_priv {
 	bool is_usr_ps_enabled;
 	bool notify_co_located_ap_upt_rnr;
 	struct mlme_ap_config mlme_ap;
+	qdf_wake_lock_t bss_color_change_wakelock;
+	qdf_runtime_lock_t bss_color_change_runtime_lock;
 };
 
 /**
