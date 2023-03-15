@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -902,16 +902,6 @@ static inline bool sde_crtc_state_in_clone_mode(struct drm_encoder *encoder,
 		return true;
 
 	return false;
-}
-
-static inline bool _is_crtc_intf_mode_wb(struct drm_crtc *crtc)
-{
-	enum sde_intf_mode intf_mode = sde_crtc_get_intf_mode(crtc, crtc->state);
-
-	if ((intf_mode != INTF_MODE_WB_BLOCK) && (intf_mode != INTF_MODE_WB_LINE))
-		return false;
-
-	return true;
 }
 
 /**
