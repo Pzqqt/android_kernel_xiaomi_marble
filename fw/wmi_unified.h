@@ -2386,6 +2386,8 @@ typedef enum {
     WMI_MLO_AP_VDEV_TID_TO_LINK_MAP_EVENTID,
     /* Response event for WMI_MLO_VDEV_GET_LINK_INFO_CMDID */
     WMI_MLO_VDEV_LINK_INFO_EVENTID,
+    /** request host to do T2LM neg to the un-disabled link */
+    WMI_MLO_LINK_DISABLE_REQUEST_EVENTID,
 
     /* WMI event specific to Quiet handling */
     WMI_QUIET_HANDLING_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_QUIET_OFL),
@@ -7184,6 +7186,13 @@ typedef struct {
     A_UINT32 value;
 } wmi_echo_cmd_fixed_param;
 
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag would be equivalent to WMITLV_TAG_STRUC_wmi_mlo_link_disable_request_event_fixed_param  */
+    /** AP MLD address request to be disabled some set of link */
+    wmi_mac_addr mld_addr;
+    /** Request link id set to disable */
+    A_UINT32 linkid_bitmap;
+} wmi_mlo_link_disable_request_event_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_regdomain_cmd_fixed_param */
@@ -21037,6 +21046,12 @@ typedef struct {
     A_UINT32 timestamp;
     /* Original timeout value in milli seconds when AP added to BL */
     A_UINT32 original_timeout;
+    /*
+     * If disallow_linkid_bitmap is not 0, then means current entity
+     * is for MLD AP and bssid field is standing for MLD address.
+     * If all links for MLD AP is disallow, then the value shall be 0xffffffff
+     */
+    A_UINT32 disallow_linkid_bitmap;
 } wmi_roam_blacklist_with_timeout_tlv_param;
 
 /** WMI_ROAM_BLACKLIST_EVENT: generated whenever STA needs to move AP to blacklist for a particluar time
@@ -37545,6 +37560,12 @@ typedef struct {
     A_UINT32 timestamp;
     /* Original timeout value in milli seconds when AP added to BL */
     A_UINT32 original_timeout;
+    /*
+     * If disallow_linkid_bitmap is not 0, then means current entity
+     * is for MLD AP and bssid field is standing for MLD address.
+     * If all links for MLD AP is disallow, then the value shall be 0xffffffff
+     */
+    A_UINT32 disallow_linkid_bitmap;
 } wmi_pdev_bssid_disallow_list_config_param;
 
 typedef enum {

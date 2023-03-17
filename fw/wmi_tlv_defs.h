@@ -1358,6 +1358,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_manual_ul_ofdma_trig_rx_peer_userinfo,
     WMITLV_TAG_STRUC_wmi_manual_ul_ofdma_trig_rx_peer_userinfo_evt_fixed_param,
     WMITLV_TAG_STRUC_wmi_cca_busy_subband_info,
+    WMITLV_TAG_STRUC_wmi_mlo_link_disable_request_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -2188,6 +2189,7 @@ typedef enum {
     OP(WMI_MANUAL_UL_OFDMA_TRIG_FEEDBACK_EVENTID) \
     OP(WMI_VDEV_STANDALONE_SOUND_COMPLETE_EVENTID) \
     OP(WMI_MANUAL_UL_OFDMA_TRIG_RX_PEER_USERINFO_EVENTID) \
+    OP(WMI_MLO_LINK_DISABLE_REQUEST_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -7261,6 +7263,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_STANDALONE_SOUND_COMPLETE_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_manual_ul_ofdma_trig_rx_peer_userinfo, rx_peer_userinfo, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_MANUAL_UL_OFDMA_TRIG_RX_PEER_USERINFO_EVENTID);
 
+/* MLO_LINK_DISABLE_REQUEST Event */
+#define WMITLV_TABLE_WMI_MLO_LINK_DISABLE_REQUEST_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_link_disable_request_event_fixed_param, wmi_mlo_link_disable_request_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_DISABLE_REQUEST_EVENTID);
 
 
 #ifdef __cplusplus
