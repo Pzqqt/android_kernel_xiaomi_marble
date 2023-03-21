@@ -42221,6 +42221,9 @@ typedef struct {
 #define WMI_TWT_SESSION_FLAG_TWT_PM_RESPONDER_MODE_GET(_var) WMI_GET_BITS(_var, 22, 1)
 #define WMI_TWT_SESSION_FLAG_TWT_PM_RESPONDER_MODE_SET(_var, _val) WMI_SET_BITS(_var, 22, 1, _val)
 
+#define WMI_TWT_SESSION_FLAG_RESTRICTED_TWT_GET(_var) WMI_GET_BITS(_var, 23, 1)
+#define WMI_TWT_SESSION_FLAG_RESTRICTED_TWT_SET(_var, _val) WMI_SET_BITS(_var, 23, 1, _val)
+
 typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_session_stats_info */
     A_UINT32 tlv_hdr;
