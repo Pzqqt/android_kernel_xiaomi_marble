@@ -7184,7 +7184,7 @@ PREPACK struct htt_tx_monitor_cfg_t {
              rsvd4:                                 10;
     A_UINT32 tx_queue_ext_v2_word_mask:             12,
              tx_peer_entry_v2_word_mask:            12,
-             rsvd5:                                 10;
+             rsvd5:                                  8;
     A_UINT32 fes_status_end_word_mask:              16,
              response_end_status_word_mask:         16;
     A_UINT32 fes_status_prot_word_mask:             11,
