@@ -261,7 +261,7 @@ static void sde_hw_intf_setup_timing_engine(struct sde_hw_intf *ctx,
 	u32 panel_format;
 	u32 intf_cfg, intf_cfg2 = 0;
 	u32 display_data_hctl = 0, active_data_hctl = 0;
-	u32 data_width;
+	u32 data_width, pack_pattern;
 	bool dp_intf = false;
 
 	/* read interface_cfg */
@@ -375,17 +375,19 @@ static void sde_hw_intf_setup_timing_engine(struct sde_hw_intf *ctx,
 		(vsync_polarity << 1) | /* VSYNC Polarity */
 		(hsync_polarity << 0);  /* HSYNC Polarity */
 
+	pack_pattern = p->fsc_mode ? 0x12 : 0x21;
+
 	if (!SDE_FORMAT_IS_YUV(fmt))
 		panel_format = (fmt->bits[C0_G_Y] |
 				(fmt->bits[C1_B_Cb] << 2) |
 				(fmt->bits[C2_R_Cr] << 4) |
-				(0x21 << 8));
+				(pack_pattern << 8));
 	else
 		/* Interface treats all the pixel data in RGB888 format */
 		panel_format = (COLOR_8BIT |
 				(COLOR_8BIT << 2) |
 				(COLOR_8BIT << 4) |
-				(0x21 << 8));
+				(pack_pattern << 8));
 
 	if (p->wide_bus_en)
 		intf_cfg2 |= BIT(0);

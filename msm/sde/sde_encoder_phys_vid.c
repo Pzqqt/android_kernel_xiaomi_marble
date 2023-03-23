@@ -106,6 +106,7 @@ static void drm_mode_to_intf_timing_params(
 	timing->hsync_skew = mode->hskew;
 	timing->v_front_porch_fixed = vid_enc->base.vfp_cached;
 	timing->vrefresh = drm_mode_vrefresh(mode);
+	timing->fsc_mode = fsc_mode;
 
 	if (vid_enc->base.comp_type != MSM_DISPLAY_COMPRESSION_NONE) {
 		timing->compression_en = true;
