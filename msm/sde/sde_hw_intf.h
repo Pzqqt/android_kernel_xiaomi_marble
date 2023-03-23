@@ -41,6 +41,7 @@ struct intf_timing_params {
 	bool poms_align_vsync;	/* poms with vsync aligned */
 	u32 dce_bytes_per_line;
 	u32 vrefresh;
+	bool fsc_mode;
 };
 
 struct intf_prog_fetch {
