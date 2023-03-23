@@ -247,9 +247,11 @@
  * 3.119 Add RX_PEER_META_DATA V1A and V1B defs.
  * 3.120 Add HTT_H2T_MSG_TYPE_PRIMARY_LINK_PEER_MIGRATE_IND, _RESP defs.
  * 3.121 Add HTT_T2H_MSG_TYPE_PEER_AST_OVERRIDE_INDEX_IND def.
+ * 3.122 Add is_umac_hang flag in H2T UMAC_HANG_RECOVERY_SOC_START_PRE_RESET msg
+ * 3.123 Add HTT_OPTION_TLV_TCL_METADATA_V21 def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 121
+#define HTT_CURRENT_VERSION_MINOR 123
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -562,10 +564,21 @@ PREPACK struct htt_option_tlv_support_tx_msdu_desc_ext_t {
  * supported by the host.  If the target doesn't provide a
  * HTT_OPTION_TLV_TAG_TCL_METADATA_VER in the VERSION_CONF message, it
  * is implicitly understood that the V1 TCL metadata shall be used.
+ *
+ * Feb 2023: Added version HTT_OPTION_TLV_TCL_METADATA_V21 = 21
+ * read as version 2.1. We added support for Dynamic AST Index Allocation
+ * for Alder+Pine in version 2.1. For HTT_OPTION_TLV_TCL_METADATA_V2 = 2
+ * we will retain older behavior of making sure the AST Index for SAWF
+ * in Pine is allocated using wifitool ath2 setUnitTestCmd 0x48 2 536 1
+ * and the FW will crash in wal_tx_de_fast.c. For version 2.1 and
+ * above we will use htt_tx_tcl_svc_class_id_metadata.ast_index
+ * in TCLV2 command and do the dynamic AST allocations.
  */
 enum HTT_OPTION_TLV_TCL_METADATA_VER_VALUES {
     HTT_OPTION_TLV_TCL_METADATA_V1 = 1,
     HTT_OPTION_TLV_TCL_METADATA_V2 = 2,
+    /* values 3-20 reserved */
+    HTT_OPTION_TLV_TCL_METADATA_V21 = 21,
 };
 
 PREPACK struct htt_option_tlv_tcl_metadata_ver_t {
@@ -782,6 +795,7 @@ typedef enum {
     HTT_STATS_TX_PDEV_MLO_ABORT_TAG                = 177, /* htt_tx_pdev_stats_mlo_abort_tlv_v */
     HTT_STATS_TX_PDEV_MLO_TXOP_ABORT_TAG           = 178, /* htt_tx_pdev_stats_mlo_txop_abort_tlv_v */
     HTT_STATS_UMAC_SSR_TAG                         = 179, /* htt_umac_ssr_stats_tlv */
+    HTT_STATS_PEER_BE_OFDMA_STATS_TAG              = 180, /* htt_peer_be_ofdma_stats_tlv */
 
 
     HTT_STATS_MAX_TAG,
@@ -2569,7 +2583,8 @@ typedef struct {
         type:          2, /* vdev_id based or peer_id or svc_id or global seq based */
         valid_htt_ext: 1, /* If set, tcl_exit_base->host_meta_info is valid */
         svc_class_id:  8,
-        rsvd:          5,
+        ast_index:     3, /* Indicates to firmware the AST index to be used for Pine for AST Override */
+        rsvd:          2,
         padding:      16; /* These 16 bits cannot be used by FW for the tcl command */
 } htt_tx_tcl_svc_class_id_metadata;
 
@@ -10212,12 +10227,13 @@ PREPACK typedef struct {
  *  and HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP was sent
  *  beforehand.
  *
- * |31                                       9|8|7            0|
+ * |31                                    10|9|8|7            0|
  * |-----------------------------------------------------------|
- * |                 reserved                 |I|   msg_type   |
+ * |                 reserved               |U|I|   msg_type   |
  * |-----------------------------------------------------------|
  * Where:
  *     I = is_initiator
+ *     U = is_umac_hang
  *
  * The message is interpreted as follows:
  * dword0 - b'0:7   - msg_type
@@ -10226,13 +10242,16 @@ PREPACK typedef struct {
  *                    execute the UMAC-recovery in context of the Initiator or
  *                    Non-Initiator.
  *                    The value zero indicates this target is Non-Initiator.
- *          b'9:31  - reserved.
+ *          b'9     - is_umac_hang: indicates whether MLO UMAC recovery
+ *                    executed in context of UMAC hang or Target recovery.
+ *          b'10:31 - reserved.
  */
 
 PREPACK typedef struct {
     A_UINT32 msg_type       : 8,
              is_initiator   : 1,
-             reserved       : 23;
+             is_umac_hang   : 1,
+             reserved       : 22;
 } POSTPACK htt_h2t_umac_hang_recovery_start_pre_reset_t;
 
 #define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_BYTES \
@@ -10249,6 +10268,17 @@ PREPACK typedef struct {
     do { \
         HTT_CHECK_SET_VAL(HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_INITIATOR, _val); \
         ((word0) |= ((_val) << HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_INITIATOR_S));\
+    } while (0)
+
+#define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_UMAC_HANG_M 0x00000200
+#define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_UMAC_HANG_S 9
+#define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_UMAC_HANG_GET(word0) \
+    (((word0) & HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_UMAC_HANG_M) >> \
+     HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_UMAC_HANG_S)
+#define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_UMAC_HANG_SET(word0, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_UMAC_HANG, _val); \
+        ((word0) |= ((_val) << HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_UMAC_HANG_S));\
     } while (0)
 
 
@@ -15377,7 +15407,7 @@ struct htt_t2h_tx_rate_stats_info { /* 2 words */
          *  dot11ba This field is the rate:
          *      0: LDR
          *      1: HDR
-         *      2: Q2Q proprietary rate
+         *      2: proprietary rate
          */
         transmit_mcs             :  4, /* [15:12] */
         /* ofdma_transmission:
@@ -19009,9 +19039,11 @@ struct htt_ul_ofdma_user_info_v0 {
 };
 
 #define HTT_UL_OFDMA_USER_INFO_V0_BITMAP_W0 \
-    A_UINT32 w0_fw_rsvd:30; \
+    A_UINT32 w0_fw_rsvd:29; \
+    A_UINT32 w0_manual_ulofdma_trig:1; \
     A_UINT32 w0_valid:1; \
     A_UINT32 w0_version:1;
+
 struct htt_ul_ofdma_user_info_v0_bitmap_w0 {
     HTT_UL_OFDMA_USER_INFO_V0_BITMAP_W0
 };
@@ -19100,6 +19132,9 @@ enum HTT_UL_OFDMA_TRIG_TYPE {
 
 #define HTT_UL_OFDMA_USER_INFO_V0_W0_FW_INTERNAL_M  0x0000ffff
 #define HTT_UL_OFDMA_USER_INFO_V0_W0_FW_INTERNAL_S  0
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W0_MANUAL_ULOFDMA_TRIG_M 0x20000000
+#define HTT_UL_OFDMA_USER_INFO_V0_W0_MANUAL_ULOFDMA_TRIG_S 29
 
 #define HTT_UL_OFDMA_USER_INFO_V0_W0_VALID_M 0x40000000
 #define HTT_UL_OFDMA_USER_INFO_V0_W0_VALID_S 30
