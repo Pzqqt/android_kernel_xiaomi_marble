@@ -2006,12 +2006,19 @@ static int msm_vdec_release_nonref_buffers(struct msm_vidc_inst *inst)
 
 	/* send release flag along with read only flag for release list bufs*/
 	list_for_each_entry(rel_buf, &inst->buffers.release.list, list) {
+		/* do not release already pending release buffers */
+		if (rel_buf->attr & MSM_VIDC_ATTR_PENDING_RELEASE)
+			continue;
+
 		/* fw needs RO flag for FTB release buffer */
 		rel_buf->attr |= MSM_VIDC_ATTR_READ_ONLY;
 		print_vidc_buffer(VIDC_LOW, "low ", "release buf", inst, rel_buf);
 		rc = venus_hfi_release_buffer(inst, rel_buf);
 		if (rc)
 			return rc;
+
+		/* mark pending release */
+		rel_buf->attr |= MSM_VIDC_ATTR_PENDING_RELEASE;
 	}
 
 	return rc;
