@@ -12315,7 +12315,7 @@ typedef struct {
     WMI_GET_BITS(flag, 30, 1)
 #define WMI_PDEV_STATS_GAP_CLKGATE_VALID_SET(flag, val) \
     WMI_SET_BITS(flag, 30, 1, val)
-#define WMI_PDEV_BURST_ENABLE_GET(flag) \
+#define WMI_PDEV_STATS_BURST_ENABLE_GET(flag) \
     WMI_GET_BITS(flag, 31, 1)
 #define WMI_PDEV_STATS_BURST_ENABLE_SET(flag, val) \
     WMI_SET_BITS(flag, 31, 1, val)
@@ -37968,6 +37968,7 @@ typedef enum {
     /* Failure reasons to indicate no candidate and final bmiss event sent */
     WMI_ROAM_FAIL_REASON_NO_AP_FOUND_AND_FINAL_BMISS_SENT, /* No roamable APs found during roam scan and final bmiss event sent */
     WMI_ROAM_FAIL_REASON_NO_CAND_AP_FOUND_AND_FINAL_BMISS_SENT, /* No candidate APs found during roam scan and final bmiss event sent */
+    WMI_ROAM_FAIL_REASON_CURR_AP_STILL_OK, /* Roam scan not happen due to current network condition is fine */
 
     WMI_ROAM_FAIL_REASON_UNKNOWN = 255,
 } WMI_ROAM_FAIL_REASON_ID;
