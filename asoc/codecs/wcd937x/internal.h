@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _WCD937X_INTERNAL_H
@@ -60,6 +61,7 @@ struct wcd937x_priv {
 	u32 hph_mode;
 	bool comp1_enable;
 	bool comp2_enable;
+	bool bcs_dis;
 
 	struct irq_domain *virq;
 	struct wcd_irq_info irq_info;
@@ -93,6 +95,7 @@ struct wcd937x_priv {
 	struct snd_info_entry *variant_entry;
 	int ear_rx_path;
 	int ana_clk_count;
+	int adc_count;
 	struct mutex ana_tx_clk_lock;
 	u8 tx_master_ch_map[WCD937X_MAX_SLAVE_CH_TYPES];
 	bool usbc_hs_status;
