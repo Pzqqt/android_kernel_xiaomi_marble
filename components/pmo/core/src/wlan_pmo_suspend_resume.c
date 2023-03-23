@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -884,8 +884,11 @@ pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 
 	hif_latency_detect_timer_stop(pmo_core_psoc_get_hif_handle(psoc));
 
-	if (hif_pm_runtime_get_delay(hif_ctx) == WOW_LARGE_RX_RTPM_DELAY)
-		hif_pm_runtime_restore_delay(hif_ctx);
+	if (hif_ctx) {
+		if (hif_pm_runtime_get_delay(hif_ctx) ==
+				WOW_LARGE_RX_RTPM_DELAY)
+			hif_pm_runtime_restore_delay(hif_ctx);
+	}
 
 	pmo_core_update_wow_enable_cmd_sent(psoc_ctx, true);
 

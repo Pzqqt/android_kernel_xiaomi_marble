@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2667,6 +2667,18 @@ char *mlme_get_sub_reason_str(uint32_t sub_reason);
 QDF_STATUS
 wlan_mlme_get_mgmt_max_retry(struct wlan_objmgr_psoc *psoc,
 			     uint8_t *max_retry);
+
+/**
+ * wlan_mlme_get_mgmt_6ghz_rate_support() - Get status of HE rates for
+ * 6GHz mgmt frames
+ * @psoc: pointer to psoc object
+ * @enable_he_mcs0_for_6ghz_mgmt: pointer to check for HE rates support
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_mgmt_6ghz_rate_support(struct wlan_objmgr_psoc *psoc,
+				     bool *enable_he_mcs0_for_6ghz_mgmt);
 
 /**
  * wlan_mlme_get_status_ring_buffer() - Get the

@@ -1218,6 +1218,33 @@ hdd_convert_hang_reason(enum qdf_hang_reason reason)
 	case QDF_TASKLET_CREDIT_LATENCY_DETECT:
 		ret_val = QCA_WLAN_HANG_TASKLET_CREDIT_LATENCY_DETECT;
 		break;
+	case QDF_RX_REG_PKT_ROUTE_ERR:
+		ret_val = QCA_WLAN_HANG_RX_MSDU_BUF_RCVD_IN_ERR_RING;
+		break;
+	case QDF_VDEV_SM_OUT_OF_SYNC:
+		ret_val = QCA_WLAN_HANG_VDEV_SM_OUT_OF_SYNC;
+		break;
+	case QDF_STATS_REQ_TIMEDOUT:
+		ret_val = QCA_WLAN_HANG_STATS_REQ_TIMEOUT;
+		break;
+	case QDF_TX_DESC_LEAK:
+		ret_val = QCA_WLAN_HANG_TX_DESC_LEAK;
+		break;
+	case QDF_SCHED_TIMEOUT:
+		ret_val = QCA_WLAN_HANG_SCHED_TIMEOUT;
+		break;
+	case QDF_SELF_PEER_DEL_FAILED:
+		ret_val = QCA_WLAN_HANG_SELF_PEER_DEL_FAIL;
+		break;
+	case QDF_DEL_SELF_STA_FAILED:
+		ret_val = QCA_WLAN_HANG_DEL_SELF_STA_FAIL;
+		break;
+	case QDF_FLUSH_LOGS:
+		ret_val = QCA_WLAN_HANG_FLUSH_LOGS;
+		break;
+	case QDF_HOST_WAKEUP_REASON_PAGEFAULT:
+		ret_val = QCA_WLAN_HANG_HOST_WAKEUP_REASON_PAGE_FAULT;
+		break;
 	case QDF_REASON_UNSPECIFIED:
 	default:
 		ret_val = QCA_WLAN_HANG_REASON_UNSPECIFIED;
@@ -1298,7 +1325,7 @@ static qdf_freq_t wlan_hdd_get_adjacent_chan_freq(qdf_freq_t freq, bool upper)
 {
 	enum channel_enum ch_idx = wlan_reg_get_chan_enum_for_freq(freq);
 
-	if (ch_idx == INVALID_CHANNEL)
+	if (reg_is_chan_enum_invalid(ch_idx))
 		return -EINVAL;
 
 	if (upper && (ch_idx < (NUM_CHANNELS - 1)))

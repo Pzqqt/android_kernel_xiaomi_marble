@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -683,6 +683,26 @@ enum wlan_wds_mode {
 
 /*
  * <ini>
+ * enable_he_mcs0_for_mgmt_6ghz- if disabled FW will use 6Mbps 11A rate
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * If this ini is disabled firmware will use 6Mbps 11A rate
+ *
+ * Supported Feature: STA/SAP
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_HE_MCS0_MGMT_6GHZ CFG_INI_BOOL( \
+	"enable_he_mcs0_for_mgmt_6ghz", \
+	0, \
+	"MCS0 rate for 6ghz mgmt frames")
+
+/*
+ * <ini>
  * bmiss_skip_full_scan - To decide whether firmware does channel map based
  * partial scan or partial scan followed by full scan in case no candidate is
  * found in partial scan.
@@ -964,6 +984,7 @@ enum wlan_wds_mode {
 	CFG(CFG_ITO_REPEAT_COUNT) \
 	CFG(CFG_ENABLE_BEACON_RECEPTION_STATS) \
 	CFG(CFG_MGMT_RETRY_MAX) \
+	CFG(CFG_ENABLE_HE_MCS0_MGMT_6GHZ) \
 	CFG(CFG_BMISS_SKIP_FULL_SCAN) \
 	CFG(CFG_ENABLE_RING_BUFFER) \
 	CFG(CFG_DFS_CHAN_AGEOUT_TIME) \

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -939,6 +939,15 @@ int pld_qmi_send(struct device *dev, int type, void *cmd,
 		 int cmd_len, void *cb_ctx,
 		 int (*cb)(void *ctx, void *event, int event_len));
 bool pld_is_fw_dump_skipped(struct device *dev);
+
+#ifdef CONFIG_ENABLE_LOW_POWER_MODE
+int pld_is_low_power_mode(struct device *dev);
+#else
+static inline int pld_is_low_power_mode(struct device *dev)
+{
+	return 0;
+}
+#endif
 
 /**
  * pld_is_pdr() - Check WLAN PD is Restarted

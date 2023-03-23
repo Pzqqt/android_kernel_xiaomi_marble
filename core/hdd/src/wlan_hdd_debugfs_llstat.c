@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -115,11 +116,17 @@ void hdd_debugfs_process_iface_stats(struct hdd_adapter *adapter,
 		ll_stats.len += len;
 		len = scnprintf(buffer,
 				DEBUGFS_LLSTATS_BUF_SIZE - ll_stats.len,
-				"\nac_type: %d, tx_mpdu: %u, rx_mpdu: %u, tx_mcast: %u, rx_mcast: %u, rx_ampdu: %u tx_ampdu: %u, mpdu_lost: %u, retries: %u, retries_short: %u, retries_long: %u, contention_time: min-%u max-%u avg-%u, contention num samples: %u, tx_pending_msdu: %u",
+				"\nac_type: %d, tx_mpdu: %u, rx_mpdu: %u, "
+				"tx_mcast: %u, rx_mcast: %u, tx_ampdu: %u, "
+				"rx_ampdu: %u, mpdu_lost: %u, retries: %u, "
+				"retries_short: %u, retries_long: %u, "
+				"contention_time: min-%u max-%u avg-%u, "
+				"contention num samples: %u, "
+				"tx_pending_msdu: %u",
 				ac_stats->ac_type,
 				ac_stats->tx_mpdu, ac_stats->rx_mpdu,
 				ac_stats->tx_mcast, ac_stats->rx_mcast,
-				ac_stats->rx_ampdu, ac_stats->rx_ampdu,
+				ac_stats->tx_ampdu, ac_stats->rx_ampdu,
 				ac_stats->mpdu_lost, ac_stats->retries,
 				ac_stats->retries_short, ac_stats->retries_long,
 				ac_stats->contention_time_min,

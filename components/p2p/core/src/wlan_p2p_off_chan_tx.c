@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,6 +36,7 @@
 #include "wlan_osif_request_manager.h"
 #include <wlan_mlme_main.h>
 #include "wlan_mlme_api.h"
+#include <wlan_cm_api.h>
 
 /**
  * p2p_psoc_get_tx_ops() - get p2p tx ops
@@ -3069,7 +3070,11 @@ QDF_STATUS p2p_process_mgmt_tx(struct tx_action_context *tx_ctx)
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct p2p_roc_context *curr_roc_ctx;
 	uint8_t *mac_to;
+	enum QDF_OPMODE mode;
+	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status;
+	bool is_vdev_connected = false;
+	qdf_freq_t curr_op_freq;
 
 	status = p2p_tx_context_check_valid(tx_ctx);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -3121,9 +3126,31 @@ QDF_STATUS p2p_process_mgmt_tx(struct tx_action_context *tx_ctx)
 		tx_ctx->no_ack = 1;
 	}
 
-	if (!tx_ctx->off_chan || !tx_ctx->chan_freq) {
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
+			p2p_soc_obj->soc, tx_ctx->vdev_id, WLAN_P2P_ID);
+	if (!vdev) {
+		p2p_err("null vdev object");
+		goto fail;
+	}
+
+	mode = wlan_vdev_mlme_get_opmode(vdev);
+	if (mode == QDF_STA_MODE)
+		is_vdev_connected = wlan_cm_is_vdev_connected(vdev);
+
+	curr_op_freq = wlan_get_operation_chan_freq(vdev);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_P2P_ID);
+
+	if (!tx_ctx->off_chan || !tx_ctx->chan_freq ||
+	    (curr_op_freq && curr_op_freq == tx_ctx->chan_freq &&
+	     !tx_ctx->duration)) {
 		if (!tx_ctx->chan_freq)
 			p2p_check_and_update_channel(tx_ctx);
+		if (!tx_ctx->chan_freq && mode == QDF_STA_MODE &&
+		    !is_vdev_connected) {
+			p2p_debug("chan freq is zero, drop tx mgmt frame");
+			goto fail;
+		}
 		status = p2p_execute_tx_action_frame(tx_ctx);
 		if (status != QDF_STATUS_SUCCESS) {
 			p2p_err("execute tx fail");
