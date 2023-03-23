@@ -876,6 +876,11 @@ typedef struct {
                      reserved3:     31;
         };
     };
+    /* is_manual_ulofdma_trigger:
+     * Flag to indicate if a given UL OFDMA trigger is manually triggered
+     * from the Host
+     */
+    A_UINT32 is_manual_ulofdma_trigger;
 } htt_ppdu_stats_common_tlv;
 
 #define HTT_PPDU_STATS_USER_COMMON_TLV_TID_NUM_M     0x000000ff
@@ -2442,7 +2447,7 @@ typedef struct {
 
     /*
      * Max rates configured per BW:
-     * for BW supported by Smart Antenna - 20MHZ, 40MHZ and 80MHZ and 160MHZ
+     * for BW supported by Smart Antenna - 20MHZ, 40MHZ, 80MHZ and 160MHZ
      * (Note: 160 MHz is currently not supported by Smart Antenna)
      */
     A_UINT32 max_rates[HTT_STATS_NUM_SUPPORTED_BW_SMART_ANTENNA];
@@ -2463,6 +2468,12 @@ typedef struct {
              sw_rts_failure:    1,
              cts_rcvd_diff_bw:  1,
              reserved2:        28;
+
+    /*
+     * Max rates configured per BW:
+     * for BW supported by Smart Antenna - 320 MHZ
+     */
+    A_UINT32 max_rates_ext;
 } htt_ppdu_stats_user_cmpltn_common_tlv;
 
 #define HTT_PPDU_STATS_USER_CMPLTN_BA_BITMAP_TLV_TID_NUM_M     0x000000ff
