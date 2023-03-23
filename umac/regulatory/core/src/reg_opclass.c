@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1153,7 +1154,7 @@ void reg_freq_width_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 
 	chan_enum = reg_get_chan_enum_for_freq(freq);
 
-	if (chan_enum == INVALID_CHANNEL) {
+	if (reg_is_chan_enum_invalid(chan_enum)) {
 		reg_err_rl("Invalid chan enum %d", chan_enum);
 		return;
 	}
@@ -1217,7 +1218,7 @@ void reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 
 	chan_enum = reg_get_chan_enum_for_freq(freq);
 
-	if (chan_enum == INVALID_CHANNEL) {
+	if (reg_is_chan_enum_invalid(chan_enum)) {
 		reg_err_rl("Invalid chan enum %d", chan_enum);
 		return;
 	}

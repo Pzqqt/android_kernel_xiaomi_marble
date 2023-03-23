@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -83,7 +84,8 @@ static void scheduler_watchdog_timeout(void *arg)
 	if (qdf_atomic_test_bit(MC_SHUTDOWN_EVENT_MASK, &sched->sch_event_flag))
 		return;
 
-	SCHED_DEBUG_PANIC("Going down for Scheduler Watchdog Bite!");
+	sched_err("Triggering self recovery on sheduler timeout");
+	qdf_trigger_self_recovery(NULL, QDF_SCHED_TIMEOUT);
 }
 
 QDF_STATUS scheduler_enable(void)

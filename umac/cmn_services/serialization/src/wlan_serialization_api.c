@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -72,6 +73,63 @@ bool wlan_serialization_is_cmd_present_in_pending_queue(
 	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 error:
 	return status;
+}
+
+bool wlan_ser_is_non_scan_cmd_type_in_vdev_queue(struct wlan_objmgr_vdev *vdev,
+				enum wlan_serialization_cmd_type cmd_type)
+{
+	bool found = false;
+	qdf_list_t *queue;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_ser_pdev_obj *ser_pdev_obj;
+	struct wlan_ser_vdev_obj *ser_vdev_obj;
+	struct wlan_serialization_pdev_queue *pdev_queue;
+
+	if (!vdev) {
+		ser_err("invalid cmd");
+		goto error;
+	}
+
+	if (cmd_type < WLAN_SER_CMD_NONSCAN) {
+		ser_err("invalid cmd type %d", cmd_type);
+		goto error;
+	}
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		ser_err("invalid pdev");
+		goto error;
+	}
+
+	ser_pdev_obj = wlan_serialization_get_pdev_obj(pdev);
+	if (!ser_pdev_obj) {
+		ser_err("invalid ser pdev obj");
+		goto error;
+	}
+
+	pdev_queue = wlan_serialization_get_pdev_queue_obj(ser_pdev_obj,
+							   cmd_type);
+	if (!pdev_queue) {
+		ser_err("pdev_queue is invalid");
+		goto error;
+	}
+	ser_vdev_obj = wlan_serialization_get_vdev_obj(vdev);
+	if (!ser_vdev_obj) {
+		ser_err("invalid ser vdev obj");
+		goto error;
+	}
+
+	wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
+	queue = wlan_serialization_get_list_from_vdev_queue(ser_vdev_obj,
+							    cmd_type, false);
+	if (wlan_serialization_find_cmd(queue, WLAN_SER_MATCH_CMD_TYPE_VDEV,
+					NULL, cmd_type, NULL, vdev,
+					WLAN_SER_VDEV_NODE))
+		found = true;
+
+	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
+error:
+	return found;
 }
 
 bool wlan_serialization_is_cmd_present_in_active_queue(
