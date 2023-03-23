@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1414,6 +1414,10 @@ enum qdf_suspend_type {
  * @QDF_STATS_REQ_TIMEDOUT: Stats request timedout
  * @QDF_RSO_STOP_RSP_TIMEOUT: Firmware hasn't sent RSO stop response
  * @QDF_HOST_WAKEUP_REASON_PAGEFAULT: Host wakeup because of pagefault
+ * @QDF_SCHED_TIMEOUT: Scheduler watchdog timedout
+ * @QDF_SELF_PEER_DEL_FAILED: Failed to send self peer deletion cmd to fw
+ * @QDF_DEL_SELF_STA_FAILED: Received del self sta without del bss
+ * @QDF_FLUSH_LOGS : Recovery needed when sending flush completion to userspace
  */
 enum qdf_hang_reason {
 	QDF_REASON_UNSPECIFIED,
@@ -1447,6 +1451,10 @@ enum qdf_hang_reason {
 	QDF_TX_DESC_LEAK,
 	QDF_RSO_STOP_RSP_TIMEOUT,
 	QDF_HOST_WAKEUP_REASON_PAGEFAULT,
+	QDF_SCHED_TIMEOUT,
+	QDF_SELF_PEER_DEL_FAILED,
+	QDF_DEL_SELF_STA_FAILED,
+	QDF_FLUSH_LOGS,
 };
 
 /**
