@@ -2383,9 +2383,10 @@ lim_handle_bss_color_change_ie(struct mac_context *mac_ctx,
 			lim_send_obss_color_collision_cfg(
 				mac_ctx, session,
 				OBSS_COLOR_COLLISION_DETECTION);
+			wma_allow_suspend_after_obss_color_change(
+								session->vdev);
 		}
 		lim_send_bss_color_change_ie_update(mac_ctx, session);
-		wma_allow_suspend_after_obss_color_change(session->vdev);
 	}
 }
 
