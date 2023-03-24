@@ -14891,6 +14891,8 @@ typedef struct {
 #define WMI_MLO_FLAGS_SET_LINK_ADD(mlo_flags, value)        WMI_SET_BITS(mlo_flags, 8, 1, value)
 #define WMI_MLO_FLAGS_GET_LINK_DEL(mlo_flags)               WMI_GET_BITS(mlo_flags, 9, 1)
 #define WMI_MLO_FLAGS_SET_LINK_DEL(mlo_flags, value)        WMI_SET_BITS(mlo_flags, 9, 1, value)
+#define WMI_MLO_FLAGS_GET_BRIDGE_PEER(mlo_flags)            WMI_GET_BITS(mlo_flags, 10, 1)
+#define WMI_MLO_FLAGS_SET_BRIDGE_PEER(mlo_flags, value)     WMI_SET_BITS(mlo_flags, 10, 1, value)
 
 /* this structure used for pass mlo flags*/
 typedef struct {
@@ -14906,7 +14908,8 @@ typedef struct {
                      mlo_force_link_inactive:1, /* indicate this link is forced inactive */
                      mlo_link_add:1, /* Indicate dynamic link addition in an MLD VAP */
                      mlo_link_del:1, /* Indicate dynamic link deletion in an MLD VAP */
-                     unused: 22;
+                     mlo_bridge_peer:1, /* Indicate if this link has bridge_peer */
+                     unused: 21;
         };
         A_UINT32 mlo_flags;
     };
