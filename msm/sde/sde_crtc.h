@@ -455,7 +455,6 @@ enum sde_crtc_dirty_flags {
  * @num_connectors: Number of associated drm connectors
  * @rsc_client    : sde rsc client when mode is valid
  * @is_ppsplit    : Whether current topology requires PPSplit special handling
- * @in_fsc_mode   : Whether current state is in fsc mode
  * @bw_control    : true if bw/clk controlled by core bw/clk properties
  * @bw_split_vote : true if bw controlled by llcc/dram bw properties
  * @crtc_roi      : Current CRTC ROI. Possibly sub-rectangle of mode.
@@ -496,7 +495,6 @@ struct sde_crtc_state {
 	bool bw_split_vote;
 
 	bool is_ppsplit;
-	bool in_fsc_mode;
 	struct sde_rect crtc_roi;
 	struct sde_rect lm_bounds[MAX_MIXERS_PER_CRTC];
 	struct sde_rect lm_roi[MAX_MIXERS_PER_CRTC];
@@ -565,6 +563,13 @@ struct sde_crtc_irq_info {
 	((S) && ((X) < CRTC_PROP_COUNT) ? ((S)->property_values[(X)].value) : 0)
 
 /**
+ * sde_crtc_is_connector_fsc - check if connector is in fsc mode
+ * @cstate: Pointer to sde crtc state
+ * Returns: true if fsc to fsc mode else false
+ */
+bool sde_crtc_is_connector_fsc(struct sde_crtc_state *cstate);
+
+/**
  * sde_crtc_get_mixer_width - get the mixer width
  * Mixer width will be same as panel width(/2 for split)
  * unless destination scaler feature is enabled
@@ -580,7 +585,7 @@ static inline int sde_crtc_get_mixer_width(struct sde_crtc *sde_crtc,
 	if (cstate->num_ds_enabled)
 		mixer_width = cstate->ds_cfg[0].lm_width;
 	else
-		mixer_width = GET_MODE_WIDTH(cstate->in_fsc_mode, mode) /
+		mixer_width = GET_MODE_WIDTH(sde_crtc_is_connector_fsc(cstate), mode) /
 				sde_crtc->num_mixers;
 
 	return mixer_width;
@@ -598,7 +603,7 @@ static inline int sde_crtc_get_mixer_height(struct sde_crtc *sde_crtc,
 		return 0;
 
 	return (cstate->num_ds_enabled ? cstate->ds_cfg[0].lm_height :
-			GET_MODE_HEIGHT(cstate->in_fsc_mode, mode));
+			GET_MODE_HEIGHT(sde_crtc_is_connector_fsc(cstate), mode));
 }
 
 /**
@@ -1069,5 +1074,12 @@ struct drm_encoder *sde_crtc_get_src_encoder_of_clone(struct drm_crtc *crtc);
  * _sde_crtc_vm_release_notify- send event to usermode on vm release
  */
 void _sde_crtc_vm_release_notify(struct drm_crtc *crtc);
+
+/**
+ * sde_crtc_state_setup_connector - populate connectors in sde crtc state
+ * @state: Pointer to drm crtc state
+ * @dev: Pointer to drm device
+ */
+void sde_crtc_state_setup_connectors(struct drm_crtc_state *state, struct drm_device *dev);
 
 #endif /* _SDE_CRTC_H_ */
