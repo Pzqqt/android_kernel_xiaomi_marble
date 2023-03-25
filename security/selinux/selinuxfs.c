@@ -134,6 +134,25 @@ static ssize_t sel_read_enforce(struct file *filp, char __user *buf,
 }
 
 #ifdef CONFIG_SECURITY_SELINUX_DEVELOP
+void sel_set_enforce(int new_value)
+{
+	struct selinux_state *state = &selinux_state;
+	int old_value;
+
+	new_value = !!new_value;
+
+	old_value = enforcing_enabled(state);
+	if (new_value != old_value) {
+		enforcing_set(state, new_value);
+		if (new_value)
+			avc_ss_reset(state->avc, 0);
+		selnl_notify_setenforce(new_value);
+		selinux_status_update_setenforce(state, new_value);
+		if (!new_value)
+			call_lsm_notifier(LSM_POLICY_CHANGE, NULL);
+	}
+}
+
 static ssize_t sel_write_enforce(struct file *file, const char __user *buf,
 				 size_t count, loff_t *ppos)
 
