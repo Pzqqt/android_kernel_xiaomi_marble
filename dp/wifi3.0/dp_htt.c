@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3049,9 +3049,7 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 				 */
 				dp_peer_unref_delete(peer, DP_MOD_ID_HTT);
 
-				QDF_TRACE(QDF_MODULE_ID_TXRX,
-					QDF_TRACE_LEVEL_INFO,
-					FL("PeerID %d BAW %d TID %d stat %d"),
+				dp_info("PeerID %d BAW %d TID %d stat %d",
 					peer_id, win_sz, tid, status);
 
 			} else {
