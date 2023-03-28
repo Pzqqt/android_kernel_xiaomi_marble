@@ -3270,11 +3270,10 @@ void cm_report_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
 			roam_event->roam_event_param.roam_scan_state =
 					QCA_WLAN_VENDOR_ROAM_SCAN_STATE_END;
 
-		//TO DO: Add a new CB in CM and register the hdd function to it
-		//And call the new CB from here.
 		mlme_debug("Invoke HDD roam events callback for roam "
 			   "scan notif");
 		roam_event->vdev_id = vdev_id;
+		mlme_cm_osif_roam_rt_stats(roam_event, idx);
 		qdf_mem_free(roam_event);
 		break;
 	case ROAM_RT_STATS_TYPE_INVOKE_FAIL_REASON:
@@ -3284,11 +3283,10 @@ void cm_report_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
 
 		roam_event->roam_event_param.roam_invoke_fail_reason = value;
 
-		//TO DO: Add a new CB in CM and register the hdd function to it
-		//And call the new CB from here.
 		mlme_debug("Invoke HDD roam events callback for roam "
 			   "invoke fail");
 		roam_event->vdev_id = vdev_id;
+		mlme_cm_osif_roam_rt_stats(roam_event, idx);
 		qdf_mem_free(roam_event);
 		break;
 	case ROAM_RT_STATS_TYPE_ROAM_SCAN_INFO:
@@ -3299,8 +3297,7 @@ void cm_report_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
 			mlme_debug("Invoke HDD roam events callback for roam "
 				   "stats event");
 			roam_info->vdev_id = vdev_id;
-		//TO DO: Add a new CB in CM and register the hdd function to it
-		//And call the new CB from here.
+			mlme_cm_osif_roam_rt_stats(roam_info, idx);
 		}
 		break;
 	default:

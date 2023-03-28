@@ -2488,6 +2488,9 @@ struct osif_cm_ops osif_ops = {
 	.netif_queue_control_cb = hdd_cm_netif_queue_control,
 	.napi_serialize_control_cb = hdd_cm_napi_serialize_control,
 	.save_gtk_cb = hdd_cm_save_gtk,
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	.roam_rt_stats_event_cb = wlan_hdd_cfg80211_roam_events_callback,
+#endif
 #ifdef WLAN_FEATURE_FILS_SK
 	.set_hlp_data_cb = hdd_cm_set_hlp_data,
 #endif
