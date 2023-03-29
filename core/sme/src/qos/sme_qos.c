@@ -3351,8 +3351,7 @@ static QDF_STATUS sme_qos_process_ft_reassoc_req_ev(
 	 */
 	entry = csr_ll_peek_head(&sme_qos_cb.flow_list, false);
 	if (!entry) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_WARN,
-			FL("Flow List empty, nothing to update"));
+		sme_debug("Flow List empty, nothing to update");
 		return QDF_STATUS_E_FAILURE;
 	}
 
