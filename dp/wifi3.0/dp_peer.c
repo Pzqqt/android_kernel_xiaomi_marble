@@ -5499,3 +5499,30 @@ void dp_peer_flush_frags(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
 }
+
+/*
+ * dp_peer_find_by_id_valid - check if peer exists for given id
+ * @soc: core DP soc context
+ * @peer_id: peer id from peer object can be retrieved
+ *
+ * Return: true if peer exists of false otherwise
+ */
+bool dp_peer_find_by_id_valid(struct dp_soc *soc, uint16_t peer_id)
+{
+	struct dp_peer *peer = dp_peer_get_ref_by_id(soc, peer_id,
+						     DP_MOD_ID_HTT);
+
+	if (peer) {
+		/*
+		 * Decrement the peer ref which is taken as part of
+		 * dp_peer_get_ref_by_id if PEER_LOCK_REF_PROTECT is enabled
+		 */
+		dp_peer_unref_delete(peer, DP_MOD_ID_HTT);
+
+		return true;
+	}
+
+	return false;
+}
+
+qdf_export_symbol(dp_peer_find_by_id_valid);
