@@ -1360,6 +1360,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_cca_busy_subband_info,
     WMITLV_TAG_STRUC_wmi_mlo_link_disable_request_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_ctrl_path_peer_stats_struct,
+    WMITLV_TAG_STRUC_wmi_vdev_pause_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1885,6 +1886,7 @@ typedef enum {
     OP(WMI_VDEV_SET_ULOFDMA_MANUAL_MU_TRIG_CMDID) \
     OP(WMI_VDEV_STANDALONE_SOUND_CMDID) \
     OP(WMI_PDEV_SET_RF_PATH_CMDID) \
+    OP(WMI_VDEV_PAUSE_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -5349,6 +5351,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_STANDALONE_SOUND_CMDID);
 #define WMITLV_TABLE_WMI_PDEV_SET_RF_PATH_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_rf_path_cmd_fixed_param, wmi_pdev_set_rf_path_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_RF_PATH_CMDID);
+
+/* VDEV PAUSE cmd */
+#define WMITLV_TABLE_WMI_VDEV_PAUSE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_pause_cmd_fixed_param, wmi_vdev_pause_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_PAUSE_CMDID);
 
 
 

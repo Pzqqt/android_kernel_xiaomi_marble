@@ -628,6 +628,9 @@ typedef enum {
     /** Enable SR prohibit feature for TIDs of vdev */
     WMI_VDEV_PARAM_ENABLE_SR_PROHIBIT_CMDID,
 
+    /** pause vdev's Tx, Rx, or both for a specific duration */
+    WMI_VDEV_PAUSE_CMDID,
+
     /* peer specific commands */
 
     /** create a peer */
@@ -36132,6 +36135,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_SET_ULOFDMA_MANUAL_MU_TRIG_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_STANDALONE_SOUND_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_SET_RF_PATH_CMDID); /* set RF path of PHY */
+        WMI_RETURN_STRING(WMI_VDEV_PAUSE_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -45105,6 +45109,25 @@ typedef struct {
      *         UL OFDMA trigger
      */
 } wmi_manual_ul_ofdma_trig_rx_peer_userinfo_evt_fixed_param;
+
+typedef enum _WMI_VDEV_PAUSE_TYPE
+{
+    WMI_VDEV_PAUSE_TYPE_UNKNOWN = 0,
+    WMI_VDEV_PAUSE_TYPE_MLO_LINK = 1,
+    WMI_VDEV_PAUSE_TYPE_TX = 2,
+} WMI_VDEV_PAUSE_TYPE;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_vdev_pause_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
+    /** type of pause, refer to WMI_VDEV_PAUSE_TYPE */
+    A_UINT32 pause_type;
+    /** duration of pause, in unit of ms */
+    A_UINT32 pause_dur_ms;
+} wmi_vdev_pause_cmd_fixed_param;
 
 
 
