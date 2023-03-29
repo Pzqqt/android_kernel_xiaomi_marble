@@ -4437,8 +4437,14 @@ typedef struct {
      *      1  -> disable wds_mec_intrabss offload
      *      Refer to WMI_RSRC_CFG_FLAGS2_DISABLE_WDS_MEC_INTRABSS_OFFLOAD_GET /
      *      SET macros.
+     * Bit 16 - latency_flowq_support
+     *      Flag to indicate whether host supports latency tolerant queue.
+     *      By default, it is disabled.
+     *      0  -> disable latency_flowq_support
+     *      1  -> enable latency_flowq_support
+     *      Refer to WMI_RSRC_CFG_FLAGS2_LATENCY_FLOWQ_SUPPORT_GET/SET macros.
      *
-     *  Bits 31:16 - Reserved
+     *  Bits 31:17 - Reserved
      */
     A_UINT32 flags2;
     /** @brief host_service_flags - can be used by Host to indicate
@@ -4881,6 +4887,11 @@ typedef struct {
     WMI_GET_BITS(flags2, 15, 1)
 #define WMI_RSRC_CFG_FLAGS2_DISABLE_WDS_MEC_INTRABSS_OFFLOAD_SET(flags2, value) \
     WMI_SET_BITS(flags2, 15, 1, value)
+
+#define WMI_RSRC_CFG_FLAGS2_LATENCY_FLOWQ_SUPPORT_GET(flags2) \
+    WMI_GET_BITS(flags2, 16, 1)
+#define WMI_RSRC_CFG_FLAGS2_LATENCY_FLOWQ_SUPPORT_SET(flags2, value) \
+    WMI_SET_BITS(flags2, 16, 1, value)
 
 
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_IFACE_SUPPORT_GET(host_service_flags) \
