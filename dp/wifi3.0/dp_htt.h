@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -64,6 +64,11 @@ int htt_wbm_event_record(struct htt_logger *h, uint8_t tx_status,
 }
 
 #endif
+
+#define HTT_MGMT_CTRL_TLV_HDR_RESERVERD_LEN 16
+#define HTT_TLV_HDR_LEN HTT_T2H_EXT_STATS_CONF_TLV_HDR_SIZE
+#define HTT_SHIFT_UPPER_TIMESTAMP 32
+#define HTT_MASK_UPPER_TIMESTAMP 0xFFFFFFFF00000000
 
 void htt_htc_pkt_pool_free(struct htt_soc *soc);
 

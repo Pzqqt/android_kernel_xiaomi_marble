@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
@@ -59,6 +60,16 @@ static inline bool dp_is_monitor_mode_using_poll(struct dp_soc *soc)
 static inline bool dp_is_monitor_mode_using_poll(struct dp_soc *soc)
 {
 	return true;
+}
+#endif
+
+#ifndef WLAN_TX_PKT_CAPTURE_ENH
+static inline void
+dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
+					   void *data,
+					   uint32_t ppdu_id,
+					   uint32_t size)
+{
 }
 #endif
 
@@ -364,6 +375,21 @@ dp_vdev_set_monitor_mode_rings(struct dp_pdev *pdev,
 {
 	return QDF_STATUS_SUCCESS;
 }
+#endif
+
+#if defined(WDI_EVENT_ENABLE) &&\
+	(defined(QCA_ENHANCED_STATS_SUPPORT) || !defined(REMOVE_PKT_LOG))
+/*
+ * dp_ppdu_stats_ind_handler() - PPDU stats msg handler
+ * @htt_soc:	 HTT SOC handle
+ * @msg_word:    Pointer to payload
+ * @htt_t2h_msg: HTT msg nbuf
+ *
+ * Return: True if buffer should be freed by caller.
+ */
+bool dp_ppdu_stats_ind_handler(struct htt_soc *soc,
+			       uint32_t *msg_word,
+			       qdf_nbuf_t htt_t2h_msg);
 #endif
 
 struct dp_mon_ops {
