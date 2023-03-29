@@ -854,7 +854,6 @@ struct wma_wlm_stats_data {
  * @log_completion_timer: log completion timer
  * @old_hw_mode_index: Previous configured HW mode index
  * @new_hw_mode_index: Current configured HW mode index
- * @peer_authorized_cb: peer authorized hdd callback
  * @ocb_config_req: OCB request context
  * @self_gen_frm_pwr: Self-generated frame power
  * @tx_chain_mask_cck: Is the CCK tx chain mask enabled
@@ -981,7 +980,6 @@ typedef struct {
 	qdf_mc_timer_t log_completion_timer;
 	uint32_t old_hw_mode_index;
 	uint32_t new_hw_mode_index;
-	wma_peer_authorized_fp peer_authorized_cb;
 	struct sir_ocb_config *ocb_config_req;
 	uint16_t self_gen_frm_pwr;
 	bool tx_chain_mask_cck;

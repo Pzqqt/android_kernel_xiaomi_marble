@@ -1379,8 +1379,6 @@ struct hdd_adapter {
 	/* Completion variable for action frame */
 	struct completion tx_action_cnf_event;
 
-	struct completion sta_authorized_event;
-
 	/* Track whether the linkup handling is needed  */
 	bool is_link_up_service_needed;
 
