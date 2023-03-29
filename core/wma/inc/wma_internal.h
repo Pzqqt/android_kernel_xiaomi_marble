@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -961,10 +961,6 @@ int32_t wmi_unified_send_txbf(tp_wma_handle wma, tpAddStaParams params);
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 QDF_STATUS wma_check_txrx_chainmask(int num_rf_chains, int cmd_value);
-
-int wma_peer_state_change_event_handler(void *handle,
-					       uint8_t *event_buff,
-					       uint32_t len);
 
 QDF_STATUS wma_set_enable_disable_mcc_adaptive_scheduler(uint32_t
 						mcc_adaptive_scheduler);

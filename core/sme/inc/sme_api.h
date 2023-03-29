@@ -1904,9 +1904,7 @@ QDF_STATUS sme_nss_update_request(uint32_t vdev_id,
 				  uint32_t original_vdev_id,
 				  uint32_t request_id);
 
-typedef void (*sme_peer_authorized_fp) (uint32_t vdev_id);
 QDF_STATUS sme_set_peer_authorized(uint8_t *peer_addr,
-				   sme_peer_authorized_fp auth_fp,
 				   uint32_t vdev_id);
 QDF_STATUS sme_soc_set_dual_mac_config(struct policy_mgr_dual_mac_config msg);
 QDF_STATUS sme_soc_set_antenna_mode(mac_handle_t mac_handle,

@@ -1412,20 +1412,6 @@ wma_vdev_set_param(wmi_unified_t wmi_handle, uint32_t if_id,
 }
 
 /**
- * wma_set_peer_authorized_cb() - set peer authorized callback function
- * @wma_ctx: wma handle
- * @auth_cb: peer authorized callback
- *
- * Return: none
- */
-void wma_set_peer_authorized_cb(void *wma_ctx, wma_peer_authorized_fp auth_cb)
-{
-	tp_wma_handle wma_handle = (tp_wma_handle) wma_ctx;
-
-	wma_handle->peer_authorized_cb = auth_cb;
-}
-
-/**
  * wma_set_peer_param() - set peer parameter in fw
  * @wma_ctx: wma handle
  * @peer_addr: peer mac address

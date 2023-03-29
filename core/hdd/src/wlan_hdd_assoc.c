@@ -166,8 +166,6 @@ u8 ccp_rsn_oui_13[HDD_RSN_OUI_SIZE] = {0x50, 0x6F, 0x9A, 0x01};
 #define ASSOC_RSP_IES_OFFSET 6  /* Capability(2) + AID(2) + Status Code(2) */
 #define ASSOC_REQ_IES_OFFSET 4  /* Capability(2) + LI(2) */
 
-#define HDD_PEER_AUTHORIZE_WAIT 10
-
 /*
  * beacon_filter_table - table of IEs used for beacon filtering
  */
@@ -1028,39 +1026,10 @@ void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 	hdd_exit();
 }
 
-/**
- * hdd_set_peer_authorized_event() - set peer_authorized_event
- * @vdev_id: vdevid
- *
- * Return: None
- */
-static void hdd_set_peer_authorized_event(uint32_t vdev_id)
-{
-	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_adapter *adapter = NULL;
-
-	if (!hdd_ctx)
-		return;
-
-	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
-	if (!adapter) {
-		hdd_err("Invalid vdev_id");
-		return;
-	}
-	complete(&adapter->sta_authorized_event);
-}
-
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
 static inline
 void hdd_set_unpause_queue(void *soc, struct hdd_adapter *adapter)
 {
-	unsigned long rc;
-	/* wait for event from firmware to set the event */
-	rc = wait_for_completion_timeout(
-			&adapter->sta_authorized_event,
-			msecs_to_jiffies(HDD_PEER_AUTHORIZE_WAIT));
-	if (!rc)
-		hdd_debug("timeout waiting for sta_authorized_event");
 
 	cdp_fc_vdev_unpause(soc, adapter->vdev_id,
 			    OL_TXQ_PAUSE_REASON_PEER_UNAUTHORIZED,
@@ -1128,15 +1097,9 @@ QDF_STATUS hdd_change_peer_state(struct hdd_adapter *adapter,
 		/* Reset scan reject params on successful set key */
 		hdd_debug("Reset scan reject params");
 		hdd_init_scan_reject_params(adapter->hdd_ctx);
-#ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
-		/* make sure event is reset */
-		INIT_COMPLETION(adapter->sta_authorized_event);
-#endif
 
-		err = sme_set_peer_authorized(
-				peer_mac,
-				hdd_set_peer_authorized_event,
-				adapter->vdev_id);
+		err = sme_set_peer_authorized(peer_mac,
+					      adapter->vdev_id);
 		if (err != QDF_STATUS_SUCCESS) {
 			hdd_err("Failed to set the peer state to authorized");
 			return QDF_STATUS_E_FAULT;

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -174,7 +174,6 @@ void wma_get_phy_mode_cb(qdf_freq_t freq, uint32_t chan_width,
 
 QDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value);
 
-void wma_set_peer_authorized_cb(void *wma_ctx, wma_peer_authorized_fp auth_cb);
 QDF_STATUS wma_set_peer_param(void *wma_ctx, uint8_t *peer_addr,
 		  uint32_t param_id,
 		  uint32_t param_value, uint32_t vdev_id);

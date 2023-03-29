@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1070,57 +1070,6 @@ QDF_STATUS wma_check_txrx_chainmask(int num_rf_chains, int cmd_value)
 		return QDF_STATUS_E_INVAL;
 	}
 	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * wma_peer_state_change_event_handler() - peer state change event handler
- * @handle: wma handle
- * @event_buff: event buffer
- * @len: length of buffer
- *
- * This event handler unpauses vdev if peer state change to AUTHORIZED STATE
- *
- * Return: 0 for success or error code
- */
-int wma_peer_state_change_event_handler(void *handle,
-					uint8_t *event_buff,
-					uint32_t len)
-{
-	WMI_PEER_STATE_EVENTID_param_tlvs *param_buf;
-	wmi_peer_state_event_fixed_param *event;
-#ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
-	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-#endif
-
-	if (!event_buff) {
-		wma_err("Received NULL event ptr from FW");
-		return -EINVAL;
-	}
-	param_buf = (WMI_PEER_STATE_EVENTID_param_tlvs *) event_buff;
-	if (!param_buf) {
-		wma_err("Received NULL buf ptr from FW");
-		return -ENOMEM;
-	}
-
-	event = param_buf->fixed_param;
-
-	if ((cdp_get_opmode(cds_get_context(QDF_MODULE_ID_SOC),
-			    event->vdev_id) == wlan_op_mode_sta) &&
-	    event->state == WMI_PEER_STATE_AUTHORIZED) {
-		/*
-		 * set event so that hdd
-		 * can procced and unpause tx queue
-		 */
-#ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
-		if (!wma_handle->peer_authorized_cb) {
-			wma_err("peer authorized cb not registered");
-			return -EINVAL;
-		}
-		wma_handle->peer_authorized_cb(event->vdev_id);
-#endif
-	}
-
-	return 0;
 }
 
 /**
