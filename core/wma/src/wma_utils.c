@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -110,7 +110,9 @@ static struct index_vht_data_rate_type vht_mcs_nss1[] = {
 	{6,  {585,  650}, {1215, 1350}, {2633, 2925}, {5265, 5850} },
 	{7,  {650,  722}, {1350, 1500}, {2925, 3250}, {5850, 6500} },
 	{8,  {780,  867}, {1620, 1800}, {3510, 3900}, {7020, 7800} },
-	{9,  {865,  960}, {1800, 2000}, {3900, 4333}, {7800, 8667} }
+	{9,  {865,  960}, {1800, 2000}, {3900, 4333}, {7800, 8667} },
+	{10, {975, 1083}, {2025, 2250}, {4388, 4875}, {8775, 9750} },
+	{11, {1083, 1204}, {2250, 2500}, {4875, 5417}, {9750, 1083} }
 };
 
 /*MCS parameters with Nss = 2*/
@@ -125,7 +127,9 @@ static struct index_vht_data_rate_type vht_mcs_nss2[] = {
 	{6,  {1170, 1300}, {2430, 2700}, {5265, 5850}, {10530, 11700} },
 	{7,  {1300, 1444}, {2700, 3000}, {5850, 6500}, {11700, 13000} },
 	{8,  {1560, 1733}, {3240, 3600}, {7020, 7800}, {14040, 15600} },
-	{9,  {1730, 1920}, {3600, 4000}, {7800, 8667}, {15600, 17333} }
+	{9,  {1730, 1920}, {3600, 4000}, {7800, 8667}, {15600, 17333} },
+	{10, {1950, 2167}, {4050, 4500}, {8775, 9750}, {17550, 19500} },
+	{11, {2167, 2407}, {4500, 5000}, {9750, 10833}, {19500, 21667} }
 };
 
 #ifdef WLAN_FEATURE_11AX
