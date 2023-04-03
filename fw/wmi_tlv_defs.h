@@ -1120,11 +1120,23 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_twt_nudge_dialog_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_twt_nudge_dialog_complete_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_vendor_event_fixed_param,
+        WMITLV_TAG_STRUC_wmi_vendor_pdev_event_fixed_param =
+            WMITLV_TAG_STRUC_wmi_pdev_vendor_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_vendor_cmd_fixed_param,
+        WMITLV_TAG_STRUC_wmi_vendor_pdev_cmd_fixed_param =
+            WMITLV_TAG_STRUC_wmi_pdev_vendor_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_vendor_event_fixed_param,
+        WMITLV_TAG_STRUC_wmi_vendor_vdev_event_fixed_param =
+            WMITLV_TAG_STRUC_wmi_vdev_vendor_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_vendor_cmd_fixed_param,
+        WMITLV_TAG_STRUC_wmi_vendor_vdev_cmd_fixed_param =
+            WMITLV_TAG_STRUC_wmi_vdev_vendor_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_vendor_event_fixed_param,
+        WMITLV_TAG_STRUC_wmi_vendor_peer_event_fixed_param =
+            WMITLV_TAG_STRUC_wmi_peer_vendor_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_vendor_cmd_fixed_param,
+        WMITLV_TAG_STRUC_wmi_vendor_peer_cmd_fixed_param =
+            WMITLV_TAG_STRUC_wmi_peer_vendor_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_msg_info_tlv_param,
     WMITLV_TAG_STRUC_wmi_vdev_set_tpc_power_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_ch_power_info,

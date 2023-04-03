@@ -4446,8 +4446,14 @@ typedef struct {
      *      0  -> disable latency_flowq_support
      *      1  -> enable latency_flowq_support
      *      Refer to WMI_RSRC_CFG_FLAGS2_LATENCY_FLOWQ_SUPPORT_GET/SET macros.
+     * Bit 17 - rf_path_mode
+     *      Flag to indicate overlapping_freq_mode
+     *      By default, it will be primary mode (0)
+     *      0 - Primary
+     *      1 - Secondary
+     *      Refer to WMI_RSRC_CFG_FLAGS2_RF_PATH_MODE_GET/SET macros.
      *
-     *  Bits 31:17 - Reserved
+     *  Bits 31:18 - Reserved
      */
     A_UINT32 flags2;
     /** @brief host_service_flags - can be used by Host to indicate
@@ -4895,6 +4901,11 @@ typedef struct {
     WMI_GET_BITS(flags2, 16, 1)
 #define WMI_RSRC_CFG_FLAGS2_LATENCY_FLOWQ_SUPPORT_SET(flags2, value) \
     WMI_SET_BITS(flags2, 16, 1, value)
+
+#define WMI_RSRC_CFG_FLAGS2_RF_PATH_MODE_GET(flags2) \
+    WMI_GET_BITS(flags2, 17, 1)
+#define WMI_RSRC_CFG_FLAGS2_RF_PATH_MODE_SET(flags2, value) \
+    WMI_SET_BITS(flags2, 17, 1, value)
 
 
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_IFACE_SUPPORT_GET(host_service_flags) \
@@ -43219,7 +43230,7 @@ typedef struct {
 
 typedef struct wmi_pdev_vendor_event
 {
-    /* type is WMI_PDEV_VENDOR_EVENTID */
+    /* type is WMITLV_TAG_STRUC_wmi_vendor_pdev_event_fixed_param */
     A_UINT32 tlv_header;
     /* pdev_id for identifying the MAC.  See macros starting with WMI_PDEV_ID_ for values. */
     A_UINT32 pdev_id;
@@ -43233,10 +43244,11 @@ typedef struct wmi_pdev_vendor_event
      * would change, causing backwards incompatibilities.
      */
 } wmi_pdev_vendor_event_fixed_param;
+typedef wmi_pdev_vendor_event_fixed_param wmi_vendor_pdev_event_fixed_param;
 
 typedef struct wmi_vdev_vendor_event
 {
-    /* type is WMI_VDEV_VENDOR_EVENTID */
+    /* type is WMITLV_TAG_STRUC_wmi_vendor_vdev_event_fixed_param */
     A_UINT32 tlv_header;
     /* pdev_id for identifying the MAC.  See macros starting with WMI_PDEV_ID_ for values. */
     A_UINT32 pdev_id;
@@ -43252,10 +43264,11 @@ typedef struct wmi_vdev_vendor_event
      * would change, causing backwards incompatibilities.
      */
 } wmi_vdev_vendor_event_fixed_param;
+typedef wmi_vdev_vendor_event_fixed_param wmi_vendor_vdev_event_fixed_param;
 
 typedef struct wmi_peer_vendor_event
 {
-    /* type is WMI_PEER_VENDOR_EVENTID */
+    /* type is WMITLV_TAG_STRUC_wmi_vendor_peer_event_fixed_param */
     A_UINT32 tlv_header;
     /* pdev_id for identifying the MAC.  See macros starting with WMI_PDEV_ID_ for values. */
     A_UINT32 pdev_id;
@@ -43273,10 +43286,11 @@ typedef struct wmi_peer_vendor_event
      * would change, causing backwards incompatibilities.
      */
 } wmi_peer_vendor_event_fixed_param;
+typedef wmi_peer_vendor_event_fixed_param wmi_vendor_peer_event_fixed_param;
 
 typedef struct wmi_pdev_vendor_cmd
 {
-    /* type is WMI_PDEV_VENDOR_CMDID */
+    /* type is WMITLV_TAG_STRUC_wmi_vendor_pdev_cmd_fixed_param */
     A_UINT32 tlv_header;
     /* pdev_id for identifying the MAC.  See macros starting with WMI_PDEV_ID_ for values. */
     A_UINT32 pdev_id;
@@ -43290,10 +43304,11 @@ typedef struct wmi_pdev_vendor_cmd
      * would change, causing backwards incompatibilities.
      */
 } wmi_pdev_vendor_cmd_fixed_param;
+typedef wmi_pdev_vendor_cmd_fixed_param wmi_vendor_pdev_cmd_fixed_param;
 
 typedef struct wmi_vdev_vendor_cmd
 {
-    /* type is WMI_VDEV_VENDOR_CMDID */
+    /* type is WMITLV_TAG_STRUC_wmi_vendor_vdev_cmd_fixed_param */
     A_UINT32 tlv_header;
     /* pdev_id for identifying the MAC.  See macros starting with WMI_PDEV_ID_ for values. */
     A_UINT32 pdev_id;
@@ -43309,10 +43324,11 @@ typedef struct wmi_vdev_vendor_cmd
      * would change, causing backwards incompatibilities.
      */
 } wmi_vdev_vendor_cmd_fixed_param;
+typedef wmi_vdev_vendor_cmd_fixed_param wmi_vendor_vdev_cmd_fixed_param;
 
 typedef struct wmi_peer_vendor_cmd
 {
-    /* type is WMI_PEER_VENDOR_CMDID */
+    /* type is WMITLV_TAG_STRUC_wmi_vendor_peer_cmd_fixed_param */
     A_UINT32 tlv_header;
     /* pdev_id for identifying the MAC.  See macros starting with WMI_PDEV_ID_ for values. */
     A_UINT32 pdev_id;
@@ -43330,6 +43346,7 @@ typedef struct wmi_peer_vendor_cmd
      * would change, causing backwards incompatibilities.
      */
 } wmi_peer_vendor_cmd_fixed_param;
+typedef wmi_peer_vendor_cmd_fixed_param wmi_vendor_peer_cmd_fixed_param;
 
 typedef enum {
     WMI_MLO_LINK_FORCE_ACTIVE                 = 1, /* Force specific links active */
