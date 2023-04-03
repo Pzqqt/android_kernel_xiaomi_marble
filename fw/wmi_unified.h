@@ -17873,6 +17873,17 @@ typedef enum {
      */
     WMI_VDEV_PARAM_DISABLE_LPI_ANT_OPTIMIZATION,          /* 0xB9 */
 
+    /*
+     * Param to update connected VDEV channel bandwidth.
+     * Target firmware should take care of notifying associated peers
+     * (except TDLS) about change in bandwidth, through OMN/OMI notification
+     * before performing bandwidth update internally.
+     * Please note incase of STA VDEV only BSS peer gets updated,
+     * associated TDLS peer bandwidth wont be impacted.
+     *
+     * The the updated bandwith is specified with a wmi_channel_width value.
+     */
+    WMI_VDEV_PARAM_CHWIDTH_WITH_NOTIFY,                   /* 0xBA */
 
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
@@ -19925,14 +19936,6 @@ typedef struct {
 #define WMI_PEER_CHWIDTH_PUNCTURE_20MHZ_BITMAP         0x27
 
 #define WMI_PEER_SET_TX_POWER                          0x28
-
-/*
- * Param to update connected peer channel bandwidth.
- * Target firmware should take care of notifying connected peer about
- * change in bandwidth, through OMN/OMI notification before performing
- * bandwidth update internally.
- */
-#define WMI_PEER_CHWIDTH_WITH_NOTIFY                   0x29
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_set_param_cmd_fixed_param */
