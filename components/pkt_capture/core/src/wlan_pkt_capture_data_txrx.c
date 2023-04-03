@@ -208,9 +208,9 @@ static void pkt_capture_tx_get_phy_info(
 		break;
 	}
 
-	if (preamble == 0)
+	if (preamble_type != HAL_TX_PKT_TYPE_11B)
 		tx_status->ofdm_flag = 1;
-	else if (preamble == 1)
+	else
 		tx_status->cck_flag = 1;
 
 	tx_status->mcs = mcs;
@@ -731,9 +731,9 @@ static void pkt_capture_rx_get_phy_info(void *context, void *psoc,
 		break;
 	}
 
-	if (preamble == 0)
+	if (preamble_type != HAL_RX_PKT_TYPE_11B)
 		rx_status->ofdm_flag = 1;
-	else if (preamble == 1)
+	else
 		rx_status->cck_flag = 1;
 
 	rx_status->bw = bw;
