@@ -1247,6 +1247,7 @@ typedef enum {
     /* GPIO Configuration */
     WMI_GPIO_CONFIG_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_GPIO),
     WMI_GPIO_OUTPUT_CMDID,
+    WMI_GPIO_STATE_REQ_CMDID,
 
     /* Txbf configuration command */
     WMI_TXBF_CMDID,
@@ -2236,6 +2237,8 @@ typedef enum {
 
     /* Smart Antenna Controller status */
     WMI_SMARTANT_STATE_CHANGE_EVENTID,
+
+    WMI_GPIO_STATE_RES_EVENTID,
 
     /* TDLS Event */
     WMI_TDLS_PEER_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_TDLS),
@@ -24834,11 +24837,36 @@ typedef struct {
     A_UINT32 set; /* Set the GPIO pin*/
 } wmi_gpio_output_cmd_fixed_param;
 
+/* WMI_GPIO_STATE_REQ_CMDID */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_gpio_state_req_cmd_fixed_param */
+    A_UINT32 gpio_num;   /* GPIO number to get state */
+} wmi_gpio_state_req_cmd_fixed_param;
+
 /* WMI_GPIO_INPUT_EVENTID */
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_gpio_input_event_fixed_param */
     A_UINT32 gpio_num; /* GPIO number which changed state */
 } wmi_gpio_input_event_fixed_param;
+
+typedef enum {
+    /**
+     * The following wmi_gpio_state_type is mutually exclusive.
+     * 0:  gpio_invalid_state
+     * 1:  gpio_state is LO
+     * 2:  gpio_state is HIGH
+     */
+    WMI_GPIO_STATE_INVALID, /* GPIO state is invalid. */
+    WMI_GPIO_STATE_LOW,     /* GPIO state is low. */
+    WMI_GPIO_STATE_HIGH,    /* GPIO state is high. */
+} WMI_GPIO_STATE_TYPE;
+
+/* WMI_GPIO_STATE_RES_EVENTID */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_gpio_state_res_event_fixed_param */
+    A_UINT32 gpio_num;   /* GPIO number */
+    A_UINT32 gpio_state; /* state of GPIO pin defined in WMI_GPIO_STATE_TYPE 0 invalid 1 - LO, 2 -HI*/
+} wmi_gpio_state_res_event_fixed_param;
 
 /* WMI_ANT_CONTROLLER_CMDID */
 typedef struct {
@@ -36147,6 +36175,10 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_STANDALONE_SOUND_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_SET_RF_PATH_CMDID); /* set RF path of PHY */
         WMI_RETURN_STRING(WMI_VDEV_PAUSE_CMDID);
+        WMI_RETURN_STRING(WMI_GPIO_STATE_REQ_CMDID);
+        WMI_RETURN_STRING(WMI_VENDOR_PDEV_CMDID);
+        WMI_RETURN_STRING(WMI_VENDOR_VDEV_CMDID);
+        WMI_RETURN_STRING(WMI_VENDOR_PEER_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
