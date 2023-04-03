@@ -34581,6 +34581,12 @@ typedef enum wmi_hw_mode_config_type {
 #define WMI_SUPPORT_AAR_GET(mld_capability) WMI_GET_BITS(mld_capability, 12, 1)
 #define WMI_SUPPORT_AAR_SET(mld_capability, value) WMI_SET_BITS(mld_capability, 12, 1, value)
 
+/*
+ * 11BE Ext MLD Capability Set and Get macros
+ */
+#define WMI_EXT_MLD_OPERATION_PARAMETER_UPDATE_SUPP_GET(ext_mld_capability) WMI_GET_BITS(ext_mld_capability, 0, 1)
+#define WMI_EXT_MLD_OPERATION_PARAMETER_UPDATE_SUPP_SET(ext_mld_capability, value) WMI_SET_BITS(ext_mld_capability, 0, 1, value)
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_MAC_PHY_CAPABILITIES */
     /* hw_mode_id - identify a particular set of HW characteristics, as specified
@@ -34855,6 +34861,14 @@ typedef struct {
                      reserved2: 19;
         };
         A_UINT32 mld_capability;
+    };
+    union {
+        struct {
+            A_UINT32
+                op_update_para_support:1, /* Indicates support of operation parameter update negotiation */
+                reserved3: 31;
+        };
+        A_UINT32 ext_mld_capability;
     };
 } WMI_MAC_PHY_CAPABILITIES_EXT;
 
@@ -41408,7 +41422,20 @@ typedef struct {
 #define WMI_EHTCAP_PHY_RX4096QAMWIDERBWDLOFDMA_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[2], 1, 1)
 #define WMI_EHTCAP_PHY_RX4096QAMWIDERBWDLOFDMA_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[2], 1, 1, value)
 
-/* Bits 66-71: reserved */
+/* Bit 66: 20Mhz-only limited capabilities support */
+#define WMI_EHTCAP_20MHZ_ONLY_CAPS_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[2], 2, 1)
+#define WMI_EHTCAP_20MHZ_ONLY_CAPS_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[2], 2, 1, value)
+
+/* Bit 67: 20Mhz-only triggered MU beamforming full BW feedback and DL MU-MIMO */
+#define WMI_EHTCAP_20MHZ_ONLY_TRIGGER_MUBF_FULL_BW_FB_AND_DLMUMIMO_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[2], 3, 1)
+#define WMI_EHTCAP_20MHZ_ONLY_TRIGGER_MUBF_FULL_BW_FB_AND_DLMUMIMO_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[2], 3, 1, value)
+
+/* Bit 68: 20Mhz-only M-RU support */
+#define WMI_EHTCAP_20MHZ_ONLY_MRU_SUPP_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[2], 4, 1)
+#define WMI_EHTCAP_20MHZ_ONLY_MRU_SUPP_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[2], 4, 1, value)
+
+
+/* Bits 69-71: reserved */
 
 /****** End of 11BE EHT PHY Capabilities Information field ******/
 
