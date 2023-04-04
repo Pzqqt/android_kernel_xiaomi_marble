@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -913,6 +914,11 @@ static inline int __qdf_ipa_get_wdi_stats(struct IpaHwStatsWDIInfoData_t *stats)
 	return ipa_get_wdi_stats(stats);
 }
 
+/* IPA supports this call only on legacy devices. Starting from
+ * Linux version 6.1.15, IPA has moved out of the kernel and
+ * has deprecated this call.
+ */
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 15))
 static inline int __qdf_ipa_uc_reg_rdyCB(struct ipa_wdi_uc_ready_params *param)
 {
 	return ipa_uc_reg_rdyCB(param);
@@ -922,7 +928,23 @@ static inline int __qdf_ipa_uc_dereg_rdyCB(void)
 {
 	return ipa_uc_dereg_rdyCB();
 }
+#else
+/* This call has been removed from IPA since
+ * Commit-ID: b37958da466efc1320b7f97ddf876565762f05b7.
+ * This call returns 0 here as ipa_wdi_init_per_inst()
+ * call to IPA would already handle all the initialization steps
+ * and do not require WLAN to make this IPA call.
+ */
+static inline int __qdf_ipa_uc_reg_rdyCB(struct ipa_wdi_uc_ready_params *param)
+{
+	return 0;
+}
 
+static inline int __qdf_ipa_uc_dereg_rdyCB(void)
+{
+	return 0;
+}
+#endif
 static inline int __qdf_ipa_register_ipa_ready_cb(
 	void (*ipa_ready_cb)(void *user_data),
 	void *user_data)
