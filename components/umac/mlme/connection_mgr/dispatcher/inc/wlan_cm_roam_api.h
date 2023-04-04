@@ -924,10 +924,12 @@ cm_akm_roam_allowed(struct wlan_objmgr_psoc *psoc,
  * cm_invalid_roam_reason_handler() - Handler for invalid roam reason
  * @vdev_id: vdev id
  * @notif: roam notification of type enum cm_roam_notif
+ * @reason: Notif param value from the roam event that carries trigger reason
  *
  * Return: QDF_STATUS
  */
-void cm_invalid_roam_reason_handler(uint32_t vdev_id, enum cm_roam_notif notif);
+void cm_invalid_roam_reason_handler(uint32_t vdev_id, enum cm_roam_notif notif,
+				    uint32_t reason);
 
 /**
  * cm_handle_roam_reason_ho_failed() - Handler for roam due to ho failure
@@ -1044,6 +1046,7 @@ wlan_cm_get_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
  * @roam_info: Roam stats from the roam stats event
  * @value:     Notif param value from the roam event
  * @idx:       TLV index in roam stats event
+ * @reason:    Notif param value from the roam event that carries trigger reason
  *
  * Gathers the roam stats from the roam event and the roam stats event and
  * sends them to hdd for filling the vendor attributes.
@@ -1054,7 +1057,7 @@ void cm_report_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
 			     uint8_t vdev_id,
 			     enum roam_rt_stats_type events,
 			     struct roam_stats_event *roam_info,
-			     uint32_t value, uint8_t idx);
+			     uint32_t value, uint8_t idx, uint32_t reason);
 /**
  * cm_roam_candidate_event_handler() - CM callback to save roam
  * candidate entry in scan db
@@ -1303,7 +1306,7 @@ static inline void
 cm_report_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
 			uint8_t vdev_id, enum roam_rt_stats_type events,
 			struct roam_stats_event *roam_info,
-			uint32_t value, uint8_t idx)
+			uint32_t value, uint8_t idx, uint32_t reason)
 {}
 
 static inline QDF_STATUS

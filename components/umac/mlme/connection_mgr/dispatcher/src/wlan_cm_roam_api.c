@@ -2500,7 +2500,8 @@ cm_handle_roam_offload_events(struct roam_offload_roam_event *roam_event)
 	break;
 	case ROAM_REASON_INVALID:
 		cm_invalid_roam_reason_handler(roam_event->vdev_id,
-					       roam_event->notif);
+					       roam_event->notif,
+					       roam_event->notif_params);
 		break;
 	default:
 		break;
@@ -3248,7 +3249,7 @@ void cm_report_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
 			     uint8_t vdev_id,
 			     enum roam_rt_stats_type events,
 			     struct roam_stats_event *roam_info,
-			     uint32_t value, uint8_t idx)
+			     uint32_t value, uint8_t idx, uint32_t reason)
 {
 	struct roam_stats_event *roam_event = NULL;
 
@@ -3263,12 +3264,18 @@ void cm_report_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
 		if (!roam_event)
 			return;
 
-		if (value == WMI_ROAM_NOTIF_SCAN_START)
+		if (value == WMI_ROAM_NOTIF_SCAN_START) {
 			roam_event->roam_event_param.roam_scan_state =
 					QCA_WLAN_VENDOR_ROAM_SCAN_STATE_START;
-		else if (value == WMI_ROAM_NOTIF_SCAN_END)
+			if (reason) {
+				roam_event->trigger[idx].present = true;
+				roam_event->trigger[idx].trigger_reason =
+							reason;
+			}
+		} else if (value == WMI_ROAM_NOTIF_SCAN_END) {
 			roam_event->roam_event_param.roam_scan_state =
 					QCA_WLAN_VENDOR_ROAM_SCAN_STATE_END;
+		}
 
 		mlme_debug("Invoke HDD roam events callback for roam "
 			   "scan notif");
@@ -3396,7 +3403,7 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 
 		cm_report_roam_rt_stats(psoc, stats_info->vdev_id,
 					ROAM_RT_STATS_TYPE_ROAM_SCAN_INFO,
-					stats_info, 0, i);
+					stats_info, 0, i, 0);
 	}
 
 	if (!stats_info->num_tlv) {
