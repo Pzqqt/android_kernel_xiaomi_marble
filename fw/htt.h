@@ -17819,12 +17819,12 @@ enum htt_dbg_ext_stats_status {
  * to host ppdu stats indication message.
  *
  *
- * |31                         16|15   12|11   10|9      8|7            0 |
- * |----------------------------------------------------------------------|
+ * |31         24|23           16|15   12|11   10|9      8|7            0 |
+ * |-----------------------------+-------+-------+--------+---------------|
  * |    payload_size             | rsvd  |pdev_id|mac_id  |    msg type   |
- * |----------------------------------------------------------------------|
- * |                          ppdu_id                                     |
- * |----------------------------------------------------------------------|
+ * |-------------+---------------+-------+-------+--------+---------------|
+ * | tgt_private |                     ppdu_id                            |
+ * |-------------+--------------------------------------------------------|
  * |                        Timestamp in us                               |
  * |----------------------------------------------------------------------|
  * |                          reserved                                    |
@@ -17864,8 +17864,9 @@ enum htt_dbg_ext_stats_status {
 #define HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_M     0xFFFF0000
 #define HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_S     16
 
-#define HTT_T2H_PPDU_STATS_PPDU_ID_M          0xFFFFFFFF
+#define HTT_T2H_PPDU_STATS_PPDU_ID_M          0x00FFFFFF
 #define HTT_T2H_PPDU_STATS_PPDU_ID_S          0
+/* bits 31:24 are used by the target for internal purposes */
 
 #define HTT_T2H_PPDU_STATS_MAC_ID_SET(word, value)             \
     do {                                                         \
@@ -17896,7 +17897,7 @@ enum htt_dbg_ext_stats_status {
 
 #define HTT_T2H_PPDU_STATS_PPDU_ID_SET(word, value)             \
     do {                                                         \
-        HTT_CHECK_SET_VAL(HTT_T2H_PPDU_STATS_PPDU_ID, value);   \
+        /*HTT_CHECK_SET_VAL(HTT_T2H_PPDU_STATS_PPDU_ID, value);*/   \
         (word) |= (value)  << HTT_T2H_PPDU_STATS_PPDU_ID_S;     \
     } while (0)
 #define HTT_T2H_PPDU_STATS_PPDU_ID_GET(word) \
