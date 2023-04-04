@@ -1247,13 +1247,14 @@ typedef enum {
     /* GPIO Configuration */
     WMI_GPIO_CONFIG_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_GPIO),
     WMI_GPIO_OUTPUT_CMDID,
-    WMI_GPIO_STATE_REQ_CMDID,
 
     /* Txbf configuration command */
     WMI_TXBF_CMDID,
 
     /* Antenna Controller, connected to wlan debug uart/GPIO. */
     WMI_ANT_CONTROLLER_CMDID,
+
+    WMI_GPIO_STATE_REQ_CMDID,
 
     /* FWTEST Commands */
     WMI_FWTEST_VDEV_MCC_SET_TBTT_MODE_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_FWTEST),
