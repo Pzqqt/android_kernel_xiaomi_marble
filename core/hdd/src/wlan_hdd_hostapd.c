@@ -3170,6 +3170,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
 	QDF_STATUS status;
 	int ret = 0;
 	struct hdd_adapter *adapter = (netdev_priv(dev));
+	struct hdd_beacon_data *beacon = adapter->session.ap.beacon;
 	struct hdd_context *hdd_ctx = NULL;
 	struct hdd_adapter *sta_adapter;
 	struct hdd_station_ctx *sta_ctx;
@@ -3181,6 +3182,10 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
 	bool strict;
 	uint32_t sta_cnt = 0;
 	struct ch_params ch_params = {0};
+	const u8 *rsn_ie, *rsnxe_ie;
+	struct wlan_crypto_params crypto_params = {0};
+	bool capable, is_wps;
+	int32_t keymgmt;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -3210,6 +3215,32 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
 		return ret;
 	}
 
+	if (wlan_reg_is_6ghz_chan_freq(target_chan_freq)) {
+		rsn_ie = wlan_get_ie_ptr_from_eid(WLAN_EID_RSN,
+						  beacon->tail,
+						  beacon->tail_len);
+		rsnxe_ie = wlan_get_ie_ptr_from_eid(WLAN_ELEMID_RSNXE,
+						    beacon->tail,
+						    beacon->tail_len);
+		if (rsn_ie)
+			wlan_crypto_rsnie_check(&crypto_params, rsn_ie);
+
+		keymgmt = wlan_crypto_get_param(sap_ctx->vdev,
+						WLAN_CRYPTO_PARAM_KEY_MGMT);
+		if (keymgmt < 0) {
+			hdd_err_rl("Invalid keymgmt");
+			return -EINVAL;
+		}
+
+		is_wps = adapter->device_mode == QDF_P2P_GO_MODE ? true : false;
+		capable = wlan_cm_6ghz_allowed_for_akm(hdd_ctx->psoc, keymgmt,
+						       crypto_params.rsn_caps,
+						       rsnxe_ie, 0, is_wps);
+		if (!capable) {
+			hdd_err_rl("6Ghz channel switch not capable");
+			return -EINVAL;
+		}
+	}
 	sta_adapter = hdd_get_adapter(hdd_ctx, QDF_STA_MODE);
 	ucfg_policy_mgr_get_conc_rule1(hdd_ctx->psoc, &conc_rule1);
 	/*
