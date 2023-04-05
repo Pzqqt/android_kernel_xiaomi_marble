@@ -180,12 +180,14 @@ static void pkt_capture_tx_get_phy_info(
 			mcs = 8 + pktcapture_hdr->mcs;
 		else
 			mcs = pktcapture_hdr->mcs;
+
+		tx_status->ht_mcs = mcs;
 		break;
 	case 0x3:
 		tx_status->vht_flags = 1;
 		mcs = pktcapture_hdr->mcs;
 		tx_status->vht_flag_values3[0] =
-			mcs << 0x4 | (pktcapture_hdr->nss + 1);
+			mcs << 0x4 | (pktcapture_hdr->nss);
 		tx_status->vht_flag_values2 = pktcapture_hdr->bw;
 		break;
 	case 0x4:
