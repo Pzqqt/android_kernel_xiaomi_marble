@@ -9323,6 +9323,19 @@ QDF_STATUS hdd_add_adapter_front(struct hdd_context *hdd_ctx,
 	return status;
 }
 
+void hdd_validate_next_adapter(struct hdd_adapter **curr,
+			       struct hdd_adapter **next,
+			       wlan_net_dev_ref_dbgid dbg_id)
+{
+	if (!*curr || !*next || *curr != *next)
+		return;
+
+	hdd_err("Validation failed");
+	hdd_adapter_dev_put_debug(*curr, dbg_id);
+	*curr = NULL;
+	*next = NULL;
+}
+
 QDF_STATUS hdd_adapter_iterate(hdd_adapter_iterate_cb cb, void *context)
 {
 	struct hdd_context *hdd_ctx;
@@ -16627,9 +16640,6 @@ int hdd_register_cb(struct hdd_context *hdd_ctx)
 	sme_stats_ext2_register_callback(mac_handle,
 					wlan_hdd_cfg80211_stats_ext2_callback);
 
-	sme_roam_events_register_callback(mac_handle,
-					wlan_hdd_cfg80211_roam_events_callback);
-
 	sme_multi_client_ll_rsp_register_callback(mac_handle,
 					hdd_latency_level_event_handler_cb);
 
@@ -16747,7 +16757,6 @@ void hdd_deregister_cb(struct hdd_context *hdd_ctx)
 		hdd_err("Failed to de-register data stall detect event callback");
 	hdd_thermal_unregister_callbacks(hdd_ctx);
 	sme_deregister_oem_data_rsp_callback(mac_handle);
-	sme_roam_events_deregister_callback(mac_handle);
 	sme_multi_client_ll_rsp_deregister_callback(mac_handle);
 
 	hdd_exit();

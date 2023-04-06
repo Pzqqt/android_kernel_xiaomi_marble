@@ -67,6 +67,7 @@
 #include "wlan_reg_services_api.h"
 #include <lim_mlo.h>
 #include <wlan_vdev_mgr_utils_api.h>
+#include "wma_he.h"
 
 /* SME REQ processing function templates */
 static bool __lim_process_sme_sys_ready_ind(struct mac_context *, uint32_t *);
@@ -1942,6 +1943,7 @@ lim_handle_11a_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 	case MLME_DOT11_MODE_11AC:
 		/* fallthrough */
 	case MLME_DOT11_MODE_11AX:
+	case MLME_DOT11_MODE_11BE:
 		*intersected_mode = MLME_DOT11_MODE_11A;
 		break;
 	default:
@@ -1973,6 +1975,7 @@ lim_handle_11b_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 	case MLME_DOT11_MODE_11B:
 		/* fallthrough */
 	case MLME_DOT11_MODE_11G:
+	case MLME_DOT11_MODE_11BE:
 		/* Self 11B and BSS 11A cannot connect */
 		*intersected_mode = MLME_DOT11_MODE_11B;
 		break;
@@ -2007,6 +2010,7 @@ lim_handle_11g_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 	case MLME_DOT11_MODE_11AX:
 		/* fallthrough */
 	case MLME_DOT11_MODE_11G:
+	case MLME_DOT11_MODE_11BE:
 		/* Self 11B and BSS 11A cannot connect */
 		*intersected_mode = MLME_DOT11_MODE_11G;
 		break;
@@ -2096,6 +2100,7 @@ lim_handle_11ac_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 		*intersected_mode = MLME_DOT11_MODE_11AC;
 		break;
 	case MLME_DOT11_MODE_11AX:
+	case MLME_DOT11_MODE_11BE:
 		if (vht_capable) {
 			*intersected_mode = MLME_DOT11_MODE_11AC;
 			break;
@@ -2241,6 +2246,7 @@ lim_handle_11g_only_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 	case MLME_DOT11_MODE_11AX:
 		/* fallthrough */
 	case MLME_DOT11_MODE_11G:
+	case MLME_DOT11_MODE_11BE:
 		/* Self 11B and BSS 11A cannot connect */
 		*intersected_mode = MLME_DOT11_MODE_11G;
 		break;
@@ -2277,6 +2283,7 @@ lim_handle_11n_only_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 	case MLME_DOT11_MODE_11AC:
 		/* fallthrough */
 	case MLME_DOT11_MODE_11AX:
+	case MLME_DOT11_MODE_11BE:
 		if (ie_struct->HTCaps.present) {
 			*intersected_mode = MLME_DOT11_MODE_11N;
 			break;
@@ -2322,6 +2329,7 @@ lim_handle_11ac_only_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 		*intersected_mode = MLME_DOT11_MODE_11AC;
 		break;
 	case MLME_DOT11_MODE_11AX:
+	case MLME_DOT11_MODE_11BE:
 		if (vht_capable) {
 			*intersected_mode = MLME_DOT11_MODE_11AC;
 			break;
@@ -9222,6 +9230,10 @@ static void obss_color_collision_process_color_change(struct mac_context *mac_ct
 		pe_debug("New bss color = %d", bss_color_index_array[i]);
 		he_bss_color.vdev_id = obss_color_info->vdev_id;
 		he_bss_color.bss_color = bss_color_index_array[i];
+
+		/* Take the wakelock for 2 sec, release it after color change */
+		wma_prevent_suspend_on_obss_color_collision(session->vdev);
+
 		lim_process_set_he_bss_color(mac_ctx,
 					     (uint32_t *)&he_bss_color);
 	} else {

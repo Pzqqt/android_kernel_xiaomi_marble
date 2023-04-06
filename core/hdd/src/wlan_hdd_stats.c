@@ -4079,7 +4079,8 @@ roam_rt_stats_fill_cand_info(struct sk_buff *vendor_event, uint8_t idx,
 	uint8_t i, num_cand = 0;
 
 	if (roam_stats->result[idx].present &&
-	    roam_stats->result[idx].fail_reason) {
+	    roam_stats->result[idx].fail_reason &&
+	    roam_stats->result[idx].fail_reason != ROAM_FAIL_REASON_UNKNOWN) {
 		num_cand++;
 		for (i = 0; i < roam_stats->scan[idx].num_ap; i++) {
 			if (roam_stats->scan[idx].ap[i].type == 0 &&
@@ -4155,10 +4156,10 @@ roam_rt_stats_fill_cand_info(struct sk_buff *vendor_event, uint8_t idx,
 }
 
 void
-wlan_hdd_cfg80211_roam_events_callback(hdd_handle_t hdd_handle, uint8_t idx,
-				       struct roam_stats_event *roam_stats)
+wlan_hdd_cfg80211_roam_events_callback(struct roam_stats_event *roam_stats,
+				       uint8_t idx)
 {
-	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	int status;
 	uint32_t data_size, roam_event_type = 0;
 	struct sk_buff *vendor_event;

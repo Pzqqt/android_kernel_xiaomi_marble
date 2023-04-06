@@ -85,8 +85,10 @@ QDF_STATUS os_if_monitor_mode_configure(struct hdd_adapter *adapter,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (tb[SET_MONITOR_MODE_INVALID])
+	if (tb[SET_MONITOR_MODE_INVALID]) {
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_PKT_CAPTURE_ID);
 		return QDF_STATUS_E_FAILURE;
+	}
 
 	if (tb[SET_MONITOR_MODE_DATA_TX_FRAME_TYPE] &&
 	    nla_get_u32(tb[SET_MONITOR_MODE_DATA_TX_FRAME_TYPE]) <
