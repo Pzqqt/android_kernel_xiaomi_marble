@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -595,6 +595,7 @@ struct sde_connector {
 
 	u32 color_enc_fmt;
 	u32 lm_mask;
+	bool is_fsc;
 
 	u8 hdr_plus_app_ver;
 	u32 qsync_mode;
