@@ -2859,7 +2859,6 @@ is_p2p_oui(const uint8_t *frm)
 		(frm[5] == P2P_WFA_VER);
 }
 
-#define WLAN_VENDOR_SON_IE_LEN 31
 /**
  * is_qca_son_oui() - If vendor IE is QCA WHC type
  * @frm: vendor IE pointer
