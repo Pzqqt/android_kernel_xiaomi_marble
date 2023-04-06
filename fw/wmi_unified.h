@@ -2386,6 +2386,8 @@ typedef enum {
     WMI_MLO_AP_VDEV_TID_TO_LINK_MAP_EVENTID,
     /* Response event for WMI_MLO_VDEV_GET_LINK_INFO_CMDID */
     WMI_MLO_VDEV_LINK_INFO_EVENTID,
+    /** request host to do T2LM neg to the un-disabled link */
+    WMI_MLO_LINK_DISABLE_REQUEST_EVENTID,
 
     /* WMI event specific to Quiet handling */
     WMI_QUIET_HANDLING_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_QUIET_OFL),
@@ -5667,6 +5669,12 @@ typedef struct {
 #define WMI_SCAN_FLAG_QUARTER_RATE_SUPPORT   0x40000
 #define WMI_SCAN_RANDOM_SEQ_NO_IN_PROBE_REQ 0x80000
 #define WMI_SCAN_ENABLE_IE_WHTELIST_IN_PROBE_REQ 0x100000
+/** pause home channel when scan channel is same as home channel */
+#define WMI_SCAN_FLAG_PAUSE_HOME_CHANNEL            0x200000
+/**
+ * report CCA busy for each possible 20Mhz subbands of the wideband scan channel
+ */
+#define WMI_SCAN_FLAG_REPORT_CCA_BUSY_FOREACH_20MHZ 0x400000
 
 /** for adaptive scan mode using 3 bits (21 - 23 bits) */
 #define WMI_SCAN_DWELL_MODE_MASK 0x00E00000
@@ -7178,6 +7186,13 @@ typedef struct {
     A_UINT32 value;
 } wmi_echo_cmd_fixed_param;
 
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag would be equivalent to WMITLV_TAG_STRUC_wmi_mlo_link_disable_request_event_fixed_param  */
+    /** AP MLD address request to be disabled some set of link */
+    wmi_mac_addr mld_addr;
+    /** Request link id set to disable */
+    A_UINT32 linkid_bitmap;
+} wmi_mlo_link_disable_request_event_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_regdomain_cmd_fixed_param */
@@ -12300,7 +12315,7 @@ typedef struct {
     WMI_GET_BITS(flag, 30, 1)
 #define WMI_PDEV_STATS_GAP_CLKGATE_VALID_SET(flag, val) \
     WMI_SET_BITS(flag, 30, 1, val)
-#define WMI_PDEV_BURST_ENABLE_GET(flag) \
+#define WMI_PDEV_STATS_BURST_ENABLE_GET(flag) \
     WMI_GET_BITS(flag, 31, 1)
 #define WMI_PDEV_STATS_BURST_ENABLE_SET(flag, val) \
     WMI_SET_BITS(flag, 31, 1, val)
@@ -13388,6 +13403,7 @@ typedef struct {
  *  vdev extension statistics
  */
 typedef struct {
+    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ctrl_vdev_extd_stats */
     A_UINT32 tlv_header;
     /* vdev id */
     A_UINT32 vdev_id;
@@ -13408,7 +13424,1177 @@ typedef struct {
      * Refer to WMI_VDEV_STATS_FLAGS_ defs.
      */
     A_UINT32 flags;
+
+    /** opaque_debug_wal_vdev_flags:
+     * This will contain the value from wal_vdev wal vdev flags for vdev state
+     */
+    A_UINT32 opaque_debug_wal_vdev_flags;
+    /** control flags for this vdev */
+    A_UINT32 opaque_debug_vdev_flags;
+    /**  vdevid of transmitted AP (mbssid case) */
+    A_UINT32 opaque_debug_vdevid_trans;
+    /** opaque_debug_profile_idx:
+     * the profile index of the connected non-trans ap (mbssid case).
+     * 0 means invalid.
+     */
+    A_UINT32 opaque_debug_profile_idx;
+    /** opaque_debug_profile_num:
+     * the total profile numbers of non-trans aps (mbssid case).
+     * 0 means legacy AP.
+     */
+    A_UINT32 opaque_debug_profile_num;
+    /* Contains the value of multi_vdev_restart status */
+    A_UINT32 opaque_debug_multi_vdev_restart;
+    /* Contains the value of created mac_id from wal_vdev */
+    A_UINT32 opaque_debug_created_mac_id;
+    /* Contains the value of consecutive count of the leaky AP */
+    A_UINT32 opaque_debug_consec_detect_leaky_ap_cnt;
+    /* Contains the value of Vdev manager debug flags */
+    A_UINT32 opaque_debug_vdev_mgr_dbg_flags;
+    /* Contains the value of max vdev pause delay in microseconds */
+    A_UINT32 opaque_debug_max_pause_delay_us;
+    /* opaque_debug_sta_offset:
+     * Contains the value of the offset of vdev TSF with BI (vdev_tsf%BI)
+     * for STA vdev.
+     */
+    A_UINT32 opaque_debug_sta_offset;
+    /* Contains the value of vdev pn sequence receive filter */
+    A_UINT32 opaque_debug_vdev_pn_rx_filter;
+    /* Contains the value of config params */
+    A_UINT32 opaque_debug_traffic_config;
+    /* opaque_debug_he_bss_rts_thld_tu:
+     * Contains Period of time in units for a non-AP STA to reserve the medium.
+     */
+    A_UINT32 opaque_debug_he_bss_rts_thld_tu;
+    /* opaque_debug_rts_threshold:
+     * Contains the value of Request to Send (RTS) Threshold of the packet size.
+     */
+    A_UINT32 opaque_debug_rts_threshold; /* dot11RTSThreshold */
+    /* Contains the value of Tx failure count threshold */
+    A_UINT32 opaque_debug_tx_fail_cnt_thres;
+    /* Contains the value of ratio = HI_WORD/LO_WORD */
+    A_UINT32 opaque_debug_mu_edca_sifs_ratio;
+    /* opaque_debug_kickout_th:
+     * Contains the value of kickout threshold that denotes units of
+     * lost block acks of consecutive tx failure threshold.
+     */
+    A_UINT32 opaque_debug_kickout_th;
+    /* opaque_debug_rate_dd_bmap:
+     * Contains the value of per vap config related to VAP aggregation
+     * of ratectrl drop-down limits.
+     */
+    A_UINT32 opaque_debug_rate_dd_bmap;
+    /* Contains the value of Maximum Transmission Unit frame size */
+    A_UINT32 opaque_debug_mtu_size;
+    /* Contains the value of vdev event bitmap from wal_vdev */
+    A_UINT32 opaque_debug_event_bitmap;
+    /* Contains the value of peer event bitmap from wal_vdev */
+    A_UINT32 opaque_debug_peer_event_bitmap;
+    /* Contains the value of Sched config of vdev allowed time during ATF */
+    A_UINT32 opaque_debug_atf_vdev_allowed_time;
+    /* opaque_debug_atf_vdev_used_unallocated_time:
+     * Contains the value of Sched config of vdev used unallocated time
+     * during ATF.
+     */
+    A_UINT32 opaque_debug_atf_vdev_used_unallocated_time;
+    /* Contains the value of Sched config of vdev unused time during ATF */
+    A_UINT32 opaque_debug_atf_vdev_unused_time;
+    /* Contains the value of Carrier frequency offset last programmed time */
+    A_UINT32 opaque_debug_last_prog_time;
+    /* Contains the value of Carrier frequency offset last receive time */
+    A_UINT32 opaque_debug_last_recv_time;
+    /* Contains the value of Packet count of received frames on the channel */
+    A_UINT32 opaque_debug_rx_pkt_on_channel;
+    /* Contains the value of Target beacon transmission time offset value */
+    A_UINT32 opaque_debug_tbtt_offset;
+    /* Contains the value of tid pause bitmap of the peer from wal_vdev */
+    A_UINT32 opaque_debug_peer_all_tid_pause_bitmap;
+    /* Contains the value of tid block bitmap of the peer from wal_vdev */
+    A_UINT32 opaque_debug_peer_all_tid_block_bitmap;
+    /* Contains the value of tdls peer kickout threshold */
+    A_UINT32 opaque_debug_tdls_peer_kickout_th;
+    /* opaque_debug_num_of_remote_peers_connected:
+     * Contains the value of num_of_remote_peers_connected;
+     * Below field is valid only for AP vap.
+     */
+    A_UINT32 opaque_debug_num_of_remote_peers_connected;
+    /* Contains the value of num of Multi group key support */
+    A_UINT32 opaque_debug_num_group_key_enabled;
+    /* Contains the value of delete all peer command flags */
+    A_UINT32 opaque_debug_delete_all_peer_flags;
+    /* Contains the value of Keepalive ARP sender address time */
+    A_UINT32 opaque_debug_keepalive_arp_sender_ipv4;
+    /* Contains the value of Keepalive ARP Target address time */
+    A_UINT32 opaque_debug_keepalive_arp_target_ipv4;
+    /* Contains the value of Keepalive interval duration time */
+    A_UINT32 opaque_debug_keepalive_interval;
+    /* Contains the value of Keepalive start timer timestamp */
+    A_UINT32 opaque_debug_keepalive_timer_start_timestamp;
+    /* Contains the value of max idle interval and status of STA */
+    A_UINT32 opaque_debug_sta_maxidle_interval;
+    A_UINT32 opaque_debug_sta_maxidle_method;
+    /* Contains the value of Timing synchronization function (TSF) time diff */
+    A_UINT32 opaque_debug_tsf_curr_time_diff;
+    /* opaque_debug_sleep_duration_us:
+     * Contains the value of Time in microsends to detect sleep duration
+     * of the client.
+     */
+    A_UINT32 opaque_debug_sleep_duration_us;
+    /* Contains the value of pause start time and to calculate pause delay */
+    A_UINT32 opaque_debug_pause_start_time_us;
+    A_UINT32 opaque_debug_pause_delay_us;
+    /* Contains the value of number of supported group key */
+    A_UINT32 opaque_debug_num_supported_group_key;
+    /* opaque_debug_avg_data_null_tx_delay:
+     * Contains the value of Average time taken to calculate data frame
+     * tx delay.
+     */
+    A_UINT32 opaque_debug_avg_data_null_tx_delay;
+    /* opaque_debug_avg_rx_leak_window:
+     * Contains the value of Average time taken to calculate data frame
+     * in receive window.
+     */
+    A_UINT32 opaque_debug_avg_rx_leak_window;
+    /* Contains the value of count for number of received deauth frames */
+    A_UINT32 opaque_debug_num_recv_deauth;
+    /* Contains the value of Beacon interval in microseconds */
+    A_UINT32 opaque_debug_bcn_intval_us;
+    /* opaque_debug_fils_period
+     * Contains the value of us, period configured through
+     * WMI_ENABLE_FILS_CMDID.
+     */
+    A_UINT32 opaque_debug_fils_period;
+    /* Contains the value of previous Timing synchronization function (TSF) */
+    A_UINT32 opaque_debug_prev_tsf;
+    /* Contains the value of time taken during client sleep */
+    A_UINT32 opaque_debug_sleep_entry_time;
+    /* Contains the value of Total sleep duration from wal_vdev */
+    A_UINT32 opaque_debug_tot_sleep_dur;
+    /* Contains the value of Vdev pause bitmap from wal_vdev */
+    A_UINT32 opaque_debug_pause_bitmap;
+    /* opaque_debug_last_send_to_host_deauth_tsf:
+     * Contains the value of Last TSF time last_send_to_host_deauth_tsf
+     * from wlan_vdev.
+     */
+    A_UINT32 opaque_debug_last_send_to_host_deauth_tsf;
+    /* Contains the value of debug_short_ssid from wlan_vdev */
+    A_UINT32 opaque_debug_short_ssid;
+    /* Bitfield macro's expansion variables */
+    /* opaque_debug_vdev_amsdu_bitfield:
+     * bit  7:0  - Contains the value of dis_dyn_bw_rts from wlan_vdev,
+     *     15:8  - max_amsdu,
+     *     23:16 - def_amsdu,
+     *     31:24 - he_bss_color
+     */
+    A_UINT32 opaque_debug_vdev_amsdu_bitfield;
+    /* opaque_debug_vdev_ac_failure_configs:
+     * bit  7:0  - Contains the value of dhe_def_pe_duratio from wal_vdev,
+     *     15:8  - minimum_allowed_mcs,
+     *     23:16 - max_11ac_to_leg_rts_fallback_th,
+     *     31:24 - max_11ac_rts_consec_failure_th
+     */
+    A_UINT32 opaque_debug_vdev_ac_failure_configs;
+    /* opaque_debug_vdev_pkt_type_info:
+     * bit  7:0  - Contains the value of input_pkt_type from wal_vdev,
+     *     15:8  - recv_pkt_type,
+     *     23:16 - disable_intra_fwd,
+     *     31:24 - ps_awake
+     */
+    A_UINT32 opaque_debug_vdev_pkt_type_info;
+    /* opaque_debug_vdev_ba_param_bitfield:
+     * bit  7:0  - Contains the value of snr_cal_count from wal_vdev,
+     *     15:8  - amsdu_auto_enable,
+     *     23:16 - param_ba_timeout,
+     *     31:24 - param_ba_buffer_size
+     */
+    A_UINT32 opaque_debug_vdev_ba_param_bitfield;
+    /* opaque_debug_vdev_aggr_bitfield:
+     * bit  7:0  - Contains the value of param_amsdu_support from wal_vdev,
+     *     15:8  - param_ba_retry_max,
+     *     23:16 - tx_aggr_size,
+     *     31:24 - rx_aggr_size
+     */
+    A_UINT32 opaque_debug_vdev_aggr_bitfield;
+    /* opaque_debug_vdev_event_delivery:
+     * bit  7:0  - Contains the value of tqm_bypass_enabled from wal_vdev,
+     *     15:8  - wmmac_timer_vote_cnt,
+     *     23:16 - peer_event_delivery_in_progress,
+     *     31:24 - vdev_event_delivery_in_progress
+     */
+    A_UINT32 opaque_debug_vdev_event_delivery;
+     /* opaque_debug_vdev_cap_slot_bitfield:
+     * bit  7:0  - Contains the value of bcn_max_slot from wal_vdev,
+     *     15:8  - bcn_curr_slot,
+     *     23:16 - mgmt_tx_power,
+     *     31:24 - mbssid_capable_association
+     */
+    A_UINT32 opaque_debug_vdev_cap_slot_bitfield;
+    /* opaque_debug_vdev_bcn_configs:
+     * bit  7:0  - Contains the value of mbssid_txbssid_association from
+     *             wal_vdev,
+     *     15:8  - consec_beacon_skip,
+     *     23:16 - consec_beacon_skip_cnt,
+     *     31:24 - max_consec_beacon_skip
+     */
+    A_UINT32 opaque_debug_vdev_bcn_configs;
+    /* Contains the value of opaque_debug_vdev_cmd_info */
+    A_UINT32 opaque_debug_vdev_cmd_info;
+    /* opaque_debug_vdev_mac_configs:
+     * bit  7:0  - Contains the value of pause_cnt from wlan_vdev,
+     *     15:8  - e_mac_id,
+     *     23:16 - is_transmit_bssid,
+     *     31:24 - rts_rc_flag
+     */
+    A_UINT32 opaque_debug_vdev_mac_configs;
+    /* opaque_debug_vdev_mode_configs:
+     * bit  7:0  - Contains the value of ic_opmode from wlan_vdev,
+     *     15:8  - ic_subopmode,
+     *     23:16 - ic_curmode,
+     *     31:24 - vdev_up_cmd_cnt
+     */
+    A_UINT32 opaque_debug_vdev_mode_configs;
+    /* opaque_debug_vdev_keepalive_bitfields:
+     * bit  7:0  - keepalive_method
+     *     15:8  - keepalive_prohibit_data_mgmt
+     *     23:16 - resp_type
+     *     31:24 - ap_detect_out_of_sync_sleeping_sta_time_secs
+     */
+    A_UINT32 opaque_debug_vdev_keepalive_bitfields;
+    /* opaque_debug_vdev_bcn_drift_info:
+     * bit  7:0  - bcn_drift_cnt
+     *     15:8  - bcn_drift_calibration
+     *     23:16 - rts_cts_default
+     *     31:24 - vdev_down_cmd_cnt
+     */
+    A_UINT32 opaque_debug_vdev_bcn_drift_info;
+    /* opaque_debug_vdev_arp_configs:
+     * bit  7:0  - Contains the value of tbtt_link_type from wlan_vdev,
+     *     15:8  - is_arp_in_air,
+     *     23:16 - is_ns_in_air,
+     *     31:24 - num_of_keepalive_attempts
+     */
+    A_UINT32 opaque_debug_vdev_arp_configs;
+    /* opaque_debug_vdev_streams_configs:
+     * bit  7:0  - n_beacons_since_last_rssi_report
+     *     15:8  - num_ofld_peer_alloced
+     *     23:16 - preferred_tx_streams
+     *     31:24 - preferred_rx_streams
+     */
+    A_UINT32 opaque_debug_vdev_streams_configs;
+    /* opaque_debug_vdev_chains_configs:
+     * bit  7:0  - Contains the value of preferred_tx_streams_160 from
+     *             wlan_vdev,
+     *     15:8  - preferred_rx_streams_160,
+     *     23:16 - tx_chains_num_11b,
+     *     31:24 - tx_chains_num_11ag
+     */
+    A_UINT32 opaque_debug_vdev_chains_configs;
+    /* opaque_debug_vdev_power_cap_configs:
+     * bit  7:0  - Contains the value of supp_op_cls_ie_len from wlan_vdev,
+     *     15:8  - rm_en_cap_ie_len,
+     *     23:16 - power_cap_ie_len,
+     *     31:24 - supp_channel_ie_len
+     */
+    A_UINT32 opaque_debug_vdev_power_cap_configs;
+    /* opaque_debug_vdev_wmm_mbo_configs:
+     * bit  7:0  - Contains the value of wmm_tspec_ie_len from wlan_vdev,
+     *     15:8  - ccx_version_ie_len,
+     *     23:16 - extn_dh_ie_len,
+     *     31:24 - mbo_ie_len
+     */
+    A_UINT32 opaque_debug_vdev_wmm_mbo_configs;
+    /* opaque_debug_vdev_remote_configs:
+     * bit  7:0  - Contains the value of rsnxe_ie_len from wlan_vdev,
+     *     15:8  - remote_peer_cnt
+     *     23:16 - p2p_cli_pause_type
+     *     31:24 - mu_edca_update_count
+     */
+    A_UINT32 opaque_debug_vdev_remote_configs;
+    /* opaque_debug_vdev_stats_id_configs:
+     * bit  7:0  - vdev_stats_id
+     *     15:8  - vdev_stats_id_valid
+     *     23:16 - preferred_tx_streams_320
+     *     31:24 - preferred_rx_streams_320
+     */
+    A_UINT32 opaque_debug_vdev_stats_id_configs;
+    /* opaque_debug_vdev_assoc_peer_configs:
+     * bit  7:0  - unused / reserved
+     *     15:8  - group_cipher
+     *     31:16 - assoc_id
+     */
+    A_UINT32 opaque_debug_vdev_assoc_peer_configs;
+    /* opaque_debug_vdev_mhz_fils_configs:
+     * bit 15:0  - Contains the value of bss_channel_mhz from wal_vdev,
+     *     31:16 - config_fils_period
+     */
+    A_UINT32 opaque_debug_vdev_mhz_fils_configs;
+    /* opaque_debug_vdev_fils_period:
+     * bit 15:0  - Contains the value of calc_fils_period from wal_vdev,
+     *     31:16 - ic_txseqs_cmn
+     */
+    A_UINT32 opaque_debug_vdev_fils_period;
+    /* opaque_debug_vdev_inactive_time:
+     * bit 15:0  - Contains the value of
+     *             ap_keepalive_min_idle_inactive_time_secs from wlan_vdev,
+     *     31:16 - ap_keepalive_max_idle_inactive_time_secs
+     */
+    A_UINT32 opaque_debug_vdev_inactive_time;
+    /* opaque_debug_vdev_chain_mask_configs:
+     * bit 15:0  - Contains the value of
+     *             ap_keepalive_max_unresponsive_time_secs from wlan_vdev,
+     *     31:16 - chain_mask
+     */
+    A_UINT32 opaque_debug_vdev_chain_mask_configs;
+    /* opaque_debug_vdev_ie_len_configs:
+     * bit 15:0  - num_mcast_filters
+     *     31:16 - ext_cap_ie_len
+     */
+    A_UINT32 opaque_debug_vdev_ie_len_configs;
+    /* opaque_debug_vdev_fils_configs:
+     * bit 15:0  - Contains the value of fils_channel_guard_time from wlan_vdev,
+     *     31:16 - fd_tmpl_len
+     */
+    A_UINT32 opaque_debug_vdev_fils_configs;
+    /* opaque_debug_vdev_chan_configs:
+     * bit 15:0  - Contains the value of common_rsn_caps from wlan_vdev,
+     *     31:16 - off_ch_active_dwell_time
+     */
+    A_UINT32 opaque_debug_vdev_chan_configs;
+    /* opaque_debug_vdev_dwell_configs:
+     * bit 15:0  - Contains the value of off_ch_passive_dwell_time from
+     *             wlan_vdev,
+     *     31:16 - current_pause_request_id
+     */
+    A_UINT32 opaque_debug_vdev_dwell_configs;
+    /* opaque_debug_vdev_wmi_configs:
+     * bit  0 - Contains the value of hide_ssid_enable from wlan_vdev,
+     *      1 - b_none_protocol_paused
+     *      2 - dpd_cal_state
+     *      4 - req_bcn_q_unpause
+     *      5 - bt_coex_enable_cts2s
+     *      6 - dpd_delay_n_beacon
+     *      8 - b_need_check_first_beacon
+     *      9 - ap_peer_keepalive_max_idle_time_reached
+     *     10 - leakyap_cts2s_enable
+     *     11 - stasapscc_in_mcc
+     *     12 - stasapscc_in_mcc_cts2s_enable
+     *     13 - is_vdev_stopping
+     *     14 - is_wmi_vdev_down
+     *     15 - is_vdev_down_pending
+     *     16 - vdev_delete_in_progress
+     *     17 - cac_enabled
+     *     18 - is_quaterrate
+     *     19 - is_halfrate
+     *     20 - stop_resp_event_blocked
+     *     21 - use_enhanced_mcast_filter
+     *     22 - is_start_pending_on_asm
+     *     23 - no_null_to_ap_for_roaming
+     *     24 - is_loopback_cal_pending
+     *     25 - vdev_delete_acked
+     *     26 - bc_proberesp_enable
+     *     27 - is_wmm_param
+     *     28 - is_connect_in_progress
+     *     29 - is_mu_edca_param
+     *     30 - send_del_resp_tohost
+     *     31 - is_restart_different_ch
+     */
+    A_UINT32 opaque_debug_vdev_wmi_configs;
+    /* opaque_debug_vdev_hu_mu_configs:
+     * bit     0 - Contains the value of proto_ps_status from wlan_vdev,
+     *         1 - smps_intolerant
+     *         2 - is_offload_registered_for_connection
+     *         3 - is_bss_beacon_offload_registered
+     *         4 - is_prob_resp_offload_registered
+     *         5 - is_ibss_beacon_offload_registered
+     *         6 - is_keepalive_attempts_exhausted
+     *         7 - is_bcn_tx_ie_changed_log
+     *         8 - he_su_bfee
+     *         9 - he_su_bfer
+     *        10 - he_mu_bfee
+     *        11 - he_mu_bfer
+     *        12 - he_dl_ofdma
+     *        13 - he_ul_ofdma
+     *        14 - he_ul_mumimo
+     *        15 - ul_mu_resp
+     *     23:16 - alt_rssi_non_srg
+     *     31:24 - alt_rssi_srg
+     */
+    A_UINT32 opaque_debug_vdev_hu_mu_configs;
+    /* opaque_debug_vdev_sm_chan_configs:
+     * bit    0 - Contains the value of he_bss_color_en from wlan_vdev,
+     *        1 - he_txbf_ofdma
+     *        2 - non_srg_enable
+     *        3 - srg_enable
+     *        4 - srp_enable
+     *        5 - sr_initialized
+     *        6 - sr_rings_initialized
+     *     10:7 - per_ac_obss_pd_enable
+     *       11 - ifup
+     *       12 - ifactive
+     *       13 - ifpaused
+     *       14 - ifoutofsync
+     *       15 - is_free
+     *       16 - is_nawds
+     *       17 - hw_flag
+     *       18 - ch_req_flag
+     *       20 - restart_resp
+     *       21 - first_beacon_recv_wait
+     *       22 - erpenabled
+     *       23 - start_responded
+     *       24 - bcn_sync_crit_req_act
+     *       25 - recal_notif_registered
+     *       26 - bcn_tx_paused
+     *       27 - he_bss_color_en_bypass
+     *       28 - default_ba_mode
+     *       29 - ba_256_bitmap_enable
+     *       30 - ba_256_bitmap_tx_disable
+     *       31 - is_multi_group_key_enabled
+     */
+    A_UINT32 opaque_debug_vdev_sm_chan_configs;
+    /*
+     * The following 4 opaque_debug variables are provided purely for
+     * debugging by technicians who have outside knowledge of what kind of
+     * values the target has placed into these fields.
+     * The host must not interpret the values of these fields, since the
+     * meaning of the values provided in these fields may change without
+     * regard for backwards compatibility or interoperability.
+     */
+    A_UINT32 opaque_debug_field_1;
+    A_UINT32 opaque_debug_field_2;
+    A_UINT32 opaque_debug_field_3;
+    A_UINT32 opaque_debug_field_4;
 } wmi_vdev_extd_stats;
+
+
+#define WMI_VDEV_STATS_DIS_DYN_BW_RTS_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 8, val)
+#define WMI_VDEV_STATS_DIS_DYN_BW_RTS_GET(flag) \
+    WMI_GET_BITS(flag, 0, 8)
+#define WMI_VDEV_STATS_MAX_AMSDU_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_MAX_AMSDU_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_DEF_AMSDU_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_DEF_AMSDU_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_HW_BSS_COLOR_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_HW_BSS_COLOR_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+#define WMI_VDEV_STATS_HE_DEF_PE_DURATION_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 8, val)
+#define WMI_VDEV_STATS_HE_DEF_PE_DURATION_GET(flag) \
+    WMI_GET_BITS(flag, 0, 8)
+#define WMI_VDEV_STATS_MINIMUM_ALLOWED_MCS_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_MINIMUM_ALLOWED_MCS_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_MAX_11AC_TO_LEG_RTS_FALLBACK_TH_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_MAX_11AC_TO_LEG_RTS_FALLBACK_TH_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_MAX_11AC_RTS_CONSEC_FAILURE_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_MAX_11AC_RTS_CONSEC_FAILURE_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+#define WMI_VDEV_STATS_INPUT_PKT_TYPE_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 8, val)
+#define WMI_VDEV_STATS_INPUT_PKT_TYPE_GET(flag) \
+    WMI_GET_BITS(flag, 0, 8)
+#define WMI_VDEV_STATS_RECV_PKT_TYPE_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_RECV_PKT_TYPE_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_DISABLE_INTRA_FWD_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_DISABLE_INTRA_FWD_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_PS_AWAKE_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_PS_AWAKE_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+#define WMI_VDEV_STATS_SNR_CAL_COUNT_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 8, val)
+#define WMI_VDEV_STATS_SNR_CAL_COUNT_GET(flag) \
+    WMI_GET_BITS(flag, 0, 8)
+#define WMI_VDEV_STATS_AMSDU_AUTO_ENABLE_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_AMSDU_AUTO_ENABLE_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_PARAM_BA_TIMEOUT_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_PARAM_BA_TIMEOUT_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_PARAM_BA_BUFFER_SIZE_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_PARAM_BA_BUFFER_SIZE_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+#define WMI_VDEV_STATS_PARAM_AMSDU_SUPPORT_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 8, val)
+#define WMI_VDEV_STATS_PARAM_AMSDU_SUPPORT_GET(flag) \
+    WMI_GET_BITS(flag, 0, 8)
+#define WMI_VDEV_STATS_PARAM_BA_RETRY_MAX_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_PARAM_BA_RETRY_MAX_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_TX_AGGR_SIZE_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_TX_AGGR_SIZE_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_RX_AGGR_SIZE_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_RX_AGGR_SIZE_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+#define WMI_VDEV_STATS_TQM_BYPASS_ENABLED_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 8, val)
+#define WMI_VDEV_STATS_TQM_BYPASS_ENABLED_GET(flag) \
+    WMI_GET_BITS(flag, 0, 8)
+#define WMI_VDEV_STATS_WMMAC_TIMER_VOTE_CNT_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_WMMAC_TIMER_VOTE_CNT_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_PEER_EVENT_DELIVERY_IN_PROGRESS_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_PEER_EVENT_DELIVERY_IN_PROGRESS_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_VDEV_EVENT_DELIVERY_IN_PROGRESS_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_VDEV_EVENT_DELIVERY_IN_PROGRESS_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+#define WMI_VDEV_STATS_BCN_MAX_SLOT_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 8, val)
+#define WMI_VDEV_STATS_BCN_MAX_SLOT_GET(flag) \
+    WMI_GET_BITS(flag, 0, 8)
+#define WMI_VDEV_STATS_BCN_CURR_SLOT_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_BCN_CURR_SLOT_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_MGMT_TX_POWER_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_MGMT_TX_POWER_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_MBSSID_CAPABLE_ASSOCIATION_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_MBSSID_CAPABLE_ASSOCIATION_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+#define WMI_VDEV_STATS_MBSSID_TXBSSID_ASSOCIATION_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 8, val)
+#define WMI_VDEV_STATS_MBSSID_TXBSSID_ASSOCIATION_GET(flag) \
+    WMI_GET_BITS(flag, 0, 8)
+#define WMI_VDEV_STATS_CONSEC_BEACON_SKIP_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_CONSEC_BEACON_SKIP_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_CONSEC_BEACON_SKIP_CNT_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_CONSEC_BEACON_SKIP_CNT_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_MAX_CONSEC_BEACON_SKIP_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_MAX_CONSEC_BEACON_SKIP_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+#define WMI_VDEV_STATS_BCN_DRIFT_CNT_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 8, val)
+#define WMI_VDEV_STATS_BCN_DRIFT_CNT_GET(flag) \
+    WMI_GET_BITS(flag, 0, 8)
+#define WMI_VDEV_STATS_BCN_DRIFT_CALIBRATION_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_BCN_DRIFT_CALIBRATION_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_VDEV_DOWN_CMD_CNT_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_VDEV_DOWN_CMD_CNT_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_RTS_CTS_DEFAULT_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_RTS_CTS_DEFAULT_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+#define WMI_VDEV_STATS_PAUSE_CNT_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 8, val)
+#define WMI_VDEV_STATS_PAUSE_CNT_GET(flag) \
+    WMI_GET_BITS(flag, 0, 8)
+#define WMI_VDEV_STATS_E_MAC_ID_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_E_MAC_ID_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_IS_TRANSMIT_BSSID_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_IS_TRANSMIT_BSSID_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_RTS_RC_FLAG_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_RTS_RC_FLAG_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+#define WMI_VDEV_STATS_IC_OPMODE_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 8, val)
+#define WMI_VDEV_STATS_IC_OPMODE_GET(flag) \
+    WMI_GET_BITS(flag, 0, 8)
+#define WMI_VDEV_STATS_IC_SUBOPMODE_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_IC_SUBOPMODE_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_IC_CURMODE_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_IC_CURMODE_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_VDEV_UP_CMD_CNT_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_VDEV_UP_CMD_CNT_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+#define WMI_VDEV_STATS_KEEPALIVE_METHOD_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 8, val)
+#define WMI_VDEV_STATS_KEEPALIVE_METHOD_GET(flag) \
+    WMI_GET_BITS(flag, 0, 8)
+#define WMI_VDEV_STATS_KEEPALIVE_PROHIBIT_DATA_MGMT_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_KEEPALIVE_PROHIBIT_DATA_MGMT_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_RESP_TYPE_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_RESP_TYPE_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_AP_DETECT_OUT_OF_SYNC_SLEEPING_STA_TIME_SECS_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_AP_DETECT_OUT_OF_SYNC_SLEEPING_STA_TIME_SECS_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+#define WMI_VDEV_STATS_BCN_DRIFT_CNT_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 8, val)
+#define WMI_VDEV_STATS_BCN_DRIFT_CNT_GET(flag) \
+    WMI_GET_BITS(flag, 0, 8)
+#define WMI_VDEV_STATS_BCN_DRIFT_CALIBRATION_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_BCN_DRIFT_CALIBRATION_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_VDEV_DOWN_CMD_CNT_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_VDEV_DOWN_CMD_CNT_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_RTS_CTS_DEFAULT_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_RTS_CTS_DEFAULT_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+#define WMI_VDEV_STATS_TBTT_LINK_TYPE_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 8, val)
+#define WMI_VDEV_STATS_TBTT_LINK_TYPE_GET(flag) \
+    WMI_GET_BITS(flag, 0, 8)
+#define WMI_VDEV_STATS_IS_ARP_IN_AIR_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_IS_ARP_IN_AIR_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_IS_NS_IN_AIR_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_IS_NS_IN_AIR_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_NUM_OF_KEEPALIVE_ATTEMPTS_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_NUM_OF_KEEPALIVE_ATTEMPTS_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+#define WMI_VDEV_STATS_N_BEACONS_SINCE_LAST_RSSI_REPORT_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 8, val)
+#define WMI_VDEV_STATS_N_BEACONS_SINCE_LAST_RSSI_REPORT_GET(flag) \
+    WMI_GET_BITS(flag, 0, 8)
+#define WMI_VDEV_STATS_NUM_OFLD_PEER_ALLOCED_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_NUM_OFLD_PEER_ALLOCED_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_PREFERRED_TX_STREAMS_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_PREFERRED_TX_STREAMS_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_PREFERRED_RX_STREAMS_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_PREFERRED_RX_STREAMS_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+#define WMI_VDEV_STATS_PREFERRED_TX_STREAMS_160_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 8, val)
+#define WMI_VDEV_STATS_PREFERRED_TX_STREAMS_160_GET(flag) \
+    WMI_GET_BITS(flag, 0, 8)
+#define WMI_VDEV_STATS_PREFERRED_RX_STREAMS_160_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_PREFERRED_RX_STREAMS_160_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_TX_CHAINS_NUM_11B_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_TX_CHAINS_NUM_11B_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_TX_CHAINS_NUM_11AG_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_TX_CHAINS_NUM_11AG_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+#define WMI_VDEV_STATS_SUPP_OP_CLS_IE_LEN_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 8, val)
+#define WMI_VDEV_STATS_SUPP_OP_CLS_IE_LEN_GET(flag) \
+    WMI_GET_BITS(flag, 0, 8)
+#define WMI_VDEV_STATS_RM_EN_CAP_IE_LEN_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_RM_EN_CAP_IE_LEN_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_POWER_CAP_IE_LEN_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_POWER_CAP_IE_LEN_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_SUPP_CHANNEL_IE_LEN_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_SUPP_CHANNEL_IE_LEN_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+#define WMI_VDEV_STATS_WMM_TSPEC_IE_LEN_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 8, val)
+#define WMI_VDEV_STATS_WMM_TSPEC_IE_LEN_GET(flag) \
+    WMI_GET_BITS(flag, 0, 8)
+#define WMI_VDEV_STATS_CCX_VERSION_IE_LEN_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_CCX_VERSION_IE_LEN_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_EXTN_DH_IE_LEN_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_EXTN_DH_IE_LEN_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_MBO_IE_LEN_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_MBO_IE_LEN_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+#define WMI_VDEV_STATS_RSNXE_IE_LEN_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 8, val)
+#define WMI_VDEV_STATS_RSNXE_IE_LEN_GET(flag) \
+    WMI_GET_BITS(flag, 0, 8)
+#define WMI_VDEV_STATS_REMOTE_PEER_CNT_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_REMOTE_PEER_CNT_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_P2P_CLI_PAUSE_TYPE_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_P2P_CLI_PAUSE_TYPE_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_MU_EDCA_UPDATE_COUNT_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_MU_EDCA_UPDATE_COUNT_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+#define WMI_VDEV_STATS_ID_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 8, val)
+#define WMI_VDEV_STATS_ID_GET(flag) \
+    WMI_GET_BITS(flag, 0, 8)
+#define WMI_VDEV_STATS_ID_VALID_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_ID_VALID_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_PREFERRED_TX_STREAMS_320_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_PREFERRED_TX_STREAMS_320_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_PREFERRED_RX_STREAMS_320_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_PREFERRED_RX_STREAMS_320_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+/* bits 7:0 unused / reserved */
+#define WMI_VDEV_STATS_GROUP_CIPHER_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 8, val)
+#define WMI_VDEV_STATS_GROUP_CIPHER_GET(flag) \
+    WMI_GET_BITS(flag, 8, 8)
+#define WMI_VDEV_STATS_ASSOC_ID_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 16, val)
+#define WMI_VDEV_STATS_ASSOC_ID_GET(flag) \
+    WMI_GET_BITS(flag, 16, 16)
+
+#define WMI_VDEV_STATS_BSS_CHANNEL_MHZ_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 16, val)
+#define WMI_VDEV_STATS_BSS_CHANNEL_MHZ_GET(flag) \
+    WMI_GET_BITS(flag, 0, 16)
+#define WMI_VDEV_STATS_CONFIG_FILS_PERIOD_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 16, val)
+#define WMI_VDEV_STATS_CONFIG_FILS_PERIOD_GET(flag) \
+    WMI_GET_BITS(flag, 16, 16)
+
+#define WMI_VDEV_STATS_CALC_FILS_PERIOD_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 16, val)
+#define WMI_VDEV_STATS_CALC_FILS_PERIOD_GET(flag) \
+    WMI_GET_BITS(flag, 0, 16)
+#define WMI_VDEV_STATS_IC_TXSEQS_CMN_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 16, val)
+#define WMI_VDEV_STATS_IC_TXSEQS_CMN_GET(flag) \
+    WMI_GET_BITS(flag, 16, 16)
+
+#define WMI_VDEV_STATS_AP_KEEPALIVE_MIN_IDLE_INACTIVE_TIME_SECS_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 16, val)
+#define WMI_VDEV_STATS_AP_KEEPALIVE_MIN_IDLE_INACTIVE_TIME_SECS_GET(flag) \
+    WMI_GET_BITS(flag, 0, 16)
+#define WMI_VDEV_STATS_AP_KEEPALIVE_MAX_IDLE_INACTIVE_TIME_SECS_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 16, val)
+#define WMI_VDEV_STATS_AP_KEEPALIVE_MAX_IDLE_INACTIVE_TIME_SECS_GET(flag) \
+    WMI_GET_BITS(flag, 16, 16)
+
+#define WMI_VDEV_STATS_AP_KEEPALIVE_MAX_UNRESPONSIVE_TIME_SECS_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 16, val)
+#define WMI_VDEV_STATS_AP_KEEPALIVE_MAX_UNRESPONSIVE_TIME_SECS_GET(flag) \
+    WMI_GET_BITS(flag, 0, 16)
+#define WMI_VDEV_STATS_CHAIN_MASK_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 16, val)
+#define WMI_VDEV_STATS_CHAIN_MASK_GET(flag) \
+    WMI_GET_BITS(flag, 16, 16)
+
+#define WMI_VDEV_STATS_NUM_MCAST_FILTERS_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 16, val)
+#define WMI_VDEV_STATS_NUM_MCAST_FILTERS_GET(flag) \
+    WMI_GET_BITS(flag, 0, 16)
+#define WMI_VDEV_STATS_EXT_CAP_IE_LEN_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 16, val)
+#define WMI_VDEV_STATS_EXT_CAP_IE_LEN_GET(flag) \
+    WMI_GET_BITS(flag, 16, 16)
+
+#define WMI_VDEV_STATS_FILS_CHANNEL_GUARD_TIME_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 16, val)
+#define WMI_VDEV_STATS_FILS_CHANNEL_GUARD_TIME_GET(flag) \
+    WMI_GET_BITS(flag, 0, 16)
+#define WMI_VDEV_STATS_FD_TMPL_LEN_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 16, val)
+#define WMI_VDEV_STATS_FD_TMPL_LEN_GET(flag) \
+    WMI_GET_BITS(flag, 16, 16)
+
+#define WMI_VDEV_STATS_COMMON_RSN_CAPS_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 16, val)
+#define WMI_VDEV_STATS_COMMON_RSN_CAPS_GET(flag) \
+    WMI_GET_BITS(flag, 0, 16)
+#define WMI_VDEV_STATS_OFF_CH_ACTIVE_DWELL_TIME_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 16, val)
+#define WMI_VDEV_STATS_OFF_CH_ACTIVE_DWELL_TIME_GET(flag) \
+    WMI_GET_BITS(flag, 16, 16)
+
+#define WMI_VDEV_STATS_OFF_CH_PASSIVE_DWELL_TIME_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 16, val)
+#define WMI_VDEV_STATS_OFF_CH_PASSIVE_DWELL_TIME_GET(flag) \
+    WMI_GET_BITS(flag, 0, 16)
+#define WMI_VDEV_STATS_CURRENT_PAUSE_REQUEST_ID_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 16, val)
+#define WMI_VDEV_STATS_CURRENT_PAUSE_REQUEST_ID_GET(flag) \
+    WMI_GET_BITS(flag, 16, 16)
+
+#define WMI_VDEV_STATS_HIDE_SSID_ENABLE_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 1, val)
+#define WMI_VDEV_STATS_HIDE_SSID_ENABLE_GET(flag) \
+    WMI_GET_BITS(flag, 0, 1)
+#define WMI_VDEV_STATS_B_NONE_PROTOCOL_PAUSED_SET(flag, val) \
+    WMI_SET_BITS(flag, 1, 1, val)
+#define WMI_VDEV_STATS_B_NONE_PROTOCOL_PAUSED_GET(flag) \
+    WMI_GET_BITS(flag, 1, 1)
+#define WMI_VDEV_STATS_DPD_CAL_STATE_SET(flag, val) \
+    WMI_SET_BITS(flag, 2, 2, val)
+#define WMI_VDEV_STATS_DPD_CAL_STATE_GET(flag) \
+    WMI_GET_BITS(flag, 2, 2)
+#define WMI_VDEV_STATS_REQ_BCN_Q_UNPAUSE_SET(flag, val) \
+    WMI_SET_BITS(flag, 4, 1, val)
+#define WMI_VDEV_STATS_REQ_BCN_Q_UNPAUSE_GET(flag) \
+    WMI_GET_BITS(flag, 4, 1)
+#define WMI_VDEV_STATS_BT_COEX_ENABLE_CTS2S_SET(flag, val) \
+    WMI_SET_BITS(flag, 5, 1, val)
+#define WMI_VDEV_STATS_BT_COEX_ENABLE_CTS2S_GET(flag) \
+    WMI_GET_BITS(flag, 5, 1)
+#define WMI_VDEV_STATS_DPD_DELAY_N_BEACON_SET(flag, val) \
+    WMI_SET_BITS(flag, 6, 2, val)
+#define WMI_VDEV_STATS_DPD_DELAY_N_BEACON_GET(flag) \
+    WMI_GET_BITS(flag, 6, 2)
+#define WMI_VDEV_STATS_B_NEED_CHECK_FIRST_BEACON_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 1, val)
+#define WMI_VDEV_STATS_B_NEED_CHECK_FIRST_BEACON_GET(flag) \
+    WMI_GET_BITS(flag, 8, 1)
+#define WMI_VDEV_STATS_AP_PEER_KEEPALIVE_MAX_IDLE_TIME_REACHED_SET(flag, val) \
+    WMI_SET_BITS(flag, 9, 1, val)
+#define WMI_VDEV_STATS_AP_PEER_KEEPALIVE_MAX_IDLE_TIME_REACHED_GET(flag) \
+    WMI_GET_BITS(flag, 9, 1)
+#define WMI_VDEV_STATS_LEAKYAP_CTS2S_ENABLE_SET(flag, val) \
+    WMI_SET_BITS(flag, 10, 1, val)
+#define WMI_VDEV_STATS_LEAKYAP_CTS2S_ENABLE_GET(flag) \
+    WMI_GET_BITS(flag, 10, 1)
+#define WMI_VDEV_STATS_STASAPSCC_IN_MCC_SET(flag, val) \
+    WMI_SET_BITS(flag, 11, 1, val)
+#define WMI_VDEV_STATS_STASAPSCC_IN_MCC_GET(flag) \
+    WMI_GET_BITS(flag, 11, 1)
+#define WMI_VDEV_STATS_STASAPSCC_IN_MCC_CTS2S_ENABLE_SET(flag, val) \
+    WMI_SET_BITS(flag, 12, 1, val)
+#define WMI_VDEV_STATS_STASAPSCC_IN_MCC_CTS2S_ENABLE_GET(flag) \
+    WMI_GET_BITS(flag, 12, 1)
+#define WMI_VDEV_STATS_IS_VDEV_STOPPING_SET(flag, val) \
+    WMI_SET_BITS(flag, 13, 1, val)
+#define WMI_VDEV_STATS_IS_VDEV_STOPPING_GET(flag) \
+    WMI_GET_BITS(flag, 13, 1)
+#define WMI_VDEV_STATS_IS_WMI_VDEV_DOWN_SET(flag, val) \
+    WMI_SET_BITS(flag, 14, 1, val)
+#define WMI_VDEV_STATS_IS_WMI_VDEV_DOWN_GET(flag) \
+    WMI_GET_BITS(flag, 14, 1)
+#define WMI_VDEV_STATS_IS_VDEV_DOWN_PENDING_SET(flag, val) \
+    WMI_SET_BITS(flag, 15, 1, val)
+#define WMI_VDEV_STATS_IS_VDEV_DOWN_PENDING_GET(flag) \
+    WMI_GET_BITS(flag, 15, 1)
+#define WMI_VDEV_STATS_VDEV_DELETE_IN_PROGRESS_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 1, val)
+#define WMI_VDEV_STATS_VDEV_DELETE_IN_PROGRESS_GET(flag) \
+    WMI_GET_BITS(flag, 16, 1)
+#define WMI_VDEV_STATS_CAC_ENABLED_SET(flag, val) \
+    WMI_SET_BITS(flag, 17, 1, val)
+#define WMI_VDEV_STATS_CAC_ENABLED_GET(flag) \
+    WMI_GET_BITS(flag, 17, 1)
+#define WMI_VDEV_STATS_IS_QUATERRATE_SET(flag, val) \
+    WMI_SET_BITS(flag, 18, 1, val)
+#define WMI_VDEV_STATS_IS_QUATERRATE_GET(flag) \
+    WMI_GET_BITS(flag, 18, 1)
+#define WMI_VDEV_STATS_IS_HALFRATE_SET(flag, val) \
+    WMI_SET_BITS(flag, 19, 1, val)
+#define WMI_VDEV_STATS_IS_HALFRATE_GET(flag) \
+    WMI_GET_BITS(flag, 19, 1)
+#define WMI_VDEV_STATS_STOP_RESP_EVENT_BLOCKED_SET(flag, val) \
+    WMI_SET_BITS(flag, 20, 1, val)
+#define WMI_VDEV_STATS_STOP_RESP_EVENT_BLOCKED_GET(flag) \
+    WMI_GET_BITS(flag, 20, 1)
+#define WMI_VDEV_STATS_USE_ENHANCED_MCAST_FILTER_SET(flag, val) \
+    WMI_SET_BITS(flag, 21, 1, val)
+#define WMI_VDEV_STATS_USE_ENHANCED_MCAST_FILTER_GET(flag) \
+    WMI_GET_BITS(flag, 21, 1)
+#define WMI_VDEV_STATS_IS_START_PENDING_ON_ASM_SET(flag, val) \
+    WMI_SET_BITS(flag, 22, 1, val)
+#define WMI_VDEV_STATS_IS_START_PENDING_ON_ASM_GET(flag) \
+    WMI_GET_BITS(flag, 22, 1)
+#define WMI_VDEV_STATS_NO_NULL_TO_AP_FOR_ROAMING_SET(flag, val) \
+    WMI_SET_BITS(flag, 23, 1, val)
+#define WMI_VDEV_STATS_NO_NULL_TO_AP_FOR_ROAMING_GET(flag) \
+    WMI_GET_BITS(flag, 23, 1)
+#define WMI_VDEV_STATS_IS_LOOPBACK_CAL_PENDING_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 1, val)
+#define WMI_VDEV_STATS_IS_LOOPBACK_CAL_PENDING_GET(flag) \
+    WMI_GET_BITS(flag, 24, 1)
+#define WMI_VDEV_STATS_VDEV_DELETE_ACKED_SET(flag, val) \
+    WMI_SET_BITS(flag, 25, 1, val)
+#define WMI_VDEV_STATS_VDEV_DELETE_ACKED_GET(flag) \
+    WMI_GET_BITS(flag, 25, 1)
+#define WMI_VDEV_STATS_BC_PROBERESP_ENABLE_SET(flag, val) \
+    WMI_SET_BITS(flag, 26, 1, val)
+#define WMI_VDEV_STATS_BC_PROBERESP_ENABLE_GET(flag) \
+    WMI_GET_BITS(flag, 26, 1)
+#define WMI_VDEV_STATS_IS_WMM_PARAM_SET_SET(flag, val) \
+    WMI_SET_BITS(flag, 27, 1, val)
+#define WMI_VDEV_STATS_IS_WMM_PARAM_SET_GET(flag) \
+    WMI_GET_BITS(flag, 27, 1)
+#define WMI_VDEV_STATS_IS_CONNECT_IN_PROGRESS_SET(flag, val) \
+    WMI_SET_BITS(flag, 28, 1, val)
+#define WMI_VDEV_STATS_IS_CONNECT_IN_PROGRESS_GET(flag) \
+    WMI_GET_BITS(flag, 28, 1)
+#define WMI_VDEV_STATS_IS_MU_EDCA_PARAM_SET_SET(flag, val) \
+    WMI_SET_BITS(flag, 29, 1, val)
+#define WMI_VDEV_STATS_IS_MU_EDCA_PARAM_SET_GET(flag) \
+    WMI_GET_BITS(flag, 29, 1)
+#define WMI_VDEV_STATS_SEND_DEL_RESP_TOHOST_SET(flag, val) \
+    WMI_SET_BITS(flag, 30, 1, val)
+#define WMI_VDEV_STATS_SEND_DEL_RESP_TOHOST_GET(flag) \
+    WMI_GET_BITS(flag, 30, 1)
+#define WMI_VDEV_STATS_IS_RESTART_DIFFERENT_CH_SET(flag, val) \
+    WMI_SET_BITS(flag, 31, 1, val)
+#define WMI_VDEV_STATS_IS_RESTART_DIFFERENT_CH_GET(flag) \
+    WMI_GET_BITS(flag, 31, 1)
+
+#define WMI_VDEV_STATS_PROTO_PS_STATUS_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 1, val)
+#define WMI_VDEV_STATS_PROTO_PS_STATUS_GET(flag) \
+    WMI_GET_BITS(flag, 0, 1)
+#define WMI_VDEV_STATS_SMPS_INTOLERANT_SET(flag, val) \
+    WMI_SET_BITS(flag, 1, 1, val)
+#define WMI_VDEV_STATS_SMPS_INTOLERANT_GET(flag) \
+    WMI_GET_BITS(flag, 1, 1)
+#define WMI_VDEV_STATS_IS_OFFLOAD_REGISTERED_FOR_CONNECTION_SET(flag, val) \
+    WMI_SET_BITS(flag, 2, 1, val)
+#define WMI_VDEV_STATS_IS_OFFLOAD_REGISTERED_FOR_CONNECTION_GET(flag) \
+    WMI_GET_BITS(flag, 2, 1)
+#define WMI_VDEV_STATS_IS_BSS_BEACON_OFFLOAD_REGISTERED_SET(flag, val) \
+    WMI_SET_BITS(flag, 3, 1, val)
+#define WMI_VDEV_STATS_IS_BSS_BEACON_OFFLOAD_REGISTERED_GET(flag) \
+    WMI_GET_BITS(flag, 3, 1)
+#define WMI_VDEV_STATS_IS_PROB_RESP_OFFLOAD_REGISTERED_SET(flag, val) \
+    WMI_SET_BITS(flag, 4, 1, val)
+#define WMI_VDEV_STATS_IS_PROB_RESP_OFFLOAD_REGISTERED_GET(flag) \
+    WMI_GET_BITS(flag, 4, 1)
+#define WMI_VDEV_STATS_IS_IBSS_BEACON_OFFLOAD_REGISTERED_SET(flag, val) \
+    WMI_SET_BITS(flag, 5, 1, val)
+#define WMI_VDEV_STATS_IS_IBSS_BEACON_OFFLOAD_REGISTERED_GET(flag) \
+    WMI_GET_BITS(flag, 5, 1)
+#define WMI_VDEV_STATS_IS_KEEPALIVE_ATTEMPTS_EXHAUSTED_SET(flag, val) \
+    WMI_SET_BITS(flag, 6, 1, val)
+#define WMI_VDEV_STATS_IS_KEEPALIVE_ATTEMPTS_EXHAUSTED_GET(flag) \
+    WMI_GET_BITS(flag, 6, 1)
+#define WMI_VDEV_STATS_IS_BCN_TX_IE_CHANGED_LOG_SET(flag, val) \
+    WMI_SET_BITS(flag, 7, 1, val)
+#define WMI_VDEV_STATS_IS_BCN_TX_IE_CHANGED_LOG_GET(flag) \
+    WMI_GET_BITS(flag, 7, 1)
+#define WMI_VDEV_STATS_HE_SU_BFEE_SET(flag, val) \
+    WMI_SET_BITS(flag, 8, 1, val)
+#define WMI_VDEV_STATS_HE_SU_BFEE_GET(flag) \
+    WMI_GET_BITS(flag, 8, 1)
+#define WMI_VDEV_STATS_HE_SU_BFER_SET(flag, val) \
+    WMI_SET_BITS(flag, 9, 1, val)
+#define WMI_VDEV_STATS_HE_SU_BFER_GET(flag) \
+    WMI_GET_BITS(flag, 9, 1)
+#define WMI_VDEV_STATS_HE_MU_BFEE_SET(flag, val) \
+    WMI_SET_BITS(flag, 10, 1, val)
+#define WMI_VDEV_STATS_HE_MU_BFEE_GET(flag) \
+    WMI_GET_BITS(flag, 10, 1)
+#define WMI_VDEV_STATS_HE_MU_BFER_SET(flag, val) \
+    WMI_SET_BITS(flag, 11, 1, val)
+#define WMI_VDEV_STATS_HE_MU_BFER_GET(flag) \
+    WMI_GET_BITS(flag, 11, 1)
+#define WMI_VDEV_STATS_HE_DL_OFDMA_SET(flag, val) \
+    WMI_SET_BITS(flag, 12, 1, val)
+#define WMI_VDEV_STATS_HE_DL_OFDMA_GET(flag) \
+    WMI_GET_BITS(flag, 12, 1)
+#define WMI_VDEV_STATS_HE_UL_OFDMA_SET(flag, val) \
+    WMI_SET_BITS(flag, 13, 1, val)
+#define WMI_VDEV_STATS_HE_UL_OFDMA_GET(flag) \
+    WMI_GET_BITS(flag, 13, 1)
+#define WMI_VDEV_STATS_HE_UL_MUMIMO_SET(flag, val) \
+    WMI_SET_BITS(flag, 14, 1, val)
+#define WMI_VDEV_STATS_HE_UL_MUMIMO_GET(flag) \
+    WMI_GET_BITS(flag, 14, 1)
+#define WMI_VDEV_STATS_UL_MU_RESP_SET(flag, val) \
+    WMI_SET_BITS(flag, 15, 1, val)
+#define WMI_VDEV_STATS_UL_MU_RESP_GET(flag) \
+    WMI_GET_BITS(flag, 15, 1)
+#define WMI_VDEV_STATS_ALT_RSSI_NON_SRG_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 8, val)
+#define WMI_VDEV_STATS_ALT_RSSI_NON_SRG_GET(flag) \
+    WMI_GET_BITS(flag, 16, 8)
+#define WMI_VDEV_STATS_ALT_RSSI_SRG_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 8, val)
+#define WMI_VDEV_STATS_ALT_RSSI_SRG_GET(flag) \
+    WMI_GET_BITS(flag, 24, 8)
+
+#define WMI_VDEV_STATS_HE_BSS_COLOR_EN_SET(flag, val) \
+    WMI_SET_BITS(flag, 0, 1, val)
+#define WMI_VDEV_STATS_HE_BSS_COLOR_EN_GET(flag) \
+    WMI_GET_BITS(flag, 0, 1)
+#define WMI_VDEV_STATS_HE_TXBF_OFDMA_SET(flag, val) \
+    WMI_SET_BITS(flag, 1, 1, val)
+#define WMI_VDEV_STATS_HE_TXBF_OFDMA_GET(flag) \
+    WMI_GET_BITS(flag, 1, 1)
+#define WMI_VDEV_STATS_NON_SRG_ENABLE_SET(flag, val) \
+    WMI_SET_BITS(flag, 2, 1, val)
+#define WMI_VDEV_STATS_NON_SRG_ENABLE_GET(flag) \
+    WMI_GET_BITS(flag, 2, 1)
+#define WMI_VDEV_STATS_SRG_ENABLE_SET(flag, val) \
+    WMI_SET_BITS(flag, 3, 1, val)
+#define WMI_VDEV_STATS_SRG_ENABLE_GET(flag) \
+    WMI_GET_BITS(flag, 3, 1)
+#define WMI_VDEV_STATS_SRP_ENABLE_SET(flag, val) \
+    WMI_SET_BITS(flag, 4, 1, val)
+#define WMI_VDEV_STATS_SRP_ENABLE_GET(flag) \
+    WMI_GET_BITS(flag, 4, 1)
+#define WMI_VDEV_STATS_SR_INITIALIZED_SET(flag, val) \
+    WMI_SET_BITS(flag, 5, 1, val)
+#define WMI_VDEV_STATS_SR_INITIALIZED_GET(flag) \
+    WMI_GET_BITS(flag, 5, 1)
+#define WMI_VDEV_STATS_SR_RINGS_INITIALIZED_SET(flag, val) \
+    WMI_SET_BITS(flag, 6, 1, val)
+#define WMI_VDEV_STATS_SR_RINGS_INITIALIZED_GET(flag) \
+    WMI_GET_BITS(flag, 6, 1)
+#define WMI_VDEV_STATS_PER_AC_OBSS_PD_ENABLE_SET(flag, val) \
+    WMI_SET_BITS(flag, 7, 4, val)
+#define WMI_VDEV_STATS_PER_AC_OBSS_PD_ENABLE_GET(flag) \
+    WMI_GET_BITS(flag, 7, 4)
+#define WMI_VDEV_STATS_IFUP_SET(flag, val) \
+    WMI_SET_BITS(flag, 11, 1, val)
+#define WMI_VDEV_STATS_IFUP_GET(flag) \
+    WMI_GET_BITS(flag, 11, 1)
+#define WMI_VDEV_STATS_IFACTIVE_SET(flag, val) \
+    WMI_SET_BITS(flag, 12, 1, val)
+#define WMI_VDEV_STATS_IFACTIVE_GET(flag) \
+    WMI_GET_BITS(flag, 12, 1)
+#define WMI_VDEV_STATS_IFPAUSED_SET(flag, val) \
+    WMI_SET_BITS(flag, 13, 1, val)
+#define WMI_VDEV_STATS_IFPAUSED_GET(flag) \
+    WMI_GET_BITS(flag, 13, 1)
+#define WMI_VDEV_STATS_IFOUTOFSYNC_SET(flag, val) \
+    WMI_SET_BITS(flag, 14, 1, val)
+#define WMI_VDEV_STATS_IFOUTOFSYNC_GET(flag) \
+    WMI_GET_BITS(flag, 14, 1)
+#define WMI_VDEV_STATS_IS_FREE_SET(flag, val) \
+    WMI_SET_BITS(flag, 15, 1, val)
+#define WMI_VDEV_STATS_IS_FREE_GET(flag) \
+    WMI_GET_BITS(flag, 15, 1)
+#define WMI_VDEV_STATS_IS_NAWDS_SET(flag, val) \
+    WMI_SET_BITS(flag, 16, 1, val)
+#define WMI_VDEV_STATS_IS_NAWDS_GET(flag) \
+    WMI_GET_BITS(flag, 16, 1)
+#define WMI_VDEV_STATS_HW_FLAG_SET(flag, val) \
+    WMI_SET_BITS(flag, 17, 1, val)
+#define WMI_VDEV_STATS_HW_FLAG_GET(flag) \
+    WMI_GET_BITS(flag, 17, 1)
+#define WMI_VDEV_STATS_CH_REQ_FLAG_SET(flag, val) \
+    WMI_SET_BITS(flag, 18, 2, val)
+#define WMI_VDEV_STATS_CH_REQ_FLAG_GET(flag) \
+    WMI_GET_BITS(flag, 18, 2)
+#define WMI_VDEV_STATS_RESTART_RESP_SET(flag, val) \
+    WMI_SET_BITS(flag, 20, 1, val)
+#define WMI_VDEV_STATS_RESTART_RESP_GET(flag) \
+    WMI_GET_BITS(flag, 20, 1)
+#define WMI_VDEV_STATS_FIRST_BEACON_RECV_WAIT_SET(flag, val) \
+    WMI_SET_BITS(flag, 21, 1, val)
+#define WMI_VDEV_STATS_FIRST_BEACON_RECV_WAIT_GET(flag) \
+    WMI_GET_BITS(flag, 21, 1)
+#define WMI_VDEV_STATS_ERPENABLED_SET(flag, val) \
+    WMI_SET_BITS(flag, 22, 1, val)
+#define WMI_VDEV_STATS_ERPENABLED_GET(flag) \
+    WMI_GET_BITS(flag, 22, 1)
+#define WMI_VDEV_STATS_START_RESPONDED_SET(flag, val) \
+    WMI_SET_BITS(flag, 23, 1, val)
+#define WMI_VDEV_STATS_START_RESPONDED_GET(flag) \
+    WMI_GET_BITS(flag, 23, 1)
+#define WMI_VDEV_STATS_BCN_SYNC_CRIT_REQ_ACT_SET(flag, val) \
+    WMI_SET_BITS(flag, 24, 1, val)
+#define WMI_VDEV_STATS_BCN_SYNC_CRIT_REQ_ACT_GET(flag) \
+    WMI_GET_BITS(flag, 24, 1)
+#define WMI_VDEV_STATS_RECAL_NOTIF_REGISTERED_SET(flag, val) \
+    WMI_SET_BITS(flag, 25, 1, val)
+#define WMI_VDEV_STATS_RECAL_NOTIF_REGISTERED_GET(flag) \
+    WMI_GET_BITS(flag, 25, 1)
+#define WMI_VDEV_STATS_BCN_TX_PAUSED_SET(flag, val) \
+    WMI_SET_BITS(flag, 26, 1, val)
+#define WMI_VDEV_STATS_BCN_TX_PAUSED_GET(flag) \
+    WMI_GET_BITS(flag, 26, 1)
+#define WMI_VDEV_STATS_HE_BSS_COLOR_EN_BYPASS_SET(flag, val) \
+    WMI_SET_BITS(flag, 27, 1, val)
+#define WMI_VDEV_STATS_HE_BSS_COLOR_EN_BYPASS_GET(flag) \
+    WMI_GET_BITS(flag, 27, 1)
+#define WMI_VDEV_STATS_DEFAULT_BA_MODE_SET(flag, val) \
+    WMI_SET_BITS(flag, 28, 1, val)
+#define WMI_VDEV_STATS_DEFAULT_BA_MODE_GET(flag) \
+    WMI_GET_BITS(flag, 28, 1)
+#define WMI_VDEV_STATS_BA_256_BITMAP_ENABLE_SET(flag, val) \
+    WMI_SET_BITS(flag, 29, 1, val)
+#define WMI_VDEV_STATS_BA_256_BITMAP_ENABLE_GET(flag) \
+    WMI_GET_BITS(flag, 29, 1)
+#define WMI_VDEV_STATS_BA_256_BITMAP_TX_DISABLE_SET(flag, val) \
+    WMI_SET_BITS(flag, 30, 1, val)
+#define WMI_VDEV_STATS_BA_256_BITMAP_TX_DISABLE_GET(flag) \
+    WMI_GET_BITS(flag, 30, 1)
+#define WMI_VDEV_STATS_IS_MULTI_GROUP_KEY_ENABLED_SET(flag, val) \
+    WMI_SET_BITS(flag, 31, 1, val)
+#define WMI_VDEV_STATS_IS_MULTI_GROUP_KEY_ENABLED_GET(flag) \
+    WMI_GET_BITS(flag, 31, 1)
+
 
 /**
  *  peer statistics.
@@ -17795,7 +18981,8 @@ typedef struct {
 
 #define WMI_PEER_CHWIDTH_PUNCTURE_BITMAP_GET_CHWIDTH(value32)          WMI_GET_BITS(value32, 0x0, 8)
 #define WMI_PEER_CHWIDTH_PUNCTURE_BITMAP_GET_PUNCTURE_BMAP(value32)    WMI_GET_BITS(value32, 0x8, 16)
-/* peer channel bandwidth and puncture_bitmap
+/*
+ * peer channel bandwidth and puncture_bitmap
  * BIT 0-7  -  Peer channel width
  *             This bitfield holds a wmi_channel_width enum value.
  * BIT 8-23 -  Peer Puncture bitmap where each bit indicates whether
@@ -17808,6 +18995,13 @@ typedef struct {
 
 #define WMI_PEER_SET_TX_POWER                          0x28
 
+/*
+ * Param to update connected peer channel bandwidth.
+ * Target firmware should take care of notifying connected peer about
+ * change in bandwidth, through OMN/OMI notification before performing
+ * bandwidth update internally.
+ */
+#define WMI_PEER_CHWIDTH_WITH_NOTIFY                   0x29
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_set_param_cmd_fixed_param */
@@ -18400,8 +19594,17 @@ typedef struct {
 /**
  * Following this structure is the optional TLV:
  * struct wmi_scan_blanking_params_info[0/1];
+ * struct wmi_cca_busy_subband_info[];
+ *     Reporting subband CCA busy info in host requested manner.
  */
 } wmi_chan_info_event_fixed_param;
+
+typedef struct {
+    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_cca_busy_subband_info */
+    A_UINT32 tlv_header;
+    /** rx clear count */
+    A_UINT32 rx_clear_count;
+} wmi_cca_busy_subband_info;
 
 /**
  * The below structure contains parameters related to the scan radio
@@ -19843,6 +21046,12 @@ typedef struct {
     A_UINT32 timestamp;
     /* Original timeout value in milli seconds when AP added to BL */
     A_UINT32 original_timeout;
+    /*
+     * If disallow_linkid_bitmap is not 0, then means current entity
+     * is for MLD AP and bssid field is standing for MLD address.
+     * If all links for MLD AP is disallow, then the value shall be 0xffffffff
+     */
+    A_UINT32 disallow_linkid_bitmap;
 } wmi_roam_blacklist_with_timeout_tlv_param;
 
 /** WMI_ROAM_BLACKLIST_EVENT: generated whenever STA needs to move AP to blacklist for a particluar time
@@ -26268,12 +27477,24 @@ typedef struct {
      */
 } wmi_stats_ext_event_fixed_param;
 
+typedef enum {
+    /** Default: no replay required. */
+    WMI_PEER_DELETE_NO_REPLAY = 0,
+    /**
+      * Replay requested due to UMAC hang during Peer delete.
+      * Replay done by Host SW after MLO UMAC SSR recovered the UMAC.
+      */
+    WMI_PEER_DELETE_REPLAY_FOR_UMAC,
+} WMI_PEER_DELETE_REPLAY_T;
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_delete_resp_event_fixed_param  */
     /** unique id identifying the VDEV, generated by the caller */
     A_UINT32 vdev_id;
     /** peer MAC address */
     wmi_mac_addr peer_macaddr;
+    /** WMI_PEER_DELETE_REPLAY_T */
+    A_UINT32 replay_type;
 } wmi_peer_delete_resp_event_fixed_param;
 
 typedef struct {
@@ -26288,6 +27509,8 @@ typedef struct {
      *  2 - EFAILED; Delete all peer failed
      */
     A_UINT32 status;
+    /** WMI_PEER_DELETE_REPLAY_T */
+    A_UINT32 replay_type;
 } wmi_vdev_delete_all_peer_resp_event_fixed_param;
 
 typedef struct {
@@ -36351,6 +37574,12 @@ typedef struct {
     A_UINT32 timestamp;
     /* Original timeout value in milli seconds when AP added to BL */
     A_UINT32 original_timeout;
+    /*
+     * If disallow_linkid_bitmap is not 0, then means current entity
+     * is for MLD AP and bssid field is standing for MLD address.
+     * If all links for MLD AP is disallow, then the value shall be 0xffffffff
+     */
+    A_UINT32 disallow_linkid_bitmap;
 } wmi_pdev_bssid_disallow_list_config_param;
 
 typedef enum {
@@ -36735,6 +37964,11 @@ typedef enum {
     WMI_ROAM_FAIL_REASON_SAE_PREAUTH_TIMEOUT, /* WPA3-SAE pre-authentication timeout */
     WMI_ROAM_FAIL_REASON_SAE_PREAUTH_FAIL, /* WPA3-SAE pre-authentication failed */
     WMI_ROAM_FAIL_REASON_UNABLE_TO_START_ROAM_HO, /* Roam HO is not started due to FW internal issue */
+
+    /* Failure reasons to indicate no candidate and final bmiss event sent */
+    WMI_ROAM_FAIL_REASON_NO_AP_FOUND_AND_FINAL_BMISS_SENT, /* No roamable APs found during roam scan and final bmiss event sent */
+    WMI_ROAM_FAIL_REASON_NO_CAND_AP_FOUND_AND_FINAL_BMISS_SENT, /* No candidate APs found during roam scan and final bmiss event sent */
+    WMI_ROAM_FAIL_REASON_CURR_AP_STILL_OK, /* Roam scan not happen due to current network condition is fine */
 
     WMI_ROAM_FAIL_REASON_UNKNOWN = 255,
 } WMI_ROAM_FAIL_REASON_ID;
@@ -40987,6 +42221,9 @@ typedef struct {
 
 #define WMI_TWT_SESSION_FLAG_TWT_PM_RESPONDER_MODE_GET(_var) WMI_GET_BITS(_var, 22, 1)
 #define WMI_TWT_SESSION_FLAG_TWT_PM_RESPONDER_MODE_SET(_var, _val) WMI_SET_BITS(_var, 22, 1, _val)
+
+#define WMI_TWT_SESSION_FLAG_RESTRICTED_TWT_GET(_var) WMI_GET_BITS(_var, 23, 1)
+#define WMI_TWT_SESSION_FLAG_RESTRICTED_TWT_SET(_var, _val) WMI_SET_BITS(_var, 23, 1, _val)
 
 typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_session_stats_info */
