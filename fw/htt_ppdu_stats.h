@@ -881,6 +881,11 @@ typedef struct {
      * from the Host
      */
     A_UINT32 is_manual_ulofdma_trigger;
+    /* is_combined_ul_bsrp_trigger:
+     * Flag to indicate if a given UL BSRP trigger is sent combined as
+     * part of existing DL/UL data sequence
+     */
+    A_UINT32 is_combined_ul_bsrp_trigger;
 } htt_ppdu_stats_common_tlv;
 
 #define HTT_PPDU_STATS_USER_COMMON_TLV_TID_NUM_M     0x000000ff
