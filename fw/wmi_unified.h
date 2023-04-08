@@ -5812,6 +5812,11 @@ typedef enum {
 /* Include MLO IE in Probe req */
 #define WMI_SCAN_FLAG_EXT_INCL_MLIE_PRB_REQ           0x00004000
 
+#define WMI_SCAN_FLAG_EXT_LOW_LATENCY_SCAN    0x00008000
+#define WMI_SCAN_FLAG_EXT_RELIABLE_SCAN       0x00010000
+#define WMI_SCAN_FLAG_EXT_FAST_SCAN           0x00020000
+#define WMI_SCAN_FLAG_EXT_LOW_POWER_SCAN      0x00040000
+
 
 /**
  * new 6 GHz flags per chan (short ssid or bssid) in struct
@@ -34453,6 +34458,16 @@ typedef enum wmi_hw_mode_config_type {
                                   * and Tx/Rx trigger on any PHY will switch
                                   * from 1x1 to 2x2 on that Phy
                                   */
+    WMI_HW_MODE_AUX_EMLSR_SINGLE = 9, /* PHYA0 and AUX are active in listen mode
+                                       * in 1x1 and Tx/Rx trigger on any.
+                                       * PHY will switch from 1x1 to 2x2
+                                       * on that Phy.
+                                       */
+    WMI_HW_MODE_AUX_EMLSR_SPLIT = 10, /* PHYA1 and AUX are active in listen mode
+                                       * in 1x1 and Tx/Rx trigger on any.
+                                       * PHY will switch from 1x1 to 2x2
+                                       * on that Phy.
+                                       */
 } WMI_HW_MODE_CONFIG_TYPE;
 
 /*
@@ -36238,6 +36253,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_RMC_SET_MANUAL_LEADER_CMDID);
         WMI_RETURN_STRING(WMI_11D_SCAN_START_CMDID);
         WMI_RETURN_STRING(WMI_11D_SCAN_STOP_CMDID);
+        WMI_RETURN_STRING(WMI_VENDOR_PDEV_CMDID);
         WMI_RETURN_STRING(WMI_VENDOR_VDEV_CMDID);
         WMI_RETURN_STRING(WMI_VENDOR_PEER_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_SET_TWT_EDCA_PARAMS_CMDID); /* XPAN TWT */
@@ -36252,9 +36268,6 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_SET_RF_PATH_CMDID); /* set RF path of PHY */
         WMI_RETURN_STRING(WMI_VDEV_PAUSE_CMDID);
         WMI_RETURN_STRING(WMI_GPIO_STATE_REQ_CMDID);
-        WMI_RETURN_STRING(WMI_VENDOR_PDEV_CMDID);
-        WMI_RETURN_STRING(WMI_VENDOR_VDEV_CMDID);
-        WMI_RETURN_STRING(WMI_VENDOR_PEER_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";

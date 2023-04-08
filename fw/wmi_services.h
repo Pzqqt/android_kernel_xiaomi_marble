@@ -627,6 +627,7 @@ typedef  enum  {
     WMI_SERVICE_VDEV_PARAM_CHWIDTH_WITH_NOTIFY_SUPPORT = 374, /* FW supports VDEV param channel width switch with OMN/OMI notification  */
     WMI_SERVICE_RESTRICTED_TWT_REQUESTER = 375, /* Indicates FW supports Restricted TWT REQUESTER */
     WMI_SERVICE_RESTRICTED_TWT_RESPONDER = 376, /* Indicates FW supports Restricted TWT RESPONDER */
+    WMI_SERVICE_AUX_MAC_SUPPORT = 377,
 
     WMI_MAX_EXT2_SERVICE
 
