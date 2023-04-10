@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include "msm_vidc_ar50lt.h"
@@ -65,6 +65,8 @@
 /* VIDC_UC_REGION_ADDR */
 #define VIDC_CPU_CS_SCIBARG2_AR50_LT		(VIDC_CPU_CS_BASE_OFFS_AR50_LT + 0x68)
 
+#define VIDC_CPU_CS_AHB_BRIDGE_SYNC_RESET	(VIDC_CPU_CS_BASE_OFFS_AR50_LT + 0x160)
+
 #define VIDC_CPU_IC_SOFTINT_EN_AR50_LT	(VIDC_CPU_IC_BASE_OFFS_AR50_LT + 0x148)
 #define VIDC_CPU_IC_SOFTINT_AR50_LT		(VIDC_CPU_IC_BASE_OFFS_AR50_LT + 0x150)
 #define VIDC_CPU_IC_SOFTINT_H2A_BMSK_AR50_LT	0x8000
@@ -104,6 +106,14 @@
 #define VIDC_WRAPPER_INTR_CLEAR_A2H_BMSK_AR50_LT	0x4
 #define VIDC_WRAPPER_INTR_CLEAR_A2H_SHFT_AR50_LT	0x2
 
+#define WRAPPER_CORE_POWER_STATUS          (VIDC_WRAPPER_BASE_OFFS_AR50_LT + 0x90)
+
+#define VENUS_WRAPPER_VCODEC0_SW_RESET     (VIDC_WRAPPER_BASE_OFFS_AR50_LT + 0x98)
+#define VENUS_WRAPPER_VCODEC0_SW_RESET___M     0x09FFFF7F
+#define DMA_NOC_SW_RESET                       0x00000004
+#define DMA_RIF_SW_RESET                       0x00000008
+#define NOC_PARTIAL_RESET_SW_RESET             0x8000000
+
 /*
  * --------------------------------------------------------------------------
  * MODULE: tz_wrapper
@@ -131,6 +141,11 @@
 #define VIDC_MMAP_ADDR_AR50_LT			VIDC_CPU_CS_SCIBCMDARG0_AR50_LT
 #define VIDC_UC_REGION_ADDR_AR50_LT		VIDC_CPU_CS_SCIBARG1_AR50_LT
 #define VIDC_UC_REGION_SIZE_AR50_LT		VIDC_CPU_CS_SCIBARG2_AR50_LT
+
+#define VENUS_SS_VIDEO_NOC_PARTIAL_RESET_REQ   0x60
+#define VENUS_SS_VIDEO_NOC_PARTIAL_RESET_ACK   0x64
+
+#define VENUS_DMA_SPARE_3                      0x3BDC
 
 static int __boot_firmware_ar50lt(struct msm_vidc_core *vidc_core)
 {
@@ -545,31 +560,122 @@ fail_regulator:
 	return rc;
 }
 
+static bool is_ar50lt_hw_power_collapsed(struct msm_vidc_core *core)
+{
+	int rc = 0;
+	u32 value = 0, pwr_status = 0;
+
+	rc = __read_register(core, WRAPPER_CORE_POWER_STATUS, &value);
+	if (rc)
+		return false;
+
+	// if (1), CORE_SS(0) power is on and if (0), CORE_ss(0) power is off
+	pwr_status = value & BIT(1);
+
+	return pwr_status ? false : true;
+
+}
+
 static int __power_off_ar50lt_hardware(struct msm_vidc_core *core)
 {
 	int rc = 0;
 
+	if (core->hw_power_control && is_ar50lt_hw_power_collapsed(core)) {
+		d_vpr_h("%s: hardware power control enabled and power collapsed\n", __func__);
+		goto disable_power;
+	}
+
+	d_vpr_e("%s: hardware is not power collapsed, doing now\n", __func__);
+
+	rc = __write_register(core, VENUS_DMA_SPARE_3, 0x1);
+	if (rc)
+		return rc;
+
+	rc = __write_register(core, VENUS_SS_VIDEO_NOC_PARTIAL_RESET_REQ, 0x1);
+	if (rc)
+		return rc;
+
+	rc = __read_register_with_poll_timeout(core, VENUS_SS_VIDEO_NOC_PARTIAL_RESET_ACK,
+			BIT(0), 0x1, 2000, 50000);
+	if (rc)
+		d_vpr_h("%s: VENUS_SS_VIDEO_NOC_PARTIAL_RESET_ACK assert failed with %d\n",
+			__func__, rc);
+
+	rc = __write_register_masked(core, VENUS_WRAPPER_VCODEC0_SW_RESET,
+			NOC_PARTIAL_RESET_SW_RESET, BIT(27));
+	if (rc)
+		return rc;
+
+	rc = __write_register_masked(core, VENUS_WRAPPER_VCODEC0_SW_RESET,
+			0x0, BIT(27));
+	if (rc)
+		return rc;
+
+	rc = __write_register(core, VENUS_SS_VIDEO_NOC_PARTIAL_RESET_REQ, 0);
+	if (rc)
+		return rc;
+
+	rc = __read_register_with_poll_timeout(core, VENUS_SS_VIDEO_NOC_PARTIAL_RESET_ACK,
+			BIT(0), 0x0, 2000, 50000);
+	if (rc)
+		d_vpr_h("%s: VENUS_SS_VIDEO_NOC_PARTIAL_RESET_ACK deassert failed with %d\n",
+			__func__, rc);
+
+	rc = __write_register(core, VENUS_WRAPPER_VCODEC0_SW_RESET,
+			VENUS_WRAPPER_VCODEC0_SW_RESET___M &
+			(~(DMA_NOC_SW_RESET | DMA_RIF_SW_RESET | NOC_PARTIAL_RESET_SW_RESET)));
+	if (rc)
+		return rc;
+
+	rc = __write_register(core, VENUS_WRAPPER_VCODEC0_SW_RESET, 0);
+	if (rc)
+		return rc;
+
+	rc = __write_register(core, VENUS_WRAPPER_VCODEC0_SW_RESET,
+			VENUS_WRAPPER_VCODEC0_SW_RESET___M &
+			(~(DMA_NOC_SW_RESET | NOC_PARTIAL_RESET_SW_RESET)));
+	if (rc)
+		return rc;
+
+	rc = __write_register(core, VENUS_WRAPPER_VCODEC0_SW_RESET, 0);
+	if (rc)
+		return rc;
+
+	/*
+	 * Reset both sides of 2 ahb2ahb_bridges (TZ and non-TZ)
+	 */
+	rc = __write_register(core, VIDC_CPU_CS_AHB_BRIDGE_SYNC_RESET, 0x3);
+	if (rc)
+		return rc;
+	rc = __write_register(core, VIDC_CPU_CS_AHB_BRIDGE_SYNC_RESET, 0x2);
+	if (rc)
+		return rc;
+	rc = __write_register(core, VIDC_CPU_CS_AHB_BRIDGE_SYNC_RESET, 0x0);
+	if (rc)
+		return rc;
+
+disable_power:
 	/* power down process */
 	rc = __disable_regulator_ar50lt(core, "venus-core0");
 	if (rc) {
-		d_vpr_e("%s: disable regulator vcodec failed\n", __func__);
+		d_vpr_e("%s: disable regulator vcodec failed with %d\n", __func__, rc);
 		rc = 0;
 	}
 	rc = __disable_unprepare_clock_ar50lt(core, "core0_clk");
 	if (rc) {
-		d_vpr_e("%s: disable unprepare core0_clk failed\n", __func__);
+		d_vpr_e("%s: disable unprepare core0_clk failed with %d\n", __func__, rc);
 		rc = 0;
 	}
 
 	rc = __disable_unprepare_clock_ar50lt(core, "core0_bus_clk");
 	if (rc) {
-		d_vpr_e("%s: disable unprepare core0_bus_clk failed\n", __func__);
+		d_vpr_e("%s: disable unprepare core0_bus_clk failed with %d\n", __func__, rc);
 		rc = 0;
 	}
 
 	rc = __disable_unprepare_clock_ar50lt(core, "throttle_clk");
 	if (rc) {
-		d_vpr_e("%s: disable unprepare throttle_clk failed\n", __func__);
+		d_vpr_e("%s: disable unprepare throttle_clk failed with %d\n", __func__, rc);
 		rc = 0;
 	}
 
@@ -580,30 +686,36 @@ static int __power_off_ar50lt_controller(struct msm_vidc_core *core)
 {
 	int rc = 0;
 
+	/* power down process */
+	rc = __disable_regulator_ar50lt(core, "venus");
+	if (rc) {
+		d_vpr_e("%s: disable regulator venus failed with %d\n", __func__, rc);
+		rc = 0;
+	}
+
+	rc = __disable_unprepare_clock_ar50lt(core, "bus_clk");
+	if (rc) {
+		d_vpr_e("%s: disable unprepare bus_clk failed with %d\n", __func__, rc);
+		rc = 0;
+	}
+
 	rc = __disable_unprepare_clock_ar50lt(core, "core_clk");
 	if (rc) {
-		d_vpr_e("%s: disable unprepare core_clk failed\n", __func__);
+		d_vpr_e("%s: disable unprepare core_clk failed with %d\n", __func__, rc);
 		rc = 0;
 	}
 
 	if (core->platform->data.vpu_ver != VENUS_VERSION_AR50LT_V2) {
 		rc = __disable_unprepare_clock_ar50lt(core, "iface_clk");
 		if (rc) {
-			d_vpr_e("%s: disable unprepare iface_clk failed\n", __func__);
+			d_vpr_e("%s: disable unprepare iface_clk failed with %d\n", __func__, rc);
 			rc = 0;
 		}
 	}
 
-	rc = __disable_unprepare_clock_ar50lt(core, "bus_clk");
+	rc = call_venus_op(core, reset_ahb2axi_bridge, core);
 	if (rc) {
-		d_vpr_e("%s: disable unprepare bus_clk failed\n", __func__);
-		rc = 0;
-	}
-
-	/* power down process */
-	rc = __disable_regulator_ar50lt(core, "venus");
-	if (rc) {
-		d_vpr_e("%s: disable regulator venus failed\n", __func__);
+		d_vpr_e("%s: reset ahb2axi bridge failed with %d\n", __func__, rc);
 		rc = 0;
 	}
 
@@ -625,13 +737,13 @@ static int __power_on_ar50lt(struct msm_vidc_core *core)
 	}
 	rc = __power_on_ar50lt_controller(core);
 	if (rc) {
-		d_vpr_e("%s: failed to power on ar50 controller\n", __func__);
+		d_vpr_e("%s: failed to power on ar50 controller, rc %d\n", __func__, rc);
 		goto fail_power_on_controller;
 	}
 
 	rc = __power_on_ar50lt_hardware(core);
 	if (rc) {
-		d_vpr_e("%s: failed to power on ar50 hardware\n", __func__);
+		d_vpr_e("%s: failed to power on ar50 hardware, rc %d\n", __func__, rc);
 		goto fail_power_on_hardware;
 	}
 	/* video controller and hardware powered on successfully */
@@ -640,7 +752,7 @@ static int __power_on_ar50lt(struct msm_vidc_core *core)
 	// add check in main __set_clk_rate
 	rc = __scale_clocks(core);
 	if (rc) {
-		d_vpr_e("%s: failed to scale clocks\n", __func__);
+		d_vpr_e("%s: failed to scale clocks, rc %d\n", __func__, rc);
 		rc = 0;
 	}
 	/*
@@ -676,14 +788,17 @@ static int __power_off_ar50lt(struct msm_vidc_core *core)
 	if (!core->power_enabled)
 		return 0;
 
-	if (__power_off_ar50lt_hardware(core))
-		d_vpr_e("%s: failed to power off hardware\n", __func__);
+	rc = __power_off_ar50lt_hardware(core);
+	if (rc)
+		d_vpr_e("%s: failed to power off hardware, rc = %d\n", __func__, rc);
 
-	if (__power_off_ar50lt_controller(core))
-		d_vpr_e("%s: failed to power off controller\n", __func__);
+	rc = __power_off_ar50lt_controller(core);
+	if (rc)
+		d_vpr_e("%s: failed to power off controller, rc = %d\n", __func__, rc);
 
-	if (__unvote_buses(core))
-		d_vpr_e("%s: failed to unvote buses\n", __func__);
+	rc = __unvote_buses(core);
+	if (rc)
+		d_vpr_e("%s: failed to unvote buses, rc = %d\n", __func__, rc);
 
 	if (!(core->intr_status & VIDC_WRAPPER_INTR_STATUS_A2HWD_BMSK_AR50_LT))
 		disable_irq_nosync(core->dt->irq);
@@ -787,7 +902,7 @@ static struct msm_vidc_venus_ops ar50lt_ops = {
 	.clear_interrupt = __clear_interrupt_ar50lt,
 	.setup_ucregion_memmap = __setup_ucregion_memory_map_ar50lt,
 	.clock_config_on_enable = NULL,
-	.reset_ahb2axi_bridge = NULL,
+	.reset_ahb2axi_bridge = __reset_ahb2axi_bridge,
 	.power_on = __power_on_ar50lt,
 	.power_off = __power_off_ar50lt,
 	.prepare_pc = __prepare_pc_ar50lt,
