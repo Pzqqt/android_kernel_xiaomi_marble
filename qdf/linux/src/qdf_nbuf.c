@@ -4903,7 +4903,7 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	/* update tx flags for pkt capture*/
 	if (rx_status->add_rtap_ext) {
 		length = rtap_len;
-		rthdr->it_present |=
+		it_present_val |=
 			cpu_to_le32(1 << IEEE80211_RADIOTAP_TX_FLAGS);
 		rtap_len = qdf_nbuf_update_radiotap_tx_flags(rx_status,
 							     rtap_buf,
