@@ -1011,6 +1011,53 @@ end:
 	return status;
 }
 
+QDF_STATUS
+cm_disconnect_roam_abort_fail(struct wlan_objmgr_vdev *vdev,
+			      enum wlan_cm_source source,
+			      struct qdf_mac_addr *bssid,
+			      wlan_cm_id cm_id)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	bool nud_disconnect;
+	struct wlan_objmgr_psoc *psoc;
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		mlme_err(CM_PREFIX_FMT "psoc not found",
+			 CM_PREFIX_REF(vdev_id, cm_id));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	nud_disconnect = mlme_obj->cfg.lfr.disconnect_on_nud_roam_invoke_fail;
+	mlme_debug(CM_PREFIX_FMT "disconnect on NUD %d, source %d bssid " QDF_MAC_ADDR_FMT,
+		   CM_PREFIX_REF(vdev_id, cm_id),
+		   nud_disconnect, source, QDF_MAC_ADDR_REF(bssid));
+
+	/*
+	 * If reassoc MAC from user space is broadcast MAC as:
+	 * "wpa_cli DRIVER FASTREASSOC ff:ff:ff:ff:ff:ff 0",
+	 * user space invoked roaming candidate selection will base on firmware
+	 * score algorithm, current connection will be kept if current AP has
+	 * highest score. It is requirement from customer which can avoid
+	 * ping-pong roaming.
+	 */
+	if (qdf_is_macaddr_broadcast(bssid))
+		return status;
+
+	if (source == CM_ROAMING_HOST ||
+	    (source == CM_ROAMING_NUD_FAILURE && nud_disconnect))
+		status = mlo_disconnect(vdev, CM_ROAM_DISCONNECT,
+					REASON_USER_TRIGGERED_ROAM_FAILURE,
+					NULL);
+	return status;
+}
+
 QDF_STATUS cm_fw_roam_invoke_fail(struct wlan_objmgr_psoc *psoc,
 				  uint8_t vdev_id)
 {
@@ -1050,23 +1097,10 @@ QDF_STATUS cm_fw_roam_invoke_fail(struct wlan_objmgr_psoc *psoc,
 
 	status = cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_ROAM_INVOKE_FAIL,
 				     sizeof(wlan_cm_id), &cm_id);
-
 	if (QDF_IS_STATUS_ERROR(status))
 		cm_remove_cmd(cm_ctx, &cm_id);
-	/*
-	 * If reassoc MAC from user space is broadcast MAC as:
-	 * "wpa_cli DRIVER FASTREASSOC ff:ff:ff:ff:ff:ff 0",
-	 * user space invoked roaming candidate selection will base on firmware
-	 * score algorithm, current connection will be kept if current AP has
-	 * highest score. It is requirement from customer which can avoid
-	 * ping-pong roaming.
-	 */
-	if (qdf_is_macaddr_broadcast(&bssid))
-		mlme_debug("Keep current connection");
-	else if (source == CM_ROAMING_HOST || source == CM_ROAMING_NUD_FAILURE)
-		status = mlo_disconnect(vdev, CM_ROAM_DISCONNECT,
-					REASON_USER_TRIGGERED_ROAM_FAILURE,
-					NULL);
+
+	cm_disconnect_roam_abort_fail(vdev, source, &bssid, cm_id);
 
 error:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);

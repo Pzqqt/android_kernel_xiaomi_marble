@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -155,6 +155,21 @@ cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
  */
 void cm_fw_ho_fail_req(struct wlan_objmgr_psoc *psoc,
 		       uint8_t vdev_id, struct qdf_mac_addr bssid);
+
+/**
+ * cm_disconnect_roam_abort_fail() - disconnect when roam abort or fail
+ * @vdev: vdev object
+ * @source: the source of trigger roaming
+ * @bssid: bssid pointer
+ * @cm_id: CM command id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_disconnect_roam_abort_fail(struct wlan_objmgr_vdev *vdev,
+			      enum wlan_cm_source source,
+			      struct qdf_mac_addr *bssid,
+			       wlan_cm_id cm_id);
 
 /**
  * cm_fw_roam_invoke_fail() - Post roam invoke fail to CM SM

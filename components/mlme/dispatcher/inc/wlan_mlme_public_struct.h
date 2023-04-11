@@ -1839,6 +1839,8 @@ struct fw_scan_channels {
  * are already scanned as part of partial scan.
  * @roam_full_scan_6ghz_on_disc: Include the 6 GHz channels in roam full scan
  * only on prior discovery of any 6 GHz support in the environment.
+ * @disconnect_on_nud_roam_invoke_fail: indicate whether disconnect ap when
+ * roam invoke fail on nud.
  */
 struct wlan_mlme_lfr_cfg {
 	bool mawc_roam_enabled;
@@ -1962,6 +1964,7 @@ struct wlan_mlme_lfr_cfg {
 	uint16_t roam_ho_delay_config;
 	uint8_t exclude_rm_partial_scan_freq;
 	uint8_t roam_full_scan_6ghz_on_disc;
+	bool disconnect_on_nud_roam_invoke_fail;
 };
 
 /**
