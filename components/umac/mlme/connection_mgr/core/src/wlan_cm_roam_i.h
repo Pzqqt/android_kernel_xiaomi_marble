@@ -157,21 +157,6 @@ void cm_fw_ho_fail_req(struct wlan_objmgr_psoc *psoc,
 		       uint8_t vdev_id, struct qdf_mac_addr bssid);
 
 /**
- * cm_disconnect_roam_abort_fail() - disconnect when roam abort or fail
- * @vdev: vdev object
- * @source: the source of trigger roaming
- * @bssid: bssid pointer
- * @cm_id: CM command id
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-cm_disconnect_roam_abort_fail(struct wlan_objmgr_vdev *vdev,
-			      enum wlan_cm_source source,
-			      struct qdf_mac_addr *bssid,
-			       wlan_cm_id cm_id);
-
-/**
  * cm_fw_roam_invoke_fail() - Post roam invoke fail to CM SM
  * @psoc: psoc pointer
  * @vdev_id: vdev id
