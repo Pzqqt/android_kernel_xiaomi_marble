@@ -21283,7 +21283,17 @@ struct htt_t2h_rx_data_msdu_info
     A_UINT32 /* word 1 */
         buffer_addr_high        :  8,
         sw_buffer_cookie        : 21,
-        rsvd1                   :  3;
+        /* fw_offloads_inspected:
+         * When reo_destination_indication is 6 in reo_entrance_ring
+         * of the RXDMA2REO MPDU upload, all the MSDUs that are part
+         * of the MPDU are inspected by FW offloads layer, subsequently
+         * the MSDUs are qualified to be host interested.
+         * In such case the fw_offloads_inspected is set to 1, else 0.
+         * This will assist host to not consider such MSDUs for FISA
+         * flow addition.
+         */
+        fw_offloads_inspected   :  1,
+        rsvd1                   :  2;
     A_UINT32 /* word 2 */
         mpdu_retry_bit          :  1, /* used for stats maintenance */
         raw_mpdu_frame          :  1, /* used for pkt drop and processing */
@@ -21403,6 +21413,17 @@ struct htt_t2h_rx_data_msdu_info
     } while (0)
 #define HTT_RX_DATA_MSDU_INFO_SW_BUFFER_COOKIE_GET(word) \
     (((word) & HTT_RX_DATA_MSDU_INFO_SW_BUFFER_COOKIE_M) >> HTT_RX_DATA_MSDU_INFO_SW_BUFFER_COOKIE_S)
+
+#define HTT_RX_DATA_MSDU_INFO_FW_OFFLOADS_INSPECTED_M   0x20000000
+#define HTT_RX_DATA_MSDU_INFO_FW_OFFLOADS_INSPECTED_S   29
+
+#define HTT_RX_DATA_MSDU_INFO_FW_OFFLOADS_INSPECTED_SET(word, value) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_RX_DATA_MSDU_INFO_FW_OFFLOADS_INSPECTED, value); \
+        (word) |= (value)  << HTT_RX_DATA_MSDU_INFO_FW_OFFLOADS_INSPECTED_S; \
+    } while (0)
+#define HTT_RX_DATA_MSDU_INFO_FW_OFFLOADS_INSPECTED_GET(word) \
+    (((word) & HTT_RX_DATA_MSDU_INFO_FW_OFFLOADS_INSPECTED_M) >> HTT_RX_DATA_MSDU_INFO_FW_OFFLOADS_INSPECTED_S)
 
 #define HTT_RX_DATA_MSDU_INFO_MPDU_RETRY_BIT_M          0x00000001
 #define HTT_RX_DATA_MSDU_INFO_MPDU_RETRY_BIT_S          0
