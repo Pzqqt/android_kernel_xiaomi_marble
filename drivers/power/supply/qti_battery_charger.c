@@ -9,7 +9,6 @@
 #include <linux/debugfs.h>
 #include <linux/delay.h>
 #include <linux/device.h>
-#include <linux/extcon-provider.h>
 #include <linux/firmware.h>
 #include <linux/module.h>
 #include <linux/of.h>
@@ -93,11 +92,6 @@ enum uvdm_state {
 	USBPD_UVDM_CONNECT,
 };
 
-enum usb_connector_type {
-	USB_CONNECTOR_TYPE_TYPEC,
-	USB_CONNECTOR_TYPE_MICRO_USB,
-};
-
 enum psy_type {
 	PSY_TYPE_BATTERY,
 	PSY_TYPE_USB,
@@ -154,8 +148,6 @@ enum usb_property_id {
 	USB_TEMP,
 	USB_REAL_TYPE,
 	USB_TYPEC_COMPLIANT,
-	USB_SCOPE,
-	USB_CONNECTOR_TYPE,
 	F_ACTIVE,
 	USB_PROP_MAX,
 };
@@ -506,8 +498,6 @@ struct battery_chg_dev {
 	struct psy_state		psy_list[PSY_TYPE_MAX];
 	struct dentry			*debugfs_dir;
 	void				*notifier_cookie;
-	/* extcon for VBUS/ID notification for USB for micro USB */
-	struct extcon_dev		*extcon;
 	u32				*thermal_levels;
 	const char			*wls_fw_name;
 	int				curr_thermal_level;
@@ -538,8 +528,6 @@ struct battery_chg_dev {
 	u32				reverse_chg_flag;
 	u32				boost_mode;
 	u32				thermal_fcc_step;
-	u32				connector_type;
-	u32				usb_prev_mode;
 	bool				restrict_chg_en;
 	struct delayed_work		xm_prop_change_work;
 	struct delayed_work		charger_debug_info_print_work;
@@ -602,7 +590,6 @@ static const int usb_prop_map[USB_PROP_MAX] = {
 	[USB_INPUT_CURR_LIMIT]	= POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT,
 	[USB_ADAP_TYPE]		= POWER_SUPPLY_PROP_USB_TYPE,
 	[USB_TEMP]		= POWER_SUPPLY_PROP_TEMP,
-	[USB_SCOPE]		= POWER_SUPPLY_PROP_SCOPE,
 };
 
 static const int wls_prop_map[WLS_PROP_MAX] = {
@@ -614,12 +601,6 @@ static const int wls_prop_map[WLS_PROP_MAX] = {
 	[WLS_BOOST_EN]		= POWER_SUPPLY_PROP_PRESENT,
 	[WLS_INPUT_CURR_LIMIT]	= POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT,
 	[WLS_CONN_TEMP]		= POWER_SUPPLY_PROP_TEMP,
-};
-
-static const unsigned int bcdev_usb_extcon_cable[] = {
-	EXTCON_USB,
-	EXTCON_USB_HOST,
-	EXTCON_NONE,
 };
 
 static const char * const power_supply_usb_type_text[] = {
@@ -1223,48 +1204,6 @@ static void handle_message(struct battery_chg_dev *bcdev, void *data,
 		complete(&bcdev->ack);
 }
 
-static void battery_chg_update_uusb_type(struct battery_chg_dev *bcdev,
-					 u32 adap_type)
-{
-	struct psy_state *pst = &bcdev->psy_list[PSY_TYPE_USB];
-	int rc;
-
-	/* Handle the extcon notification for uUSB case only */
-	if (bcdev->connector_type != USB_CONNECTOR_TYPE_MICRO_USB)
-		return;
-
-	rc = read_property_id(bcdev, pst, USB_SCOPE);
-	if (rc < 0) {
-		pr_err("Failed to read USB_SCOPE rc=%d\n", rc);
-		return;
-	}
-
-	switch (pst->prop[USB_SCOPE]) {
-	case POWER_SUPPLY_SCOPE_DEVICE:
-		if (adap_type == POWER_SUPPLY_USB_TYPE_SDP ||
-		    adap_type == POWER_SUPPLY_USB_TYPE_CDP) {
-			/* Device mode connect notification */
-			extcon_set_state_sync(bcdev->extcon, EXTCON_USB, 1);
-			bcdev->usb_prev_mode = EXTCON_USB;
-		}
-		break;
-	case POWER_SUPPLY_SCOPE_SYSTEM:
-		/* Host mode connect notification */
-		extcon_set_state_sync(bcdev->extcon, EXTCON_USB_HOST, 1);
-		bcdev->usb_prev_mode = EXTCON_USB_HOST;
-		break;
-	default:
-		if (bcdev->usb_prev_mode == EXTCON_USB ||
-		    bcdev->usb_prev_mode == EXTCON_USB_HOST) {
-			/* Disconnect notification */
-			extcon_set_state_sync(bcdev->extcon,
-					      bcdev->usb_prev_mode, 0);
-			bcdev->usb_prev_mode = EXTCON_NONE;
-		}
-		break;
-	}
-}
-
 static struct power_supply_desc usb_psy_desc;
 
 static void battery_chg_update_usb_type_work(struct work_struct *work)
@@ -1312,8 +1251,6 @@ static void battery_chg_update_usb_type_work(struct work_struct *work)
 		usb_psy_desc.type = POWER_SUPPLY_TYPE_UNKNOWN;
 		break;
 	}
-
-	battery_chg_update_uusb_type(bcdev, pst->prop[USB_ADAP_TYPE]);
 }
 
 static void battery_chg_check_status_work(struct work_struct *work)
@@ -1792,7 +1729,6 @@ static enum power_supply_property usb_props[] = {
 	POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT,
 	POWER_SUPPLY_PROP_USB_TYPE,
 	POWER_SUPPLY_PROP_TEMP,
-	POWER_SUPPLY_PROP_SCOPE,
 };
 
 static enum power_supply_usb_type usb_psy_supported_types[] = {
@@ -6834,47 +6770,6 @@ static int battery_chg_register_panel_notifier(struct battery_chg_dev *bcdev)
 	return 0;
 }
 
-static int register_extcon_conn_type(struct battery_chg_dev *bcdev)
-{
-	struct psy_state *pst = &bcdev->psy_list[PSY_TYPE_USB];
-	int rc;
-
-	rc = read_property_id(bcdev, pst, USB_CONNECTOR_TYPE);
-	if (rc < 0) {
-		pr_err("Failed to read prop USB_CONNECTOR_TYPE, rc=%d\n",
-			rc);
-		return rc;
-	}
-
-	if (pst->prop[USB_CONNECTOR_TYPE] != USB_CONNECTOR_TYPE_MICRO_USB)
-		return 0;
-
-	bcdev->connector_type = USB_CONNECTOR_TYPE_MICRO_USB;
-	bcdev->usb_prev_mode = EXTCON_NONE;
-
-	bcdev->extcon = devm_extcon_dev_allocate(bcdev->dev,
-						bcdev_usb_extcon_cable);
-	if (IS_ERR(bcdev->extcon)) {
-		rc = PTR_ERR(bcdev->extcon);
-		pr_err("Failed to allocate extcon device rc=%d\n", rc);
-		return rc;
-	}
-
-	rc = devm_extcon_dev_register(bcdev->dev, bcdev->extcon);
-	if (rc < 0) {
-		pr_err("Failed to register extcon device rc=%d\n", rc);
-		return rc;
-	}
-	rc = extcon_set_property_capability(bcdev->extcon, EXTCON_USB,
-					    EXTCON_PROP_USB_SS);
-	rc |= extcon_set_property_capability(bcdev->extcon,
-					     EXTCON_USB_HOST, EXTCON_PROP_USB_SS);
-	if (rc < 0)
-		pr_err("failed to configure extcon capabilities rc=%d\n", rc);
-
-	return rc;
-}
-
 static int battery_chg_probe(struct platform_device *pdev)
 {
 	struct battery_chg_dev *bcdev;
@@ -7006,10 +6901,6 @@ static int battery_chg_probe(struct platform_device *pdev)
 	bcdev->notify_en = false;
 	battery_chg_notify_enable(bcdev);
 	device_init_wakeup(bcdev->dev, true);
-	rc = register_extcon_conn_type(bcdev);
-	if (rc < 0)
-		dev_warn(dev, "Failed to register extcon rc=%d\n", rc);
-
 	schedule_work(&bcdev->usb_type_work);
 	schedule_delayed_work(&bcdev->charger_debug_info_print_work, 5 * HZ);
 	bcdev->debug_work_en = 1;
