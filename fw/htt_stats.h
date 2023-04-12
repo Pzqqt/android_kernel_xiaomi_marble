@@ -6578,14 +6578,25 @@ typedef struct {
     A_UINT32 cv_buf_received;
     /** total times CV bufs fed back to the IPC ring */
     A_UINT32 cv_buf_fed_back;
-    /* Total times CV query happened for IBF case */
+    /** Total times CV query happened for IBF case */
     A_UINT32 cv_total_query_ibf;
-    /* A valid CV has been found for IBF case */
+    /** A valid CV has been found for IBF case */
     A_UINT32 cv_found_ibf;
-    /* A valid CV has not been found for IBF case */
+    /** A valid CV has not been found for IBF case */
     A_UINT32 cv_not_found_ibf;
-    /* Expired CV found during query for IBF case */
+    /** Expired CV found during query for IBF case */
     A_UINT32 cv_expired_during_query_ibf;
+    /** Total number of times adaptive sounding logic has been queried */
+    A_UINT32 adaptive_snd_total_query;
+    /**
+     * Total number of times adaptive sounding mcs drop has been computed
+     * and recorded.
+     */
+    A_UINT32 adaptive_snd_total_mcs_drop[HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS + HTT_TX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS];
+    /** Total number of times adaptive sounding logic kicked in */
+    A_UINT32 adaptive_snd_kicked_in;
+    /** Total number of times we switched back to normal sounding interval */
+    A_UINT32 adaptive_snd_back_to_default;
 } htt_tx_sounding_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_SOUNDING_INFO
