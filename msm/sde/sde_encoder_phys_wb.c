@@ -1492,7 +1492,6 @@ static void _sde_encoder_phys_wb_reset_state(
 	wb_enc->crtc = NULL;
 	phys_enc->hw_cdm = NULL;
 	phys_enc->hw_ctl = NULL;
-	phys_enc->in_clone_mode = false;
 }
 
 static int _sde_encoder_phys_wb_wait_for_commit_done(
