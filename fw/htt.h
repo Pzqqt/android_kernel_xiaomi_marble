@@ -802,6 +802,7 @@ typedef enum {
     HTT_STATS_MLO_UMAC_SSR_DBG_TAG                 = 184, /* htt_mlo_umac_ssr_dbg_tlv */
     HTT_STATS_MLO_UMAC_SSR_HANDSHAKE_TAG           = 185, /* htt_mlo_umac_htt_handshake_stats_tlv */
     HTT_STATS_MLO_UMAC_SSR_MLO_TAG                 = 186, /* htt_mlo_umac_ssr_mlo_stats_tlv */
+    HTT_STATS_PDEV_TDMA_TAG                        = 187, /* htt_pdev_tdma_stats_tlv */
 
 
     HTT_STATS_MAX_TAG,

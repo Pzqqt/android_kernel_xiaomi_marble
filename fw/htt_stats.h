@@ -538,6 +538,14 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_MLO_UMAC_SSR_STATS = 56,
 
+    /** HTT_DBG_PDEV_TDMA_STATS
+     * PARAMS:
+     *    - No Params
+     * RESP MSG:
+     *    - htt_pdev_tdma_stats_tlv
+     */
+    HTT_DBG_PDEV_TDMA_STATS = 57,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -8759,6 +8767,44 @@ typedef struct {
     A_UINT32 ul_mumimo_trigger_across_bss;
     A_UINT32 ul_mumimo_trigger_within_bss;
 } htt_pdev_mbssid_ctrl_frame_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /**
+     * BIT [ 7 :  0]   :- mac_id
+     *                    Use the HTT_STATS_TDMA_MAC_ID_GET macro to extract
+     *                    this bitfield.
+     * BIT [31 :  8]   :- reserved
+     */
+    union {
+        struct {
+            A_UINT32 mac_id:    8,
+                     reserved: 24;
+        };
+        A_UINT32 mac_id__word;
+    };
+
+    /** Num of Active TDMA schedules */
+    A_UINT32 num_tdma_active_schedules;
+    /** Num of Reserved TDMA schedules */
+    A_UINT32 num_tdma_reserved_schedules;
+    /** Num of Restricted TDMA schedules */
+    A_UINT32 num_tdma_restricted_schedules;
+    /** Num of Unconfigured TDMA schedules */
+    A_UINT32 num_tdma_unconfigured_schedules;
+    /** Num of TDMA slot switches */
+    A_UINT32 num_tdma_slot_switches;
+    /** Num of TDMA EDCA switches */
+    A_UINT32 num_tdma_edca_switches;
+} htt_pdev_tdma_stats_tlv;
+
+#define HTT_STATS_TDMA_MAC_ID_M 0x000000ff
+#define HTT_STATS_TDMA_MAC_ID_S 0
+
+#define HTT_STATS_TDMA_MAC_ID_GET(_var) \
+    (((_var) & HTT_STATS_TDMA_MAC_ID_M) >> \
+     HTT_STATS_TDMA_MAC_ID_S)
+
 
 /*======= Bandwidth Manager stats ====================*/
 
