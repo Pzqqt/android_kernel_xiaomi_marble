@@ -5819,7 +5819,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_GPIO_STATE_RES_EVENTID);
 
 /* CSA Handling Event */
 #define WMITLV_TABLE_WMI_CSA_HANDLING_EVENTID(id,op,buf,len)\
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_csa_event_fixed_param, wmi_csa_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_csa_event_fixed_param, wmi_csa_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, cs_wrap_ie, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_CSA_HANDLING_EVENTID);
 
 /* Rfkill state change Event */
