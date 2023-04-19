@@ -37642,6 +37642,16 @@ typedef struct {
 #define TWT_EN_DIS_FLAGS_GET_B_R_TWT(flag)      WMI_GET_BITS(flag, 6, 1)
 #define TWT_EN_DIS_FLAGS_SET_B_R_TWT(flag, val) WMI_SET_BITS(flag, 6, 1, val)
 
+/*
+ * disable autonomous bTWT session delete feature
+ * This feature will delete client triggered session when number of clients
+ * joined decreases to 0.
+ */
+#define TWT_EN_DIS_FLAGS_GET_DIS_BTWT_AUTO_DELETE(flag) \
+    WMI_GET_BITS(flag, 7, 1)
+#define TWT_EN_DIS_FLAGS_SET_DIS_BTWT_AUTO_DELETE(flag, val) \
+    WMI_SET_BITS(flag, 7, 1, val)
+
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_enable_cmd_fixed_param  */
     /** pdev_id for identifying the MAC.  See macros starting with WMI_PDEV_ID_ for values. In non-DBDC case host should set it to 0
