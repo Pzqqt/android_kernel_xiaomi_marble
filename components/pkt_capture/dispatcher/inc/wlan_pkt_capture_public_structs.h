@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -73,7 +73,7 @@ enum pkt_capture_config {
 struct mgmt_offload_event_params {
 	uint32_t tsf_l32;
 	uint32_t chan_freq;
-	uint32_t rate_kbps;
+	uint16_t rate_kbps;
 	uint32_t rssi;
 	uint32_t buf_len;
 	uint32_t tx_status;

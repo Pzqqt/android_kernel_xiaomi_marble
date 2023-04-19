@@ -362,6 +362,7 @@ pkt_capture_process_mgmt_tx_data(struct wlan_objmgr_pdev *pdev,
 	struct wlan_objmgr_psoc *psoc;
 	tpSirMacFrameCtl pfc = (tpSirMacFrameCtl)(qdf_nbuf_data(nbuf));
 	struct ieee80211_frame *wh;
+	uint16_t rate;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (!psoc) {
@@ -388,8 +389,6 @@ pkt_capture_process_mgmt_tx_data(struct wlan_objmgr_pdev *pdev,
 	txrx_status.tsft = (u_int64_t)params->tsf_l32;
 	txrx_status.chan_num = wlan_reg_freq_to_chan(pdev, params->chan_freq);
 	txrx_status.chan_freq = params->chan_freq;
-	/* params->rate is in Kbps, convert into Mbps */
-	txrx_status.rate = (params->rate_kbps / 1000);
 	if (params->rssi == INVALID_RSSI_FOR_TX)
 		/* RSSI -128 is invalid rssi for TX, make it 0 here,
 		 * will be normalized during radiotap updation
@@ -400,15 +399,18 @@ pkt_capture_process_mgmt_tx_data(struct wlan_objmgr_pdev *pdev,
 
 	txrx_status.rssi_comb = txrx_status.ant_signal_db;
 	txrx_status.nr_ant = 1;
-	txrx_status.rtap_flags |=
-		((txrx_status.rate == 6 /* Mbps */) ? BIT(1) : 0);
+	rate = params->rate_kbps * 2;
+	/* params->rate is in Kbps, convert into Mbps */
+	txrx_status.rate = (uint8_t)(rate / 1000);
 
-	if (txrx_status.rate == 6)
+	txrx_status.rtap_flags |=
+		((txrx_status.rate == 12 /* Mbps */) ? BIT(1) : 0);
+
+	if (txrx_status.rate == 12)
 		txrx_status.ofdm_flag = 1;
 	else
 		txrx_status.cck_flag = 1;
 
-	txrx_status.rate = ((txrx_status.rate == 6 /* Mbps */) ? 0x0c : 0x02);
 	txrx_status.tx_status = status;
 	txrx_status.tx_retry_cnt = params->tx_retry_cnt;
 	txrx_status.add_rtap_ext = true;
