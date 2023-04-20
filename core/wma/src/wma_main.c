@@ -3340,12 +3340,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 					   WMA_RX_SERIALIZER_CTX);
 #endif /* FEATURE_OEM_DATA_SUPPORT */
 
-	/* Register peer change event handler */
-	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   wmi_peer_state_event_id,
-					   wma_peer_state_change_event_handler,
-					   WMA_RX_WORK_CTX);
-
 	/* Register beacon tx complete event id. The event is required
 	 * for sending channel switch announcement frames
 	 */

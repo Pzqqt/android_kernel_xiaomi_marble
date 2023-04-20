@@ -2458,6 +2458,33 @@ endif
 
 $(call add-wlan-objs,coex,$(COEX_OBJS))
 
+###### COAP ########
+COAP_HDD_SRC := core/hdd/src
+COAP_OS_IF_SRC := os_if/coap/src
+COAP_TGT_SRC := components/target_if/coap/src
+COAP_CORE_SRC  := components/coap/core/src
+COAP_DISPATCHER_SRC := components/coap/dispatcher/src
+COAP_WMI_SRC := components/wmi/src
+
+COAP_OS_IF_INC  := -I$(WLAN_ROOT)/os_if/coap/inc
+COAP_TGT_INC := -I$(WLAN_ROOT)/components/target_if/coap/inc
+COAP_DISPATCHER_INC := -I$(WLAN_ROOT)/components/coap/dispatcher/inc
+COAP_CORE_INC := -I$(WLAN_ROOT)/components/coap/core/inc
+COAP_WMI_INC := -I$(WLAN_ROOT)/components/wmi/inc
+
+ifeq ($(CONFIG_WLAN_FEATURE_COAP), y)
+COAP_OBJS := \
+	$(COAP_HDD_SRC)/wlan_hdd_coap.o \
+	$(COAP_OS_IF_SRC)/wlan_cfg80211_coap.o \
+	$(COAP_TGT_SRC)/target_if_coap.o  \
+	$(COAP_CORE_SRC)/wlan_coap_main.o  \
+	$(COAP_DISPATCHER_SRC)/wlan_coap_tgt_api.o \
+	$(COAP_DISPATCHER_SRC)/wlan_coap_ucfg_api.o \
+	$(COAP_WMI_SRC)/wmi_unified_coap_tlv.o
+endif
+
+$(call add-wlan-objs,coap,$(COAP_OBJS))
+
 ############## HTC ##########
 HTC_DIR := htc
 HTC_INC := -I$(WLAN_COMMON_INC)/$(HTC_DIR)
@@ -2974,6 +3001,12 @@ INCS +=		$(COEX_OS_IF_INC)
 INCS +=		$(COEX_TGT_INC)
 INCS +=		$(COEX_DISPATCHER_INC)
 INCS +=		$(COEX_CORE_INC)
+################ COAP ################
+INCS +=		$(COAP_OS_IF_INC)
+INCS +=		$(COAP_TGT_INC)
+INCS +=		$(COAP_DISPATCHER_INC)
+INCS +=		$(COAP_CORE_INC)
+INCS +=		$(COAP_WMI_INC)
 
 ccflags-y += $(INCS)
 
@@ -4336,6 +4369,9 @@ endif
 ifeq ($(CONFIG_DP_HW_TX_DELAY_STATS_ENABLE), y)
 cppflags-y += -DHW_TX_DELAY_STATS_ENABLE
 endif
+
+# Flag to enable Constrained Application Protocol feature
+cppflags-$(CONFIG_WLAN_FEATURE_COAP) += -DWLAN_FEATURE_COAP
 
 KBUILD_CPPFLAGS += $(cppflags-y)
 

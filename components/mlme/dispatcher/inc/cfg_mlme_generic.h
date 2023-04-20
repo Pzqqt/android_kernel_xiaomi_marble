@@ -180,6 +180,29 @@ enum wlan_wds_mode {
 		0, \
 		"rf test mode Enable Flag")
 
+#ifdef CONFIG_BAND_6GHZ
+/*
+ * standard_6ghz_connection_policy - Enable 6 GHz standard connection policy
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to set standard 6 GHz policies where STA will be
+ * allowed to scan and connect to any 6 GHz AP.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ */
+#define CFG_6GHZ_STANDARD_CONNECTION_POLICY CFG_INI_BOOL( \
+		"standard_6ghz_connection_policy", \
+		1, \
+		"6ghz standard 6 GHZ connection policy")
+#define CFG_6GHZ_STD_CONN_POLICY	CFG(CFG_6GHZ_STANDARD_CONNECTION_POLICY)
+#else
+#define CFG_6GHZ_STD_CONN_POLICY
+#endif
+
 /*
  * <ini>
  * BandCapability - Preferred band (0: 2.4G, 5G, and 6G,
@@ -994,5 +1017,6 @@ enum wlan_wds_mode {
 	CFG(CFG_RF_TEST_MODE_SUPP_ENABLED) \
 	CFG_WDS_MODE_ALL \
 	CFG(CFG_TX_RETRY_MULTIPLIER) \
-	CFG(CFG_MGMT_FRAME_HW_TX_RETRY_COUNT)
+	CFG(CFG_MGMT_FRAME_HW_TX_RETRY_COUNT)\
+	CFG_6GHZ_STD_CONN_POLICY
 #endif /* __CFG_MLME_GENERIC_H */

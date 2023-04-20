@@ -43,6 +43,8 @@
 #define IEEE80211_RADIOTAP_HE_DATA1_STBC_KNOWN 0x0200
 #endif
 
+#define HAL_TX_PKT_TYPE_11B 1
+
 /**
  * pkt_capture_data_process_type - data pkt types to process
  * for packet capture mode
