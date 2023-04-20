@@ -17949,6 +17949,10 @@ event_ids[wmi_roam_scan_chan_list_id] =
 #ifdef MULTI_CLIENT_LL_SUPPORT
 	event_ids[wmi_vdev_latency_event_id] = WMI_VDEV_LATENCY_LEVEL_EVENTID;
 #endif
+#ifdef WLAN_FEATURE_COAP
+	event_ids[wmi_wow_coap_buf_info_eventid] =
+		WMI_WOW_COAP_BUF_INFO_EVENTID;
+#endif
 }
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
@@ -18475,6 +18479,7 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 	wmi_cp_stats_attach_tlv(wmi_handle);
 	wmi_gpio_attach_tlv(wmi_handle);
 	wmi_11be_attach_tlv(wmi_handle);
+	wmi_coap_attach_tlv(wmi_handle);
 }
 qdf_export_symbol(wmi_tlv_attach);
 

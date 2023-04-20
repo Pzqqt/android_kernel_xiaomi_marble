@@ -422,6 +422,7 @@ typedef bool (*qdf_irqlocked_func_t)(void *);
  * @QDF_MODULE_ID_AFC: AFC module ID
  * @QDF_MODULE_ID_WIFI_RADAR: WIFI RADAR module ID
  * @QDF_MODULE_ID_TWT: TWT module ID
+ * @QDF_MODULE_ID_COAP: Constrained Application Protocol module ID
  * @QDF_MODULE_ID_ANY: anything
  * @QDF_MODULE_ID_MAX: Max place holder module ID
  *
@@ -580,6 +581,7 @@ typedef enum {
 	QDF_MODULE_ID_AFC,
 	QDF_MODULE_ID_WIFI_RADAR,
 	QDF_MODULE_ID_TWT,
+	QDF_MODULE_ID_COAP,
 	QDF_MODULE_ID_ANY,
 	QDF_MODULE_ID_MAX,
 } QDF_MODULE_ID;

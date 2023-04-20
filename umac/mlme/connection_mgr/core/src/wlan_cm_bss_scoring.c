@@ -2187,6 +2187,19 @@ bool wlan_cm_get_check_6ghz_security(struct wlan_objmgr_psoc *psoc)
 	return mlme_psoc_obj->psoc_cfg.score_config.check_6ghz_security;
 }
 
+void wlan_cm_set_standard_6ghz_conn_policy(struct wlan_objmgr_psoc *psoc,
+					   bool value)
+{
+	struct psoc_mlme_obj *mlme_psoc_obj;
+
+	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
+	if (!mlme_psoc_obj)
+		return;
+
+	mlme_debug("6ghz standard connection policy val %x", value);
+	mlme_psoc_obj->psoc_cfg.score_config.standard_6ghz_conn_policy = value;
+}
+
 void wlan_cm_set_relaxed_6ghz_conn_policy(struct wlan_objmgr_psoc *psoc,
 					  bool value)
 {
@@ -2209,6 +2222,17 @@ bool wlan_cm_get_relaxed_6ghz_conn_policy(struct wlan_objmgr_psoc *psoc)
 		return false;
 
 	return mlme_psoc_obj->psoc_cfg.score_config.relaxed_6ghz_conn_policy;
+}
+
+bool wlan_cm_get_standard_6ghz_conn_policy(struct wlan_objmgr_psoc *psoc)
+{
+	struct psoc_mlme_obj *mlme_psoc_obj;
+
+	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
+	if (!mlme_psoc_obj)
+		return false;
+
+	return mlme_psoc_obj->psoc_cfg.score_config.standard_6ghz_conn_policy;
 }
 
 void wlan_cm_set_6ghz_key_mgmt_mask(struct wlan_objmgr_psoc *psoc,

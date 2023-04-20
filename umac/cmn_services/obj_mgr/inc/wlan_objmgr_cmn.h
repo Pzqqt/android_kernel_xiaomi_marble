@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -285,6 +285,7 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_MLO_MGR_ID:            MLO manager reference id
  * @WLAN_MGMT_RX_REO_ID:        Management rx reorder reference id
  * @WLAN_MGMT_RX_REO_SIM_ID:    Management rx reorder simulation reference id
+ * @WLAN_COAP_ID:               Constrained Application Protocol reference id
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
  /* New value added to the enum must also be reflected in function
@@ -387,6 +388,7 @@ typedef enum {
 	WLAN_MGMT_RX_REO_ID   = 92,
 	WLAN_MGMT_RX_REO_SIM_ID   = 93,
 	WLAN_TWT_ID           = 94,
+	WLAN_COAP_ID          = 99,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
@@ -494,7 +496,8 @@ static inline const char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_MBSS_ID",
 					"WLAN_MGMT_RX_REO_ID",
 					"WLAN_MGMT_RX_REO_SIM_ID",
-					"WLAN_TWT_ID"
+					"WLAN_TWT_ID",
+					"WLAN_COAP_ID"
 					};
 
 	if (id >= WLAN_REF_ID_MAX)

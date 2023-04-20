@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -625,6 +625,7 @@ static int hif_exec_poll(struct napi_struct *napi, int budget)
 	int actual_dones;
 	int shift = hif_ext_group->scale_bin_shift;
 	int cpu = smp_processor_id();
+	bool force_complete = false;
 
 	hif_record_event(hif_ext_group->hif, hif_ext_group->grp_id,
 			 0, 0, 0, HIF_EVENT_BH_SCHED);
@@ -642,7 +643,13 @@ static int hif_exec_poll(struct napi_struct *napi, int budget)
 
 	actual_dones = work_done;
 
-	if (hif_is_force_napi_complete_required(hif_ext_group) ||
+	if (hif_is_force_napi_complete_required(hif_ext_group)) {
+		force_complete = true;
+		if (work_done >= normalized_budget)
+			work_done = normalized_budget - 1;
+	}
+
+	if (qdf_unlikely(force_complete) ||
 	    (!hif_ext_group->force_break && work_done < normalized_budget)) {
 		hif_record_event(hif_ext_group->hif, hif_ext_group->grp_id,
 				 0, 0, 0, HIF_EVENT_BH_COMPLETE);
