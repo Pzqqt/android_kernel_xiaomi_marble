@@ -14372,7 +14372,18 @@ typedef struct {
      * Refer to WMI_VDEV_STATS_FLAGS_ defs.
      */
     A_UINT32 flags;
+} wmi_vdev_extd_stats;
 
+/**
+ * Vdev debug stats to be used for wmi control path stats.
+ * This is an extension to vdev_extd_stats,
+ * vdev_extd_stats display is part of apstats.
+ */
+typedef struct {
+    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ctrl_path_vdev_stats_struct */
+    A_UINT32 tlv_header;
+    /* vdev id */
+    A_UINT32 vdev_id;
     /** opaque_debug_wal_vdev_flags:
      * This will contain the value from wal_vdev wal vdev flags for vdev state
      */
@@ -14811,7 +14822,7 @@ typedef struct {
     A_UINT32 opaque_debug_field_2;
     A_UINT32 opaque_debug_field_3;
     A_UINT32 opaque_debug_field_4;
-} wmi_vdev_extd_stats;
+} wmi_ctrl_path_vdev_stats_struct;
 
 
 #define WMI_VDEV_STATS_DIS_DYN_BW_RTS_SET(flag, val) \
@@ -34193,6 +34204,7 @@ typedef enum {
     WMI_REQUEST_CTRL_PATH_T2LM_STAT         = 14,
     WMI_REQUEST_CTRL_PATH_BLANKING_STAT     = 15,
     WMI_REQUEST_CTRL_PATH_PEER_STAT         = 16,
+    WMI_REQUEST_CTRL_PATH_VDEV_DEBUG_STAT   = 17,
 } wmi_ctrl_path_stats_id;
 
 typedef enum {
