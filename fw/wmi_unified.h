@@ -9135,6 +9135,9 @@ typedef enum {
      *  1-31  | Reserved.
      */
     WMI_PDEV_PARAM_LPL_SETTING,
+
+    /** Set Probe Resp retry limit */
+    WMI_PDEV_PARAM_PROBE_RESP_RETRY_LIMIT,
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
