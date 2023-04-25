@@ -647,7 +647,7 @@ int ipa_pm_init(struct ipa_pm_init_params *params)
 		return -ENOMEM;
 	}
 
-	ipa_pm_ctx->wq = create_singlethread_workqueue("ipa_pm_activate");
+	ipa_pm_ctx->wq = create_singlethread_power_efficient_workqueue("ipa_pm_activate");
 	if (!ipa_pm_ctx->wq) {
 		IPA_PM_ERR("create workqueue failed\n");
 		kfree(ipa_pm_ctx);
