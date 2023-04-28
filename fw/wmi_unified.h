@@ -20184,6 +20184,8 @@ typedef struct {
 #define WMI_PEER_EXT_320MHZ      0x00000002  /* 320Mhz enabled */
 #define WMI_PEER_EXT_DMS_CAPABLE 0x00000004
 #define WMI_PEER_EXT_HE_CAPS_6GHZ_VALID        0x00000008  /* param he_caps_6ghz is valid or not */
+#define WMI_PEER_EXT_IS_QUALCOMM_NODE 0x00000010 /* Indicates if the peer connecting is a qualcomm node */
+#define WMI_PEER_EXT_IS_MESH_NODE 0x00000020 /* Indicates if the peer connecting is a mesh node */
 #define WMI_PEER_EXT_F_CRIT_PROTO_HINT_ENABLED 0x40000000
 
 /**
