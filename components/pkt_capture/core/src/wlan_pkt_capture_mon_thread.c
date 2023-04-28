@@ -215,6 +215,11 @@ pkt_capture_process_from_queue(struct pkt_capture_mon_context *mon_ctx)
 
 	spin_lock_bh(&mon_ctx->mon_queue_lock);
 	while (!list_empty(&mon_ctx->mon_thread_queue)) {
+		if (!test_bit(PKT_CAPTURE_REGISTER_EVENT,
+			      &mon_ctx->mon_event_flag)) {
+			complete(&mon_ctx->mon_register_event);
+			break;
+		}
 		pkt = list_first_entry(&mon_ctx->mon_thread_queue,
 				       struct pkt_capture_mon_pkt, list);
 		list_del(&pkt->list);
