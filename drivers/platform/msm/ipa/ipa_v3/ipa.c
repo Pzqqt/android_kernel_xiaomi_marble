@@ -8885,6 +8885,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 				0xFF;
 	}
 
+	ipa3_ctx->gfp_no_retry = resource_p->gfp_no_retry;
 	ipa3_ctx->ipa_wrapper_base = resource_p->ipa_mem_base;
 	ipa3_ctx->ipa_wrapper_size = resource_p->ipa_mem_size;
 	ipa3_ctx->ipa_cfg_offset = resource_p->ipa_cfg_offset;
@@ -9933,6 +9934,7 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	ipa_drv_res->rmnet_ll_enable = 0;
 	ipa_drv_res->ulso_wa = false;
 	ipa_drv_res->is_dual_pine_config = false;
+	ipa_drv_res->gfp_no_retry = false;
 
 	/* Get IPA HW Version */
 	result = of_property_read_u32(pdev->dev.of_node, "qcom,ipa-hw-ver",
@@ -10043,6 +10045,11 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 		ipa_drv_res->ipa_endp_delay_wa_v2 = false;
 	}
 
+	ipa_drv_res->gfp_no_retry = of_property_read_bool(pdev->dev.of_node,
+			"qcom,gfp-no-retry");
+	IPADBG(": gfp-no-retry = %s\n",
+			ipa_drv_res->gfp_no_retry
+			? "True" : "False");
 
 	ipa_drv_res->ulso_wa = of_property_read_bool(pdev->dev.of_node,
 			"qcom,ipa-ulso-wa");
