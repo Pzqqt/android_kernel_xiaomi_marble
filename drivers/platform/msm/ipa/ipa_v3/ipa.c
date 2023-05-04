@@ -5228,27 +5228,30 @@ void ipa3_q6_pre_shutdown_cleanup(void)
 		 */
 		ipa_assert();
 	}
-	/* Remove delay from Q6 PRODs to avoid pending descriptors
-	 * on pipe reset procedure
-	 */
 
-	if (ipa3_ctx->ipa_endp_delay_wa_v2) {
-		ipa3_q6_pipe_flow_control(false);
-		ipa3_set_reset_client_prod_pipe_delay(true,
-			IPA_CLIENT_USB_PROD);
-	} else if (!ipa3_ctx->ipa_endp_delay_wa) {
-		ipa3_q6_pipe_delay(false);
-		ipa3_set_reset_client_prod_pipe_delay(true,
-			IPA_CLIENT_USB_PROD);
-		if (ipa3_ctx->ipa_config_is_auto)
+	if(ipa3_ctx->ipa_hw_type != IPA_HW_v5_2) {
+		/* Remove delay from Q6 PRODs to avoid pending descriptors
+	 	* on pipe reset procedure
+	 	*/
+
+		if (ipa3_ctx->ipa_endp_delay_wa_v2) {
+			ipa3_q6_pipe_flow_control(false);
 			ipa3_set_reset_client_prod_pipe_delay(true,
-				IPA_CLIENT_USB2_PROD);
-	} else {
-		ipa3_start_stop_client_prod_gsi_chnl(IPA_CLIENT_USB_PROD,
+				IPA_CLIENT_USB_PROD);
+		} else if (!ipa3_ctx->ipa_endp_delay_wa) {
+			ipa3_q6_pipe_delay(false);
+			ipa3_set_reset_client_prod_pipe_delay(true,
+				IPA_CLIENT_USB_PROD);
+			if (ipa3_ctx->ipa_config_is_auto)
+				ipa3_set_reset_client_prod_pipe_delay(true,
+					IPA_CLIENT_USB2_PROD);
+		} else {
+			ipa3_start_stop_client_prod_gsi_chnl(IPA_CLIENT_USB_PROD,
 						false);
-		if (ipa3_ctx->ipa_config_is_auto)
-			ipa3_start_stop_client_prod_gsi_chnl(
-				IPA_CLIENT_USB2_PROD, false);
+			if (ipa3_ctx->ipa_config_is_auto)
+				ipa3_start_stop_client_prod_gsi_chnl(
+					IPA_CLIENT_USB2_PROD, false);
+		}
 	}
 
 	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
@@ -5279,6 +5282,26 @@ void ipa3_q6_post_shutdown_cleanup(void)
 	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v4_0) {
 		prod = true;
 		ipa3_halt_q6_gsi_channels(prod);
+		if (ipa3_ctx->ipa_hw_type == IPA_HW_v5_2) {
+			if (ipa3_ctx->ipa_endp_delay_wa_v2) {
+				ipa3_q6_pipe_flow_control(false);
+				ipa3_set_reset_client_prod_pipe_delay(true,
+					IPA_CLIENT_USB_PROD);
+			} else if (!ipa3_ctx->ipa_endp_delay_wa) {
+				ipa3_q6_pipe_delay(false);
+				ipa3_set_reset_client_prod_pipe_delay(true,
+				IPA_CLIENT_USB_PROD);
+				if (ipa3_ctx->ipa_config_is_auto)
+					ipa3_set_reset_client_prod_pipe_delay(true,
+						IPA_CLIENT_USB2_PROD);
+			} else {
+				ipa3_start_stop_client_prod_gsi_chnl(IPA_CLIENT_USB_PROD,
+							false);
+				if (ipa3_ctx->ipa_config_is_auto)
+					ipa3_start_stop_client_prod_gsi_chnl(
+						IPA_CLIENT_USB2_PROD, false);
+			}
+		}
 		IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 		IPADBG("Exit without consumer check\n");
 		return;
