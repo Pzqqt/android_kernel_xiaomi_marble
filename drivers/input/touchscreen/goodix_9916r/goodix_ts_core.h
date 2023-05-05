@@ -588,7 +588,7 @@ struct goodix_ts_core {
 	int report_rate;
 	bool tp_pm_suspend;
 	struct completion pm_resume_completion;
-	struct notifier_block notifier;
+	void *notifier_cookie;
 };
 
 /* external module structures */
