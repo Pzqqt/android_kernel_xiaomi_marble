@@ -2910,9 +2910,9 @@ int gsi_alloc_channel(struct gsi_chan_props *props, unsigned long dev_hdl,
 	}
 	memset(ctx, 0, sizeof(*ctx));
 
-	/* For IPA offloaded WDI channels not required user_data pointer */
-	if (props->prot != GSI_CHAN_PROT_WDI2 &&
-		props->prot != GSI_CHAN_PROT_WDI3)
+	/* For IPA offloaded WDI/RTK/XDCI channels not required user_data pointer */
+	if (props->prot == GSI_CHAN_PROT_GPI ||
+		props->prot == GSI_CHAN_PROT_GCI)
 		user_data_size = props->ring_len / props->re_size;
 	else
 		user_data_size = props->re_size;
