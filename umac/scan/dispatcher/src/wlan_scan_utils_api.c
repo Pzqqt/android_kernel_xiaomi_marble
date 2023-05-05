@@ -2274,6 +2274,14 @@ static void util_parse_noninheritance_list(uint8_t *extn_elem,
 }
 
 #ifdef WLAN_FEATURE_11BE_MLO
+static bool util_is_ml_ie(uint8_t *pos)
+{
+	if (pos[PAYLOAD_START_POS] == WLAN_EXTN_ELEMID_MULTI_LINK)
+		return true;
+
+	return false;
+}
+
 /**
  * util_handle_rnr_ie_for_mbssid() - parse and modify RNR IE for MBSSID feature
  * @rnr: The pointer to RNR IE
@@ -2419,6 +2427,11 @@ static int util_handle_rnr_ie_for_mbssid(const uint8_t *rnr,
 	return rnr_len;
 }
 #else
+static bool util_is_ml_ie(uint8_t *pos)
+{
+	return false;
+}
+
 static int util_handle_rnr_ie_for_mbssid(const uint8_t *rnr,
 					 uint8_t bssid_index, uint8_t *pos)
 {
@@ -2568,8 +2581,13 @@ static uint32_t util_gen_new_ie(uint8_t *ie, uint32_t ielen,
 				}
 			} else if (tmp_old[0] == WLAN_ELEMID_EXTN_ELEM) {
 				if (tmp_old[PAYLOAD_START_POS] ==
-				    tmp[PAYLOAD_START_POS]) {
-					/* same ie, copy from subelement */
+				    tmp[PAYLOAD_START_POS] &&
+				    !util_is_ml_ie(tmp)) {
+					/* same ie, copy from subelement
+					 * but multi link IE is exception,
+					 * it needs to copy from main frame
+					 * for full info.
+					 */
 					if ((pos + tmp[1] + MIN_IE_LEN) <=
 					    (new_ie + ielen)) {
 						qdf_mem_copy(pos, tmp,
