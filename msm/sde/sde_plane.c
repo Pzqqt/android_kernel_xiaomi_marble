@@ -1625,7 +1625,14 @@ static int sde_plane_rot_atomic_check(struct drm_plane *plane,
 		msm_fmt = msm_framebuffer_format(state->fb);
 		fmt = to_sde_format(msm_fmt);
 		ret = sde_format_validate_fmt(&sde_kms->base, fmt,
-			psde->pipe_sblk->in_rot_format_list);
+				psde->pipe_sblk->in_rot_format_list);
+		if (ret) {
+			SDE_ERROR_PLANE(psde,
+				"fmt:%d mode:%d unpack:%d not found within the list!\n",
+				(fmt) ? fmt->base.pixel_format : 0,
+				(fmt) ? fmt->fetch_mode : 0,
+				(fmt) ? fmt->unpack_tight : 0);
+		}
 	}
 
 exit:
@@ -2599,6 +2606,22 @@ static int _sde_plane_sspp_atomic_check_helper(struct sde_plane *psde,
 {
 	int ret = 0;
 	u32 min_src_size = SDE_FORMAT_IS_YUV(fmt) ? 2 : 1;
+	struct sde_kms *sde_kms = _sde_plane_get_kms(&psde->base);
+
+	if (!sde_kms) {
+		SDE_ERROR("invalid sde_kms\n");
+		return -EINVAL;
+	}
+
+	ret = sde_format_validate_fmt(&sde_kms->base, fmt,
+			psde->pipe_sblk->format_list);
+	if (ret) {
+		SDE_ERROR_PLANE(psde, "fmt:%d mode:%d unpack:%d not found within the list!\n",
+			(fmt) ? fmt->base.pixel_format : 0,
+			(fmt) ? fmt->fetch_mode : 0,
+			(fmt) ? fmt->unpack_tight : 0);
+		return ret;
+	}
 
 	if (SDE_FORMAT_IS_YUV(fmt) &&
 			(!(psde->features & SDE_SSPP_SCALER) ||
