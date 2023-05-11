@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2009-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -1311,8 +1311,8 @@ static int sde_dbg_debugfs_open(struct inode *inode, struct file *file)
 	mutex_lock(&sde_dbg_base.mutex);
 	sde_dbg_base.cur_evt_index = 0;
 	sde_dbg_base.evtlog->first = (u32)atomic_add_return(0, &sde_dbg_base.evtlog->curr) + 1;
-	sde_dbg_base.evtlog->last =
-		sde_dbg_base.evtlog->first + SDE_EVTLOG_ENTRY;
+	atomic_set(&sde_dbg_base.evtlog->last,
+		(sde_dbg_base.evtlog->first + SDE_EVTLOG_ENTRY));
 	mutex_unlock(&sde_dbg_base.mutex);
 	return 0;
 }
