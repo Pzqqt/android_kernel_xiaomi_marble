@@ -20498,6 +20498,8 @@ typedef struct {
 /* deprecated but maintained as aliases: old names containing typo */
 #define WMI_CHAN_InFO_START_RESP WMI_CHAN_INFO_START_RESP
 #define WMI_CHAN_InFO_END_RESP   WMI_CHAN_INFO_END_RESP
+/* end deprecated */
+#define WMI_CHAN_INFO_ENTRY_RESP 2
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_remove_wds_entry_cmd_fixed_param */
