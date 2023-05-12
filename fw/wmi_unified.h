@@ -43777,6 +43777,12 @@ typedef struct {
     /** MLO Peer's current link MAC address */
     wmi_mac_addr link_macaddr;
 
+    /** mapping_switch_time from the T2LM IE */
+    A_UINT32 mapping_switch_time;
+
+    /** expected_duration from the T2LM IE, in units of TUs */
+    A_UINT32 expected_duration;
+
     /**
      * Following this structure is the TLV:
      *   - struct wmi_tid_to_link_map tid_to_link_map[];
