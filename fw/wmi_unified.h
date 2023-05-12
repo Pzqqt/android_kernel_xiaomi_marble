@@ -9141,6 +9141,14 @@ typedef enum {
 
     /** Set Probe Resp retry limit */
     WMI_PDEV_PARAM_PROBE_RESP_RETRY_LIMIT,
+
+    /*
+     * Parameter for configure PCIE
+     *
+     *  0 - Default Value(FW Control).
+     *  1 - Force PCIE Gen Speed and Lane Width to maximum supported value.
+     */
+    WMI_PDEV_PARAM_PCIE_CONFIG,
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
