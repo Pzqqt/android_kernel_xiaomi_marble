@@ -1743,6 +1743,9 @@ typedef enum {
     /* Event to send target rate to power table update status */
     WMI_PDEV_SET_TGTR2P_TABLE_EVENTID,
 
+    /* Event to indicate completion on RF path */
+    WMI_PDEV_SET_RF_PATH_RESP_EVENTID,
+
 
     /* VDEV specific events */
     /** VDEV started event in response to VDEV_START request */
@@ -45243,6 +45246,29 @@ typedef struct {
      */
     A_UINT32 rf_path;
 } wmi_pdev_set_rf_path_cmd_fixed_param;
+
+typedef struct {
+    /*
+     * TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_rf_path_event_fixed_param
+     */
+    A_UINT32 tlv_header;
+    /* pdev_id for identifying the MAC */
+    A_UINT32 pdev_id;
+    /*
+     * rf_path :
+     * 0 - primary RF path
+     * 1 - secondary RF path
+     */
+    A_UINT32 rf_path;
+    /*
+     * status :
+     * TRUE (0) - for recieved and cache the value in FW
+     * FALSE (1) :
+     *      a. pdev_id for which secondary RF path is not available
+     *      b. caching of the rf_path got failed in FW
+     */
+    A_UINT32 status;
+} wmi_pdev_set_rf_path_event_fixed_param;
 
 #define WMI_SET_RX_PEER_STATS_RESP_TYPE(rx_params, value) \
         WMI_SET_BITS(rx_params, 0, 1, value)

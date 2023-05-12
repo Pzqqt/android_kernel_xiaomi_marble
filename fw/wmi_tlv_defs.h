@@ -1376,6 +1376,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_gpio_state_req_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_gpio_state_res_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_ctrl_path_vdev_stats_struct,
+    WMITLV_TAG_STRUC_wmi_pdev_set_rf_path_event_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -2215,6 +2216,7 @@ typedef enum {
     OP(WMI_VENDOR_PDEV_EVENTID) \
     OP(WMI_VENDOR_VDEV_EVENTID) \
     OP(WMI_VENDOR_PEER_EVENTID) \
+    OP(WMI_PDEV_SET_RF_PATH_RESP_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -5817,6 +5819,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_GPIO_INPUT_EVENTID);
 #define WMITLV_TABLE_WMI_GPIO_STATE_RES_EVENTID(id,op,buf,len)  \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_gpio_state_res_event_fixed_param, wmi_gpio_state_res_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_GPIO_STATE_RES_EVENTID);
+
+/* RF Path Res Event */
+#define WMITLV_TABLE_WMI_PDEV_SET_RF_PATH_RESP_EVENTID(id,op,buf,len)  \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_rf_path_event_fixed_param, wmi_pdev_set_rf_path_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_RF_PATH_RESP_EVENTID);
 
 /* CSA Handling Event */
 #define WMITLV_TABLE_WMI_CSA_HANDLING_EVENTID(id,op,buf,len)\
