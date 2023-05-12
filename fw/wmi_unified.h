@@ -7981,6 +7981,18 @@ typedef struct {
      * contain valid data, versus how many are only for alignment padding.
      */
     A_UINT32 num_bytes_valid_in_cswrap_ie_ext_ver2;
+
+    /*
+     * Add link id, mld address and link address
+     * fields for N link CSA support
+     */
+    A_UINT32 link_id; /* Link id associated with AP */
+    wmi_mac_addr mld_mac_address; /* AP mld mac address */
+    wmi_mac_addr link_mac_address; /* AP link mac address */
+    A_UINT32 mld_mac_address_present :1,
+             link_mac_address_present :1,
+             link_id_present :1,
+             reserved :29;
 /*
  * This initial fixed_param TLV may be followed by the below TLVs:
  *   - cs_wrap_ie variable-length byte-array TLV
