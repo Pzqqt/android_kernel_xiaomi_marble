@@ -14421,6 +14421,7 @@ typedef struct {
      * Refer to WMI_VDEV_STATS_FLAGS_ defs.
      */
     A_UINT32 flags;
+    A_INT32 vdev_tx_power; /* dBm units */
 } wmi_vdev_extd_stats;
 
 /**
