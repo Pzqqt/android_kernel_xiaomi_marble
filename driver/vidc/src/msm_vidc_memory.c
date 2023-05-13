@@ -373,7 +373,7 @@ int msm_vidc_memory_alloc(struct msm_vidc_core *core, struct msm_vidc_alloc *mem
 			return -EINVAL;
 		}
 	} else {
-		if (core->is_non_coherent && mem->type == MSM_VIDC_BUF_QUEUE)
+		if (core->is_non_coherent)
 			heap_name = "qcom,system-uncached";
 		else
 			heap_name = "qcom,system";
