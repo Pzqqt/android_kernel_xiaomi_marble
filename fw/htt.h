@@ -796,6 +796,13 @@ typedef enum {
     HTT_STATS_TX_PDEV_MLO_TXOP_ABORT_TAG           = 178, /* htt_tx_pdev_stats_mlo_txop_abort_tlv_v */
     HTT_STATS_UMAC_SSR_TAG                         = 179, /* htt_umac_ssr_stats_tlv */
     HTT_STATS_PEER_BE_OFDMA_STATS_TAG              = 180, /* htt_peer_be_ofdma_stats_tlv */
+    HTT_STATS_MLO_UMAC_SSR_TRIGGER_TAG             = 181, /* htt_mlo_umac_ssr_trigger_stats_tlv */
+    HTT_STATS_MLO_UMAC_SSR_CMN_TAG                 = 182, /* htt_mlo_umac_ssr_common_stats_tlv */
+    HTT_STATS_MLO_UMAC_SSR_KPI_TSTMP_TAG           = 183, /* htt_mlo_umac_ssr_kpi_tstamp_stats_tlv */
+    HTT_STATS_MLO_UMAC_SSR_DBG_TAG                 = 184, /* htt_mlo_umac_ssr_dbg_tlv */
+    HTT_STATS_MLO_UMAC_SSR_HANDSHAKE_TAG           = 185, /* htt_mlo_umac_htt_handshake_stats_tlv */
+    HTT_STATS_MLO_UMAC_SSR_MLO_TAG                 = 186, /* htt_mlo_umac_ssr_mlo_stats_tlv */
+    HTT_STATS_PDEV_TDMA_TAG                        = 187, /* htt_pdev_tdma_stats_tlv */
 
 
     HTT_STATS_MAX_TAG,
@@ -17813,12 +17820,12 @@ enum htt_dbg_ext_stats_status {
  * to host ppdu stats indication message.
  *
  *
- * |31                         16|15   12|11   10|9      8|7            0 |
- * |----------------------------------------------------------------------|
+ * |31         24|23           16|15   12|11   10|9      8|7            0 |
+ * |-----------------------------+-------+-------+--------+---------------|
  * |    payload_size             | rsvd  |pdev_id|mac_id  |    msg type   |
- * |----------------------------------------------------------------------|
- * |                          ppdu_id                                     |
- * |----------------------------------------------------------------------|
+ * |-------------+---------------+-------+-------+--------+---------------|
+ * | tgt_private |                     ppdu_id                            |
+ * |-------------+--------------------------------------------------------|
  * |                        Timestamp in us                               |
  * |----------------------------------------------------------------------|
  * |                          reserved                                    |
@@ -17858,8 +17865,9 @@ enum htt_dbg_ext_stats_status {
 #define HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_M     0xFFFF0000
 #define HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_S     16
 
-#define HTT_T2H_PPDU_STATS_PPDU_ID_M          0xFFFFFFFF
+#define HTT_T2H_PPDU_STATS_PPDU_ID_M          0x00FFFFFF
 #define HTT_T2H_PPDU_STATS_PPDU_ID_S          0
+/* bits 31:24 are used by the target for internal purposes */
 
 #define HTT_T2H_PPDU_STATS_MAC_ID_SET(word, value)             \
     do {                                                         \
@@ -17890,7 +17898,7 @@ enum htt_dbg_ext_stats_status {
 
 #define HTT_T2H_PPDU_STATS_PPDU_ID_SET(word, value)             \
     do {                                                         \
-        HTT_CHECK_SET_VAL(HTT_T2H_PPDU_STATS_PPDU_ID, value);   \
+        /*HTT_CHECK_SET_VAL(HTT_T2H_PPDU_STATS_PPDU_ID, value);*/   \
         (word) |= (value)  << HTT_T2H_PPDU_STATS_PPDU_ID_S;     \
     } while (0)
 #define HTT_T2H_PPDU_STATS_PPDU_ID_GET(word) \
@@ -19094,9 +19102,9 @@ struct htt_ul_ofdma_user_info_v0_bitmap_w1 {
 
 #define HTT_UL_OFDMA_USER_INFO_V1_BITMAP_W0 \
     A_UINT32 w0_fw_rsvd:27; \
-    A_UINT32 w0_sub_version:3;  /* set to a value of “0” on WKK/Beryllium targets (future expansion) */ \
+    A_UINT32 w0_sub_version:3;  /* set to a value of "0" on WKK/Beryllium targets (future expansion) */ \
     A_UINT32 w0_valid:1; /* field aligns with V0 definition */ \
-    A_UINT32 w0_version:1;  /* set to a value of “1” to indicate picking htt_ul_ofdma_user_info_v1_bitmap (field aligns with V0 definition) */
+    A_UINT32 w0_version:1;  /* set to a value of "1" to indicate picking htt_ul_ofdma_user_info_v1_bitmap (field aligns with V0 definition) */
 
 struct htt_ul_ofdma_user_info_v1_bitmap_w0 {
     HTT_UL_OFDMA_USER_INFO_V1_BITMAP_W0
@@ -21276,7 +21284,17 @@ struct htt_t2h_rx_data_msdu_info
     A_UINT32 /* word 1 */
         buffer_addr_high        :  8,
         sw_buffer_cookie        : 21,
-        rsvd1                   :  3;
+        /* fw_offloads_inspected:
+         * When reo_destination_indication is 6 in reo_entrance_ring
+         * of the RXDMA2REO MPDU upload, all the MSDUs that are part
+         * of the MPDU are inspected by FW offloads layer, subsequently
+         * the MSDUs are qualified to be host interested.
+         * In such case the fw_offloads_inspected is set to 1, else 0.
+         * This will assist host to not consider such MSDUs for FISA
+         * flow addition.
+         */
+        fw_offloads_inspected   :  1,
+        rsvd1                   :  2;
     A_UINT32 /* word 2 */
         mpdu_retry_bit          :  1, /* used for stats maintenance */
         raw_mpdu_frame          :  1, /* used for pkt drop and processing */
@@ -21396,6 +21414,17 @@ struct htt_t2h_rx_data_msdu_info
     } while (0)
 #define HTT_RX_DATA_MSDU_INFO_SW_BUFFER_COOKIE_GET(word) \
     (((word) & HTT_RX_DATA_MSDU_INFO_SW_BUFFER_COOKIE_M) >> HTT_RX_DATA_MSDU_INFO_SW_BUFFER_COOKIE_S)
+
+#define HTT_RX_DATA_MSDU_INFO_FW_OFFLOADS_INSPECTED_M   0x20000000
+#define HTT_RX_DATA_MSDU_INFO_FW_OFFLOADS_INSPECTED_S   29
+
+#define HTT_RX_DATA_MSDU_INFO_FW_OFFLOADS_INSPECTED_SET(word, value) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_RX_DATA_MSDU_INFO_FW_OFFLOADS_INSPECTED, value); \
+        (word) |= (value)  << HTT_RX_DATA_MSDU_INFO_FW_OFFLOADS_INSPECTED_S; \
+    } while (0)
+#define HTT_RX_DATA_MSDU_INFO_FW_OFFLOADS_INSPECTED_GET(word) \
+    (((word) & HTT_RX_DATA_MSDU_INFO_FW_OFFLOADS_INSPECTED_M) >> HTT_RX_DATA_MSDU_INFO_FW_OFFLOADS_INSPECTED_S)
 
 #define HTT_RX_DATA_MSDU_INFO_MPDU_RETRY_BIT_M          0x00000001
 #define HTT_RX_DATA_MSDU_INFO_MPDU_RETRY_BIT_S          0
