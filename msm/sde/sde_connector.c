@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -71,6 +71,10 @@ static const struct drm_prop_enum_list e_dsc_mode[] = {
 	{MSM_DISPLAY_DSC_MODE_NONE, "none"},
 	{MSM_DISPLAY_DSC_MODE_ENABLED, "dsc_enabled"},
 	{MSM_DISPLAY_DSC_MODE_DISABLED, "dsc_disabled"},
+};
+static const struct drm_prop_enum_list e_wb_fsc_mode[] = {
+	{MSM_WB_FSC_MODE_DISABLED, "fsc_disabled"},
+	{MSM_WB_FSC_MODE_ENABLED, "fsc_enabled"},
 };
 static const struct drm_prop_enum_list e_frame_trigger_mode[] = {
 	{FRAME_DONE_WAIT_DEFAULT, "default"},
@@ -2770,7 +2774,7 @@ static void sde_connector_check_status_work(struct work_struct *work)
 	dev = conn->base.dev->dev;
 
 	if (!conn->ops.check_status || dev->power.is_suspended ||
-			(conn->lp_mode == SDE_MODE_DPMS_OFF)) {
+			(sde_connector_get_lp(&conn->base) == SDE_MODE_DPMS_OFF)) {
 		SDE_DEBUG("dpms mode: %d\n", conn->dpms_mode);
 		mutex_unlock(&conn->lock);
 		return;
@@ -3158,7 +3162,10 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 			0, 0, e_power_mode,
 			ARRAY_SIZE(e_power_mode), 0,
 			CONNECTOR_PROP_LP);
-
+	if (connector_type == DRM_MODE_CONNECTOR_VIRTUAL)
+		msm_property_install_enum(&c_conn->property_info, "wb_fsc_mode", 0,
+			0, e_wb_fsc_mode, ARRAY_SIZE(e_wb_fsc_mode), 0,
+			CONNECTOR_PROP_WB_FSC_MODE);
 	return 0;
 }
 

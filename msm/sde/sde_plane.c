@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (C) 2014-2021 The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -1462,7 +1462,9 @@ static int _sde_plane_color_fill(struct sde_plane *psde,
 	const struct sde_format *fmt;
 	const struct drm_plane *plane;
 	struct sde_plane_state *pstate;
+	struct sde_crtc_state *cstate;
 	bool blend_enable = true;
+	u32 comp_color = 0;
 
 	if (!psde || !psde->base.state) {
 		SDE_ERROR("invalid plane\n");
@@ -1487,6 +1489,11 @@ static int _sde_plane_color_fill(struct sde_plane *psde,
 
 	blend_enable = (SDE_DRM_BLEND_OP_OPAQUE !=
 			sde_plane_get_property(pstate, PLANE_PROP_BLEND_OP));
+	/* read the property in FSC to RGB use case only */
+	cstate = to_sde_crtc_state(pstate->base.crtc->state);
+	if (SDE_FORMAT_IS_FSC(fmt) && !sde_crtc_is_connector_fsc(cstate))
+		comp_color = sde_plane_get_property(pstate,
+				PLANE_PROP_COLOR_COMPONENT);
 
 	/* update sspp */
 	if (fmt && psde->pipe_hw->ops.setup_solidfill) {
@@ -1505,7 +1512,8 @@ static int _sde_plane_color_fill(struct sde_plane *psde,
 			psde->pipe_hw->ops.setup_format(psde->pipe_hw,
 					fmt, blend_enable,
 					SDE_SSPP_SOLID_FILL,
-					pstate->multirect_index);
+					pstate->multirect_index,
+					comp_color);
 
 		if (psde->pipe_hw->ops.setup_rects)
 			psde->pipe_hw->ops.setup_rects(psde->pipe_hw,
@@ -1617,7 +1625,14 @@ static int sde_plane_rot_atomic_check(struct drm_plane *plane,
 		msm_fmt = msm_framebuffer_format(state->fb);
 		fmt = to_sde_format(msm_fmt);
 		ret = sde_format_validate_fmt(&sde_kms->base, fmt,
-			psde->pipe_sblk->in_rot_format_list);
+				psde->pipe_sblk->in_rot_format_list);
+		if (ret) {
+			SDE_ERROR_PLANE(psde,
+				"fmt:%d mode:%d unpack:%d not found within the list!\n",
+				(fmt) ? fmt->base.pixel_format : 0,
+				(fmt) ? fmt->fetch_mode : 0,
+				(fmt) ? fmt->unpack_tight : 0);
+		}
 	}
 
 exit:
@@ -2591,6 +2606,22 @@ static int _sde_plane_sspp_atomic_check_helper(struct sde_plane *psde,
 {
 	int ret = 0;
 	u32 min_src_size = SDE_FORMAT_IS_YUV(fmt) ? 2 : 1;
+	struct sde_kms *sde_kms = _sde_plane_get_kms(&psde->base);
+
+	if (!sde_kms) {
+		SDE_ERROR("invalid sde_kms\n");
+		return -EINVAL;
+	}
+
+	ret = sde_format_validate_fmt(&sde_kms->base, fmt,
+			psde->pipe_sblk->format_list);
+	if (ret) {
+		SDE_ERROR_PLANE(psde, "fmt:%d mode:%d unpack:%d not found within the list!\n",
+			(fmt) ? fmt->base.pixel_format : 0,
+			(fmt) ? fmt->fetch_mode : 0,
+			(fmt) ? fmt->unpack_tight : 0);
+		return ret;
+	}
 
 	if (SDE_FORMAT_IS_YUV(fmt) &&
 			(!(psde->features & SDE_SSPP_SCALER) ||
@@ -2912,13 +2943,15 @@ static void _sde_plane_map_prop_to_dirty_bits(void)
 
 	plane_prop_array[PLANE_PROP_MULTIRECT_MODE] =
 	plane_prop_array[PLANE_PROP_COLOR_FILL] =
+	plane_prop_array[PLANE_PROP_COLOR_COMPONENT] =
 		SDE_PLANE_DIRTY_ALL;
 
 	/* no special action required */
 	plane_prop_array[PLANE_PROP_INFO] =
 	plane_prop_array[PLANE_PROP_ALPHA] =
 	plane_prop_array[PLANE_PROP_INPUT_FENCE] =
-	plane_prop_array[PLANE_PROP_BLEND_OP] = 0;
+	plane_prop_array[PLANE_PROP_BLEND_OP] =
+	plane_prop_array[PLANE_PROP_BG_ALPHA] = 0;
 
 	plane_prop_array[PLANE_PROP_FB_TRANSLATION_MODE] =
 		SDE_PLANE_DIRTY_FB_TRANSLATION_MODE;
@@ -3136,7 +3169,9 @@ static void _sde_plane_update_roi_config(struct drm_plane *plane,
 static void _sde_plane_update_format_and_rects(struct sde_plane *psde,
 	struct sde_plane_state *pstate, const struct sde_format *fmt)
 {
-	uint32_t src_flags = 0;
+	uint32_t src_flags = 0, comp_color = 0;
+	struct sde_crtc_state *cstate = to_sde_crtc_state(
+			pstate->base.crtc->state);
 
 	SDE_DEBUG_PLANE(psde, "rotation 0x%X\n", pstate->rotation);
 	if (pstate->rotation & DRM_MODE_REFLECT_X)
@@ -3146,10 +3181,15 @@ static void _sde_plane_update_format_and_rects(struct sde_plane *psde,
 	if (pstate->rotation & DRM_MODE_ROTATE_90)
 		src_flags |= SDE_SSPP_ROT_90;
 
+	/* read the property in FSC to RGB use case only */
+	if (SDE_FORMAT_IS_FSC(fmt) && !sde_crtc_is_connector_fsc(cstate))
+		comp_color = sde_plane_get_property(pstate,
+				PLANE_PROP_COLOR_COMPONENT);
+
 	/* update format */
 	psde->pipe_hw->ops.setup_format(psde->pipe_hw, fmt,
 	   pstate->const_alpha_en, src_flags,
-	   pstate->multirect_index);
+	   pstate->multirect_index, comp_color);
 
 	if (psde->pipe_hw->ops.setup_cdp) {
 		struct sde_hw_pipe_cdp_cfg *cdp_cfg = &pstate->cdp_cfg;
@@ -3846,6 +3886,13 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 		{SDE_SYSCACHE_LLCC_DISP_RIGHT,  "disp_right"},
 	};
 
+	static const struct drm_prop_enum_list e_comp_type[] = {
+		{SDE_COMP_NONE, "comp_none"},
+		{SDE_COMP_R, "comp_r"},
+		{SDE_COMP_G, "comp_g"},
+		{SDE_COMP_B, "comp_b"},
+	};
+
 	static const struct drm_prop_enum_list e_buffer_mode[] = {
 		{SDE_INDEPENDENT_BUFFER_MODE, "independent"},
 		{SDE_SINGLE_BUFFER_MODE, "single"},
@@ -3899,6 +3946,9 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 	msm_property_install_range(&psde->property_info, "alpha",
 		0x0, 0, 255, 255, PLANE_PROP_ALPHA);
 
+	msm_property_install_volatile_range(&psde->property_info, "bg_alpha",
+		0x0, 0, 255, 255, PLANE_PROP_BG_ALPHA);
+
 	/* linux default file descriptor range on each process */
 	msm_property_install_range(&psde->property_info, "input_fence",
 		0x0, 0, INR_OPEN_MAX, 0, PLANE_PROP_INPUT_FENCE);
@@ -3931,6 +3981,10 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 	msm_property_install_enum(&psde->property_info, "buffer_mode", 0x0,
 		0, e_buffer_mode, ARRAY_SIZE(e_buffer_mode), 0,
 		PLANE_PROP_BUFFER_MODE);
+
+	msm_property_install_enum(&psde->property_info, "color_comp", 0x0,
+		0, e_comp_type, ARRAY_SIZE(e_comp_type), 0,
+		PLANE_PROP_COLOR_COMPONENT);
 
 	if (psde->pipe_hw->ops.setup_solidfill)
 		msm_property_install_range(&psde->property_info, "color_fill",
@@ -4963,4 +5017,14 @@ void sde_plane_add_data_to_minidump_va(struct drm_plane *plane)
 	pstate = to_sde_plane_state(plane->state);
 	sde_mini_dump_add_va_region("sde_plane", sizeof(*sde_plane), sde_plane);
 	sde_mini_dump_add_va_region("plane_state", sizeof(*pstate), pstate);
+}
+
+bool sde_plane_property_is_dirty(struct drm_plane_state *plane_state,
+		uint32_t property_idx)
+{
+	struct sde_plane_state *pstate = to_sde_plane_state(plane_state);
+	struct sde_plane *psde = to_sde_plane(plane_state->plane);
+
+	return msm_property_is_dirty(&psde->property_info,
+			&pstate->property_state, property_idx);
 }

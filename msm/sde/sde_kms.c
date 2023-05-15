@@ -1365,6 +1365,9 @@ int sde_kms_vm_pre_release(struct sde_kms *sde_kms,
 		sde_crtc_reset_sw_state(crtc);
 	}
 
+	/* Flush pp_event thread queue for any pending events */
+	kthread_flush_worker(&priv->pp_event_worker);
+
 	/*
 	 * Flush event thread queue for any pending events as vblank work
 	 * might get scheduled from drm_crtc_vblank_off
@@ -3076,7 +3079,9 @@ static int sde_kms_atomic_check(struct msm_kms *kms,
 {
 	struct sde_kms *sde_kms;
 	struct drm_device *dev;
-	int ret;
+	struct drm_crtc_state *crtc_state;
+	struct drm_crtc *crtc;
+	int ret, i = 0;
 
 	if (!kms || !state)
 		return -EINVAL;
@@ -3089,6 +3094,17 @@ static int sde_kms_atomic_check(struct msm_kms *kms,
 		SDE_DEBUG("suspended, skip atomic_check\n");
 		ret = -EBUSY;
 		goto end;
+	}
+
+	/* Populate connectors in the sde_crtc_state before atomic checks
+	 * on all the drm objects are triggered, so that they are available
+	 * during encoder and crtc check callbacks.
+	 */
+	for_each_new_crtc_in_state(state, crtc, crtc_state, i) {
+		if (!crtc_state->active)
+			continue;
+
+		sde_crtc_state_setup_connectors(crtc_state, dev);
 	}
 
 	ret = sde_kms_check_vm_request(kms, state);
