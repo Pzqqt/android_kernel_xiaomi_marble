@@ -84,6 +84,10 @@ struct msm_vdec_prop_type_handle {
 static int msm_vdec_codec_change(struct msm_vidc_inst *inst, u32 v4l2_codec)
 {
 	int rc = 0;
+	bool create_inst_handler = false;
+
+	if (!inst->codec)
+		create_inst_handler = true;
 
 	if (inst->codec && inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat == v4l2_codec)
 		return 0;
@@ -102,13 +106,15 @@ static int msm_vdec_codec_change(struct msm_vidc_inst *inst, u32 v4l2_codec)
 	if (rc)
 		goto exit;
 
-	rc = msm_vidc_ctrl_deinit(inst);
-	if (rc)
-		goto exit;
-
-	rc = msm_vidc_ctrl_init(inst);
-	if(rc)
-		goto exit;
+	if (create_inst_handler) {
+		rc = msm_vidc_ctrl_handler_init(inst, true);
+		if(rc)
+			goto exit;
+	} else {
+		rc = msm_vidc_ctrl_handler_update(inst);
+		if(rc)
+			goto exit;
+	}
 
 	rc = msm_vidc_update_buffer_count(inst, INPUT_PORT);
 	if (rc)
@@ -2945,7 +2951,7 @@ int msm_vdec_inst_deinit(struct msm_vidc_inst *inst)
 	}
 	/* cancel pending batch work */
 	cancel_batch_work(inst);
-	rc = msm_vidc_ctrl_deinit(inst);
+	rc = msm_vidc_ctrl_handler_deinit(inst);
 	if (rc)
 		return rc;
 

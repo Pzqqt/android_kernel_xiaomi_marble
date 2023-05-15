@@ -482,7 +482,7 @@ exit:
 	return rc;
 }
 
-int msm_vidc_ctrl_deinit(struct msm_vidc_inst *inst)
+int msm_vidc_ctrl_handler_deinit(struct msm_vidc_inst *inst)
 {
 	if (!inst) {
 		d_vpr_e("%s: invalid parameters\n", __func__);
@@ -497,7 +497,46 @@ int msm_vidc_ctrl_deinit(struct msm_vidc_inst *inst)
 	return 0;
 }
 
-int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
+int msm_vidc_ctrl_handler_update(struct msm_vidc_inst *inst) {
+	int rc = 0;
+	struct v4l2_ctrl_ref *ref, *next_ref;
+	struct v4l2_ctrl *ctrl, *next_ctrl;
+	struct v4l2_subscribed_event *sev, *next_sev;
+	struct v4l2_ctrl_handler *inst_hdl = &inst->ctrl_handler;
+
+	mutex_lock(inst_hdl->lock);
+	/* Free all nodes */
+	list_for_each_entry_safe(ref, next_ref, &inst_hdl->ctrl_refs, node) {
+		list_del(&ref->node);
+		kfree(ref);
+	}
+	/* Free all controls owned by the handler */
+	list_for_each_entry_safe(ctrl, next_ctrl, &inst_hdl->ctrls, node) {
+		list_del(&ctrl->node);
+		list_for_each_entry_safe(sev, next_sev, &ctrl->ev_subs, node)
+			list_del(&sev->node);
+		kvfree(ctrl);
+	}
+	inst_hdl->cached = NULL;
+	inst_hdl->error = 0;
+	INIT_LIST_HEAD(&inst_hdl->ctrls);
+	INIT_LIST_HEAD(&inst_hdl->ctrl_refs);
+	memset(inst_hdl->buckets, 0, (inst_hdl->nr_of_buckets * sizeof(inst_hdl->buckets[0])));
+	mutex_unlock(inst_hdl->lock);
+
+	/* free the previous codec inst controls memory*/
+	msm_vidc_vmem_free((void **)&inst->ctrls);
+	inst->ctrls = NULL;
+
+	/* update the ctrl handler with new codec controls*/
+	rc = msm_vidc_ctrl_handler_init(inst, false);
+	if (rc)
+		return rc;
+
+	return rc;
+}
+
+int msm_vidc_ctrl_handler_init(struct msm_vidc_inst *inst, bool init)
 {
 	int rc = 0;
 	struct msm_vidc_inst_capability *capability;
@@ -532,11 +571,13 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 	if (rc)
 		return rc;
 
-	rc = v4l2_ctrl_handler_init(&inst->ctrl_handler, num_ctrls);
-	if (rc) {
-		i_vpr_e(inst, "control handler init failed, %d\n",
-				inst->ctrl_handler.error);
-		goto error;
+	if (init) {
+		rc = v4l2_ctrl_handler_init(&inst->ctrl_handler, num_ctrls);
+		if (rc) {
+			i_vpr_e(inst, "control handler init failed, %d\n",
+					inst->ctrl_handler.error);
+			goto error;
+		}
 	}
 
 	for (idx = 0; idx < INST_CAP_MAX; idx++) {
@@ -644,7 +685,7 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 
 	return 0;
 error:
-	msm_vidc_ctrl_deinit(inst);
+	msm_vidc_ctrl_handler_deinit(inst);
 
 	return rc;
 }
