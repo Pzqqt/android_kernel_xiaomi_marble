@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3420,6 +3420,7 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_MON] = {"MONITOR"},
 	[QDF_MODULE_ID_AFC] = {"AFC"},
 	[QDF_MODULE_ID_TWT] = {"TWT"},
+	[QDF_MODULE_ID_COAP] = {"COAP"},
 	[QDF_MODULE_ID_ANY] = {"ANY"},
 };
 qdf_export_symbol(g_qdf_category_name);
@@ -3994,6 +3995,7 @@ static void set_default_trace_levels(struct category_info *cinfo)
 		[QDF_MODULE_ID_MON] = QDF_TRACE_LEVEL_ERROR,
 		[QDF_MODULE_ID_MGMT_RX_REO] = QDF_TRACE_LEVEL_ERROR,
 		[QDF_MODULE_ID_TWT] = QDF_TRACE_LEVEL_ERROR,
+		[QDF_MODULE_ID_COAP] = QDF_TRACE_LEVEL_ERROR,
 		[QDF_MODULE_ID_ANY] = QDF_TRACE_LEVEL_INFO,
 	};
 

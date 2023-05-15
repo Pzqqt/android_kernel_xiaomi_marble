@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2015,2020-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,6 +29,12 @@
 #include "wlan_cm_public_struct.h"
 #include <net/cfg80211.h>
 #include "wlan_objmgr_vdev_obj.h"
+
+#define FEATURE_DRIVER_DISCONNECT_REASON				\
+	[QCA_NL80211_VENDOR_SUBCMD_DRIVER_DISCONNECT_REASON_INDEX] = {	\
+	.vendor_id = QCA_NL80211_VENDOR_ID,				\
+	.subcmd = QCA_NL80211_VENDOR_SUBCMD_DRIVER_DISCONNECT_REASON,	\
+},
 
 /**
  * struct osif_connect_params - extra connect params

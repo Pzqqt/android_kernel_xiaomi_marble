@@ -5693,6 +5693,7 @@ static QDF_STATUS send_process_ll_stats_get_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_buf_t buf;
 	uint8_t *buf_ptr;
 	int ret;
+	bool is_link_stats_over_qmi;
 
 	len = sizeof(*cmd);
 	buf = wmi_buf_alloc(wmi_handle, len);
@@ -5721,8 +5722,20 @@ static QDF_STATUS send_process_ll_stats_get_cmd_tlv(wmi_unified_t wmi_handle,
 		 QDF_MAC_ADDR_REF(get_req->peer_macaddr.bytes));
 
 	wmi_mtrace(WMI_REQUEST_LINK_STATS_CMDID, cmd->vdev_id, 0);
-	ret = wmi_unified_cmd_send_pm_chk(wmi_handle, buf, len,
-					  WMI_REQUEST_LINK_STATS_CMDID, true);
+	is_link_stats_over_qmi = is_service_enabled_tlv(
+			wmi_handle,
+			WMI_SERVICE_UNIFIED_LL_GET_STA_OVER_QMI_SUPPORT);
+
+	if (is_link_stats_over_qmi) {
+		ret = wmi_unified_cmd_send_over_qmi(
+					wmi_handle, buf, len,
+					WMI_REQUEST_LINK_STATS_CMDID);
+	} else {
+		ret = wmi_unified_cmd_send_pm_chk(
+					wmi_handle, buf, len,
+					WMI_REQUEST_LINK_STATS_CMDID, true);
+	}
+
 	if (ret) {
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
@@ -17936,6 +17949,10 @@ event_ids[wmi_roam_scan_chan_list_id] =
 #ifdef MULTI_CLIENT_LL_SUPPORT
 	event_ids[wmi_vdev_latency_event_id] = WMI_VDEV_LATENCY_LEVEL_EVENTID;
 #endif
+#ifdef WLAN_FEATURE_COAP
+	event_ids[wmi_wow_coap_buf_info_eventid] =
+		WMI_WOW_COAP_BUF_INFO_EVENTID;
+#endif
 }
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
@@ -18462,6 +18479,7 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 	wmi_cp_stats_attach_tlv(wmi_handle);
 	wmi_gpio_attach_tlv(wmi_handle);
 	wmi_11be_attach_tlv(wmi_handle);
+	wmi_coap_attach_tlv(wmi_handle);
 }
 qdf_export_symbol(wmi_tlv_attach);
 

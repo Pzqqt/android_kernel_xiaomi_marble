@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1193,7 +1193,8 @@ QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 		 * enabled. wlan_cm_get_check_6ghz_security API returns true if
 		 * neither Safe mode nor RF test mode are enabled.
 		 */
-		if (!scm_is_bss_allowed_for_country(psoc, scan_entry) &&
+		if (!wlan_cm_get_standard_6ghz_conn_policy(psoc) &&
+		    !scm_is_bss_allowed_for_country(psoc, scan_entry) &&
 		    wlan_cm_get_check_6ghz_security(psoc)) {
 			scm_info_rl(
 				"Drop frame from "QDF_MAC_ADDR_FMT
