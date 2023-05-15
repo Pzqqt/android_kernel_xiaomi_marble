@@ -2560,9 +2560,11 @@ struct ipa3_context {
 	struct ipa3_page_recycle_stats prev_low_lat_data_recycle_stats;
 	struct mutex recycle_stats_collection_lock;
 	struct mutex ssr_lock;
+	bool gfp_no_retry;
 };
 
 struct ipa3_plat_drv_res {
+	bool gfp_no_retry;
 	bool use_ipa_teth_bridge;
 	u32 ipa_mem_base;
 	u32 ipa_mem_size;

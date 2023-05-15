@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include "ipahal.h"
@@ -14,6 +15,26 @@ struct ipahal_hw_stats_obj {
 	int (*get_offset)(void *params, struct ipahal_stats_offset *out);
 	int (*parse_stats)(void *init_params, void *raw_stats,
 		void *parsed_stats);
+};
+
+struct ipahal_hw_get_first_prod_pipe_num {
+	int first_prod_pipe_num;
+};
+
+static struct ipahal_hw_get_first_prod_pipe_num
+	ipahal_hw_get_first_prod_pipe_nums[IPA_HW_MAX] = {
+
+	[IPA_HW_v5_0] = {
+		IPAHAL_IPA5_PRODUCER_PIPE_NUM,
+	},
+
+	[IPA_HW_v5_1] = {
+		IPAHAL_IPA5_PRODUCER_PIPE_NUM,
+	},
+
+	[IPA_HW_v5_2] = {
+		IPAHAL_IPA5_2_PRODUCER_PIPE_NUM,
+	},
 };
 
 static int _count_ones(u32 number)
@@ -236,6 +257,7 @@ static struct ipahal_stats_init_pyld *ipahal_generate_init_pyld_tethering_v5_0(
 	int i, j, reg_idx;
 	void *pyld_ptr;
 	u32 incremental_offset;
+	int first_producer_pipe_num;
 
 	for (i = 0; i < IPAHAL_IPA5_PIPE_REG_NUM; i++) {
 		hdr_entries += _count_ones(in->prod_bitmask[i]);
@@ -290,6 +312,10 @@ static struct ipahal_stats_init_pyld *ipahal_generate_init_pyld_tethering_v5_0(
 			sizeof(struct ipahal_stats_tethering_hdr_v5_0_hw))
 		/ 8;
 
+	first_producer_pipe_num =
+		ipahal_hw_get_first_prod_pipe_nums[ipahal_ctx->hw_type].first_prod_pipe_num;
+	IPAHAL_DBG_LOW("first producer pipe num = %d\n", first_producer_pipe_num);
+
 	reg_idx = 0;
 	for (i = 0; i < IPAHAL_IPA5_PIPES_NUM; i++) {
 
@@ -303,10 +329,11 @@ static struct ipahal_stats_init_pyld *ipahal_generate_init_pyld_tethering_v5_0(
 				pyld_ptr;
 			// TODO: for future versions of num HW consumers > 16
 			hdr->dst_mask_31_0 =
-				((in->cons_bitmask[i][0] >> IPAHAL_IPA5_PRODUCER_PIPE_NUM) |
-				(in->cons_bitmask[i][1] << IPAHAL_IPA5_PRODUCER_PIPE_NUM));
+			((in->cons_bitmask[i][0] >> first_producer_pipe_num) |
+			(in->cons_bitmask[i][1] << first_producer_pipe_num));
 			hdr->dst_mask_63_32 =
-				in->cons_bitmask[i][1] >> IPAHAL_IPA5_PRODUCER_PIPE_NUM;
+			in->cons_bitmask[i][1] >> first_producer_pipe_num;
+
 			// TODO: for future when num pipes > 64
 			hdr->dst_mask_95_64 = 0;
 			hdr->dst_mask_127_96 = 0;
