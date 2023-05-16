@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1007,6 +1007,9 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	mlme_obj->cfg.lfr.rso_user_config.policy_params.dfs_mode =
 		STA_ROAM_POLICY_DFS_ENABLED;
 	mlme_obj->cfg.lfr.rso_user_config.policy_params.skip_unsafe_channels = 0;
+
+	if (config->enable_nud_tracking == DISCONNECT_AFTER_ROAM_FAIL)
+		mlme_obj->cfg.lfr.disconnect_on_nud_roam_invoke_fail = true;
 
 	status = hdd_set_sme_cfgs_related_to_mlme(hdd_ctx, sme_config);
 	if (!QDF_IS_STATUS_SUCCESS(status))

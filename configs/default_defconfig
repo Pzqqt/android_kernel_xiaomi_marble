@@ -649,7 +649,7 @@ ifeq ($(CONFIG_CNSS_QCA6750), y)
 	endif
 endif
 
-ifeq ($(CONFIG_CNSS_QCA6750), y)
+ifeq (y,$(findstring y, $(CONFIG_CNSS_QCA6750) $(CONFIG_CNSS_QCA6490)))
 	CONFIG_BUS_AUTO_SUSPEND := y
 endif
 
