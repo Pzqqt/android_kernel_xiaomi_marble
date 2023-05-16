@@ -3215,7 +3215,6 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
 		return ret;
 	}
 
-	if (wlan_reg_is_6ghz_chan_freq(target_chan_freq)) {
 	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(target_chan_freq)) {
 		rsn_ie = wlan_get_ie_ptr_from_eid(WLAN_EID_RSN,
 						  beacon->tail,
