@@ -1138,7 +1138,7 @@ static const struct adreno_a6xx_core adreno_gpu_core_a621 = {
 		.compatible = "qcom,adreno-gpu-a621",
 		.features = ADRENO_CONTENT_PROTECTION | ADRENO_IOCOHERENT |
 			ADRENO_APRIV | ADRENO_LSR | ADRENO_PREEMPTION |
-			ADRENO_IFPC,
+			ADRENO_IFPC | ADRENO_ACD,
 		.gpudev = &adreno_a6xx_hwsched_gpudev.base,
 		.perfcounters = &adreno_a6xx_hwsched_perfcounters,
 		.uche_gmem_alignment = 0,
@@ -2181,7 +2181,7 @@ static const struct adreno_gen7_core adreno_gpu_core_gen7_6_0 = {
 				ADRENO_IFPC | ADRENO_PREEMPTION | ADRENO_BCL |
 				ADRENO_ACD | ADRENO_LPAC | ADRENO_DMS,
 		.gpudev = &adreno_gen7_hwsched_gpudev.base,
-		.perfcounters = &adreno_gen7_6_0_perfcounters,
+		.perfcounters = &adreno_gen7_hwsched_perfcounters,
 		.uche_gmem_alignment = SZ_16M,
 		.gmem_size = 3 * SZ_1M,
 		.bus_width = 32,

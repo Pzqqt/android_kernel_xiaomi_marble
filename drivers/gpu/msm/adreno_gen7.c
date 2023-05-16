@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/io.h>
@@ -668,7 +668,7 @@ static int gen7_post_start(struct adreno_device *adreno_dev)
 	if (!adreno_is_preemption_enabled(adreno_dev))
 		return 0;
 
-	kmd_postamble_addr = PREEMPT_SCRATCH_ADDR(adreno_dev, KMD_POSTAMBLE_IDX);
+	kmd_postamble_addr = SCRATCH_POSTAMBLE_ADDR(KGSL_DEVICE(adreno_dev));
 	gen7_preemption_prepare_postamble(adreno_dev);
 
 	cmds = adreno_ringbuffer_allocspace(rb, (preempt->postamble_len ? 16 : 12));
@@ -941,8 +941,16 @@ static void gen7_err_callback(struct adreno_device *adreno_dev, int bit)
 
 	switch (bit) {
 	case GEN7_INT_AHBERROR:
-		dev_crit_ratelimited(dev, "CP: AHB bus error\n");
+		{
+		u32 err_details_0, err_details_1;
+
+		kgsl_regread(device, GEN7_CP_RL_ERROR_DETAILS_0, &err_details_0);
+		kgsl_regread(device, GEN7_CP_RL_ERROR_DETAILS_1, &err_details_1);
+		dev_crit_ratelimited(dev,
+			"CP: AHB bus error, CP_RL_ERROR_DETAILS_0:0x%x CP_RL_ERROR_DETAILS_1:0x%x\n",
+			err_details_0, err_details_1);
 		break;
+		}
 	case GEN7_INT_ATBASYNCFIFOOVERFLOW:
 		dev_crit_ratelimited(dev, "RBBM: ATB ASYNC overflow\n");
 		break;

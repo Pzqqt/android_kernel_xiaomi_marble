@@ -1090,8 +1090,6 @@ static void memlat_update_work(struct work_struct *work)
 	struct dcvs_freq new_freq;
 	u32 max_freqs[MAX_MEMLAT_GRPS] = { 0 };
 
-	calculate_sampling_stats();
-
 	/* aggregate mons to calculate max freq per memlat_group */
 	for (grp = 0; grp < MAX_MEMLAT_GRPS; grp++) {
 		memlat_grp = memlat_data->groups[grp];
@@ -1132,6 +1130,7 @@ static void memlat_update_work(struct work_struct *work)
 
 static enum hrtimer_restart memlat_hrtimer_handler(struct hrtimer *timer)
 {
+	calculate_sampling_stats();
 	queue_work(memlat_data->memlat_wq, &memlat_data->work);
 
 	return HRTIMER_NORESTART;
@@ -1854,7 +1853,8 @@ static int memlat_mon_probe(struct platform_device *pdev)
 	if (get_mask_and_mpidr_from_pdev(pdev, &mon->cpus, &mon->cpus_mpidr)) {
 		dev_err(dev, "Mon missing cpulist\n");
 		ret = -ENODEV;
-		goto unlock_out;
+		memlat_grp->num_mons--;
+		goto unlock_out_init;
 	}
 
 	num_cpus = cpumask_weight(&mon->cpus);
@@ -1931,6 +1931,7 @@ static int memlat_mon_probe(struct platform_device *pdev)
 	}
 
 	mon->index = memlat_grp->num_inited_mons++;
+unlock_out_init:
 	if (memlat_grps_and_mons_inited())
 		memlat_data->inited = true;
 
