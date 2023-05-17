@@ -270,23 +270,6 @@ typedef void
 				    uint8_t idx);
 #endif
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-/**
- * typedef osif_cm_roam_rt_stats_cb: Callback to send roam
- * stats event
- * @roam_stats: roam_stats_event pointer
- * @idx: TLV idx for roam stats event
- *
- * This callback sends roam_stats_event to userspace
- *
- * Context: Any context.
- * Return: void
- */
-typedef void
-	(*osif_cm_roam_rt_stats_cb)(struct roam_stats_event *roam_stats,
-				    uint8_t idx);
-#endif
-
 #ifdef WLAN_FEATURE_PREAUTH_ENABLE
 /**
  * typedef osif_cm_ft_preauth_complete_cb: Callback to send fast
