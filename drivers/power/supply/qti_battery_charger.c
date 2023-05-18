@@ -25,7 +25,6 @@
 #include <linux/thermal.h>
 #include <linux/ktime.h>
 #include <linux/soc/qcom/panel_event_notifier.h>
-#include "qti_typec_class.h"
 
 #if defined(CONFIG_DRM_PANEL)
 static struct drm_panel *active_panel,*active_panel_sec;
@@ -499,7 +498,6 @@ struct battery_chg_dev {
 	struct device			*dev;
 	struct class			battery_class;
 	struct pmic_glink_client	*client;
-	struct typec_role_class		*typec_class;
 	struct mutex			rw_lock;
 	struct rw_semaphore		state_sem;
 	struct completion		ack;
@@ -1248,21 +1246,12 @@ static void battery_chg_update_uusb_type(struct battery_chg_dev *bcdev,
 			/* Device mode connect notification */
 			extcon_set_state_sync(bcdev->extcon, EXTCON_USB, 1);
 			bcdev->usb_prev_mode = EXTCON_USB;
-			rc = qti_typec_partner_register(bcdev->typec_class,
-							TYPEC_DEVICE);
-			if (rc < 0)
-				pr_err("Failed to register typec partner rc=%d\n",
-					rc);
 		}
 		break;
 	case POWER_SUPPLY_SCOPE_SYSTEM:
 		/* Host mode connect notification */
 		extcon_set_state_sync(bcdev->extcon, EXTCON_USB_HOST, 1);
 		bcdev->usb_prev_mode = EXTCON_USB_HOST;
-		rc = qti_typec_partner_register(bcdev->typec_class, TYPEC_HOST);
-		if (rc < 0)
-			pr_err("Failed to register typec partner rc=%d\n",
-				rc);
 		break;
 	default:
 		if (bcdev->usb_prev_mode == EXTCON_USB ||
@@ -1271,7 +1260,6 @@ static void battery_chg_update_uusb_type(struct battery_chg_dev *bcdev,
 			extcon_set_state_sync(bcdev->extcon,
 					      bcdev->usb_prev_mode, 0);
 			bcdev->usb_prev_mode = EXTCON_NONE;
-			qti_typec_partner_unregister(bcdev->typec_class);
 		}
 		break;
 	}
@@ -7022,15 +7010,6 @@ static int battery_chg_probe(struct platform_device *pdev)
 	if (rc < 0)
 		dev_warn(dev, "Failed to register extcon rc=%d\n", rc);
 
-	if (bcdev->connector_type == USB_CONNECTOR_TYPE_MICRO_USB) {
-		bcdev->typec_class = qti_typec_class_init(bcdev->dev);
-		if (IS_ERR_OR_NULL(bcdev->typec_class)) {
-			dev_err(dev, "Failed to init typec class err=%d\n",
-				PTR_ERR(bcdev->typec_class));
-			return PTR_ERR(bcdev->typec_class);
-		}
-	}
-
 	schedule_work(&bcdev->usb_type_work);
 	schedule_delayed_work(&bcdev->charger_debug_info_print_work, 5 * HZ);
 	bcdev->debug_work_en = 1;
@@ -7082,7 +7061,6 @@ static int battery_chg_remove(struct platform_device *pdev)
 	bcdev->initialized = false;
 	up_write(&bcdev->state_sem);
 
-	qti_typec_class_deinit(bcdev->typec_class);
 	if (bcdev->notifier_cookie)
 		panel_event_notifier_unregister(bcdev->notifier_cookie);
 	device_init_wakeup(bcdev->dev, false);
