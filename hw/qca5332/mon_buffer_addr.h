@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
+/* Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -34,7 +34,7 @@
 
 
 struct mon_buffer_addr {
-#ifndef WIFI_BIT_ORDER_BIG_ENDIAN
+#ifndef BIG_ENDIAN_HOST
              uint32_t buffer_virt_addr_31_0                                   : 32; // [31:0]
              uint32_t buffer_virt_addr_63_32                                  : 32; // [31:0]
              uint32_t dma_length                                              : 12, // [11:0]
