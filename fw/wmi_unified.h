@@ -17915,7 +17915,9 @@ typedef enum {
      * bit 0: URNM_MFPR in RSNXE
      * bit 1: MFPC in RSN CAP
      * bit 2: MFPR in RSN CAP
-     * bit 31:3 Reserved
+     * bit 3: URNM_MFPR_X20 in RSNXE
+     * bit 4: RSTA_EXTCAP_I2R_LMR_FB
+     * bit 31:5 Reserved
      */
     WMI_VDEV_PARAM_11AZ_SECURITY_CONFIG,    /* 0xAB */
 
@@ -17980,6 +17982,24 @@ typedef enum {
      * The the updated bandwith is specified with a wmi_channel_width value.
      */
     WMI_VDEV_PARAM_CHWIDTH_WITH_NOTIFY,                   /* 0xBA */
+
+    /*
+     * Min time between measurment for 11AZ NTB ranging
+     * in units of 100 microseconds
+     */
+    WMI_VDEV_PARAM_RTT_11AZ_NTB_MIN_TIME_BW_MEAS,         /* 0xBB */
+
+    /*
+     * Max time between measurment for 11AZ NTB ranging
+     * in units of 10 milliseconds
+     */
+    WMI_VDEV_PARAM_RTT_11AZ_NTB_MAX_TIME_BW_MEAS,         /* 0xBC */
+
+    /*
+     * Max session expiry for 11AZ TB ranging.
+     * Session expiry value is computed as 2^(Max Session Exp + 8) ms.
+     */
+    WMI_VDEV_PARAM_RTT_11AZ_TB_MAX_SESSION_EXPIRY,        /* 0xBD */
 
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
@@ -36697,6 +36717,11 @@ typedef struct {
                                   bits 15:1  - reserved
                                   bits 31:16 - maximum PSD EIRP (dB/MHz)
                                 */
+/*
+ * NOTE: no further fields can be added into this struct, due to
+ * message buffer size limitations in certain targets for the
+ * WMI_REG_CHAN_LIST_CC_EXT_EVENT message.
+ */
 } wmi_regulatory_rule_ext_struct;
 
 #define WMI_REG_CHAN_PRIORITY_FREQ_GET(freq_info)        WMI_GET_BITS(freq_info, 0, 16)
@@ -36711,6 +36736,11 @@ typedef struct {
      *             the frequencies below this value will be de-prioritized.
      * bits 31:16 = reserved for future
      */
+/*
+ * NOTE: no further fields can be added into this struct, due to
+ * message buffer size limitations in certain targets for the
+ * WMI_REG_CHAN_LIST_CC_EXT_EVENT message.
+ */
 } wmi_regulatory_chan_priority_struct;
 
 #define WMI_REG_FCC_RULE_CHAN_FREQ_GET(freq_info)           WMI_GET_BITS(freq_info, 0, 16)
@@ -36726,6 +36756,11 @@ typedef struct {
      * bits 23:16 = u8 FCC_Tx_power (dBm units)
      * bits 31:24 = u8 reserved for future
      */
+/*
+ * NOTE: no further fields can be added into this struct, due to
+ * message buffer size limitations in certain targets for the
+ * WMI_REG_CHAN_LIST_CC_EXT_EVENT message.
+ */
 } wmi_regulatory_fcc_rule_struct;
 
 typedef enum {
@@ -36832,6 +36867,11 @@ typedef struct {
     A_UINT32 num_6g_reg_rules_client_sp[WMI_REG_CLIENT_MAX];
     A_UINT32 num_6g_reg_rules_client_lpi[WMI_REG_CLIENT_MAX];
     A_UINT32 num_6g_reg_rules_client_vlp[WMI_REG_CLIENT_MAX];
+/*
+ * NOTE: no further fields can be added into this struct, due to
+ * message buffer size limitations in certain targets for the
+ * WMI_REG_CHAN_LIST_CC_EXT_EVENT message.
+ */
 /*
  * This fixed_param TLV is followed by the following TLVs:
  *   - wmi_regulatory_rule_ext reg_rule_array[] struct TLV array.
