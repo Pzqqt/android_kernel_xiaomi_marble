@@ -111,7 +111,7 @@ static struct msm_platform_core_capability core_data_parrot_v1[] = {
 	{MAX_RT_MBPF, 40800}, /* ((3840x2176)/256) + (1920x1088)/256 */
 	{MAX_MBPF, 42976}, /* ((4096x2176)/256) + (1920x1088)/256 */
 	/* max_load 4096x2176@30fps */
-	{MAX_MBPS, 1044480}, /* Concurrency: UHD@30 decode + 1080p@30 encode */
+	{MAX_MBPS, 1224000}, /* Concurrency: UHD@30 decode + 1080p@30 encode */
 	{MAX_IMAGE_MBPF, 1048576},  /* (16384x16384)/256 */
 	{MAX_MBPF_HQ, 8160}, /* ((1920x1088)/256) */
 	{MAX_MBPS_HQ, 244800}, /* ((1920x1088)/256)@30fps */
@@ -163,7 +163,7 @@ static struct msm_platform_core_capability core_data_parrot_v2[] = {
 	{MAX_RT_MBPF, 40800}, /* ((3840x2176)/256) + (1920x1088)/256 */
 	{MAX_MBPF, 42976}, /* ((4096x2176)/256) + (1920x1088)/256 */
 	/* max_load 4096x2176@30fps */
-	{MAX_MBPS, 1044480}, /* Concurrency: UHD@30 decode + 1080p@30 encode */
+	{MAX_MBPS, 1224000}, /* Concurrency: UHD@30 decode + 1080p@30 encode */
 	{MAX_IMAGE_MBPF, 1048576},  /* (16384x16384)/256 */
 	{MAX_MBPF_HQ, 8160}, /* ((1920x1088)/256) */
 	{MAX_MBPS_HQ, 244800}, /* ((1920x1088)/256)@30fps */
