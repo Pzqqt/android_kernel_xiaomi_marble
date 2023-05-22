@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -560,3 +560,36 @@ QDF_STATUS hdd_cm_napi_serialize_control(bool action)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef WLAN_BOOST_CPU_FREQ_IN_ROAM
+QDF_STATUS hdd_cm_perfd_set_cpufreq(bool action)
+{
+	struct wlan_core_minfreq req;
+	struct hdd_context *hdd_ctx;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (unlikely(!hdd_ctx)) {
+		hdd_err("cannot get hdd_context");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (action) {
+		req.magic    = WLAN_CORE_MINFREQ_MAGIC;
+		req.reserved = 0; /* unused */
+		req.coremask = 0x00ff;/* big and little cluster */
+		req.freq     = 0xfff;/* set to max freq */
+	} else {
+		req.magic    = WLAN_CORE_MINFREQ_MAGIC;
+		req.reserved = 0; /* unused */
+		req.coremask = 0; /* not valid */
+		req.freq     = 0; /* reset */
+	}
+
+	hdd_debug("CPU min freq to 0x%x coremask 0x%x", req.freq, req.coremask);
+	/* the following service function returns void */
+	wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
+				    WLAN_SVC_CORE_MINFREQ,
+				    &req, sizeof(struct wlan_core_minfreq));
+	return QDF_STATUS_SUCCESS;
+}
+#endif
