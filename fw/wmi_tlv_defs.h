@@ -2221,6 +2221,7 @@ typedef enum {
     OP(WMI_VENDOR_VDEV_EVENTID) \
     OP(WMI_VENDOR_PEER_EVENTID) \
     OP(WMI_PDEV_SET_RF_PATH_RESP_EVENTID) \
+    OP(WMI_ROAM_SYNCH_KEY_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -5757,6 +5758,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_ml_key_material_param, ml_key_material, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_pdev_band_to_mac, mac_freq_mapping, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SYNCH_EVENTID);
+
+/* Roam Synch key Event */
+#define WMITLV_TABLE_WMI_ROAM_SYNCH_KEY_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_ml_key_material_param, ml_key_material, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SYNCH_KEY_EVENTID);
 
 /* Roam Synch frame Event */
 #define WMITLV_TABLE_WMI_ROAM_SYNCH_FRAME_EVENTID(id,op,buf,len) \

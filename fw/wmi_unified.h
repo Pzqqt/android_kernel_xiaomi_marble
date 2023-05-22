@@ -1982,6 +1982,8 @@ typedef enum {
     WMI_ROAM_FRAME_EVENTID,
     /** Send firmware ini value corresponding to param_id */
     WMI_ROAM_GET_VENDOR_CONTROL_PARAM_EVENTID,
+    /** roam synch key event */
+    WMI_ROAM_SYNCH_KEY_EVENTID,
 
     /** P2P disc found */
     WMI_P2P_DISC_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_P2P),
@@ -6225,6 +6227,7 @@ typedef struct {
      */
     A_UINT32 flags;
     wmi_mac_addr link_addr; /* link address */
+    wmi_mac_addr self_link_addr; /* self-link address */
 } wmi_roam_ml_setup_links_param;
 
 /*
@@ -24515,6 +24518,11 @@ typedef struct {
     A_UINT32 key_cipher;
     A_UINT8  pn[WMI_MAX_PN_LEN];
     A_UINT8  key_buff[WMI_MAX_KEY_LEN];
+    /*
+     * When link_id is 0xf, this field will be MLD address.
+     * Otherwise, it will be bssid which specified with link_id.
+     */
+    wmi_mac_addr mac_addr;
 } wmi_roam_ml_key_material_param;
 
 typedef struct {
@@ -39663,6 +39671,7 @@ typedef struct {
      * Bit 2: 6G band support if 1
      */
     A_UINT32 support_link_band; /* Configure the band bitmap of mlo connection supports. */
+    A_UINT32 max_active_links; /* Max active links supported for STA */
 } wmi_roam_mlo_config_cmd_fixed_param;
 
 typedef struct {
