@@ -803,6 +803,8 @@ typedef enum {
     HTT_STATS_MLO_UMAC_SSR_HANDSHAKE_TAG           = 185, /* htt_mlo_umac_htt_handshake_stats_tlv */
     HTT_STATS_MLO_UMAC_SSR_MLO_TAG                 = 186, /* htt_mlo_umac_ssr_mlo_stats_tlv */
     HTT_STATS_PDEV_TDMA_TAG                        = 187, /* htt_pdev_tdma_stats_tlv */
+    HTT_STATS_CODEL_SVC_CLASS_TAG                  = 188, /* htt_codel_svc_class_stats_tlv */
+    HTT_STATS_CODEL_MSDUQ_TAG                      = 189, /* htt_codel_msduq_stats_tlv */
 
 
     HTT_STATS_MAX_TAG,
@@ -10774,7 +10776,7 @@ enum htt_t2h_msg_type {
     HTT_T2H_MSG_TYPE_RX_ADDBA_EXTN                 = 0x31,
     HTT_T2H_MSG_TYPE_RX_DELBA_EXTN                 = 0x32,
     HTT_T2H_MSG_TYPE_RX_CCE_SUPER_RULE_SETUP_DONE  = 0x33,
-    HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_IND    = 0x34,
+    HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_IND    = 0x34, /* DEPRECATED */
     HTT_T2H_MSG_TYPE_RX_DATA_IND                   = 0x35,
     HTT_T2H_MSG_TYPE_SOFT_UMAC_TX_COMPL_IND        = 0x36,
     HTT_T2H_MSG_TYPE_PRIMARY_LINK_PEER_MIGRATE_IND = 0x37,
@@ -21075,6 +21077,8 @@ PREPACK struct htt_rx_cce_super_rule_setup_done_t {
         } while (0)
 
 /**
+ * THE BELOW MESSAGE HAS BEEN DEPRECATED
+ *======================================
  * @brief target -> host CoDel MSDU queue latencies array configuration
  *
  * MSG_TYPE => HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_IND
@@ -21125,7 +21129,7 @@ typedef struct {
              num_elem: 16; /* bits 31:16 */
     A_UINT32 paddr_low;
     A_UINT32 paddr_high;
-} htt_t2h_codel_msduq_latencies_array_cfg_int_t;
+} htt_t2h_codel_msduq_latencies_array_cfg_int_t; /* DEPRECATED */
 
 #define HTT_T2H_CODEL_MSDUQ_LATENCIES_ARRAY_CFG_SIZE 12 /* bytes */
 
