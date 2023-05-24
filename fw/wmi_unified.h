@@ -44427,6 +44427,13 @@ typedef struct {
     A_UINT32 vdev_id;
     /** Average RSSI value of Data Frames */
     A_INT32 avg_rssi_data_dbm;
+    /** rx_vht_sgi:
+     * Short guard interval state of Data frames obtaining from rx PPDU TLV
+     * of VHTSIGA buf.
+     *     0: Default (No sgi set)
+     *     1: sgi set
+     */
+    A_UINT32 rx_vht_sgi;
 } wmi_vdev_smart_monitor_event_fixed_param;
 
 typedef struct {
