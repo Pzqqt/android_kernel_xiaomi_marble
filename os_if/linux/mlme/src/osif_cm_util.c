@@ -473,6 +473,20 @@ osif_cm_cckm_preauth_cmpl_cb(struct wlan_objmgr_vdev *vdev,
 #endif
 #endif
 
+#ifdef WLAN_BOOST_CPU_FREQ_IN_ROAM
+/**
+ * osif_cm_perfd_reset_cpufreq_ctrl_cb() - Callback to reset CPU freq
+ *
+ * This callback indicates os_if to reset the request to boost CPU freq
+ *
+ * Return: None
+ */
+static void osif_cm_perfd_reset_cpufreq_ctrl_cb(void)
+{
+	osif_cm_perfd_set_cpufreq(false);
+}
+#endif
+
 static struct mlme_cm_ops cm_ops = {
 	.mlme_cm_connect_complete_cb = osif_cm_connect_complete_cb,
 	.mlme_cm_failed_candidate_cb = osif_cm_failed_candidate_cb,
@@ -494,6 +508,10 @@ static struct mlme_cm_ops cm_ops = {
 #ifdef FEATURE_WLAN_ESE
 	.mlme_cm_cckm_preauth_cmpl_cb = osif_cm_cckm_preauth_cmpl_cb,
 #endif
+#endif
+#ifdef WLAN_BOOST_CPU_FREQ_IN_ROAM
+	.mlme_cm_perfd_reset_cpufreq_ctrl_cb =
+				osif_cm_perfd_reset_cpufreq_ctrl_cb,
 #endif
 };
 
