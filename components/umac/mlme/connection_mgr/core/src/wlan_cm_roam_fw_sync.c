@@ -1185,6 +1185,10 @@ static QDF_STATUS cm_handle_ho_fail(struct scheduler_msg *msg)
 		mlme_debug("Roam req found, get cm id to remove it, before disconnect");
 		cm_id = roam_req->cm_id;
 	}
+	/* CPU freq is boosted during roam sync to improve roam latency,
+	 * upon HO failure reset that request to restore cpu freq back to normal
+	 */
+	mlme_cm_osif_perfd_reset_cpufreq();
 
 	cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_ROAM_HO_FAIL,
 			    sizeof(wlan_cm_id), &cm_id);
