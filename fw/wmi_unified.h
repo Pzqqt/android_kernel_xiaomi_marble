@@ -198,14 +198,6 @@ static INLINE void wmi_packed_arr_set_bits(A_UINT32 *arr, A_UINT32 entry_index,
         ((val & (((A_UINT32) 1 << bits_per_entry) - 1)) << start_bit_in_uint);
 }
 
-/** 2 word representation of MAC addr */
-typedef struct _wmi_mac_addr {
-    /** upper 4 bytes of  MAC address */
-    A_UINT32 mac_addr31to0;
-    /** lower 2 bytes of  MAC address */
-    A_UINT32 mac_addr47to32;
-} wmi_mac_addr;
-
 /** macro to convert MAC address from WMI word format to char array */
 #define WMI_MAC_ADDR_TO_CHAR_ARRAY(pwmi_mac_addr,c_macaddr) do {        \
      (c_macaddr)[0] = (((pwmi_mac_addr)->mac_addr31to0)  >>  0) & 0xff; \
@@ -43552,6 +43544,13 @@ typedef struct wmi_pdev_vendor_event
      * because their offsets within wmi_pdev_vendor_event_fixed_param
      * would change, causing backwards incompatibilities.
      */
+/*
+ * This fixed_param TLV may be followed by the below TLVs:
+ *   - A_UINT32 opaque_vendor_var_len_data[]:
+ *     Variable-length array of opaque data.
+ *     The _fixed_param.sub_type value clarifies how to interpret the
+ *     contents of this opaque data.
+ */
 } wmi_pdev_vendor_event_fixed_param;
 typedef wmi_pdev_vendor_event_fixed_param wmi_vendor_pdev_event_fixed_param;
 
@@ -43572,6 +43571,13 @@ typedef struct wmi_vdev_vendor_event
      * because their offsets within wmi_vdev_vendor_event_fixed_param
      * would change, causing backwards incompatibilities.
      */
+/*
+ * This fixed_param TLV may be followed by the below TLVs:
+ *   - A_UINT32 opaque_vendor_var_len_data[]:
+ *     Variable-length array of opaque data.
+ *     The _fixed_param.sub_type value clarifies how to interpret the
+ *     contents of this opaque data.
+ */
 } wmi_vdev_vendor_event_fixed_param;
 typedef wmi_vdev_vendor_event_fixed_param wmi_vendor_vdev_event_fixed_param;
 
@@ -43594,6 +43600,13 @@ typedef struct wmi_peer_vendor_event
      * because their offsets within wmi_peer_vendor_event_fixed_param
      * would change, causing backwards incompatibilities.
      */
+/*
+ * This fixed_param TLV may be followed by the below TLVs:
+ *   - A_UINT32 opaque_vendor_var_len_data[]:
+ *     Variable-length array of opaque data.
+ *     The _fixed_param.sub_type value clarifies how to interpret the
+ *     contents of this opaque data.
+ */
 } wmi_peer_vendor_event_fixed_param;
 typedef wmi_peer_vendor_event_fixed_param wmi_vendor_peer_event_fixed_param;
 
@@ -43612,6 +43625,13 @@ typedef struct wmi_pdev_vendor_cmd
      * because their offsets within wmi_pdev_vendor_cmd_fixed_param
      * would change, causing backwards incompatibilities.
      */
+/*
+ * This fixed_param TLV may be followed by the below TLVs:
+ *   - A_UINT32 opaque_vendor_var_len_data[]:
+ *     Variable-length array of opaque data.
+ *     The _fixed_param.sub_type value clarifies how to interpret the
+ *     contents of this opaque data.
+ */
 } wmi_pdev_vendor_cmd_fixed_param;
 typedef wmi_pdev_vendor_cmd_fixed_param wmi_vendor_pdev_cmd_fixed_param;
 
@@ -43632,6 +43652,13 @@ typedef struct wmi_vdev_vendor_cmd
      * because their offsets within wmi_vdev_vendor_cmd_fixed_param
      * would change, causing backwards incompatibilities.
      */
+/*
+ * This fixed_param TLV may be followed by the below TLVs:
+ *   - A_UINT32 opaque_vendor_var_len_data[]:
+ *     Variable-length array of opaque data.
+ *     The _fixed_param.sub_type value clarifies how to interpret the
+ *     contents of this opaque data.
+ */
 } wmi_vdev_vendor_cmd_fixed_param;
 typedef wmi_vdev_vendor_cmd_fixed_param wmi_vendor_vdev_cmd_fixed_param;
 
@@ -43654,6 +43681,13 @@ typedef struct wmi_peer_vendor_cmd
      * because their offsets within wmi_peer_vendor_cmd_fixed_param
      * would change, causing backwards incompatibilities.
      */
+/*
+ * This fixed_param TLV may be followed by the below TLVs:
+ *   - A_UINT32 opaque_vendor_var_len_data[]:
+ *     Variable-length array of opaque data.
+ *     The _fixed_param.sub_type value clarifies how to interpret the
+ *     contents of this opaque data.
+ */
 } wmi_peer_vendor_cmd_fixed_param;
 typedef wmi_peer_vendor_cmd_fixed_param wmi_vendor_peer_cmd_fixed_param;
 

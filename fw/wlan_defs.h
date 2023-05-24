@@ -1849,5 +1849,12 @@ typedef struct {
 A_COMPILE_TIME_ASSERT(check_mlo_glb_h_shmem_8byte_size_quantum,
         (((sizeof(mlo_glb_h_shmem) % sizeof(A_UINT64) == 0x0))));
 
+/** 2 word representation of MAC addr */
+typedef struct _wmi_mac_addr {
+    /** upper 4 bytes of  MAC address */
+    A_UINT32 mac_addr31to0;
+    /** lower 2 bytes of  MAC address */
+    A_UINT32 mac_addr47to32;
+} wmi_mac_addr;
 
 #endif /* __WLANDEFS_H__ */
