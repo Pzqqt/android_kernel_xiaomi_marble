@@ -82,6 +82,8 @@
  * @mlme_cm_cckm_preauth_cmpl_cb: Roam cckm preauth complete cb
  * @vdev: vdev pointer
  * @rsp: preauth response pointer
+ *
+ * @mlme_cm_perfd_reset_cpufreq_ctrl_cb: callback to reset CPU min freq
  */
 struct mlme_cm_ops {
 	QDF_STATUS (*mlme_cm_connect_complete_cb)(
@@ -122,6 +124,9 @@ struct mlme_cm_ops {
 					struct wlan_objmgr_vdev *vdev,
 					struct wlan_preauth_rsp *rsp);
 #endif
+#endif
+#ifdef WLAN_BOOST_CPU_FREQ_IN_ROAM
+	void (*mlme_cm_perfd_reset_cpufreq_ctrl_cb)(void);
 #endif
 };
 
@@ -1155,5 +1160,21 @@ mlme_twt_vdev_destroy_notification(struct wlan_objmgr_vdev *vdev)
 }
 
 #endif /* WLAN_SUPPORT_TWT && WLAN_TWT_CONV_SUPPORTED */
+
+#ifdef WLAN_BOOST_CPU_FREQ_IN_ROAM
+/**
+ * mlme_cm_osif_perfd_reset_cpufreq() - Function to reset CPU freq
+ *
+ * This function is to reset the CPU freq
+ *
+ * Return: None
+ */
+void mlme_cm_osif_perfd_reset_cpufreq(void);
+#else
+static inline
+void mlme_cm_osif_perfd_reset_cpufreq(void)
+{
+}
+#endif
 
 #endif
