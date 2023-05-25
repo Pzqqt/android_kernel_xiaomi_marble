@@ -2761,6 +2761,17 @@ static int dsi_panel_parse_dsc_params(struct dsi_display_mode *mode,
 	priv_info->dsc.config.pic_width = mode->timing.h_active;
 	priv_info->dsc.config.pic_height = mode->timing.v_active;
 
+	rc = utils->read_u32(utils->data, "qcom,mdss-dsc-pic-width-slice", &data);
+	if (rc) {
+		DSI_DEBUG("failed to parse qcom,mdss-dsc-pic-width-slice, defaulting to 1\n");
+		rc = 0;
+		data = 1;
+	} else if (!data || (data > 2)) {
+		DSI_ERR("invalid dsc pic-width-slice:%d\n", data);
+		goto error;
+	}
+	priv_info->dsc.dsc_pic_width_slice = data;
+
 	rc = utils->read_u32(utils->data, "qcom,mdss-dsc-slice-per-pkt", &data);
 	if (rc) {
 		DSI_ERR("failed to parse qcom,mdss-dsc-slice-per-pkt\n");
