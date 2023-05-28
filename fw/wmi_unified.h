@@ -43841,6 +43841,13 @@ typedef struct {
     A_UINT32 pdev_id;
     /** Return status. 0 for success, non-zero otherwise */
     A_UINT32 status;
+    /** max_ml_peer_ids:
+     * Max number of ml_peerids across the SOC, Derived as
+     *     max_mlo_peer * num chips.
+     * (Max_mlo_peer and num_chips are provided by Host Platform
+     * in QMI exchange).
+     */
+    A_UINT32 max_ml_peer_ids;
 } wmi_mlo_setup_complete_event_fixed_param;
 
 typedef struct {
