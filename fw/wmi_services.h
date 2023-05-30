@@ -628,6 +628,7 @@ typedef  enum  {
     WMI_SERVICE_RESTRICTED_TWT_REQUESTER = 375, /* Indicates FW supports Restricted TWT REQUESTER */
     WMI_SERVICE_RESTRICTED_TWT_RESPONDER = 376, /* Indicates FW supports Restricted TWT RESPONDER */
     WMI_SERVICE_AUX_MAC_SUPPORT = 377,
+    WMI_SERVICE_NAN_PAIRING_PEER_CREATE_BY_HOST = 378, /* Indicate FW supports creation of PASN Peer by Host for NAN pairing usecase */
 
     WMI_MAX_EXT2_SERVICE
 
