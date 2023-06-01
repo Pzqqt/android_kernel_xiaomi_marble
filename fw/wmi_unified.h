@@ -24515,6 +24515,8 @@ typedef struct {
      * Otherwise, it will be bssid which specified with link_id.
      */
     wmi_mac_addr mac_addr;
+    A_UINT32 key_len; /* number of valid bytes within key_buff */
+    A_UINT32 key_flags;
 } wmi_roam_ml_key_material_param;
 
 typedef struct {
