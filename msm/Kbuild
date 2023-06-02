@@ -13,8 +13,14 @@ endif
 endif
 
 ifeq ($(CONFIG_ARCH_NEO), y)
+ifeq ($(CONFIG_TARGET), neo_le)
+	include $(DISPLAY_ROOT)/config/gki_neoledisp.conf
+	LINUX_INC +=	-include $(DISPLAY_ROOT)/config/gki_neoledispconf.h
+endif
+ifeq ($(CONFIG_TARGET), neo_la)
 	include $(DISPLAY_ROOT)/config/gki_neodisp.conf
 	LINUX_INC +=	-include $(DISPLAY_ROOT)/config/gki_neodispconf.h
+endif
 endif
 
 ifeq ($(CONFIG_ARCH_PARROT), y)
