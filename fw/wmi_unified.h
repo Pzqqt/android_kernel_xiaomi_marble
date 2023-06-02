@@ -3338,6 +3338,11 @@ typedef struct {
 #define WMI_TARGET_CAP_CONCURRENCE_SUPPORT_SET(target_cap_flags, value) \
     WMI_SET_BITS(target_cap_flags, 11, 2, value)
 
+#define WMI_TARGET_CAP_MULTIPASS_SAP_SUPPORT_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 13, 1)
+#define WMI_TARGET_CAP_MULTIPASS_SAP_SUPPORT_SET(target_cap_flags, value) \
+    WMI_SET_BITS(target_cap_flags, 13, 1, value)
+
 /*
  * wmi_htt_msdu_idx_to_htt_msdu_qtype GET/SET APIs
  */
@@ -3480,7 +3485,8 @@ typedef struct {
      * Bits 12:11  concurrence support capability
      *      Bit11 - [ML-STA + SL-STA]  0: not supported; 1:supported
      *      Bit12 - [ML-STA + SL-SAP]  0: not supported; 1:supported
-     * Bits 31:13 - Reserved
+     * Bit 13 - Support for multipass SAP
+     * Bits 31:14 - Reserved
      */
     A_UINT32 target_cap_flags;
 
