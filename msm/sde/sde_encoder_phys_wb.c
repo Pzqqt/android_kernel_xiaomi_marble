@@ -524,6 +524,13 @@ static void _sde_encoder_phys_wb_setup_cwb(struct sde_encoder_phys *phys_enc,
 		return;
 	}
 
+	if (crtc->num_mixers > MAX_CWB_PER_CTL_V1) {
+		SDE_ERROR("[enc:%d wb:%d] %d LM %d CWB case not supported\n",
+				DRMID(phys_enc->parent), WBID(wb_enc),
+				crtc->num_mixers, MAX_CWB_PER_CTL_V1);
+		return;
+	}
+
 	hw_ctl = crtc->mixers[0].hw_ctl;
 	if (hw_ctl && hw_ctl->ops.setup_intf_cfg_v1 &&
 			(test_bit(SDE_WB_CWB_CTRL, &hw_wb->caps->features) ||
@@ -690,12 +697,18 @@ static int _sde_enc_phys_wb_validate_cwb(struct sde_encoder_phys *phys_enc,
 	int data_pt;
 	int ds_in_use = false;
 	int i = 0, is_fsc = 0;
-	int ret = 0;
+	int num_lm, ret = 0;
 
 	fb = sde_wb_connector_state_get_output_fb(conn_state);
 	if (!fb) {
 		SDE_DEBUG("no output framebuffer\n");
 		return 0;
+	}
+
+	num_lm = sde_crtc_get_num_datapath(crtc_state->crtc, conn_state->connector, crtc_state);
+	if (num_lm > MAX_CWB_PER_CTL_V1) {
+		SDE_ERROR("%d LM %d CWB case not supported\n", num_lm, MAX_CWB_PER_CTL_V1);
+		return -EINVAL;
 	}
 
 	fmt = sde_get_sde_format_ext(fb->format->format, fb->modifier);
