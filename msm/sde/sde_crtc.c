@@ -5357,6 +5357,8 @@ static int _sde_crtc_check_plane_layout(struct drm_crtc *crtc,
 
 		pstate = to_sde_plane_state(plane_state);
 		layout_split = crtc_state->mode.hdisplay >> 1;
+		if (sde_crtc_is_connector_fsc(to_sde_crtc_state(crtc_state)))
+			layout_split /= PLANAR_RGB_PACKING;
 
 		if (plane_state->crtc_x >= layout_split) {
 			plane_state->crtc_x -= layout_split;
