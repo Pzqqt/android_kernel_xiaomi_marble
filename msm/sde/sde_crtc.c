@@ -7134,14 +7134,15 @@ void sde_crtc_static_img_control(struct drm_crtc *crtc,
 		return;
 	}
 
-	if (test_bit(SDE_MDP_LLCC_DISP_LR, &sde_kms->catalog->mdp[0].features)) {
-		SDE_DEBUG("Cache mode is directly programmed without state machine\n");
-		return;
-	}
-
 	sde_crtc = to_sde_crtc(crtc);
 	if (sde_crtc->cache_state == state)
 		return;
+
+	if (test_bit(SDE_MDP_LLCC_DISP_LR, &sde_kms->catalog->mdp[0].features)) {
+		SDE_DEBUG("Cache state is directly programmed to frame read\n");
+		state = CACHE_STATE_FRAME_READ;
+		goto end;
+	}
 
 	switch (state) {
 	case CACHE_STATE_NORMAL:
@@ -7166,6 +7167,7 @@ void sde_crtc_static_img_control(struct drm_crtc *crtc,
 		return;
 	}
 
+end:
 	sde_crtc->cache_state = state;
 	drm_atomic_crtc_for_each_plane(plane, crtc)
 		sde_plane_static_img_control(plane, state);
