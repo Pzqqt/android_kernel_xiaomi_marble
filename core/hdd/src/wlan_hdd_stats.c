@@ -5429,6 +5429,7 @@ bool hdd_report_max_rate(struct hdd_adapter *adapter,
 	struct index_data_rate_type *supported_mcs_rate;
 	enum data_rate_11ac_max_mcs vht_max_mcs;
 	uint8_t max_mcs_idx = 0;
+	uint8_t max_ht_mcs_idx;
 	uint8_t rate_flag = 1;
 	int mode = 0, max_ht_idx;
 	QDF_STATUS stat = QDF_STATUS_E_FAILURE;
@@ -5596,10 +5597,11 @@ bool hdd_report_max_rate(struct hdd_adapter *adapter,
 				(struct index_data_rate_type *)
 				((nss == 1) ? &supported_mcs_rate_nss1 :
 				 &supported_mcs_rate_nss2);
-
-			max_ht_idx = MAX_HT_MCS_IDX;
+			max_ht_mcs_idx =
+				QDF_ARRAY_SIZE(supported_mcs_rate_nss1);
+			max_ht_idx = max_ht_mcs_idx;
 			if (rssidx != 0) {
-				for (i = 0; i < MAX_HT_MCS_IDX; i++) {
+				for (i = 0; i < max_ht_mcs_idx; i++) {
 					if (signal <= rssi_mcs_tbl[mode][i]) {
 						max_ht_idx = i + 1;
 						break;
@@ -5623,13 +5625,13 @@ bool hdd_report_max_rate(struct hdd_adapter *adapter,
 					}
 				}
 
-				if ((j < MAX_HT_MCS_IDX) &&
+				if ((j < max_ht_mcs_idx) &&
 				    (current_rate > max_rate))
 					max_rate = current_rate;
 			}
 
 			if (nss == 2)
-				max_mcs_idx += MAX_HT_MCS_IDX;
+				max_mcs_idx += max_ht_mcs_idx;
 			max_mcs_idx = (max_mcs_idx > mcs_index) ?
 				max_mcs_idx : mcs_index;
 		}
