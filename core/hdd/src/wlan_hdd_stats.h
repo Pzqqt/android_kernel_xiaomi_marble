@@ -30,8 +30,6 @@
 #include "wlan_hdd_main.h"
 
 #define INVALID_MCS_IDX 255
-#define MAX_HT_MCS_IDX 8
-#define MAX_VHT_MCS_IDX 10
 
 #define DATA_RATE_11AC_MCS_MASK    0x03
 
