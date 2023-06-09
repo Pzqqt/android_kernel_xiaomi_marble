@@ -3164,6 +3164,7 @@ void sde_encoder_virt_reset(struct drm_encoder *drm_enc)
 	memset(&sde_enc->mode_info, 0, sizeof(sde_enc->mode_info));
 
 	SDE_DEBUG_ENC(sde_enc, "encoder disabled\n");
+	SDE_EVT32(DRMID(drm_enc));
 
 	sde_rm_release(&sde_kms->rm, drm_enc, false);
 }
@@ -3275,8 +3276,8 @@ static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 		}
 	}
 
-	if ((sde_encoder_in_clone_mode(drm_enc) && !drm_enc->crtc->state->active)
-			|| !sde_encoder_in_clone_mode(drm_enc))
+	if ((sde_encoder_in_clone_mode(drm_enc) && sde_enc->crtc &&
+		!sde_enc->crtc->state->active) || !sde_encoder_in_clone_mode(drm_enc))
 		sde_encoder_virt_reset(drm_enc);
 }
 
