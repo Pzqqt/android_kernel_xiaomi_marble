@@ -5075,12 +5075,14 @@ typedef enum {
     WMI_VENDOR1_REQ1_VERSION_3_20   = 2,
     WMI_VENDOR1_REQ1_VERSION_3_30   = 3,
     WMI_VENDOR1_REQ1_VERSION_3_40   = 4,
+    WMI_VENDOR1_REQ1_VERSION_4_00   = 5,
 } WMI_VENDOR1_REQ1_VERSION;
 
 typedef enum {
     WMI_VENDOR1_REQ2_VERSION_3_00   = 0,
     WMI_VENDOR1_REQ2_VERSION_3_01   = 1,
     WMI_VENDOR1_REQ2_VERSION_3_20   = 2,
+    WMI_VENDOR1_REQ2_VERSION_3_50   = 3,
 } WMI_VENDOR1_REQ2_VERSION;
 
 typedef enum {
@@ -5357,6 +5359,11 @@ typedef enum {
         WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 106, 6)
 #define WMI_SET_HOST_BAND_CAP(feature_bitmap, val)   \
         WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 106, 6, val)
+
+#define WMI_GET_STA_DUMP_SUPPORT(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 112, 1)
+#define WMI_SET_STA_DUMP_SUPPORT(feature_bitmap, val)   \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 112, 1, val)
 
 /*
  * Specify how many A_UINT32 words are needed to hold the feature bitmap flags.
