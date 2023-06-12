@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2019,2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -160,8 +161,10 @@ void epping_close(void)
  * epping_target_suspend_acknowledge() - process wow ack/nack from fw
  * @context: htc_init_info->context
  * @wow_nack: true when wow is rejected
+ * @reason_code : WoW status reason code
  */
-static void epping_target_suspend_acknowledge(void *context, bool wow_nack)
+static void epping_target_suspend_acknowledge(void *context, bool wow_nack,
+					      uint16_t reson_code)
 {
 	if (!g_epping_ctx) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,

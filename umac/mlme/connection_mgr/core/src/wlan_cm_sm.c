@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2015,2020-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -575,7 +575,7 @@ static bool cm_subst_join_pending_event(void *ctx, uint16_t event,
 	case WLAN_CM_SM_EV_SCAN_FAILURE:
 		status = QDF_STATUS_E_FAILURE;
 		/* Fall through after setting status failure */
-		/* fallthrough */
+		fallthrough;
 	case WLAN_CM_SM_EV_SCAN_SUCCESS:
 		cm_connect_scan_resp(cm_ctx, data, status);
 		break;
