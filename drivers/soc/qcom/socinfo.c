@@ -165,6 +165,16 @@ static const char * const hw_platform_isku[] = {
 	[SKU_Y7 & SKU_INT_MASK] = "Y7",
 };
 
+enum {
+	PLATFORM_OEM_VARIANT_QC = 0x0,
+	PLATFORM_OEM_VARIANT_OEM,
+};
+
+static const char * const hw_platform_oem_variant[] = {
+	[PLATFORM_OEM_VARIANT_QC] = "QC",
+	[PLATFORM_OEM_VARIANT_OEM] = "OEM",
+};
+
 /* Socinfo SMEM item structure */
 static struct socinfo {
 	__le32 fmt;
@@ -216,13 +226,41 @@ static struct socinfo {
 	__le32  nproduct_code;
 	__le32  npartnamemap_offset;
 	__le32  nnum_partname_mapping;
+	/* Version 17 */
+	__le32 hw_plat_oem_variant;
 } *socinfo;
 
+#define MAX_SOCINFO_ATTRS 50
 /* sysfs attributes */
 #define ATTR_DEFINE(param)	\
 	static DEVICE_ATTR(param, 0644,	\
 		   msm_get_##param,	\
 		   NULL)
+
+/* sysfs attributes for subpart information */
+#define CREATE_PART_FUNCTION(part, part_enum)  \
+	static ssize_t \
+	msm_get_##part(struct device *dev, \
+			struct device_attribute *attr, \
+			char *buf) \
+	{ \
+		u32 *part_info; \
+		int num_parts = 0; \
+		int str_pos = 0, i = 0; \
+		num_parts = socinfo_get_part_count(part_enum); \
+		part_info = kmalloc_array(num_parts, sizeof(*part_info), GFP_KERNEL); \
+		socinfo_get_subpart_info(part_enum, part_info, num_parts); \
+		for (i = 0; i < num_parts; i++) { \
+			str_pos += scnprintf(buf+str_pos, PAGE_SIZE-str_pos, "0x%x", \
+					part_info[i]); \
+			if (i != num_parts-1) \
+				str_pos += scnprintf(buf+str_pos, PAGE_SIZE-str_pos, ","); \
+		} \
+		str_pos += scnprintf(buf+str_pos, PAGE_SIZE-str_pos, "\n"); \
+		kfree(part_info); \
+		return str_pos; \
+	} \
+	ATTR_DEFINE(part) \
 
 #define BUILD_ID_LENGTH 32
 #define CHIP_ID_LENGTH 32
@@ -435,6 +473,13 @@ static uint32_t socinfo_get_nproduct_code(void)
 		(socinfo_format >= SOCINFO_VERSION(0, 16) ?
 			le32_to_cpu(socinfo->nproduct_code) : 0)
 		: 0;
+}
+
+/* Version 17 */
+static uint32_t socinfo_get_platform_oem_variant(void)
+{
+	return (socinfo && socinfo_format >= SOCINFO_VERSION(0, 17)) ?
+			le32_to_cpu(socinfo->hw_plat_oem_variant) : 0;
 }
 
 /* Version 2 */
@@ -764,6 +809,92 @@ msm_get_subset_parts(struct device *dev,
 }
 ATTR_DEFINE(subset_parts);
 
+/*
+ * socinfo_get_part_count - Get part count
+ * @part: The subset_part_type to be checked
+ *
+ * Return the number of instance supported by the
+ * firmware for the part on success and a negative
+ * errno will be returned in error cases.
+ */
+int
+socinfo_get_part_count(enum subset_part_type part)
+{
+	int part_count = 1;
+
+	/* TODO: part_count to be read from SMEM after firmware adds support */
+	if ((part <= PART_UNKNOWN) || (part >= NUM_PARTS_MAX)) {
+		pr_err("Bad part number\n");
+		return -EINVAL;
+	}
+
+	return part_count;
+}
+EXPORT_SYMBOL(socinfo_get_part_count);
+
+/*
+ * socinfo_get_subpart_info - Get subpart information
+ * @part: The subset_part_type to be checked
+ * @part_info: Pointer to the subpart information.
+ *             Used to store the subpart information
+ *             for num_parts instances of the part.
+ * @num_parts: Number of instances of the part for
+ *             which the subpart information is required.
+ *
+ * On success subpart information will be stored in the part_info
+ * array for minimum of the number of instances requested and
+ * the number of instances supported by the firmware.
+ *
+ * A value of zero will be returned on success and a negative
+ * errno will be returned in error cases.
+ */
+int
+socinfo_get_subpart_info(enum subset_part_type part,
+		u32 *part_info,
+		u32 num_parts)
+{
+	uint32_t num_subset_parts = 0, offset = 0;
+	void *info = socinfo;
+	u32 i = 0, count = 0;
+	int part_count = 0;
+
+	part_count = socinfo_get_part_count(part);
+	if (part_count <= 0)
+		return -EINVAL;
+
+	num_subset_parts = socinfo_get_num_subset_parts();
+	offset = socinfo_get_nsubset_parts_array_offset();
+	if (!num_subset_parts || !offset)
+		return -EINVAL;
+
+	info += (offset + (part * sizeof(u32)));
+	count = min_t(u32, num_parts, part_count);
+	for (i = 0; i < count; i++) {
+		part_info[i] = get_unaligned_le32(info);
+		info += sizeof(u32);
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(socinfo_get_subpart_info);
+
+CREATE_PART_FUNCTION(gpu, PART_GPU);
+CREATE_PART_FUNCTION(video, PART_VIDEO);
+CREATE_PART_FUNCTION(camera, PART_CAMERA);
+CREATE_PART_FUNCTION(display, PART_DISPLAY);
+CREATE_PART_FUNCTION(audio, PART_AUDIO);
+CREATE_PART_FUNCTION(modem, PART_MODEM);
+CREATE_PART_FUNCTION(wlan, PART_WLAN);
+CREATE_PART_FUNCTION(comp, PART_COMP);
+CREATE_PART_FUNCTION(sensors, PART_SENSORS);
+CREATE_PART_FUNCTION(npu, PART_NPU);
+CREATE_PART_FUNCTION(spss, PART_SPSS);
+CREATE_PART_FUNCTION(nav, PART_NAV);
+CREATE_PART_FUNCTION(comp1, PART_COMP1);
+CREATE_PART_FUNCTION(display1, PART_DISPLAY1);
+CREATE_PART_FUNCTION(nsp, PART_NSP);
+CREATE_PART_FUNCTION(eva, PART_EVA);
+
 /* Version 15 */
 static ssize_t
 msm_get_nmodem_supported(struct device *dev,
@@ -795,6 +926,34 @@ msm_get_esku(struct device *dev,
 	return sysfs_emit(buf, "%s\n", esku ? esku : "Unknown");
 }
 ATTR_DEFINE(esku);
+
+/* Version 17 */
+static ssize_t
+msm_get_platform_oem_variant_id(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	uint32_t hw_oem_variant;
+
+	hw_oem_variant = socinfo_get_platform_oem_variant();
+	return scnprintf(buf, PAGE_SIZE, "%u\n", hw_oem_variant);
+}
+ATTR_DEFINE(platform_oem_variant_id);
+
+static ssize_t
+msm_get_platform_oem_variant(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	uint32_t hw_oem_variant;
+
+	hw_oem_variant = socinfo_get_platform_oem_variant();
+	if (hw_oem_variant != PLATFORM_OEM_VARIANT_QC)
+		hw_oem_variant = PLATFORM_OEM_VARIANT_OEM;
+
+	return scnprintf(buf, PAGE_SIZE, "%-.32s\n", hw_platform_oem_variant[hw_oem_variant]);
+}
+ATTR_DEFINE(platform_oem_variant);
 
 struct qcom_socinfo {
 	struct soc_device *soc_dev;
@@ -889,7 +1048,7 @@ static const struct soc_id soc_id[] = {
 };
 
 static struct qcom_socinfo *qsocinfo;
-static struct attribute *msm_custom_socinfo_attrs[35];
+static struct attribute *msm_custom_socinfo_attrs[MAX_SOCINFO_ATTRS];
 
 static char *socinfo_get_image_version_base_address(void)
 {
@@ -1150,6 +1309,10 @@ static void socinfo_populate_sysfs(struct qcom_socinfo *qcom_socinfo)
 	int i = 0;
 
 	switch (socinfo_format) {
+	case SOCINFO_VERSION(0, 17):
+		msm_custom_socinfo_attrs[i++] = &dev_attr_platform_oem_variant_id.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_platform_oem_variant.attr;
+		fallthrough;
 	case SOCINFO_VERSION(0, 16):
 		msm_custom_socinfo_attrs[i++] = &dev_attr_sku.attr;
 		msm_custom_socinfo_attrs[i++] = &dev_attr_esku.attr;
@@ -1165,6 +1328,22 @@ static void socinfo_populate_sysfs(struct qcom_socinfo *qcom_socinfo)
 		&dev_attr_nsubset_parts_array_offset.attr;
 		msm_custom_socinfo_attrs[i++] = &dev_attr_subset_cores.attr;
 		msm_custom_socinfo_attrs[i++] = &dev_attr_subset_parts.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_gpu.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_video.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_camera.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_display.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_audio.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_modem.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_wlan.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_comp.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_sensors.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_npu.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_spss.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_nav.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_comp1.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_display1.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_nsp.attr;
+		msm_custom_socinfo_attrs[i++] = &dev_attr_eva.attr;
 	case SOCINFO_VERSION(0, 13):
 		msm_custom_socinfo_attrs[i++] = &dev_attr_nproduct_id.attr;
 		msm_custom_socinfo_attrs[i++] = &dev_attr_chip_name.attr;
@@ -1421,6 +1600,30 @@ static void socinfo_print(void)
 			sku ? sku : "Unknown");
 		break;
 
+	case SOCINFO_VERSION(0, 17):
+		pr_info("v%u.%u, id=%u, ver=%u.%u, raw_id=%u, raw_ver=%u, hw_plat=%u, hw_plat_ver=%u\n accessory_chip=%u, hw_plat_subtype=%u, pmic_model=%u, pmic_die_revision=%u foundry_id=%u serial_number=%u num_pmics=%u chip_family=0x%x raw_device_family=0x%x raw_device_number=0x%x nproduct_id=0x%x num_clusters=0x%x ncluster_array_offset=0x%x nmodem_supported=0x%x sku=%s hw_plat_oem_variant=%u\n",
+			f_maj, f_min, socinfo->id, v_maj, v_min,
+			socinfo->raw_id, socinfo->raw_ver,
+			socinfo->hw_plat,
+			socinfo->plat_ver,
+			socinfo->accessory_chip,
+			socinfo->hw_plat_subtype,
+			socinfo->pmic_model,
+			socinfo->pmic_die_rev,
+			socinfo->foundry_id,
+			socinfo->serial_num,
+			socinfo->num_pmics,
+			socinfo->chip_family,
+			socinfo->raw_device_family,
+			socinfo->raw_device_num,
+			socinfo->nproduct_id,
+			socinfo->num_clusters,
+			socinfo->ncluster_array_offset,
+			socinfo->nmodem_supported,
+			sku ? sku : "Unknown",
+			socinfo->hw_plat_oem_variant);
+		break;
+
 	default:
 		pr_err("Unknown format found: v%u.%u\n", f_maj, f_min);
 		break;
@@ -1452,6 +1655,17 @@ const char *socinfo_get_id_string(void)
 	return socinfo_machine(id);
 }
 EXPORT_SYMBOL(socinfo_get_id_string);
+
+int socinfo_get_oem_variant_id(void)
+{
+	if (socinfo_format < SOCINFO_VERSION(0, 17)) {
+		pr_warn("socinfo: oem_variant is not supported by bootloaders\n");
+		return -EINVAL;
+	}
+
+	return socinfo_get_platform_oem_variant();
+}
+EXPORT_SYMBOL(socinfo_get_oem_variant_id);
 
 static int qcom_socinfo_probe(struct platform_device *pdev)
 {
