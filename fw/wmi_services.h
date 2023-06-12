@@ -628,6 +628,10 @@ typedef  enum  {
     WMI_SERVICE_RESTRICTED_TWT_REQUESTER = 375, /* Indicates FW supports Restricted TWT REQUESTER */
     WMI_SERVICE_RESTRICTED_TWT_RESPONDER = 376, /* Indicates FW supports Restricted TWT RESPONDER */
     WMI_SERVICE_AUX_MAC_SUPPORT = 377,
+    WMI_SERVICE_NAN_PAIRING_PEER_CREATE_BY_HOST = 378, /* Indicate FW supports creation of PASN Peer by Host for NAN pairing usecase */
+    WMI_SERVICE_MLO_TID_TO_LINK_MAPPING_SUPPORT = 379, /* Indicates FW supports TID-TO-LINK mapping */
+    WMI_SERVICE_PER_LINK_STATS_SUPPORT = 380, /* Indicates FW supports per link stats for MLO */
+    WMI_SERVICE_N_LINK_MLO_SUPPORT = 381,  /* Indicate FW supports N MLO link & vdev re-purpose between links */
 
     WMI_MAX_EXT2_SERVICE
 

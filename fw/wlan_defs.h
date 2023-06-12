@@ -1747,7 +1747,14 @@ A_COMPILE_TIME_ASSERT(check_mlo_glb_link_info_8byte_size_quantum,
 
 typedef enum {
     MLO_SHMEM_CRASH_PARTNER_CHIPS = 1,
+    MLO_SHMEM_CRASH_SW_PANIC      = 2,
+    MLO_SHMEM_CRASH_SW_ASSERT     = 3,
 } MLO_SHMEM_CHIP_CRASH_REASON;
+
+typedef enum {
+    MLO_SHMEM_RECOVERY_CRASH_PARTNER_CHIPS = 1,
+    MLO_SHMEM_RECOVER_NON_MLO_MODE = 2,
+} MLO_SHMEM_CHIP_RECOVERY_MODE;
 
 /* glb link info structures used for scratchpad memory (crash and recovery) */
 typedef struct {
@@ -1757,6 +1764,12 @@ typedef struct {
      * crash reason, takes value in enum MLO_SHMEM_CHIP_CRASH_REASON
      */
     A_UINT32 crash_reason;
+    /**
+     * crash reason, takes value in enum MLO_SHMEM_CHIP_RECOVERY_MODE
+     */
+    A_UINT32 recovery_mode;
+    /* reserved: added for padding to A_UINT64 size, available for future use */
+    A_UINT32 reserved;
 } mlo_glb_per_chip_crash_info;
 
 A_COMPILE_TIME_ASSERT(check_mlo_glb_per_chip_crash_info,
