@@ -632,6 +632,7 @@ typedef  enum  {
     WMI_SERVICE_MLO_TID_TO_LINK_MAPPING_SUPPORT = 379, /* Indicates FW supports TID-TO-LINK mapping */
     WMI_SERVICE_PER_LINK_STATS_SUPPORT = 380, /* Indicates FW supports per link stats for MLO */
     WMI_SERVICE_N_LINK_MLO_SUPPORT = 381,  /* Indicate FW supports N MLO link & vdev re-purpose between links */
+    WMI_SERVICE_ATF_MAX_CLIENT_512_SUPPORT = 382, /* Indicates FW supports maximum of 512 clients when ATF is enabled */
 
     WMI_MAX_EXT2_SERVICE
 

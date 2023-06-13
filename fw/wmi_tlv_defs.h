@@ -1385,6 +1385,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_mlo_new_primary_link_peer_info,
     WMITLV_TAG_STRUC_wmi_mlo_primary_link_peer_migration_compl_fixed_param,
     WMITLV_TAG_STRUC_wmi_mlo_primary_link_peer_migration_status,
+    WMITLV_TAG_STRUC_wmi_atf_group_info_v2,
+    WMITLV_TAG_STRUC_wmi_atf_peer_info_v2,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -4484,7 +4486,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_FWTEST_CMDID);
 /* ATF PEER REQUEST commands. */
 #define WMITLV_TABLE_WMI_PEER_ATF_REQUEST_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_atf_request_fixed_param, wmi_peer_atf_request_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
-WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_atf_peer_info, peer_info, WMITLV_SIZE_VAR)
+WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_atf_peer_info, peer_info, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_atf_peer_info_v2, peer_info_v2, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_ATF_REQUEST_CMDID);
 
 #define WMITLV_TABLE_WMI_VDEV_TID_LATENCY_CONFIG_CMDID(id,op,buf,len) \
@@ -4500,7 +4503,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_TID_LATENCY_CONFIG_CMDID);
 /* ATF Group Request commands */
 #define WMITLV_TABLE_WMI_ATF_SSID_GROUPING_REQUEST_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_atf_ssid_grp_request_fixed_param, wmi_atf_ssid_grp_request_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_atf_group_info, group_info, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_atf_group_info, group_info, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_atf_group_info_v2, group_info_v2, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_ATF_SSID_GROUPING_REQUEST_CMDID);
 
 /* ATF Group WMM Request commands */

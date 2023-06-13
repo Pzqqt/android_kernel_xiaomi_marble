@@ -32770,12 +32770,100 @@ typedef struct {
     A_UINT32 pdev_id;
 } wmi_atf_peer_info;
 
+#define WMI_ATF_PEER_UNITS_BIT_POS        0
+#define WMI_ATF_PEER_UNITS_NUM_BITS       16
+
+#define WMI_ATF_GET_PEER_UNITS(atf_peer_info)  \
+    WMI_GET_BITS(atf_peer_info,WMI_ATF_PEER_UNITS_BIT_POS,WMI_ATF_PEER_UNITS_NUM_BITS)
+
+#define WMI_ATF_SET_PEER_UNITS(atf_peer_info,val)  \
+    WMI_SET_BITS(atf_peer_info,WMI_ATF_PEER_UNITS_BIT_POS,WMI_ATF_PEER_UNITS_NUM_BITS, val)
+
+#define WMI_ATF_GROUP_ID_BIT_POS        16
+#define WMI_ATF_GROUP_ID_NUM_BITS       8
+
+#define WMI_ATF_GET_GROUP_ID(atf_peer_info)  \
+    WMI_GET_BITS(atf_peer_info,WMI_ATF_GROUP_ID_BIT_POS,WMI_ATF_GROUP_ID_NUM_BITS)
+
+#define WMI_ATF_SET_GROUP_ID(atf_peer_info,val)  \
+    WMI_SET_BITS(atf_peer_info,WMI_ATF_GROUP_ID_BIT_POS,WMI_ATF_GROUP_ID_NUM_BITS, val)
+
+#define WMI_ATF_EXPLICIT_PEER_FLAG_BIT_POS        24
+#define WMI_ATF_EXPLICIT_PEER_FLAG_NUM_BITS       1
+
+#define WMI_ATF_GET_EXPLICIT_PEER_FLAG(atf_peer_info)  \
+    WMI_GET_BITS(atf_peer_info,WMI_ATF_EXPLICIT_PEER_FLAG_BIT_POS,WMI_ATF_EXPLICIT_PEER_FLAG_NUM_BITS)
+
+#define WMI_ATF_SET_EXPLICIT_PEER_FLAG(atf_peer_info,val)  \
+    WMI_SET_BITS(atf_peer_info,WMI_ATF_EXPLICIT_PEER_FLAG_BIT_POS,WMI_ATF_EXPLICIT_PEER_FLAG_NUM_BITS, val)
+
+typedef struct {
+    /* The new structure is an optimized version of wmi_atf_peer_info & wmi_atf_peer_ext_info combined */
+    A_UINT32 tlv_header;
+    wmi_mac_addr peer_macaddr;
+    /* atf_peer_info
+     * Bits 0-15  - atf_units (based on 1 part in 1000 (per mille))
+     * Bits 16-23 - atf_groupid
+     * Bit  24    - Configured Peer Indication (0/1), this bit would be set by
+     *              host to indicate that the peer has airtime % configured
+     *              explicitly by user
+     * Bits 25-31 - Reserved (Shall be zero)
+     */
+    A_UINT32 atf_peer_info;
+} wmi_atf_peer_info_v2;
+
+#define WMI_ATF_PEER_FULL_UPDATE_BIT_POS        0
+#define WMI_ATF_PEER_FULL_UPDATE_NUM_BITS       1
+
+#define WMI_ATF_GET_PEER_FULL_UPDATE(atf_flags)  \
+    WMI_GET_BITS(atf_flags,WMI_ATF_PEER_FULL_UPDATE_BIT_POS,WMI_ATF_PEER_FULL_UPDATE_NUM_BITS)
+
+#define WMI_ATF_SET_PEER_FULL_UPDATE(atf_flags,val)  \
+    WMI_SET_BITS(atf_flags,WMI_ATF_PEER_FULL_UPDATE_BIT_POS,WMI_ATF_PEER_FULL_UPDATE_NUM_BITS,val)
+
+#define WMI_ATF_PEER_PENDING_WMI_CMDS_BIT_POS        1
+#define WMI_ATF_PEER_PENDING_WMI_CMDS_NUM_BITS       1
+
+#define WMI_ATF_GET_PEER_PENDING_WMI_CMDS(atf_flags)  \
+    WMI_GET_BITS(atf_flags,WMI_ATF_PEER_PENDING_WMI_CMDS_BIT_POS, WMI_ATF_PEER_PENDING_WMI_CMDS_NUM_BITS)
+
+#define WMI_ATF_SET_PEER_PENDING_WMI_CMDS(atf_flags,val)  \
+    WMI_SET_BITS(atf_flags,WMI_ATF_PEER_PENDING_WMI_CMDS_BIT_POS, WMI_ATF_PEER_PENDING_WMI_CMDS_NUM_BITS, val)
+
+#define WMI_ATF_PEER_PDEV_ID_VALID_BIT_POS          2
+#define WMI_ATF_PEER_PDEV_ID_VALID_NUM_BITS         1
+
+#define WMI_ATF_GET_PEER_PDEV_ID_VALID(atf_flags)   \
+    WMI_GET_BITS(atf_flags,WMI_ATF_PEER_PDEV_ID_VALID_BIT_POS, WMI_ATF_PEER_PDEV_ID_VALID_NUM_BITS)
+
+#define WMI_ATF_SET_PEER_PDEV_ID_VALID(atf_flags,val)   \
+    WMI_SET_BITS(atf_flags,WMI_ATF_PEER_PDEV_ID_VALID_BIT_POS, WMI_ATF_PEER_PDEV_ID_VALID_NUM_BITS, val)
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_atf_request_fixed_param */
     A_UINT32 num_peers;
+    A_UINT32 pdev_id;
+    /* atf_flags
+     * Bit 0 - full or partial update;
+     *         full update -
+     *             indicates that this is done for all the connected peers
+     *         partial update -
+     *             indicates update for only the newly connected peers
+     *             (whenever some peers gets connected/disconnected)
+     * Bit 1 - indicates whether there are more iterations of WMI command
+     *         incoming after the current set of cmds
+     *         Example : If there are 500 peers present and tlv can accomodate
+     *         only 50 peers at a time, then this will be set for all the
+     *         instances of the WMI commands except the last one.
+     * Bit 2 - indicates if pdev_id is valid or not
+     * Bits 3-31 - Reserved (Shall be zero)
+     */
+    A_UINT32 atf_flags;
     /*
-     * Following this structure is the TLV:
-     * struct wmi_atf_peer_info peer_info[num_peers];
+     * Following this structure is one of the following TLVs
+     * (only one of them will have valid data in a particular message)
+     *   - struct wmi_atf_peer_info peer_info[num_peers];
+     *   - struct wmi_atf_peer_info_v2 peer_info_v2[num_peers];
      */
 } wmi_peer_atf_request_fixed_param;
 
@@ -32808,12 +32896,69 @@ typedef struct {
     A_UINT32 atf_group_flags;
 } wmi_atf_group_info;
 
+#define WMI_ATF_GROUP_NUM_EXPLICIT_PEERS_BIT_POS    0
+#define WMI_ATF_GROUP_NUM_EXPLICIT_PEERS_NUM_BITS   16
+
+#define WMI_ATF_GROUP_GET_NUM_EXPLICIT_PEERS(atf_total_num_peers)  \
+    WMI_GET_BITS(atf_total_num_peers, WMI_ATF_GROUP_NUM_EXPLICIT_PEERS_BIT_POS, WMI_ATF_GROUP_NUM_EXPLICIT_PEERS_NUM_BITS)
+
+#define WMI_ATF_GROUP_SET_NUM_EXPLICIT_PEERS(atf_total_num_peers, val)  \
+    WMI_SET_BITS(atf_total_num_peers, WMI_ATF_GROUP_NUM_EXPLICIT_PEERS_BIT_POS, WMI_ATF_GROUP_NUM_EXPLICIT_PEERS_NUM_BITS, val)
+
+#define WMI_ATF_GROUP_NUM_IMPLICIT_PEERS_BIT_POS    16
+#define WMI_ATF_GROUP_NUM_IMPLICIT_PEERS_NUM_BITS   16
+
+#define WMI_ATF_GROUP_GET_NUM_IMPLICIT_PEERS(atf_total_num_peers)  \
+    WMI_GET_BITS(atf_total_num_peers, WMI_ATF_GROUP_NUM_IMPLICIT_PEERS_BIT_POS, WMI_ATF_GROUP_NUM_IMPLICIT_PEERS_NUM_BITS)
+
+#define WMI_ATF_GROUP_SET_NUM_IMPLICIT_PEERS(atf_total_num_peers, val)  \
+    WMI_SET_BITS(atf_total_num_peers, WMI_ATF_GROUP_NUM_IMPLICIT_PEERS_BIT_POS, WMI_ATF_GROUP_NUM_IMPLICIT_PEERS_NUM_BITS, val)
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_atf_group_info_v2 */
+    A_UINT32 tlv_header;
+    A_UINT32 atf_group_id; /* ID of the Air Time Management group */
+    /* atf_group_units
+     * Fraction of air time allowed for the group, in per mille units
+     * (from 0-1000).
+     * For example, to indicate that the group can use 12.3% of the air time,
+     * the atf_group_units setting would be 123.
+     */
+    A_UINT32 atf_group_units;
+    /* atf_group_flags
+     *  Bits 0-3  - Group Schedule Policy (Fair/Strict/Fair with upper bound)
+     *              Refer to WMI_ATF_SSID_ definitions
+     *  Bit  4-31 - Reserved (Shall be zero)
+     */
+    A_UINT32 atf_group_flags;
+    /* atf_total_num_peers
+     *
+     *  Bits 0-15  - total number of explicit peers
+     *  Bits 16-31 - total number of implicit peers
+     *  An explicit peer has an ATF % configured by the user.
+     *  An implicit peer has an ATF % =
+     *      (Group_ATF_percent - Total_Explicit_Peers_ATF_Percent) /
+     *      number of implicit peers
+     *  This computation can be done in FW based on atf_total_num_peers.
+     */
+    A_UINT32 atf_total_num_peers;
+    /* atf_total_implicit_peer_units
+     *
+     * Air time allocated for all the implicit peers
+     * (from 0-1000, in per mille units)
+     */
+    A_UINT32 atf_total_implicit_peer_units;
+} wmi_atf_group_info_v2;
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_atf_ssid_grp_request_fixed_param */
     A_UINT32 pdev_id;
     /*
-     * Following this structure is the TLV:
-     * struct wmi_atf_group_info group_info[];
+     * Following this structure is the one of the following TLVs
+     * (only one of them will have valid data in a particular message)
+     *   - struct wmi_atf_group_info group_info[];
+     *   - struct wmi_atf_group_info_v2 group_info[];
      */
 } wmi_atf_ssid_grp_request_fixed_param;
 
@@ -43737,23 +43882,38 @@ typedef enum {
     WMI_MLO_LINK_FORCE_REASON_TDLS             = 4, /* Set force specific links because of 11BE MLO TDLS setup/teardown */
 } WMI_MLO_LINK_FORCE_REASON;
 
-#define WMI_MLO_CONTROL_FLAGS_GET_OVERWRITE_FORCE_ACTIVE(mlo_flags)                WMI_GET_BITS(control_flags, 0, 1)
-#define WMI_MLO_CONTROL_FLAGS_SET_OVERWRITE_FORCE_ACTIVE(mlo_flags, value)         WMI_SET_BITS(control_flags, 0, 1, value)
-#define WMI_MLO_CONTROL_FLAGS_GET_OVERWRITE_FORCE_INACTIVE(mlo_flags)              WMI_GET_BITS(control_flags, 1, 1)
-#define WMI_MLO_CONTROL_FLAGS_SET_OVERWRITE_FORCE_INACTIVE(mlo_flags, value)       WMI_SET_BITS(control_flags, 1, 1, value)
+#define WMI_MLO_CONTROL_FLAGS_GET_OVERWRITE_FORCE_ACTIVE(mlo_flags) \
+    WMI_GET_BITS(control_flags, 0, 1)
+#define WMI_MLO_CONTROL_FLAGS_SET_OVERWRITE_FORCE_ACTIVE(mlo_flags, value) \
+    WMI_SET_BITS(control_flags, 0, 1, value)
+#define WMI_MLO_CONTROL_FLAGS_GET_OVERWRITE_FORCE_INACTIVE(mlo_flags) \
+    WMI_GET_BITS(control_flags, 1, 1)
+#define WMI_MLO_CONTROL_FLAGS_SET_OVERWRITE_FORCE_INACTIVE(mlo_flags, value) \
+    WMI_SET_BITS(control_flags, 1, 1, value)
+#define WMI_MLO_CONTROL_FLAGS_GET_DYNAMIC_FORCE_LINK_NUM(mlo_flags) \
+    WMI_GET_BITS(control_flags, 2, 1)
+#define WMI_MLO_CONTROL_FLAGS_SET_DYNAMIC_FORCE_LINK_NUM(mlo_flags, value) \
+    WMI_SET_BITS(control_flags, 2, 1, value)
 
 /*
  * This structure is used for passing wmi_mlo_control_flags.
- * When force_mode is WMI_MLO_LINK_FORCE_ACTIVE or WMI_MLO_LINK_FORCE_INACTIVE
- * host can pass below control flags, to indicate if FW need to clear earlier
- * force bitmap config.
+ *
+ *  - When force_mode is WMI_MLO_LINK_FORCE_ACTIVE or
+ *    WMI_MLO_LINK_FORCE_INACTIVE host can pass below control flags,
+ *    to indicate if FW need to clear earlier force bitmap config.
+ *
+ *  - When force mode is WMI_MLO_LINK_FORCE_ACTIVE_LINK_NUM or
+ *    WMI_MLO_LINK_FORCE_INACTIVE_LINK_NUM, host can pass below control flags,
+ *    to indicate if FW need to use force link number instead of force link
+ *    bitmap.
  */
 typedef struct {
     union {
         struct {
             A_UINT32 overwrite_force_active_bitmap:1, /* indicate overwrite all earlier force_active bitmaps */
                      overwrite_force_inactive_bitmap:1, /* indicate overwrite all earlier force_inactive bitmaps */
-                     unused: 30;
+                     dynamic_force_link_num:1, /* indicate fw to use force link number instead of force link bitmap */
+                     unused: 29;
         };
         A_UINT32 control_flags;
     };
