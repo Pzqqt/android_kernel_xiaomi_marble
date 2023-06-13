@@ -1559,6 +1559,8 @@ typedef enum {
     WMI_MLO_LINK_SET_BSS_PARAMS_CMDID,
     /** WMI cmd to confirm the status of link switch request handling */
     WMI_MLO_LINK_SWITCH_CONF_CMDID,
+    /** WMI cmd to migrate the primary link peer */
+    WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_CMDID,
 
     /** WMI commands specific to Service Aware WiFi (SAWF) */
     /** configure or reconfigure the parameters for a service class */
@@ -2398,6 +2400,8 @@ typedef enum {
     WMI_MLO_LINK_DISABLE_REQUEST_EVENTID,
     /** request host to switch to new link for specified vdev */
     WMI_MLO_LINK_SWITCH_REQUEST_EVENTID,
+    /** Response event for WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_CMDID */
+    WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_EVENTID,
 
     /* WMI event specific to Quiet handling */
     WMI_QUIET_HANDLING_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_QUIET_OFL),
@@ -36472,6 +36476,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_SET_RF_PATH_CMDID); /* set RF path of PHY */
         WMI_RETURN_STRING(WMI_VDEV_PAUSE_CMDID);
         WMI_RETURN_STRING(WMI_GPIO_STATE_REQ_CMDID);
+        WMI_RETURN_STRING(WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -45712,6 +45717,81 @@ typedef struct {
     A_UINT32 status;  /*see definition of WMI_LINK_SWITCH_CNF_STATUS*/
     A_UINT32 reason;  /*see definition of WMI_LINK_SWITCH_CNF_REASON*/
 } wmi_mlo_link_switch_cnf_fixed_param;
+
+#define WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_ML_PEER_ID_GET(new_link_info) WMI_GET_BITS(new_link_info, 0, 16)
+#define WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_ML_PEER_ID_SET(new_link_info, value) WMI_SET_BITS(new_link_info, 0, 16, value)
+
+#define WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_HW_LINK_ID_GET(new_link_info) WMI_GET_BITS(new_link_info, 16, 16)
+#define WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_HW_LINK_ID_SET(new_link_info, value) WMI_SET_BITS(new_link_info, 16, 16, value)
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mlo_new_primary_link_peer_info */
+    A_UINT32 tlv_header;
+
+    union {
+        A_UINT32 new_link_info;
+        struct {
+            A_UINT32 ml_peer_id :16,
+                     hw_link_id :16;
+        };
+    };
+} wmi_mlo_new_primary_link_peer_info;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mlo_primary_link_peer_migration_fixed_param */
+    A_UINT32 tlv_header;
+
+    A_UINT32 vdev_id;
+
+    /**
+     * Following this structure is
+     * the array of "wmi_mlo_new_primary_link_peer_info" TLVs.
+     */
+} wmi_mlo_primary_link_peer_migration_fixed_param;
+
+#define WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_STATUS_ML_PEER_ID_GET(status_info) WMI_GET_BITS(status_info, 0, 16)
+#define WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_STATUS_ML_PEER_ID_SET(status_info, value) WMI_SET_BITS(status_info, 0, 16, value)
+
+#define WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_STATUS_STATUS_GET(status_info) WMI_GET_BITS(status_info, 16, 8)
+#define WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_STATUS_STATUS_SET(status_info, value) WMI_SET_BITS(status_info, 16, 8, value)
+
+typedef enum {
+    WMI_PRIMARY_LINK_PEER_MIGRATION_SUCCESS,
+    WMI_PRIMARY_LINK_PEER_MIGRATION_IN_PROGRESS,
+    WMI_PRIMARY_LINK_PEER_MIGRATION_DELETE_IN_PROGRESS,
+    WMI_PRIMARY_LINK_PEER_MIGRATION_DELETED,
+    WMI_PRIMARY_LINK_PEER_MIGRATION_TX_PIPES_FAILED,
+    WMI_PRIMARY_LINK_PEER_MIGRATION_RX_PIPES_FAILED,
+
+    /* Add any new status above this line */
+    WMI_PRIMARY_LINK_PEER_MIGRATION_FAIL = 255,
+} WMI_PRIMARY_LINK_PEER_MIGRATION_STATUS;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mlo_primary_link_peer_migration_status */
+    A_UINT32 tlv_header;
+
+    union {
+        A_UINT32 status_info;
+        struct {
+            A_UINT32 ml_peer_id :16,
+                     status     :8, /* WMI_PRIMARY_LINK_PEER_MIGRATION_STATUS */
+                     reserved   :8;
+        };
+    };
+} wmi_mlo_primary_link_peer_migration_status;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mlo_primary_link_peer_migration_compl_fixed_param */
+    A_UINT32 tlv_header;
+    A_UINT32 vdev_id;
+
+    /**
+     * Following the fixed param is
+     * the array of TLVs "wmi_mlo_primary_link_peer_migration_status".
+     */
+} wmi_mlo_primary_link_peer_migration_compl_fixed_param;
+
 
 
 /* ADD NEW DEFS HERE */
