@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/devcoredump.h>
@@ -903,9 +903,6 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 	} else {
 		inst->power.fw_cr = inst->hfi_frame_info.cr;
 	}
-
-	if (is_encode_session(inst) && inst->max_filled_len > buf->data_size)
-		inst->max_filled_len = buf->data_size;
 
 	if (!is_image_session(inst) && is_decode_session(inst) && buf->data_size)
 		msm_vidc_update_timestamp(inst, buf->timestamp);
