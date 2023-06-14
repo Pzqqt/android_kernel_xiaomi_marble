@@ -248,8 +248,7 @@ enum {
   Function declarations and documenation
   ------------------------------------------------------------------------*/
 QDF_STATUS sme_open(mac_handle_t mac_handle);
-QDF_STATUS sme_init_chan_list(mac_handle_t mac_handle, uint8_t *alpha2,
-		enum country_src cc_src);
+QDF_STATUS sme_init_chan_list(mac_handle_t mac_handle, enum country_src cc_src);
 QDF_STATUS sme_close(mac_handle_t mac_handle);
 QDF_STATUS sme_start(mac_handle_t mac_handle);
 

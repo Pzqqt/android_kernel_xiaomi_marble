@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -474,11 +475,13 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 	uint32_t channelnum, chan_freq;
 	struct scheduler_msg msg = {0};
 	uint8_t channel24gnum, count;
+	uint8_t reg_cc[REG_ALPHA2_LEN + 1];
 
 	ht40_obss_scanind = qdf_mem_malloc(sizeof(struct obss_ht40_scanind));
 	if (!ht40_obss_scanind)
 		return QDF_STATUS_E_FAILURE;
 
+	wlan_reg_read_current_country(mac_ctx->psoc, reg_cc);
 	ht40_obss_scanind->cmd = HT40_OBSS_SCAN_PARAM_START;
 	ht40_obss_scanind->scan_type = eSIR_ACTIVE_SCAN;
 	ht40_obss_scanind->obss_passive_dwelltime =
@@ -497,7 +500,7 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 		session->obss_ht40_scanparam.obss_activity_threshold;
 	ht40_obss_scanind->current_operatingclass =
 		wlan_reg_dmn_get_opclass_from_channel(
-			mac_ctx->scan.countryCodeCurrent,
+			reg_cc,
 			wlan_reg_freq_to_chan(
 			mac_ctx->pdev, session->curr_op_freq),
 			session->ch_width);

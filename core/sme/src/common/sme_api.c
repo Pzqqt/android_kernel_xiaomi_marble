@@ -853,8 +853,7 @@ QDF_STATUS sme_open(mac_handle_t mac_handle)
 /*
  * sme_init_chan_list, triggers channel setup based on country code.
  */
-QDF_STATUS sme_init_chan_list(mac_handle_t mac_handle, uint8_t *alpha2,
-			      enum country_src cc_src)
+QDF_STATUS sme_init_chan_list(mac_handle_t mac_handle, enum country_src cc_src)
 {
 	struct mac_context *pmac = MAC_CONTEXT(mac_handle);
 
@@ -863,7 +862,7 @@ QDF_STATUS sme_init_chan_list(mac_handle_t mac_handle, uint8_t *alpha2,
 		pmac->mlme_cfg->gen.enabled_11d = false;
 	}
 
-	return csr_init_chan_list(pmac, alpha2);
+	return csr_init_chan_list(pmac);
 }
 
 /*
@@ -12179,7 +12178,9 @@ void sme_get_opclass(mac_handle_t mac_handle, uint8_t channel,
 		     uint8_t bw_offset, uint8_t *opclass)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	uint8_t reg_cc[REG_ALPHA2_LEN + 1];
 
+	wlan_reg_read_current_country(mac_ctx->psoc, reg_cc);
 	/* redgm opclass table contains opclass for 40MHz low primary,
 	 * 40MHz high primary and 20MHz. No support for 80MHz yet. So
 	 * first we will check if bit for 40MHz is set and if so find
@@ -12189,21 +12190,17 @@ void sme_get_opclass(mac_handle_t mac_handle, uint8_t channel,
 	 */
 	if (bw_offset & (1 << BW_40_OFFSET_BIT)) {
 		*opclass = wlan_reg_dmn_get_opclass_from_channel(
-				mac_ctx->scan.countryCodeCurrent,
-				channel, BW40_LOW_PRIMARY);
+				reg_cc, channel, BW40_LOW_PRIMARY);
 		if (!(*opclass)) {
 			*opclass = wlan_reg_dmn_get_opclass_from_channel(
-					mac_ctx->scan.countryCodeCurrent,
-					channel, BW40_HIGH_PRIMARY);
+					reg_cc, channel, BW40_HIGH_PRIMARY);
 		}
 	} else if (bw_offset & (1 << BW_20_OFFSET_BIT)) {
 		*opclass = wlan_reg_dmn_get_opclass_from_channel(
-				mac_ctx->scan.countryCodeCurrent,
-				channel, BW20);
+				reg_cc, channel, BW20);
 	} else {
 		*opclass = wlan_reg_dmn_get_opclass_from_channel(
-				mac_ctx->scan.countryCodeCurrent,
-				channel, BWALL);
+				reg_cc, channel, BWALL);
 	}
 }
 #endif

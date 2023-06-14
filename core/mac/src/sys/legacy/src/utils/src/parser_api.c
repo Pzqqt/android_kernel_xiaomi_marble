@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -195,6 +195,7 @@ void populate_dot_11_f_ext_chann_switch_ann(struct mac_context *mac_ptr,
 	uint32_t sw_target_freq;
 	uint8_t primary_channel;
 	enum phy_ch_width ch_width;
+	uint8_t reg_cc[REG_ALPHA2_LEN + 1];
 
 	ch_width = session_entry->gLimChannelSwitch.ch_width;
 	ch_offset = session_entry->gLimChannelSwitch.sec_ch_offset;
@@ -211,8 +212,9 @@ void populate_dot_11_f_ext_chann_switch_ann(struct mac_context *mac_ptr,
 		session_entry->gLimChannelSwitch.switchCount;
 	dot_11_ptr->present = 1;
 
+	wlan_reg_read_current_country(mac_ptr->psoc, reg_cc);
 	pe_debug("country:%s chan:%d freq %d width:%d reg:%d off:%d",
-		 mac_ptr->scan.countryCodeCurrent,
+		 reg_cc,
 		 session_entry->gLimChannelSwitch.primaryChannel,
 		 sw_target_freq,
 		 session_entry->gLimChannelSwitch.ch_width,
