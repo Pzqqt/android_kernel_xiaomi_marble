@@ -401,7 +401,7 @@ QDF_STATUS ucfg_cm_check_ft_status(struct wlan_objmgr_pdev *pdev,
 				   mlme_priv->connect_info.ft_info.ft_state);
 			break;
 		}
-		/* fallthrough */
+		fallthrough;
 	default:
 		mlme_debug("Unhandled state:%d",
 			   mlme_priv->connect_info.ft_info.ft_state);

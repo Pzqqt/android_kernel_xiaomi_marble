@@ -3012,7 +3012,6 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 	switch (type) {
 	/* Automatically determine transmit power */
 	case NL80211_TX_POWER_AUTOMATIC:
-	/* Fall through */
 	case NL80211_TX_POWER_LIMITED:
 	/* Limit TX power by the mBm parameter */
 		status = sme_set_max_tx_power(mac_handle, bssid, selfmac, dbm);

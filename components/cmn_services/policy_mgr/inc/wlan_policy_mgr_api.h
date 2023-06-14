@@ -4357,4 +4357,18 @@ policy_mgr_is_conc_sap_present_on_sta_freq(struct wlan_objmgr_psoc *psoc,
  * Return: number of active connection on the specific frequency
  */
 uint32_t policy_mgr_get_connection_count_with_ch_freq(uint32_t ch_freq);
+
+/**
+ * policy_mgr_any_other_vdev_on_same_mac_as_freq() - Function to check
+ * whether more than one vdev are present on same mac or not
+ * @psoc: PSOC object
+ * @freq: Channel frequency
+ * @vdev_id: Vdev id
+ *
+ * Return: True if more than one vdev are present on same mac
+ *
+ */
+bool policy_mgr_any_other_vdev_on_same_mac_as_freq(
+				struct wlan_objmgr_psoc *psoc,
+				uint32_t freq, uint8_t vdev_id);
 #endif /* __WLAN_POLICY_MGR_API_H */

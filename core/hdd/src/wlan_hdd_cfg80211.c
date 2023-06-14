@@ -54,6 +54,7 @@
 #include "qdf_str.h"
 #include "qdf_trace.h"
 #include "qdf_types.h"
+#include "qdf_net_if.h"
 #include "cds_utils.h"
 #include "cds_sched.h"
 #include "wlan_hdd_scan.h"
@@ -7079,8 +7080,7 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 {
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct nlattr *tb_vendor[QCA_WLAN_VENDOR_ATTR_WIFI_INFO_GET_MAX + 1];
-	tSirVersionString driver_version;
-	tSirVersionString firmware_version;
+	uint8_t *firmware_version = NULL;
 	int status;
 	struct sk_buff *reply_skb;
 	uint32_t skb_len = 0, count = 0;
@@ -7108,9 +7108,7 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 
 	if (tb_vendor[QCA_WLAN_VENDOR_ATTR_WIFI_INFO_DRIVER_VERSION]) {
 		hdd_debug("Rcvd req for Driver version");
-		strlcpy(driver_version, QWLAN_VERSIONSTR,
-			sizeof(driver_version));
-		skb_len += strlen(driver_version) + 1;
+		skb_len += strlen(QWLAN_VERSIONSTR) + 1;
 		count++;
 	}
 
@@ -7119,16 +7117,20 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 		if (!pld_get_soc_info(hdd_ctx->parent_dev, &info))
 			stt_flag = true;
 
-		snprintf(firmware_version, sizeof(firmware_version),
-			"FW:%d.%d.%d.%d.%d.%d HW:%s STT:%s",
-			hdd_ctx->fw_version_info.major_spid,
-			hdd_ctx->fw_version_info.minor_spid,
-			hdd_ctx->fw_version_info.siid,
-			hdd_ctx->fw_version_info.rel_id,
-			hdd_ctx->fw_version_info.crmid,
-			hdd_ctx->fw_version_info.sub_id,
-			hdd_ctx->target_hw_name,
-			(stt_flag ? info.fw_build_id : " "));
+		firmware_version = qdf_mem_malloc(SIR_VERSION_STRING_LEN);
+		if (!firmware_version)
+			return -ENOMEM;
+
+		snprintf(firmware_version, SIR_VERSION_STRING_LEN,
+			 "FW:%d.%d.%d.%d.%d.%d HW:%s STT:%s",
+			 hdd_ctx->fw_version_info.major_spid,
+			 hdd_ctx->fw_version_info.minor_spid,
+			 hdd_ctx->fw_version_info.siid,
+			 hdd_ctx->fw_version_info.rel_id,
+			 hdd_ctx->fw_version_info.crmid,
+			 hdd_ctx->fw_version_info.sub_id,
+			 hdd_ctx->target_hw_name,
+			 (stt_flag ? info.fw_build_id : " "));
 		skb_len += strlen(firmware_version) + 1;
 		count++;
 	}
@@ -7141,6 +7143,7 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 
 	if (count == 0) {
 		hdd_err("unknown attribute in get_wifi_info request");
+		qdf_mem_free(firmware_version);
 		return -EINVAL;
 	}
 
@@ -7149,13 +7152,14 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 
 	if (!reply_skb) {
 		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
+		qdf_mem_free(firmware_version);
 		return -ENOMEM;
 	}
 
 	if (tb_vendor[QCA_WLAN_VENDOR_ATTR_WIFI_INFO_DRIVER_VERSION]) {
 		if (nla_put_string(reply_skb,
 			    QCA_WLAN_VENDOR_ATTR_WIFI_INFO_DRIVER_VERSION,
-			    driver_version))
+			    QWLAN_VERSIONSTR))
 			goto error_nla_fail;
 	}
 
@@ -7173,10 +7177,12 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 			goto error_nla_fail;
 	}
 
+	qdf_mem_free(firmware_version);
 	return cfg80211_vendor_cmd_reply(reply_skb);
 
 error_nla_fail:
 	hdd_err("nla put fail");
+	qdf_mem_free(firmware_version);
 	kfree_skb(reply_skb);
 	return -EINVAL;
 }
@@ -19626,6 +19632,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	bool ap_random_bssid_enabled;
 	QDF_STATUS status;
 	int errno;
+	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
 
 	hdd_enter();
 
@@ -19708,13 +19715,20 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 				 * a randomized MAC address of the
 				 * form 02:1A:11:Fx:xx:xx
 				 */
-				get_random_bytes(&ndev->dev_addr[3], 3);
-				ndev->dev_addr[0] = 0x02;
-				ndev->dev_addr[1] = 0x1A;
-				ndev->dev_addr[2] = 0x11;
-				ndev->dev_addr[3] |= 0xF0;
-				memcpy(adapter->mac_addr.bytes, ndev->dev_addr,
+				memcpy(mac_addr, ndev->dev_addr,
 				       QDF_MAC_ADDR_SIZE);
+
+				get_random_bytes(&mac_addr[3], 3);
+				mac_addr[0] = 0x02;
+				mac_addr[1] = 0x1A;
+				mac_addr[2] = 0x11;
+				mac_addr[3] |= 0xF0;
+				memcpy(adapter->mac_addr.bytes, mac_addr,
+				       QDF_MAC_ADDR_SIZE);
+				qdf_net_update_net_device_dev_addr(ndev,
+								   mac_addr,
+								   QDF_MAC_ADDR_SIZE);
+
 				pr_info("wlan: Generated HotSpot BSSID "
 					QDF_MAC_ADDR_FMT "\n",
 					QDF_MAC_ADDR_REF(ndev->dev_addr));

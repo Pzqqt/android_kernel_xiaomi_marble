@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1027,6 +1027,50 @@ error:
 	return ret;
 }
 
+#ifdef TDLS_MGMT_VERSION5
+static void
+wlan_cfg80211_tdls_indicate_discovery(struct tdls_osif_indication *ind)
+{
+	struct vdev_osif_priv *osif_vdev;
+
+	osif_vdev = wlan_vdev_get_ospriv(ind->vdev);
+
+	cfg80211_tdls_oper_request(osif_vdev->wdev->netdev,
+				   ind->peer_mac, -1,
+				   NL80211_TDLS_DISCOVERY_REQ,
+				   false, GFP_KERNEL);
+}
+
+static void
+wlan_cfg80211_tdls_indicate_setup(struct tdls_osif_indication *ind)
+{
+	struct vdev_osif_priv *osif_vdev;
+	int link_id = -1;
+
+	osif_vdev = wlan_vdev_get_ospriv(ind->vdev);
+	if (wlan_vdev_mlme_is_mlo_vdev(ind->vdev))
+		link_id = wlan_vdev_get_link_id(ind->vdev);
+
+	osif_debug("Indication to request TDLS setup on link id %d", link_id);
+	cfg80211_tdls_oper_request(osif_vdev->wdev->netdev,
+				   ind->peer_mac, link_id,
+				   NL80211_TDLS_SETUP, false,
+				   GFP_KERNEL);
+}
+
+static void
+wlan_cfg80211_tdls_indicate_teardown(struct tdls_osif_indication *ind)
+{
+	struct vdev_osif_priv *osif_vdev;
+
+	osif_vdev = wlan_vdev_get_ospriv(ind->vdev);
+
+	osif_debug("Teardown reason %d", ind->reason);
+	cfg80211_tdls_oper_request(osif_vdev->wdev->netdev,
+				   ind->peer_mac, -1, NL80211_TDLS_TEARDOWN,
+				   ind->reason, GFP_KERNEL);
+}
+#else
 static void
 wlan_cfg80211_tdls_indicate_discovery(struct tdls_osif_indication *ind)
 {
@@ -1064,6 +1108,7 @@ wlan_cfg80211_tdls_indicate_teardown(struct tdls_osif_indication *ind)
 				   ind->peer_mac, NL80211_TDLS_TEARDOWN,
 				   ind->reason, GFP_KERNEL);
 }
+#endif
 
 void wlan_cfg80211_tdls_event_callback(void *user_data,
 				       enum tdls_event_type type,
@@ -1114,6 +1159,7 @@ void wlan_cfg80211_tdls_event_callback(void *user_data,
 	case TDLS_EVENT_ANTENNA_SWITCH:
 		tdls_priv->tdls_antenna_switch_status = ind->status;
 		complete(&tdls_priv->tdls_antenna_switch_comp);
+		break;
 	default:
 		break;
 	}

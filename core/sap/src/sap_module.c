@@ -573,7 +573,7 @@ enum phy_ch_width wlan_sap_get_concurrent_bw(struct wlan_objmgr_pdev *pdev,
 	bool is_hw_dbs_capable = false;
 
 	if (WLAN_REG_IS_24GHZ_CH_FREQ(con_ch_freq))
-		return CH_WIDTH_20MHZ;
+		return channel_width;
 
 	if (wlan_reg_is_6ghz_chan_freq(con_ch_freq))
 		return channel_width;
@@ -2244,7 +2244,7 @@ wlansap_reset_sap_config_add_ie(struct sap_config *config,
 		}
 		if (eUPDATE_IE_ALL != updateType)
 			break;
-		/* fallthrough */
+		fallthrough;
 	case eUPDATE_IE_ASSOC_RESP:
 		if (config->pAssocRespIEsBuffer) {
 			qdf_mem_free(config->pAssocRespIEsBuffer);
@@ -2253,7 +2253,7 @@ wlansap_reset_sap_config_add_ie(struct sap_config *config,
 		}
 		if (eUPDATE_IE_ALL != updateType)
 			break;
-		/* fallthrough */
+		fallthrough;
 	case eUPDATE_IE_PROBE_BCN:
 		if (config->pProbeRespBcnIEsBuffer) {
 			qdf_mem_free(config->pProbeRespBcnIEsBuffer);
@@ -2262,7 +2262,7 @@ wlansap_reset_sap_config_add_ie(struct sap_config *config,
 		}
 		if (eUPDATE_IE_ALL != updateType)
 			break;
-		/* fallthrough */
+		fallthrough;
 	default:
 		if (eUPDATE_IE_ALL != updateType)
 			sap_err("Invalid buffer type %d", updateType);

@@ -842,10 +842,9 @@ cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		mlo_roam_copy_partner_info(connect_rsp, roam_synch_data);
 		mlo_roam_update_connected_links(vdev, connect_rsp);
 	}
-	cm_connect_info(vdev, true, &connect_rsp->bssid, &connect_rsp->ssid,
-			connect_rsp->freq);
 
 	mlme_cm_osif_connect_complete(vdev, connect_rsp);
+
 	/**
 	 * Don't send roam_sync complete for MLO link vdevs.
 	 * Send only for legacy STA/MLO STA vdev.
@@ -867,6 +866,7 @@ cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			cm_roam_start_init_on_connect(pdev, vdev_id);
 		}
 		wlan_cm_tgt_send_roam_sync_complete_cmd(psoc, vdev_id);
+
 	}
 
 	status = cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_ROAM_DONE,

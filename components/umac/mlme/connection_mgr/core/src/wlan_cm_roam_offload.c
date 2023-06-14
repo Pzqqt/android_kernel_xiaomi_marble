@@ -1623,6 +1623,13 @@ cm_check_band_freq_match(enum band_info band, qdf_freq_t freq)
 	if (band == BAND_5G && WLAN_REG_IS_5GHZ_CH_FREQ(freq))
 		return true;
 
+	/*
+	 * Not adding the band check for now as band_info will be soon
+	 * replaced with reg_wifi_band enum
+	 */
+	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(freq))
+		return true;
+
 	return false;
 }
 
@@ -3618,7 +3625,7 @@ cm_roam_switch_to_deinit(struct wlan_objmgr_pdev *pdev,
 			if (QDF_IS_STATUS_ERROR(status))
 				mlme_err("ROAM: Unable to clear roam scan mode");
 		}
-
+		break;
 	case WLAN_ROAM_INIT:
 		break;
 
@@ -3995,7 +4002,7 @@ cm_roam_switch_to_roam_start(struct wlan_objmgr_pdev *pdev,
 					    WLAN_ROAMING_IN_PROG);
 			break;
 		}
-		/* fallthrough */
+		fallthrough;
 	case WLAN_ROAM_INIT:
 	case WLAN_ROAM_DEINIT:
 	case WLAN_ROAM_SYNCH_IN_PROG:
@@ -4057,7 +4064,7 @@ cm_roam_switch_to_roam_sync(struct wlan_objmgr_pdev *pdev,
 		 * transition to WLAN_ROAM_SYNCH_IN_PROG not allowed otherwise
 		 * if we're already RSO stopped, fall through to return failure
 		 */
-		/* fallthrough */
+		fallthrough;
 	case WLAN_ROAM_INIT:
 	case WLAN_ROAM_DEINIT:
 	case WLAN_ROAM_SYNCH_IN_PROG:

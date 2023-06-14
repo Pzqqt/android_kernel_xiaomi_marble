@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,6 +41,7 @@
 #include "cfg_nan_api.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "qdf_util.h"
+#include "qdf_net_if.h"
 #include <cdp_txrx_misc.h>
 #include "wlan_fwol_ucfg_api.h"
 
@@ -742,17 +743,12 @@ int hdd_ndi_set_mode(const char *iface_name)
 			return -EFAULT;
 		}
 		ndi_mac_addr = &random_ndi_mac.bytes[0];
+		hdd_update_dynamic_mac(hdd_ctx, &adapter->mac_addr,
+				       (struct qdf_mac_addr *)ndi_mac_addr);
+		qdf_mem_copy(&adapter->mac_addr, ndi_mac_addr, ETH_ALEN);
+		qdf_net_update_net_device_dev_addr(adapter->dev,
+						   ndi_mac_addr, ETH_ALEN);
 	}
-
-	if (!ndi_mac_addr) {
-		hdd_err("ndi mac address is null");
-		return -EINVAL;
-	}
-
-	hdd_update_dynamic_mac(hdd_ctx, &adapter->mac_addr,
-			       (struct qdf_mac_addr *)ndi_mac_addr);
-	qdf_mem_copy(&adapter->mac_addr, ndi_mac_addr, ETH_ALEN);
-	qdf_mem_copy(adapter->dev->dev_addr, ndi_mac_addr, ETH_ALEN);
 
 	adapter->device_mode = QDF_NDI_MODE;
 	hdd_debug("Created NDI with device mode:%d and iface_name:%s",
