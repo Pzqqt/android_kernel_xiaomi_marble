@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -59,7 +60,7 @@ QDF_STATUS qdf_ini_parse(const char *ini_path, void *context,
 			case '\n':
 				*cursor = '\0';
 				cursor++;
-				/* fall through */
+				fallthrough;
 			case '\0':
 				eol = true;
 				break;
@@ -85,7 +86,7 @@ QDF_STATUS qdf_ini_parse(const char *ini_path, void *context,
 				 */
 				comment = true;
 				*cursor = '\0';
-				/* fall through */
+				fallthrough;
 			default:
 				cursor++;
 				break;

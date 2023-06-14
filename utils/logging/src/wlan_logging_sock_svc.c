@@ -64,6 +64,15 @@
 #include <cdp_txrx_misc.h>
 #endif
 
+/*
+ * The following commit was introduced in v5.17:
+ * cead18552660 ("exit: Rename complete_and_exit to kthread_complete_and_exit")
+ * Use the old name for kernels before 5.17
+ */
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 17, 0))
+#define kthread_complete_and_exit(c, s) complete_and_exit(c, s)
+#endif
+
 #define MAX_NUM_PKT_LOG 32
 
 #define LOGGING_TRACE(level, args ...) \
@@ -923,7 +932,7 @@ static int wlan_logging_thread(void *Arg)
 			  &gwlan_logging.eventFlag);
 	}
 
-	complete_and_exit(&gwlan_logging.shutdown_comp, 0);
+	kthread_complete_and_exit(&gwlan_logging.shutdown_comp, 0);
 
 	return 0;
 }

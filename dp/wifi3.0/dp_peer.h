@@ -71,6 +71,7 @@ struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
 				       int mac_addr_is_aligned,
 				       uint8_t vdev_id,
 				       enum dp_mod_id id);
+bool dp_peer_find_by_id_valid(struct dp_soc *soc, uint16_t peer_id);
 
 /**
  * dp_peer_get_ref() - Returns peer object given the peer id

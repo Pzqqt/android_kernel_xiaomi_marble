@@ -375,7 +375,7 @@ scm_copy_valid_channels(struct wlan_objmgr_psoc *psoc,
 		 * Consider the complete channel list if firmware supports
 		 * RNR_ONLY scan flag/feature.
 		 */
-		/* fallthrough */
+		fallthrough;
 	default:
 		/*
 		 * Allow all 2g/5g/6g channels. Below are also covered in this

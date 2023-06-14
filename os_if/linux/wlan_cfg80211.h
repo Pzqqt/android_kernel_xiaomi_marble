@@ -502,6 +502,15 @@ static inline void wlan_cfg80211_unregister_netdevice(struct net_device *dev)
 #endif
 
 #ifdef CFG80211_SINGLE_NETDEV_MULTI_LINK_SUPPORT
+#ifdef CFG80211_RU_PUNCT_NOTIFY
+static inline
+void wlan_cfg80211_ch_switch_notify(struct net_device *dev,
+				    struct cfg80211_chan_def *chandef,
+				    unsigned int link_id)
+{
+	cfg80211_ch_switch_notify(dev, chandef, link_id, 0);
+}
+#else
 static inline
 void wlan_cfg80211_ch_switch_notify(struct net_device *dev,
 				    struct cfg80211_chan_def *chandef,
@@ -509,6 +518,7 @@ void wlan_cfg80211_ch_switch_notify(struct net_device *dev,
 {
 	cfg80211_ch_switch_notify(dev, chandef, link_id);
 }
+#endif
 #else
 static inline
 void wlan_cfg80211_ch_switch_notify(struct net_device *dev,
