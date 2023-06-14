@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1483,7 +1483,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 		 */
 		hdd_wmm_free_context(qos_context);
 		/* start packets flowing */
-		/* fallthrough */
+		fallthrough;
 	case SME_QOS_STATUS_SETUP_SUCCESS_NO_ACM_NO_APSD_RSP:
 		/* no ACM in effect, no need to setup U-APSD */
 	case SME_QOS_STATUS_SETUP_SUCCESS_APSD_SET_ALREADY:

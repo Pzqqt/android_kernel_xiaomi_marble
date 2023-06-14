@@ -1334,9 +1334,13 @@ QDF_STATUS cds_post_disable(void)
 
 	/* flush any unprocessed scheduler messages */
 	sched_ctx = scheduler_get_context();
-	if (sched_ctx)
-		scheduler_queues_flush(sched_ctx);
-
+	if (sched_ctx) {
+		qdf_status = scheduler_disable();
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			cds_err("Failed to disable scheduler");
+			return QDF_STATUS_E_INVAL;
+		}
+	}
 	/*
 	 * With new state machine changes cds_close can be invoked without
 	 * cds_disable. So, send the following clean up prerequisites to fw,
@@ -1387,11 +1391,6 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 	QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		cds_err("Failed to close CDS Scheduler");
-
-	qdf_status = dispatcher_disable();
-	QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-	if (QDF_IS_STATUS_ERROR(qdf_status))
-		cds_err("Failed to disable dispatcher; status:%d", qdf_status);
 
 	dispatcher_psoc_close(psoc);
 

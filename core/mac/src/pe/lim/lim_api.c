@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -86,6 +86,7 @@
 #include "wlan_mlo_mgr_sta.h"
 #include "wlan_mlo_mgr_peer.h"
 #include <wlan_twt_api.h>
+#include "wlan_tdls_api.h"
 
 struct pe_hang_event_fixed_param {
 	uint16_t tlv_header;
@@ -2711,6 +2712,13 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 		(struct bss_params *) ft_session_ptr->ftPEContext.pAddBssReq;
 	add_bss_params = ft_session_ptr->ftPEContext.pAddBssReq;
 	lim_delete_tdls_peers(mac_ctx, session_ptr);
+	/*
+	 * After deleting the TDLS peers notify the Firmware about TDLS STA
+	 * disconnection due to roaming
+	 */
+	wlan_tdls_notify_sta_disconnect(vdev_id, true,
+					false, session_ptr->vdev);
+
 	curr_sta_ds = dph_lookup_hash_entry(mac_ctx, session_ptr->bssId, &aid,
 					    &session_ptr->dph.dphHashTable);
 	if (!curr_sta_ds && !is_multi_link_roam(roam_sync_ind_ptr)) {

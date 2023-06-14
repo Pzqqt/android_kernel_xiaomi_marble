@@ -2463,6 +2463,9 @@ struct osif_cm_ops osif_ops = {
 	.cckm_preauth_complete_cb = hdd_cm_cckm_preauth_complete,
 #endif
 #endif
+#ifdef WLAN_BOOST_CPU_FREQ_IN_ROAM
+	.perfd_set_cpufreq_cb = hdd_cm_perfd_set_cpufreq,
+#endif
 };
 
 QDF_STATUS hdd_cm_register_cb(void)
