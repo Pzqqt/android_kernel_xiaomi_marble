@@ -7206,6 +7206,8 @@ typedef struct {
 /* This TLV is followed by wmi_tx_send_params
  * wmi_tx_send_params tx_send_params;
  * wmi_mlo_tx_send_params mlo_tx_send_params[];
+ *     Note: WMI_MLO_MGMT_TID path validated for specific scenario
+ *     (BTM Usecase). Full support is not available.
  * wmi_tx_send_params_ext tx_send_params_ext[0 or 1];
  */
 } wmi_mgmt_tx_send_cmd_fixed_param;
@@ -15839,7 +15841,7 @@ typedef struct {
     A_UINT32 vdev_id;
     /** VDEV type (AP,STA,IBSS,MONITOR) */
     A_UINT32 vdev_type;
-    /** VDEV subtype (P2PDEV, P2PCLI, P2PGO, BT3.0)*/
+    /** VDEV subtype (P2PDEV, P2PCLI, P2PGO, BT3.0, BRIDGE) */
     A_UINT32 vdev_subtype;
     /** VDEV MAC address */
     wmi_mac_addr vdev_macaddr;
@@ -16086,6 +16088,14 @@ typedef enum {
  * with smart monitor AP mode
  */
 #define WMI_UNIFIED_VDEV_SUBTYPE_SMART_MON  0x7
+
+/* Subtype to indicate that the VDEV is in Bridge mode.
+ * Bridge VDEV is dummy VDEV required for 4 chip MLO scenario.
+ * Bridge Peer will be connected to Bridge VDEV.
+ * Bridge VDEV/PEER will be required to seamlessly transmit
+ * to diagonal links in 4 chip MLO.
+ */
+#define WMI_UNIFIED_VDEV_SUBTYPE_BRIDGE  0x8
 
 /** values for vdev_start_request flags */
 /** Indicates that AP VDEV uses hidden ssid. only valid for
