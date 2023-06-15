@@ -250,9 +250,10 @@
  * 3.122 Add is_umac_hang flag in H2T UMAC_HANG_RECOVERY_SOC_START_PRE_RESET msg
  * 3.123 Add HTT_OPTION_TLV_TCL_METADATA_V21 def.
  * 3.124 Add HTT_T2H_MSG_TYPE_PEER_EXTENDED_EVENT def.
+ * 3.125 Expand fisa_aggr_limit bits in fisa_control_bits_v2.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 124
+#define HTT_CURRENT_VERSION_MINOR 125
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -8621,8 +8622,8 @@ PREPACK struct htt_h2t_msg_type_fisa_config_t {
          } fisa_control_bits;
          struct {
              A_UINT32 fisa_enable:                1,
-                      fisa_aggr_limit:            4,
-                      reserved:                   27;
+                      fisa_aggr_limit:            6,
+                      reserved:                   25;
          } fisa_control_bits_v2;
 
          A_UINT32 fisa_control_value;
@@ -8842,7 +8843,7 @@ PREPACK struct htt_h2t_msg_type_fisa_config_t {
         } while (0)
 
 /* Dword 1: fisa_control_value fisa_aggr_limit */
-#define HTT_RX_FISA_CONFIG_FISA_V2_AGGR_LIMIT_M        0x0000001e
+#define HTT_RX_FISA_CONFIG_FISA_V2_AGGR_LIMIT_M        0x0000007e
 #define HTT_RX_FISA_CONFIG_FISA_V2_AGGR_LIMIT_S        1
 #define HTT_RX_FISA_CONFIG_FISA_V2_AGGR_LIMIT_GET(_var) \
         (((_var) & HTT_RX_FISA_CONFIG_FISA_V2_AGGR_LIMIT_M) >> \

@@ -633,6 +633,7 @@ typedef  enum  {
     WMI_SERVICE_PER_LINK_STATS_SUPPORT = 380, /* Indicates FW supports per link stats for MLO */
     WMI_SERVICE_N_LINK_MLO_SUPPORT = 381,  /* Indicate FW supports N MLO link & vdev re-purpose between links */
     WMI_SERVICE_ATF_MAX_CLIENT_512_SUPPORT = 382, /* Indicates FW supports maximum of 512 clients when ATF is enabled */
+    WMI_SERVICE_FISA_DYNAMIC_MSDU_AGGR_SIZE_SUPPORT = 383, /* Indicates FW support for FISA aggregation size up to 64 instead of only 16 */
 
     WMI_MAX_EXT2_SERVICE
 
