@@ -1387,6 +1387,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_mlo_primary_link_peer_migration_status,
     WMITLV_TAG_STRUC_wmi_atf_group_info_v2,
     WMITLV_TAG_STRUC_wmi_atf_peer_info_v2,
+    WMITLV_TAG_STRUC_wmi_mlo_link_recommendation_fixed_param,
+    WMITLV_TAG_STRUC_wmi_mlo_peer_recommended_links,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -1917,6 +1919,7 @@ typedef enum {
     OP(WMI_VENDOR_VDEV_CMDID) \
     OP(WMI_VENDOR_PEER_CMDID) \
     OP(WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_CMDID) \
+    OP(WMI_MLO_LINK_RECOMMENDATION_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -5169,6 +5172,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_PEER_TID_TO_LINK_MAP_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_ap_vdev_tid_to_link_map_cmd_fixed_param, wmi_mlo_ap_vdev_tid_to_link_map_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mlo_ap_vdev_tid_to_link_map_ie_info, mlo_vdev_tid_to_link_map_ie_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_MLO_AP_VDEV_TID_TO_LINK_MAP_CMDID);
+
+/** WMI cmd used to set up Tid to Link Mapping for a vdev */
+#define WMITLV_TABLE_WMI_MLO_LINK_RECOMMENDATION_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_link_recommendation_fixed_param, wmi_mlo_link_recommendation_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mlo_peer_recommended_links, mlo_peer_recommended_links, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_RECOMMENDATION_CMDID);
 
 /* Mcast ipv4 address filter list cmd */
 #define WMITLV_TABLE_WMI_VDEV_IGMP_OFFLOAD_CMDID(id,op,buf,len) \
