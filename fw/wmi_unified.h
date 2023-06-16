@@ -6372,6 +6372,7 @@ typedef struct {
 
 typedef enum {
     WMI_RX_PARAMS_EXT_META_ADDBA = 0x0,
+    WMI_RX_PARAMS_EXT_META_TWT = 0x1,
 } wmi_mgmt_rx_params_ext_meta_t;
 
 typedef struct {
@@ -6395,6 +6396,20 @@ typedef struct {
                 reo_win_size :16; /* 2x the negotiated BA window size to handle any latency across MLO */
         };
         A_UINT32 mgmt_rx_params_ext_dword1;
+    };
+    union {
+        struct {
+            /* WMI_RX_PARAMS_EXT_META_TWT */
+            A_UINT32 twt_ie_buf_len; /* IE length */
+            /* Following this structure is the TLV byte stream of IE data
+             * of length twt_ie_buf_len:
+             *     A_UINT8 ie_data[]; <-- length in bytes given by field
+             *                            twt_ie_buf_len.
+             *     This ie_data[] would contain only the TWT IE information
+             *     when twt_ie_buf_len is non zero.
+             */
+        };
+        A_UINT32 mgmt_rx_params_ext_dword2;
     };
 } wmi_mgmt_rx_params_ext;
 
