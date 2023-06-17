@@ -7285,6 +7285,14 @@ typedef struct {
     A_UINT32 linkid_bitmap;
 } wmi_mlo_link_disable_request_event_fixed_param;
 
+typedef enum {
+    /**
+     * Projects support to offload regulatory database by default.
+     * If don`t offload regulatory database, host can set this bit.
+     */
+    WMI_REGDOMAIN_DATABASE_NO_OFFLOAD_BITMASK = 0x00000001,
+} WMI_REGDOMAIN_BITMASK;
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_regdomain_cmd_fixed_param */
 
@@ -7350,6 +7358,9 @@ typedef struct {
     A_UINT32 conformance_test_limit_6G_subband_UNII6_client[3][2];
     A_UINT32 conformance_test_limit_6G_subband_UNII7_client[3][2];
     A_UINT32 conformance_test_limit_6G_subband_UNII8_client[3][2];
+
+    /** reg domain bitmap */
+    A_UINT32 regdomain_bitmap;
 } wmi_pdev_set_regdomain_cmd_fixed_param;
 
 typedef struct {
