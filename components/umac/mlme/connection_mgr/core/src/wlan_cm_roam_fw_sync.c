@@ -1180,6 +1180,8 @@ static QDF_STATUS cm_handle_ho_fail(struct scheduler_msg *msg)
 		mlme_debug("Roam req found, get cm id to remove it, before disconnect");
 		cm_id = roam_req->cm_id;
 	}
+	/* Reset CPU frequency in HO failure */
+	mlme_cm_osif_perfd_reset_cpufreq();
 
 	cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_ROAM_HO_FAIL,
 			    sizeof(wlan_cm_id), &cm_id);
