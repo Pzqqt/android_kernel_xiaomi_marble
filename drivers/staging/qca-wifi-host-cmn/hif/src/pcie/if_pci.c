@@ -2810,6 +2810,16 @@ int hif_ahb_configure_irq(struct hif_pci_softc *sc)
 static irqreturn_t hif_ce_interrupt_handler(int irq, void *context)
 {
 	struct ce_tasklet_entry *tasklet_entry = context;
+	struct HIF_CE_state *hif_ce_state = tasklet_entry->hif_ce_state;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ce_state);
+
+	hif_irq_disable(scn, tasklet_entry->ce_id);
+	return IRQ_WAKE_THREAD;
+}
+
+static irqreturn_t hif_ce_interrupt_thread(int irq, void *context)
+{
+	struct ce_tasklet_entry *tasklet_entry = context;
 	return ce_dispatch_interrupt(tasklet_entry->ce_id, tasklet_entry);
 }
 extern const char *ce_name[];
@@ -2901,10 +2911,11 @@ int hif_ce_msi_configure_irq_by_ceid(struct hif_softc *scn, int ce_id)
 		      DP_IRQ_NAME_LEN, "pci%u_wlan_ce_%u",
 		      pci_slot, ce_id);
 
-	ret = pfrm_request_irq(scn->qdf_dev->dev,
-			       irq, hif_ce_interrupt_handler, IRQF_SHARED,
-			       ce_irqname[pci_slot][ce_id],
-			       &ce_sc->tasklets[ce_id]);
+	ret = request_threaded_irq(irq, hif_ce_interrupt_handler,
+				   hif_ce_interrupt_thread,
+				   IRQF_SHARED | IRQF_NO_THREAD,
+				   ce_irqname[pci_slot][ce_id],
+				   &ce_sc->tasklets[ce_id]);
 	if (ret)
 		return -EINVAL;
 
