@@ -218,37 +218,28 @@ static void hif_print_napi_latency_stats(struct HIF_CE_state *hif_state)
 
 	cur_tstamp = qdf_ktime_to_ms(qdf_ktime_get());
 
-	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_FATAL,
+	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "Current timestamp: %lld", cur_tstamp);
 
 	for (i = 0; i < hif_state->hif_num_extgroup; i++) {
 		if (hif_state->hif_ext_group[i]) {
 			hif_ext_group = hif_state->hif_ext_group[i];
 
-			QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_FATAL,
-				  "Interrupts in the HIF Group");
+			QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_INFO_HIGH,
+				  "ext grp %d Last serviced timestamp: %lld",
+				  i, hif_ext_group->tstamp);
 
-			for (j = 0; j < hif_ext_group->numirq; j++) {
-				QDF_TRACE(QDF_MODULE_ID_HIF,
-					  QDF_TRACE_LEVEL_FATAL,
-					  "  %s",
-					  hif_ext_group->irq_name
-					  (hif_ext_group->irq[j]));
-			}
-
-			QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_FATAL,
-				  "Last serviced timestamp: %lld",
-				  hif_ext_group->tstamp);
-
-			QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_FATAL,
+			QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_INFO_HIGH,
 				  "Latency Bucket     | Time elapsed");
 
 			for (j = 0; j < HIF_SCHED_LATENCY_BUCKETS; j++) {
-				QDF_TRACE(QDF_MODULE_ID_HIF,
-					  QDF_TRACE_LEVEL_FATAL,
-					  "%s     |    %lld", time_str[j],
-					  hif_ext_group->
-					  sched_latency_stats[j]);
+				if (hif_ext_group->sched_latency_stats[j])
+					QDF_TRACE(QDF_MODULE_ID_HIF,
+						  QDF_TRACE_LEVEL_INFO_HIGH,
+						  "%s     |    %lld",
+						  time_str[j],
+						  hif_ext_group->
+						  sched_latency_stats[j]);
 			}
 		}
 	}
