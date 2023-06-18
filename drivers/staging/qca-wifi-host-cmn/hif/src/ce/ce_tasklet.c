@@ -777,19 +777,6 @@ irqreturn_t ce_dispatch_interrupt(int ce_id,
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ce_state);
 	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 
-	if (tasklet_entry->ce_id != ce_id) {
-		hif_err("ce_id (expect %d, received %d) does not match",
-			tasklet_entry->ce_id, ce_id);
-		return IRQ_NONE;
-	}
-	if (unlikely(ce_id >= CE_COUNT_MAX)) {
-		hif_err("ce_id=%d > CE_COUNT_MAX=%d",
-			tasklet_entry->ce_id, CE_COUNT_MAX);
-		return IRQ_NONE;
-	}
-
-	hif_irq_disable(scn, ce_id);
-
 	if (!TARGET_REGISTER_ACCESS_ALLOWED(scn))
 		return IRQ_HANDLED;
 
