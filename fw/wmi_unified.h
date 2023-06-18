@@ -18537,6 +18537,10 @@ typedef struct {
     A_UINT32 mac_tsf_id;
     /** ignore mac_tsf_id unless mac_tsf_id_valid is set */
     A_UINT32 mac_tsf_id_valid;
+    /** min_device_tx_pwr_valid = 0 means value is not specified. */
+    A_UINT32 min_device_tx_pwr_valid;
+    /** minimum allowed device Tx power (in dBm) for this connection. */
+    A_INT32  min_device_tx_pwr;
 } wmi_vdev_start_response_event_fixed_param;
 
 typedef struct {
