@@ -2036,6 +2036,8 @@ lim_handle_11n_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 		break;
 	case MLME_DOT11_MODE_11AC:
 		/* fallthrough */
+	case MLME_DOT11_MODE_11BE:
+		/* fallthrough */
 	case MLME_DOT11_MODE_11AX:
 		if (ie_struct->HTCaps.present) {
 			*intersected_mode = MLME_DOT11_MODE_11N;
