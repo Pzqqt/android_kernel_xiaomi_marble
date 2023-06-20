@@ -3563,6 +3563,7 @@ typedef struct {
      *     wmi_htt_msdu_idx_to_htt_msdu_qtype htt_msdu_idx_to_qtype_map[];
      *     wmi_dbs_or_sbs_cap_ext             dbs_or_sbs_cap_ext;
      *     A_INT32 hw_tx_power_signed[WMI_HW_TX_POWER_CAPS_MAX];
+     *     wmi_aux_dev_capabilities           aux_dev_caps[];
      */
 } wmi_service_ready_ext2_event_fixed_param;
 
@@ -46015,6 +46016,103 @@ typedef struct {
      * the array of TLVs "wmi_mlo_primary_link_peer_migration_status".
      */
 } wmi_mlo_primary_link_peer_migration_compl_fixed_param;
+
+/* WMI_AUX_DEV_CAPS_SUPPORTED_MODE:
+ * How many bits to shift for each supported mode.
+ * This works just like Linux file permission bits
+ * (i.e. user|group|other values for each rwx perms).
+ */
+typedef enum _WMI_AUX_DEV_CAPS_SUPPORTED_MODE {
+    WMI_AUX_DEV_SUPPORTED_MODE_SCAN = 0,
+    WMI_AUX_DEV_SUPPORTED_MODE_LISTEN = 1,
+    WMI_AUX_DEV_SUPPORTED_MODE_EMLSR = 2,
+} WMI_AUX_DEV_CAPS_SUPPORTED_MODE;
+
+/* wmi_aux_dev_capabilities:
+ * TLV representing AUX mode capabilities
+ * A one-dimensional "flattened" array of these structs shall represent
+ * all AUX capabilities regardless of the actual AUX count.
+ *
+ * For example, if 2x AUX are present, then the array is expected to look
+ * something like this:
+ *     wmi_aux_dev_capabilities caps[] = {
+ *         // 4 elements for AUX_0 - one element for each HW mode:
+ *         AUX_0_single_mac,
+ *         AUX_0_dual_mac,
+ *         AUX_0_single_mac_emlsr,
+ *         AUX_0_split_emlsr,
+ *         // 4 elements for AUX_1:
+ *         AUX_1_single_mac,
+ *         AUX_1_dual_mac,
+ *         AUX_1_single_mac_emlsr,
+ *         AUX_1_split_emlsr,
+ *     };
+ * In effect, indexes 0 to 3 (inclusive) represent the first AUX,
+ * 4 to 7 (inclusive) represent the second, and so on.
+ * Note that each element explicitly identifies which AUX and HW mode it
+ * corresponds to, via the aux_index and hw_mode_id fields respectively.
+ * So the receiver should not assume the ordering will be as shown above
+ * (AUX0 single, AUX0 dual, AUX0 single emlsr, AUX0 split emlsr,
+ *  AUX1 single, AUX1 dual, AUX1 single emlsr, AUX1 split emlsr)
+ * but instead should directly check each element's aux_index and hw_mode_id
+ * fields.
+ */
+typedef struct {
+    /* tlv_header -- WMITLV_TAG_STRUC_wmi_aux_dev_capabilities */
+    A_UINT32 tlv_header;
+
+    /* aux_index -- Which AUX this TLV applies to.
+    Ex: aux_index=0 is first AUX, aux_index=1 is second AUX, etc */
+    A_UINT32 aux_index;
+
+    /*
+     * This TLV represents which AUX capabilities are supported by
+     * which MAC for the given HW mode.
+     * pdev ID value of 0x0 denotes that the AUX mode is not applicable
+     * for the given HW mode.
+     *
+     *  hw_mode_id         |  Single  DBS_OR_SBS  AUX eMLSR  AUX eMLSR
+     *                     |  Phy                 single     split
+     *  --------------------------------------------------------------
+     *  supported_modes    |  SCAN/   SCAN/       EMLSR      EMLSR
+     *                     |  LISTEN  LISTEN
+     *  listen_pdev_id_map |  0x1     0x2         0x0        0x0
+     *  emlsr_pdev_id_map  |  0x0     0x0         0x1        0x2
+     */
+
+    /* hw_mode_id:
+     * Which HW mode this TLV applies to.
+     * HW mode values are defined in WMI_HW_MODE_CONFIG_TYPE.
+     */
+    A_UINT32 hw_mode_id;
+
+    /* supported_modes:
+     * Which mode this AUX supports for the HW mode defined in hw_mode_id.
+     * Shift amounts are defined in WMI_AUX_DEV_CAPS_SUPPORTED_MODE.
+     * This works just like user|group|other bits for Linux file permissions:
+     *  0x1 = SCAN          (0 0 1)
+     *  0x2 = LISTEN        (0 1 0)
+     *  0x3 = SCAN+LISTEN   (0 1 1)
+     *  0x4 = EMLSR         (1 0 0)
+     */
+    A_UINT32 supported_modes_bitmap;
+
+    /* listen_pdev_id_map:
+     * Which AUX MAC can listen/scan for the HW mode described in hw_mode_id.
+     * 0x0 - AUX cannot be used for listen mode.
+     * 0x1 - AUX can be attached to MAC-0 in AUX listen mode.
+     * 0x2 - AUX can be attached to MAC-1 in AUX listen mode.
+     */
+    A_UINT32 listen_pdev_id_map;
+
+    /* emlsr_pdev_id_map:
+     * Which AUX MAC can perform eMLSR for the HW mode described in hw_mode_id.
+     * 0x0 - AUX cannot be used for eMLSR mode.
+     * 0x1 - AUX can be attached to MAC-0 in AUX eMLSR mode.
+     * 0x2 - AUX can be attached to MAC-1 in AUX eMLSR mode.
+     */
+    A_UINT32 emlsr_pdev_id_map;
+} wmi_aux_dev_capabilities;
 
 
 
