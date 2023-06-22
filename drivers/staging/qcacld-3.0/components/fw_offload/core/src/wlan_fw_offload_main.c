@@ -813,10 +813,10 @@ QDF_STATUS fwol_set_ilp_config(struct wlan_objmgr_pdev *pdev,
 			       uint32_t enable_ilp)
 {
 	QDF_STATUS status;
-	struct pdev_params pdev_param;
-
-	pdev_param.param_id = WMI_PDEV_PARAM_PCIE_HW_ILP;
-	pdev_param.param_value = enable_ilp;
+	struct pdev_params pdev_param = {
+		.param_id = WMI_PDEV_PARAM_PCIE_HW_ILP,
+		.param_value = enable_ilp
+	};
 
 	status = tgt_fwol_pdev_param_send(pdev, pdev_param);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -829,11 +829,11 @@ QDF_STATUS fwol_set_sap_sho(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			    uint32_t sap_sho)
 {
 	QDF_STATUS status;
-	struct vdev_set_params vdev_param;
-
-	vdev_param.vdev_id = vdev_id;
-	vdev_param.param_id = WMI_VDEV_PARAM_SHO_CONFIG;
-	vdev_param.param_value = sap_sho;
+	struct vdev_set_params vdev_param = {
+		.vdev_id = vdev_id,
+		.param_id = WMI_VDEV_PARAM_SHO_CONFIG,
+		.param_value = sap_sho
+	};
 
 	status = tgt_fwol_vdev_param_send(psoc, vdev_param);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -846,10 +846,10 @@ QDF_STATUS fwol_configure_hw_assist(struct wlan_objmgr_pdev *pdev,
 				    bool disable_hw_assist)
 {
 	QDF_STATUS status;
-	struct pdev_params pdev_param;
-
-	pdev_param.param_id = WMI_PDEV_PARAM_DISABLE_HW_ASSIST;
-	pdev_param.param_value = disable_hw_assist;
+	struct pdev_params pdev_param = {
+		.param_id = WMI_PDEV_PARAM_DISABLE_HW_ASSIST,
+		.param_value = disable_hw_assist
+	};
 
 	status = tgt_fwol_pdev_param_send(pdev, pdev_param);
 	if (QDF_IS_STATUS_ERROR(status))
