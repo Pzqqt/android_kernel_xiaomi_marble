@@ -1305,9 +1305,6 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 	dst_cfg = &rso_cfg->cfg_param;
-	mlme_debug("roam_cfg_type %d, uint val %d int val %d bool val %d num chan %d",
-		   roam_cfg_type, src_config->uint_value, src_config->int_value,
-		   src_config->bool_value, src_config->chan_info.num_chan);
 	switch (roam_cfg_type) {
 	case RSSI_CHANGE_THRESHOLD:
 		rso_cfg->rescan_rssi_delta  = src_config->uint_value;
