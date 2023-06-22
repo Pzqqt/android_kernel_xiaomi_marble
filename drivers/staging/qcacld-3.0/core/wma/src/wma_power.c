@@ -1085,7 +1085,7 @@ QDF_STATUS wma_process_tx_power_limits(WMA_HANDLE handle,
 	int32_t ret = 0;
 	uint32_t txpower_params2g = 0;
 	uint32_t txpower_params5g = 0;
-	struct pdev_params pdevparam;
+	struct pdev_params pdevparam = {};
 	struct wmi_unified *wmi_handle;
 
 	if (wma_validate_handle(wma))
@@ -1454,13 +1454,14 @@ QDF_STATUS wma_set_idle_ps_config(void *wma_ptr, uint32_t idle_ps)
 {
 	int32_t ret;
 	tp_wma_handle wma = (tp_wma_handle) wma_ptr;
-	struct pdev_params pdevparam;
+	struct pdev_params pdevparam = {
+		.param_id = WMI_PDEV_PARAM_IDLE_PS_CONFIG,
+		.param_value = idle_ps
+	};
 
 	wma_debug("WMA Set Idle Ps Config [1:set 0:clear] val %d", idle_ps);
 
 	/* Set Idle Mode Power Save Config */
-	pdevparam.param_id = WMI_PDEV_PARAM_IDLE_PS_CONFIG;
-	pdevparam.param_value = idle_ps;
 	ret = wmi_unified_pdev_param_send(wma->wmi_handle,
 					 &pdevparam,
 					 WMA_WILDCARD_PDEV_ID);
