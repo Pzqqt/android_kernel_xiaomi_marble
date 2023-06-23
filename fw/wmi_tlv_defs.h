@@ -1390,6 +1390,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_mlo_link_recommendation_fixed_param,
     WMITLV_TAG_STRUC_wmi_mlo_peer_recommended_links,
     WMITLV_TAG_STRUC_wmi_aux_dev_capabilities,
+    WMITLV_TAG_STRUC_wmi_nan_oem_data_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_nan_oem_data_event_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -1923,6 +1925,7 @@ typedef enum {
     OP(WMI_MLO_LINK_RECOMMENDATION_CMDID) \
     OP(WMI_MLO_LINK_SET_BSS_PARAMS_CMDID) \
     OP(WMI_MLO_LINK_SWITCH_CONF_CMDID) \
+    OP(WMI_NAN_OEM_DATA_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2237,6 +2240,7 @@ typedef enum {
     OP(WMI_ROAM_SYNCH_KEY_EVENTID) \
     OP(WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_EVENTID) \
     OP(WMI_MLO_LINK_SWITCH_REQUEST_EVENTID) \
+    OP(WMI_NAN_OEM_DATA_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -3866,6 +3870,13 @@ WMITLV_CREATE_PARAM_STRUC(WMI_DEL_PROACTIVE_ARP_RSP_PATTERN_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_nan_host_config_param, host_config, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_NAN_CMDID);
+
+/* NAN OEM Data Cmd */
+#define WMITLV_TABLE_WMI_NAN_OEM_DATA_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_nan_oem_data_cmd_fixed_param, wmi_nan_oem_data_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_nan_oem_data_hdr, nan_oem_data_hdr, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, nan_oem_data_buffer, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_NAN_OEM_DATA_CMDID);
 
 /* NAN Data Get Capabilities Cmd */
 #define WMITLV_TABLE_WMI_NDI_GET_CAP_REQ_CMDID(id,op,buf,len) \
@@ -6254,6 +6265,13 @@ WMITLV_CREATE_PARAM_STRUC(WMI_OEM_DMA_RING_CFG_RSP_EVENTID)
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_nan_event_info, event_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_NAN_EVENTID);
+
+/* NAN OEM Data Event */
+#define WMITLV_TABLE_WMI_NAN_OEM_DATA_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_nan_oem_data_event_fixed_param, wmi_nan_oem_data_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_nan_oem_data_hdr, nan_oem_data_hdr, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, nan_oem_data_buffer, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_NAN_OEM_DATA_EVENTID);
 
 /* NAN discovery interface created event */
 #define WMITLV_TABLE_WMI_NAN_DISC_IFACE_CREATED_EVENTID(id,op,buf,len) \

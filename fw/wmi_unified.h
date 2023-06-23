@@ -1344,6 +1344,8 @@ typedef enum {
 
     /** Nan Request */
     WMI_NAN_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_NAN),
+    /** Command to handle OEM's NAN specific opaque data */
+    WMI_NAN_OEM_DATA_CMDID,
 
     /** Modem power state command */
     WMI_MODEM_POWER_STATE_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_COEX),
@@ -2278,6 +2280,8 @@ typedef enum {
     WMI_NAN_STARTED_CLUSTER_EVENTID,
     WMI_NAN_JOINED_CLUSTER_EVENTID,
     WMI_NAN_DMESG_EVENTID,
+    /** Event to deliver OEM's NAN specific opaque data */
+    WMI_NAN_OEM_DATA_EVENTID,
 
     /* Coex Event */
     WMI_COEX_REPORT_ANTENNA_ISOLATION_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_COEX),
@@ -27618,6 +27622,42 @@ typedef struct {
 */
 } wmi_nan_cmd_param;
 
+typedef enum {
+    WMI_NAN_VENDOR1_REQ1 = 1,
+} WMI_NAN_OEM_DATA_TYPE;
+
+typedef struct {
+    /** oem_data_type:
+     * Indicate what kind of OEM-specific data is present in the
+     * oem_data_buffer[].
+     * Possible values are listed in the enum WMI_NAN_OEM_DATA_TYPE.
+     */
+    A_UINT32 oem_data_type;
+    /** oem_data_len:
+     * Actual length in bytes of the OEM-specific data within the
+     * oem_data_buffer[].
+     * Note that it is possible for a single message to contain multiple
+     * OEM opaque data blobs.  In such cases, the oem_data_len field of
+     * nan_oem_data_hdr[0] not only specifies the size of the first such
+     * opaque blob, but furthermore specifies the offset in oem_data_buffer[]
+     * where the second opaque blob begins.
+     */
+    A_UINT32 oem_data_len;
+} wmi_nan_oem_data_hdr;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_oem_data_cmd_fixed_param */
+
+    /* Following this structure are the below TLVs:
+     *   - wmi_nan_oem_data_hdr nan_oem_data_hdr[];
+     *     This TLV explains the type and size of the one or more OEM NAN
+     *     opaque data blobs carried in this message.
+     *   - A_UINT8 nan_oem_data_buffer[];
+     *     This TLV holds the contents of the one or more OEM NAN opaque data
+     *     blobs carried in this message.
+     */
+} wmi_nan_oem_data_cmd_fixed_param;
+
 #define WMI_NAN_GET_RANGING_INITIATOR_ROLE(flag)      WMI_GET_BITS(flag, 0, 1)
 #define WMI_NAN_SET_RANGING_INITIATOR_ROLE(flag, val) WMI_SET_BITS(flag, 0, 1, val)
 #define WMI_NAN_GET_RANGING_RESPONDER_ROLE(flag)      WMI_GET_BITS(flag, 1, 1)
@@ -27649,6 +27689,19 @@ typedef struct {
 *     A_UINT8 data[]; <-- length in byte given by field data_len.
 */
 } wmi_nan_event_hdr;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_oem_data_event_fixed_param */
+
+    /* Following this structure are the below TLVs:
+     *   - wmi_nan_oem_data_hdr nan_oem_data_hdr[];
+     *     This TLV explains the type and size of the one or more OEM NAN
+     *     opaque data blobs carried in this message.
+     *   - A_UINT8 nan_oem_data_buffer[];
+     *     This TLV holds the contents of the one or more OEM NAN opaque data
+     *     blobs carried in this message.
+     */
+} wmi_nan_oem_data_event_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_event_info */
@@ -36690,6 +36743,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_GPIO_STATE_REQ_CMDID);
         WMI_RETURN_STRING(WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_CMDID);
         WMI_RETURN_STRING(WMI_MLO_LINK_RECOMMENDATION_CMDID);
+        WMI_RETURN_STRING(WMI_NAN_OEM_DATA_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
