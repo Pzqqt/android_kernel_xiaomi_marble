@@ -2479,6 +2479,11 @@ typedef struct {
      * for BW supported by Smart Antenna - 320 MHZ
      */
     A_UINT32 max_rates_ext;
+
+    /* hw_prot_dur_us:
+     * hw protection frame's FES duration in micro seconds.
+     */
+    A_UINT32 hw_prot_dur_us;
 } htt_ppdu_stats_user_cmpltn_common_tlv;
 
 #define HTT_PPDU_STATS_USER_CMPLTN_BA_BITMAP_TLV_TID_NUM_M     0x000000ff
