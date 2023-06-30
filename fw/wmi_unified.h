@@ -45646,7 +45646,7 @@ typedef struct {
         struct {
             A_UINT32 vdev_id:8,     /* vdev id for this link */
                      link_id:8,     /* link id defined as in 802.11 BE spec. */
-                     link_status:2, /* link_status - 0: active, 1: inactive  */
+                     link_status:2, /* link_status - 0: inactive, 1: active  */
                      reserved:14;
         };
         A_UINT32 link_info;
