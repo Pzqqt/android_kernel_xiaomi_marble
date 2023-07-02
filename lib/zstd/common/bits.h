@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ OR BSD-3-Clause */
 /*
- * Copyright (c) Facebook, Inc.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  * All rights reserved.
  *
  * This source code is licensed under both the BSD-style license (found in the
@@ -18,7 +18,7 @@ MEM_STATIC unsigned ZSTD_countTrailingZeros32_fallback(U32 val)
 {
     assert(val != 0);
     {
-        static const int DeBruijnBytePos[32] = {0, 1, 28, 2, 29, 14, 24, 3,
+        static const U32 DeBruijnBytePos[32] = {0, 1, 28, 2, 29, 14, 24, 3,
                                                 30, 22, 20, 15, 25, 17, 4, 8,
                                                 31, 27, 13, 23, 21, 19, 16, 7,
                                                 26, 12, 18, 6, 11, 5, 10, 9};
@@ -119,6 +119,31 @@ MEM_STATIC unsigned ZSTD_highbit32(U32 val)   /* compress, dictBuilder, decodeCo
 {
     assert(val != 0);
     return 31 - ZSTD_countLeadingZeros32(val);
+}
+
+/* ZSTD_rotateRight_*():
+ * Rotates a bitfield to the right by "count" bits.
+ * https://en.wikipedia.org/w/index.php?title=Circular_shift&oldid=991635599#Implementing_circular_shifts
+ */
+MEM_STATIC
+U64 ZSTD_rotateRight_U64(U64 const value, U32 count) {
+    assert(count < 64);
+    count &= 0x3F; /* for fickle pattern recognition */
+    return (value >> count) | (U64)(value << ((0U - count) & 0x3F));
+}
+
+MEM_STATIC
+U32 ZSTD_rotateRight_U32(U32 const value, U32 count) {
+    assert(count < 32);
+    count &= 0x1F; /* for fickle pattern recognition */
+    return (value >> count) | (U32)(value << ((0U - count) & 0x1F));
+}
+
+MEM_STATIC
+U16 ZSTD_rotateRight_U16(U16 const value, U32 count) {
+    assert(count < 16);
+    count &= 0x0F; /* for fickle pattern recognition */
+    return (value >> count) | (U16)(value << ((0U - count) & 0x0F));
 }
 
 #endif /* ZSTD_BITS_H */
