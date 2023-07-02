@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ OR BSD-3-Clause */
 /*
- * Copyright (c) Yann Collet, Facebook, Inc.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  * All rights reserved.
  *
  * This source code is licensed under both the BSD-style license (found in the
@@ -166,6 +166,7 @@ struct ZSTD_DCtx_s
     ZSTD_dictUses_e dictUses;
     ZSTD_DDictHashSet* ddictSet;                    /* Hash set for multiple ddicts */
     ZSTD_refMultipleDDicts_e refMultipleDDicts;     /* User specified: if == 1, will allow references to multiple DDicts. Default == 0 (disabled) */
+    int disableHufAsm;
 
     /* streaming */
     ZSTD_dStreamStage streamStage;

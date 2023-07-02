@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ OR BSD-3-Clause */
 /*
- * Copyright (c) Facebook, Inc.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  * All rights reserved.
  *
  * This source code is licensed under both the BSD-style license (found in the
@@ -94,12 +94,20 @@
 /*
  * For x86 ELF targets, add .note.gnu.property section for Intel CET in
  * assembly sources when CET is enabled.
+ *
+ * Additionally, any function that may be called indirectly must begin
+ * with ZSTD_CET_ENDBRANCH.
  */
 #if defined(__ELF__) && (defined(__x86_64__) || defined(__i386__)) \
     && defined(__has_include)
 # if __has_include(<cet.h>)
 #  include <cet.h>
+#  define ZSTD_CET_ENDBRANCH _CET_ENDBR
 # endif
+#endif
+
+#ifndef ZSTD_CET_ENDBRANCH
+# define ZSTD_CET_ENDBRANCH
 #endif
 
 #endif /* ZSTD_PORTABILITY_MACROS_H */

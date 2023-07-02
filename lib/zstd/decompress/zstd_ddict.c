@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+ OR BSD-3-Clause
 /*
- * Copyright (c) Yann Collet, Facebook, Inc.
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
  * All rights reserved.
  *
  * This source code is licensed under both the BSD-style license (found in the
@@ -15,12 +15,12 @@
 /*-*******************************************************
 *  Dependencies
 *********************************************************/
+#include "../common/allocations.h"  /* ZSTD_customMalloc, ZSTD_customFree */
 #include "../common/zstd_deps.h"   /* ZSTD_memcpy, ZSTD_memmove, ZSTD_memset */
 #include "../common/cpu.h"         /* bmi2 */
 #include "../common/mem.h"         /* low level memory routines */
 #define FSE_STATIC_LINKING_ONLY
 #include "../common/fse.h"
-#define HUF_STATIC_LINKING_ONLY
 #include "../common/huf.h"
 #include "zstd_decompress_internal.h"
 #include "zstd_ddict.h"
