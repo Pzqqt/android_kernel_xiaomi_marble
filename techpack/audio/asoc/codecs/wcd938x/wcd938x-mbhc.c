@@ -34,7 +34,7 @@
 #define WCD938X_MBHC_GET_C1(c)          ((c & 0xC000) >> 14)
 #define WCD938X_MBHC_GET_X1(x)          (x & 0x3FFF)
 /* Z value compared in milliOhm */
-#define WCD938X_MBHC_IS_SECOND_RAMP_REQUIRED(z) ((z > 400000) || (z < 32000))
+#define WCD938X_MBHC_IS_SECOND_RAMP_REQUIRED(z) (z < 32000)
 #define WCD938X_MBHC_ZDET_CONST         (86 * 16384)
 #define WCD938X_MBHC_MOISTURE_RREF      R_24_KOHM
 
@@ -1104,10 +1104,13 @@ int wcd938x_mbhc_init(struct wcd938x_mbhc **mbhc,
 	}
 
 	(*mbhc) = wcd938x_mbhc;
+
+#ifndef CONFIG_TARGET_PRODUCT_ZIYI
 	snd_soc_add_component_controls(component, impedance_detect_controls,
 				   ARRAY_SIZE(impedance_detect_controls));
 	snd_soc_add_component_controls(component, hph_type_detect_controls,
 				   ARRAY_SIZE(hph_type_detect_controls));
+#endif
 
 	return 0;
 err:

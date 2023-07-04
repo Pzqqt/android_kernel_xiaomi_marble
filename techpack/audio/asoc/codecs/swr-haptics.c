@@ -385,7 +385,8 @@ static const struct snd_kcontrol_new haptics_snd_controls[] = {
 };
 
 static const struct snd_soc_dapm_widget haptics_comp_dapm_widgets[] = {
-	SND_SOC_DAPM_INPUT("HAP_IN"),
+	SND_SOC_DAPM_AIF_IN("HAP_IN", "HAPTICS_AIF Playback", 0,
+				SND_SOC_NOPM, 0, 0),
 	SND_SOC_DAPM_MIXER_E("SWR DAC_Port", SND_SOC_NOPM, 0, 0,
 			hap_swr_dac_port, ARRAY_SIZE(hap_swr_dac_port),
 			hap_enable_swr_dac_port,
@@ -501,7 +502,7 @@ static int swr_haptics_probe(struct swr_device *sdev)
 		return -ENOMEM;
 
 	/* VMAX default to 5V */
-	swr_hap->vmax = 100;
+	swr_hap->vmax = 160;
 	swr_hap->swr_slave = sdev;
 	swr_hap->dev = &sdev->dev;
 	pmic_type = (uintptr_t)of_device_get_match_data(swr_hap->dev);

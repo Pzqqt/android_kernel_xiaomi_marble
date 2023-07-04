@@ -90,6 +90,14 @@ CDEFINES +=	-DANI_LITTLE_BYTE_ENDIAN \
 		-Werror\
 		-D__linux__
 
+ifneq (,$(filter $(TARGET_PRODUCT), ingres))
+	CDEFINES += -DCONFIG_TARGET_PRODUCT_INGRES
+endif
+
+ifneq (,$(filter $(TARGET_PRODUCT), ziyi))
+     CDEFINES += -DCONFIG_TARGET_PRODUCT_ZIYI
+endif
+
 KBUILD_CPPFLAGS += $(CDEFINES)
 
 # Currently, for versions of gcc which support it, the kernel Makefile
