@@ -52,6 +52,36 @@
 #define SCAN_DONE_EVENT_BUF_SIZE 4096
 #define RATE_MASK 0x7f
 
+#ifdef CFG_SUPPORT_SCAN_EXT_FLAG
+void hdd_scan_event_callback(struct net_device *netdev)
+{
+	struct hdd_adapter *adapter;
+	struct hdd_context *hdd_ctx;
+
+	if (!netdev)
+		return;
+
+	adapter = WLAN_HDD_GET_PRIV_PTR(netdev);
+	if (!adapter)
+		return;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (!hdd_ctx)
+		return;
+
+	if (adapter->scan_ext_flag == 1) {
+		adapter->scan_ext_flag = 0;
+		if (adapter->latency_level == (QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_ULTRALOW - 1) ||
+			adapter->latency_level == (QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_LOW - 1)) {
+			hdd_debug("Re-enter low latency mode after scan");
+			if(sme_set_wlm_latency_level(hdd_ctx->mac_handle,
+						   adapter->vdev_id, adapter->latency_level,0,false))
+				hdd_debug("Re-enter low latency mode failed after scan");
+		}
+	}
+}
+#endif
+
 /**
  * hdd_vendor_scan_callback() - Scan completed callback event
  * @hddctx: HDD context
@@ -672,6 +702,17 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Failed to get unicast probe req ra cfg");
 
+#ifdef CFG_SUPPORT_SCAN_EXT_FLAG
+	if (adapter->scan_ext_flag == 1 &&
+		(adapter->latency_level == (QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_ULTRALOW - 1) ||
+		 adapter->latency_level == (QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_LOW - 1))) {
+		hdd_debug("exit latency mode before active scan");
+		// set latency level 0 when active scan
+		if(sme_set_wlm_latency_level(hdd_ctx->mac_handle,
+					   adapter->vdev_id, 0 , 0, false))
+		    hdd_debug("set latency level 0 failed when scan");
+	}
+#endif
 	status = wlan_cfg80211_scan(vdev, request, &params);
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_SCAN_ID);
 error:

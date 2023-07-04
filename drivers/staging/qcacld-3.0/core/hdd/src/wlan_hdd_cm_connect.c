@@ -129,6 +129,28 @@ bool hdd_cm_is_connecting(struct hdd_adapter *adapter)
 	return is_vdev_connecting;
 }
 
+bool hdd_cm_is_connected(struct hdd_adapter *adapter)
+{
+	struct wlan_objmgr_vdev *vdev;
+	bool is_vdev_connected;
+	enum QDF_OPMODE opmode;
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_CM_ID);
+	if (!vdev)
+		return false;
+
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
+	if (opmode != QDF_STA_MODE && opmode != QDF_P2P_CLIENT_MODE) {
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_CM_ID);
+		return false;
+	}
+	is_vdev_connected = ucfg_cm_is_vdev_connected(vdev);
+
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_CM_ID);
+
+	return is_vdev_connected;
+}
+
 bool hdd_cm_is_disconnected(struct hdd_adapter *adapter)
 {
 	struct wlan_objmgr_vdev *vdev;

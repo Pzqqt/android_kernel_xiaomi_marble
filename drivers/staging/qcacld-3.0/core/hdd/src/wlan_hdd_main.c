@@ -209,6 +209,11 @@
 #include <linux/bitfield.h>
 #include "wlan_hdd_mlo.h"
 #include <wlan_hdd_son.h>
+
+#ifdef FEATURE_WLAN_DYNAMIC_NSS
+#include "wlan_hdd_dynamic_nss.h"
+#endif
+
 #ifdef WLAN_FEATURE_11BE_MLO
 #include <wlan_mlo_mgr_ap.h>
 #endif
@@ -4534,6 +4539,7 @@ static int hdd_rtpm_tput_policy_get_vote(struct hdd_context *hdd_ctx)
 	ctx = &hdd_ctx->rtpm_tput_policy_ctx;
 	return qdf_atomic_read(&ctx->high_tput_vote);
 }
+
 #else
 static inline
 void hdd_rtpm_tput_policy_init(struct hdd_context *hdd_ctx)
@@ -8171,6 +8177,11 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 	enum wlan_reason_code reason = REASON_IFACE_DOWN;
 
 	hdd_enter();
+
+#ifdef FEATURE_WLAN_DYNAMIC_NSS
+	wlan_hdd_stop_dynamic_nss(adapter);
+#endif
+
 	hdd_destroy_adapter_sysfs_files(adapter);
 
 	if (adapter->device_mode == QDF_STA_MODE &&
@@ -18827,6 +18838,10 @@ void hdd_driver_unload(void)
 		 * periodic work hence stop it.
 		 */
 		hdd_bus_bw_compute_timer_stop(hdd_ctx);
+
+#ifdef FEATURE_WLAN_DYNAMIC_NSS
+		wlan_hdd_tput_stats_timer_deinit(hdd_ctx);
+#endif
 	}
 
 	/*

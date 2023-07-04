@@ -429,7 +429,7 @@ CONFIG_SAE_SINGLE_PMK := y
 CONFIG_MULTI_CLIENT_LL_SUPPORT := y
 
 #Flag to enable mscs feature
-CONFIG_FEATURE_MSCS := y
+CONFIG_FEATURE_MSCS := n
 
 #Flag to enable FILS Feature (11ai)
 CONFIG_WLAN_FEATURE_FILS := y

@@ -1231,6 +1231,39 @@ wlansap_5g_original_bw_validate(
 	return ch_width;
 }
 
+/**
+ * wlansap_2g_original_bw_validate() - validate bw for sap on 2.4 GHz
+ * @sap_context: sap context
+ * @chan_freq: channel frequency
+ * @ch_width: band width
+ * @sec_ch_freq: secondary channel frequency
+ *
+ * If initial SAP starts on 2.4 GHz HT40/HT20 mode, driver honors it.
+ *
+ * Return: new bandwidth
+ */
+static enum phy_ch_width
+wlansap_2g_original_bw_validate(struct sap_context *sap_context,
+				uint32_t chan_freq,
+				enum phy_ch_width ch_width,
+				qdf_freq_t *sec_ch_freq)
+{
+	if (sap_context->csa_reason == CSA_REASON_UNKNOWN &&
+	    WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq) &&
+	    sap_context->ch_width_orig == CH_WIDTH_40MHZ) {
+		ch_width = CH_WIDTH_40MHZ;
+		if (sap_context->ch_params.sec_ch_offset == LOW_PRIMARY_CH)
+			*sec_ch_freq = chan_freq + 20;
+		else if (sap_context->ch_params.sec_ch_offset ==
+						HIGH_PRIMARY_CH)
+			*sec_ch_freq = chan_freq - 20;
+		else
+			*sec_ch_freq = 0;
+	}
+
+	return ch_width;
+}
+
 enum phy_ch_width
 wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
 				       uint32_t chan_freq,
@@ -1240,6 +1273,7 @@ wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
 	struct mac_context *mac;
 	struct ch_params ch_params = {0};
 	uint32_t channel_bonding_mode = 0;
+	qdf_freq_t sec_ch_freq = 0;
 
 	mac = sap_get_mac_context();
 	if (!mac) {
@@ -1253,7 +1287,9 @@ wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
 		 * SAP coming up in HT40 on channel switch we are
 		 * disabling channel bonding in 2.4Ghz.
 		 */
-		ch_width = CH_WIDTH_20MHZ;
+		ch_width = wlansap_2g_original_bw_validate(
+				sap_context, chan_freq, CH_WIDTH_20MHZ,
+				&sec_ch_freq);
 	} else {
 		wlan_mlme_get_channel_bonding_5ghz(mac->psoc,
 						   &channel_bonding_mode);
@@ -1273,7 +1309,7 @@ wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
 			ch_width = QDF_MIN(ch_width, tgt_ch_params->ch_width);
 	}
 	ch_params.ch_width = ch_width;
-	wlan_reg_set_channel_params_for_freq(mac->pdev, chan_freq, 0,
+	wlan_reg_set_channel_params_for_freq(mac->pdev, chan_freq, sec_ch_freq,
 					     &ch_params);
 	ch_width = ch_params.ch_width;
 	if (tgt_ch_params)

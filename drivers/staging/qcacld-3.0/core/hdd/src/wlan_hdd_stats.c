@@ -1388,6 +1388,10 @@ static void hdd_process_ll_stats(tSirLLStatsResults *results,
 		struct wifi_radio_stats *rs_results, *stat_result;
 		u64 channel_size = 0, pwr_lvl_size = 0;
 		int i;
+
+		if (!results->num_radio)
+			goto exit;
+
 		stats = qdf_mem_malloc(sizeof(*stats));
 		if (!stats)
 			goto exit;

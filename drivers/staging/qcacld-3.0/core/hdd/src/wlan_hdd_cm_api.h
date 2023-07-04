@@ -288,6 +288,14 @@ bool hdd_cm_is_vdev_connected(struct hdd_adapter *adapter);
 bool hdd_cm_is_connecting(struct hdd_adapter *adapter);
 
 /**
+ * hdd_cm_is_connected() - Function to check if vdev is connected or not
+ * @adapter: pointer to the adapter structure
+ *
+ * Return: true if connected, false otherwise
+ */
+bool hdd_cm_is_connected(struct hdd_adapter *adapter);
+
+/**
  * hdd_cm_is_disconnected() - Function to check if vdev is disconnected or not
  * @adapter: pointer to the adapter structure
  *

@@ -3977,6 +3977,10 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 	uint8_t i;
 	bool srd_chan_enabled;
 	enum QDF_OPMODE vdev_opmode;
+	bool is_sap_only_allow_sta_dfs_indoor_chan = true;
+	uint32_t work_freq = 0;
+	uint32_t max_num_of_conc_connections = 0;
+	struct policy_mgr_conc_connection_info *pm_conc_connection_list = NULL;
 
 	mac_ctx = sap_get_mac_context();
 	if (!mac_ctx) {
@@ -3984,6 +3988,16 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 		*num_ch = 0;
 		*freq_list = NULL;
 		return QDF_STATUS_E_FAULT;
+	}
+
+	pm_conc_connection_list = policy_mgr_get_conn_info(&max_num_of_conc_connections);
+	if (mac_ctx->psoc) {
+		if (policy_mgr_get_connection_count(mac_ctx->psoc) == 1) {
+			work_freq = pm_conc_connection_list[0].freq;
+			sap_debug("allow sap to use freq %u", work_freq);
+		}
+		is_sap_only_allow_sta_dfs_indoor_chan =
+			policy_mgr_is_sap_only_allow_sta_dfs_indoor_chan(mac_ctx->psoc);
 	}
 
 	weight_list = mac_ctx->mlme_cfg->acs.normalize_weight_chan;
@@ -4075,6 +4089,17 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 					sap_ctx->acs_cfg->freq_list,
 					sap_ctx->acs_cfg->ch_list_count))
 			continue;
+
+		/* Only allow sap to use indoor/dfs channel when sta using same channel.
+		 * Currently, sap can work on the same channel only when a connection
+		 * is working on indoor/dfs channel
+		 */
+		if (mac_ctx->pdev && work_freq != chan_freq &&
+				is_sap_only_allow_sta_dfs_indoor_chan &&
+				(wlan_reg_is_freq_indoor(mac_ctx->pdev, chan_freq) ||
+				wlan_reg_is_dfs_for_freq(mac_ctx->pdev, chan_freq)))
+			continue;
+
 		/* Dont scan DFS channels in case of MCC disallowed
 		 * As it can result in SAP starting on DFS channel
 		 * resulting  MCC on DFS channel

@@ -3614,6 +3614,17 @@ bool policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
 		struct wlan_objmgr_psoc *psoc);
 
 /**
+ * policy_mgr_is_sap_only_allow_sta_dfs_indoor_chan() - check if disallow
+ * sap to work on dfs/indoor chan outside mac working freq
+ * @psoc: pointer to soc
+ * check if disallow sap to work on dfs/indoor chan outside mac working freq
+ *
+ * Return: true if disallowsap to work on dfs/indoor chan outside mac working freq
+ */
+bool policy_mgr_is_sap_only_allow_sta_dfs_indoor_chan(
+		struct wlan_objmgr_psoc *psoc);
+
+/**
  * policy_mgr_is_special_mode_active_5g() - check if given mode active in 5g
  * @psoc: pointer to soc
  * @mode: operating mode of interface to be checked

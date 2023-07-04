@@ -2692,6 +2692,32 @@ static int drv_cmd_get_country(struct hdd_adapter *adapter,
 	return ret;
 }
 
+/**
+ * set APF working status per WLAN chip's suspend monitor mode
+
+ * @adapter: pointer to adapter on which request is received
+ * Return: On success 0, negative value on error.
+ */
+
+static int drv_apf_enable(struct hdd_adapter *adapter, bool apf_enable)
+{
+	QDF_STATUS status;
+
+	hdd_prevent_suspend(WIFI_POWER_EVENT_WAKELOCK_WOW);
+
+	status = sme_set_apf_enable_disable(hdd_adapter_get_mac_handle(adapter),
+					    adapter->vdev_id, apf_enable);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("Unable to post sme apf enable/disable message (status-%d)",
+				status);
+		return -EINVAL;
+	}
+	adapter->apf_context.apf_enabled = apf_enable;
+
+	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_WOW);
+	return 0;
+}
+
 static int drv_cmd_set_roam_trigger(struct hdd_adapter *adapter,
 				    struct hdd_context *hdd_ctx,
 				    uint8_t *command,
@@ -3060,7 +3086,11 @@ static int drv_cmd_set_suspend_mode(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	hdd_debug("idle_monitor:%d", idle_monitor);
+	//MIUI: ADD
+	//idle_monitor: 0-screen on/monitor off/APF disable, 1: screen off/monitor on/APF enable.
+	drv_apf_enable(adapter, idle_monitor);
+
+	hdd_debug("APF status and idle_monitor:%d, ", idle_monitor);
 	status = ucfg_pmo_tgt_psoc_send_idle_roam_suspend_mode(hdd_ctx->psoc,
 							       idle_monitor);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -5164,6 +5194,41 @@ static int drv_cmd_set_app2_params(struct hdd_adapter *adapter,
 }
 #endif /* WLAN_FEATURE_EXTWOW_SUPPORT */
 
+#ifdef CFG_SUPPORT_SCAN_EXT_FLAG
+/*
+ * argv: 1 means that force scan on gaming mode
+ */
+static int driver_cmd_set_scan_ext_flag(struct hdd_adapter *adapter,
+				   struct hdd_context *hdd_ctx,
+				   uint8_t *command,
+				   uint8_t command_len,
+				   struct hdd_priv_data *priv_data)
+{
+	int ret = 0;
+	uint8_t *value = command;
+	uint8_t external_flag = 0;
+
+	/* Move pointer to ahead of SetScanExtFlag */
+	value = value + command_len + 1;
+
+	/* Convert the value from ascii to integer */
+	ret = kstrtou8(value, 10, &external_flag);
+	if (ret < 0) {
+		/*
+		 * If the input value is greater than max value of datatype,
+		 * then also kstrtou8 fails
+		 */
+		hdd_err("kstrtou8 failed Input value may be out of range");
+		ret = -EINVAL;
+		return ret;
+	}
+
+	adapter->scan_ext_flag = external_flag;
+	hdd_debug("driver_cmd_set_scan_ext_flag: %d ", adapter->scan_ext_flag);
+	return ret;
+}
+#endif /* CFG_SUPPORT_SCAN_EXT_FLAG */
+
 #ifdef FEATURE_WLAN_TDLS
 /**
  * drv_cmd_tdls_secondary_channel_offset() - secondary tdls off channel offset
@@ -6587,6 +6652,36 @@ static int drv_cmd_get_disable_chan_list(struct hdd_adapter *adapter,
 }
 #endif
 
+static int drv_cmd_set_phymode(struct hdd_adapter *adapter,
+					struct hdd_context *hdd_ctx,
+					uint8_t *command,
+					uint8_t command_len,
+					struct hdd_priv_data *priv_data)
+{
+	int ret = 0;
+	uint8_t *value = command;
+	uint8_t new_phymode = 0;
+
+	/* Move pointer to ahead of SET_PHYMODE<delimiter> */
+	value = value + command_len + 1;
+
+	/* Convert the value from ascii to integer */
+	ret = kstrtou8(value, 10, &new_phymode);
+	if (ret < 0) {
+		/*
+		 * If the input value is greater than max value of datatype,
+		 * then also kstrtou8 fails
+		 */
+		hdd_err("kstrtou8 failed Input value may be out of range");
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	hdd_we_update_phymode(adapter, new_phymode);
+exit:
+	return ret;
+}
+
 #ifdef FEATURE_ANI_LEVEL_REQUEST
 static int drv_cmd_get_ani_level(struct hdd_adapter *adapter,
 				 struct hdd_context *hdd_ctx,
@@ -6930,11 +7025,15 @@ static const struct hdd_drv_cmd hdd_drv_cmds[] = {
 	{"GET_FUNCTION_CALL_MAP",     drv_cmd_get_function_call_map, true},
 #endif
 	{"STOP",                      drv_cmd_dummy, false},
+	{"SET_PHYMODE",               drv_cmd_set_phymode, true},
 	/* Deprecated commands */
 	{"RXFILTER-START",            drv_cmd_dummy, false},
 	{"RXFILTER-STOP",             drv_cmd_dummy, false},
 	{"BTCOEXSCAN-START",          drv_cmd_dummy, false},
 	{"BTCOEXSCAN-STOP",           drv_cmd_dummy, false},
+#ifdef CFG_SUPPORT_SCAN_EXT_FLAG
+	{"SetScanExtFlag",            driver_cmd_set_scan_ext_flag, true},
+#endif
 };
 
 /**

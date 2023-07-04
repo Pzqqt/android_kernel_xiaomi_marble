@@ -693,6 +693,8 @@ static int hdd_soc_probe(struct device *dev,
 
 	hdd_info("probing driver");
 
+	printk(KERN_ERR "probing wlan driver");
+
 	errno = osif_psoc_sync_create_and_trans(&psoc_sync);
 	if (errno)
 		return errno;
@@ -1758,6 +1760,7 @@ static int wlan_hdd_pld_probe(struct device *dev,
 {
 	enum qdf_bus_type bus_type = to_bus_type(pld_bus_type);
 
+	hdd_err("wlan_hdd_pld_probe");
 	if (bus_type == QDF_BUS_TYPE_NONE) {
 		hdd_err("Invalid bus type %d->%d", pld_bus_type, bus_type);
 		return -EINVAL;
