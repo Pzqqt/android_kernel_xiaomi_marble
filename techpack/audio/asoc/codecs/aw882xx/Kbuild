@@ -87,8 +87,7 @@ CDEFINES +=	-DANI_LITTLE_BYTE_ENDIAN \
 		-DPTT_SOCK_SVC_ENABLE \
 		-Wall\
 		-Werror\
-		-D__linux__ \
-		-DDEBUG
+		-D__linux__
 
 ifneq (,$(filter $(TARGET_PRODUCT), ziyi))
 	CDEFINES += -DCONFIG_TARGET_PRODUCT_ZIYI
