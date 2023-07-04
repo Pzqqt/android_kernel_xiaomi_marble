@@ -811,6 +811,11 @@ dp_tx_ring_access_end_wrapper(struct dp_soc *soc,
 {
 	dp_tx_ring_access_end(soc, hal_ring_hdl, coalesce);
 }
+
+static inline void
+dp_set_rtpm_tput_policy_requirement(struct cdp_soc_t *soc_hdl,
+				    bool is_high_tput)
+{ }
 #endif
 
 static inline void
