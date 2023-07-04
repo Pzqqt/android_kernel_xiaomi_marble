@@ -37,8 +37,9 @@ struct snd_card_pdata {
 #define DIR_SZ 10
 
 #define MAX_CODEC_DAI 8
+//NEED CHK #define TDM_SLOT_WIDTH_BITS 32
 #define TDM_SLOT_WIDTH_BITS 32
-#define TDM_MAX_SLOTS 8
+#define TDM_MAX_SLOTS 4
 #define MI2S_NUM_CHANNELS 2
 
 #define SAMPLING_RATE_44P1KHZ   44100
@@ -408,7 +409,7 @@ int msm_common_snd_hw_params(struct snd_pcm_substream *substream,
 
 				intf_clk_cfg.clk_id = ret;
 				intf_clk_cfg.clk_freq_in_hz = rate * slot_width * slots;
-				intf_clk_cfg.clk_attri = pdata->tdm_clk_attribute[index];
+				intf_clk_cfg.clk_attri = CLOCK_ATTRIBUTE_INVERT_COUPLE_NO;
 				intf_clk_cfg.clk_root = 0;
 
 				if (pdata->is_audio_hw_vote_required[index]  &&

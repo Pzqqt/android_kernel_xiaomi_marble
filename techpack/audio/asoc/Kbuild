@@ -6,6 +6,8 @@ else
 	KERNEL_BUILD := 0
 endif
 
+ccflags-y += -I$(srctree)/drivers/misc/hwid/
+
 ifeq ($(KERNEL_BUILD), 1)
 	# These are configurable via Kconfig for kernel-based builds
 	# Need to explicitly configure for Android-based builds
@@ -212,6 +214,50 @@ CDEFINES +=	-DANI_LITTLE_BYTE_ENDIAN \
 		-Wall\
 		-Werror\
 		-D__linux__
+
+ifneq (,$(filter $(TARGET_PRODUCT), zeus))
+	CDEFINES += -DCONFIG_TARGET_PRODUCT_ZEUS
+endif
+
+ifneq (,$(filter $(TARGET_PRODUCT), thor))
+	CDEFINES += -DCONFIG_TARGET_PRODUCT_THOR
+endif
+
+ifneq (,$(filter $(TARGET_PRODUCT), cupid))
+	CDEFINES += -DCONFIG_TARGET_PRODUCT_CUPID
+endif
+
+ifneq (,$(filter $(TARGET_PRODUCT), ingres))
+	CDEFINES += -DCONFIG_TARGET_PRODUCT_INGRES
+endif
+
+ifneq (,$(filter $(TARGET_PRODUCT), zizhan))
+	CDEFINES += -DCONFIG_TARGET_PRODUCT_ZIZHAN
+endif
+
+ifneq (,$(filter $(TARGET_PRODUCT), unicorn))
+	CDEFINES += -DCONFIG_TARGET_PRODUCT_UNICORN
+endif
+
+ifneq (,$(filter $(TARGET_PRODUCT), ziyi))
+	CDEFINES += -DCONFIG_TARGET_PRODUCT_ZIYI
+endif
+
+ifneq (,$(filter $(TARGET_PRODUCT), mayfly))
+	CDEFINES += -DCONFIG_TARGET_PRODUCT_MAYFLY
+endif
+
+ifneq (,$(filter $(TARGET_PRODUCT), diting))
+	CDEFINES += -DCONFIG_TARGET_PRODUCT_DITING
+endif
+
+ifneq (,$(filter $(TARGET_PRODUCT), mondrian))
+	CDEFINES += -DCONFIG_TARGET_PRODUCT_MONDRIAN
+endif
+
+ifneq (,$(filter $(TARGET_PRODUCT), marble))
+	CDEFINES += -DCONFIG_TARGET_PRODUCT_MARBLE
+endif
 
 KBUILD_CPPFLAGS += $(CDEFINES)
 
