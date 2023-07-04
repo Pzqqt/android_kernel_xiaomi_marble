@@ -1931,6 +1931,11 @@ void hdd_wmm_classify_pkt(struct hdd_adapter *adapter,
 	 */
 	hdd_check_and_upgrade_udp_qos(adapter, skb, user_pri);
 
+	if (!tos && skb->priority && skb->priority < HDD_WMM_UP_TO_AC_MAP_SIZE) {
+		// cgroup net_prio. see net/core/netprio_cgroup.c.
+		*user_pri = skb->priority;
+	}
+
 #ifdef HDD_WMM_DEBUG
 	hdd_debug("tos is %d, dscp is %d, up is %d", tos, dscp, *user_pri);
 #endif /* HDD_WMM_DEBUG */

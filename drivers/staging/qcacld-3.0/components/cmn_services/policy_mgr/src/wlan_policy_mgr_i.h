@@ -276,6 +276,7 @@ struct policy_mgr_cfg {
 	uint32_t vdev_priority_list;
 	uint32_t chnl_select_plcy;
 	uint8_t go_force_scc;
+	uint8_t sap_only_allow_sta_dfs_indoor_chan;
 	enum policy_mgr_pcl_band_priority pcl_band_priority;
 	bool sbs_enable;
 };
