@@ -389,7 +389,7 @@ static int ctrl_cmd_bye(struct sockaddr_qrtr *from)
 
 	/* Advertise removal of this client to all servers of remote node */
 	xa_for_each(&node->servers, index, srv)
-		server_del(node, srv->port);
+		server_del(node, srv->port, true);
 
 	/* Advertise the removal of this client to all local servers */
 	local_node = node_get(qrtr_ns.local_node);
