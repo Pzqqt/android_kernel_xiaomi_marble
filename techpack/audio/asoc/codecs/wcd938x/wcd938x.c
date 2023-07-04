@@ -298,6 +298,11 @@ static int wcd938x_init_reg(struct snd_soc_component *component)
 	snd_soc_component_update_bits(component,
 				WCD938X_HPH_SURGE_HPHLR_SURGE_EN, 0xC0, 0xC0);
 
+#ifdef CONFIG_TARGET_PRODUCT_INGRES
+	snd_soc_component_update_bits(component,
+				WCD938X_MICB2_TEST_CTL_3, 0x80, 0x80);
+#endif
+
 	return 0;
 }
 

@@ -574,11 +574,11 @@ static void tx_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 				dec_cfg_reg, TX_HPF_CUT_OFF_FREQ_MASK,
 				hpf_cut_off_freq << 5);
 		snd_soc_component_update_bits(component, hpf_gate_reg,
-						0x02, 0x02);
+						0x03, 0x02);
 		/* Minimum 1 clk cycle delay is required as per HW spec */
 		usleep_range(1000, 1010);
 		snd_soc_component_update_bits(component, hpf_gate_reg,
-						0x02, 0x00);
+						0x03, 0x01);
 	}
 }
 

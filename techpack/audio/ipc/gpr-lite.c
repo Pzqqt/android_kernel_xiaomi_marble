@@ -26,7 +26,7 @@
 #include <dsp/audio_notifier.h>
 
 #define APM_EVENT_MODULE_TO_CLIENT	0x03001000
-#define WAKELOCK_TIMEOUT 200
+#define WAKELOCK_TIMEOUT 500
 
 struct gpr {
 	struct rpmsg_endpoint *ch;
@@ -307,7 +307,7 @@ static int gpr_callback(struct rpmsg_device *rpdev, void *buf,
 	__func__ , hdr->dst_port, hdr_size, pkt_size);
 
 	if (hdr->opcode == APM_EVENT_MODULE_TO_CLIENT) {
-		dev_err(gpr->dev, "%s: Acquire wakelock in case of module event with timeout %d",
+		dev_info(gpr->dev, "%s: Acquire wakelock in case of module event with timeout %d",
 			__func__, WAKELOCK_TIMEOUT);
 		pm_wakeup_ws_event(gpr_priv->wsource, WAKELOCK_TIMEOUT, true);
 	}
