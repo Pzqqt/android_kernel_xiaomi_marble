@@ -1033,6 +1033,7 @@ QDF_STATUS hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
 	hif_ext_group->hif = hif_ctx;
 	hif_ext_group->context_name = context_name;
 	hif_ext_group->type = type;
+	qdf_atomic_init(&hif_ext_group->force_napi_complete);
 	hif_init_force_napi_complete(hif_ext_group);
 
 	hif_state->hif_num_extgroup++;
