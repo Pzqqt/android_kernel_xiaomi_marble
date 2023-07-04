@@ -62,6 +62,8 @@ static QDF_STATUS policy_mgr_init_cfg(struct wlan_objmgr_psoc *psoc)
 		cfg_get(psoc, CFG_FORCE_1X1_FEATURE);
 	cfg->sta_sap_scc_on_dfs_chnl =
 		cfg_get(psoc, CFG_STA_SAP_SCC_ON_DFS_CHAN);
+	cfg->sap_only_allow_sta_dfs_indoor_chan =
+		cfg_get(psoc, CFG_SAP_ONLY_ALLOW_STA_DFS_INDOOR_CHAN);
 
 	/*
 	 * Override concurrency sta+sap indoor flag to true if global indoor

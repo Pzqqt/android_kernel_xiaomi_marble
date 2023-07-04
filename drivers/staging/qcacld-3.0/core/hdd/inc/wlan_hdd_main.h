@@ -1629,6 +1629,9 @@ struct hdd_adapter {
 #ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
 	void *set_mac_addr_req_ctx;
 #endif
+#ifdef CFG_SUPPORT_SCAN_EXT_FLAG
+	uint8_t scan_ext_flag;
+#endif
 	int64_t delta_qtime;
 };
 
