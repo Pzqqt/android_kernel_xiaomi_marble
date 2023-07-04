@@ -81,6 +81,7 @@ QDF_STATUS hif_initialize_snoc_ops(struct hif_bus_ops *bus_ops)
 	bus_ops->hif_config_irq_affinity = &hif_dummy_config_irq_affinity;
 	bus_ops->hif_config_irq_by_ceid = &hif_dummy_config_irq_by_ceid;
 	bus_ops->hif_log_bus_info = &hif_dummy_log_bus_info;
+	bus_ops->hif_set_grp_intr_affinity = &hif_dummy_set_grp_intr_affinity;
 
 	return QDF_STATUS_SUCCESS;
 }

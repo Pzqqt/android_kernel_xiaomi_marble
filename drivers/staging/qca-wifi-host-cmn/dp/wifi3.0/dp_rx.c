@@ -573,14 +573,17 @@ bool dp_rx_intrabss_mcbc_fwd(struct dp_soc *soc, struct dp_peer *ta_peer,
 	len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
 	/* set TX notify flag 0 to avoid unnecessary TX comp callback */
 	qdf_nbuf_tx_notify_comp_set(nbuf_copy, 0);
-	if (dp_tx_send((struct cdp_soc_t *)soc,
-		       ta_peer->vdev->vdev_id, nbuf_copy)) {
+
+	/* Don't send packets if tx is paused */
+	if (!soc->is_tx_pause &&
+	    !dp_tx_send((struct cdp_soc_t *)soc,
+			ta_peer->vdev->vdev_id, nbuf_copy)) {
+		DP_STATS_INC_PKT(ta_peer, rx.intra_bss.pkts, 1, len);
+		tid_stats->intrabss_cnt++;
+	} else {
 		DP_STATS_INC_PKT(ta_peer, rx.intra_bss.fail, 1, len);
 		tid_stats->fail_cnt[INTRABSS_DROP]++;
 		qdf_nbuf_free(nbuf_copy);
-	} else {
-		DP_STATS_INC_PKT(ta_peer, rx.intra_bss.pkts, 1, len);
-		tid_stats->intrabss_cnt++;
 	}
 	return false;
 }
@@ -631,8 +634,8 @@ bool dp_rx_intrabss_ucast_fwd(struct dp_soc *soc, struct dp_peer *ta_peer,
 		}
 	}
 
-	if (!dp_tx_send((struct cdp_soc_t *)soc,
-			tx_vdev_id, nbuf)) {
+	if (!soc->is_tx_pause && !dp_tx_send((struct cdp_soc_t *)soc,
+					     tx_vdev_id, nbuf)) {
 		DP_STATS_INC_PKT(ta_peer, rx.intra_bss.pkts, 1,
 				 len);
 	} else {
