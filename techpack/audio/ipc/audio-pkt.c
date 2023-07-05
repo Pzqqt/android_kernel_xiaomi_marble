@@ -1,5 +1,5 @@
 /* Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -398,6 +398,8 @@ ssize_t audio_pkt_write(struct file *file, const char __user *buf,
 	ret = gpr_send_pkt(ap_priv->adev,(struct gpr_pkt *) kbuf);
 	if (ret < 0) {
 		AUDIO_PKT_ERR("APR Send Packet Failed ret -%d\n", ret);
+		if (ret == -ECONNRESET)
+			ret = -ENETRESET;
 	}
 	mutex_unlock(&audpkt_dev->lock);
 

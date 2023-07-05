@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -29,8 +30,9 @@
 #include "wsa881x.h"
 #include "wsa881x-temp-sensor.h"
 #include "asoc/bolero-slave-internal.h"
+#include <asoc/msm-cdc-supply.h>
+#include <linux/qti-regmap-debugfs.h>
 
-#define DRV_NAME "wsa-codec"
 #define WSA881X_NUM_RETRY	5
 
 enum {
@@ -103,13 +105,18 @@ struct wsa881x_priv {
 	struct delayed_work ocp_ctl_work;
 	struct device_node *wsa_rst_np;
 	int pa_mute;
-	struct device_node *bolero_np;
-	struct platform_device* bolero_dev;
-	struct notifier_block bolero_nblock;
+	struct device_node *parent_np;
+	struct platform_device* parent_dev;
+	struct notifier_block parent_nblock;
 	void *handle;
 	int (*register_notifier)(void *handle,
 				 struct notifier_block *nblock,
 				 bool enable);
+	struct snd_soc_dai_driver *dai_driver;
+	struct snd_soc_component_driver *driver;
+	struct cdc_regulator *regulator;
+	int num_supplies;
+	struct regulator_bulk_data *supplies;
 };
 
 struct wsa_ctrl_platform_data {
@@ -132,6 +139,19 @@ struct wsa_ctrl_platform_data {
 #define WSA881X_OCP_CTL_TIMER_SEC 2
 #define WSA881X_OCP_CTL_TEMP_CELSIUS 25
 #define WSA881X_OCP_CTL_POLL_TIMER_SEC 60
+
+#define MAX_NAME_LEN	30
+#define WSA881X_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
+						SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |\
+						SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_192000 |\
+						SNDRV_PCM_RATE_384000)
+/* Fractional Rates */
+#define WSA881X_FRAC_RATES (SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_88200 |\
+						SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800)
+
+#define WSA881X_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |\
+				SNDRV_PCM_FMTBIT_S24_LE |\
+				SNDRV_PCM_FMTBIT_S24_3LE | SNDRV_PCM_FMTBIT_S32_LE)
 
 static int wsa881x_ocp_poll_timer_sec = WSA881X_OCP_CTL_POLL_TIMER_SEC;
 module_param(wsa881x_ocp_poll_timer_sec, int, 0664);
@@ -332,8 +352,8 @@ int wsa881x_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
 
 	wsa881x = snd_soc_component_get_drvdata(component);
 	card = component->card;
-	snprintf(name, sizeof(name), "%s.%x", "wsa881x",
-		 (u32)wsa881x->swr_slave->addr);
+	snprintf(name, sizeof(name), "%s.%lx", "wsa881x",
+		wsa881x->swr_slave->addr);
 
 	wsa881x->entry = snd_info_create_module_entry(codec_root->module,
 						(const char *)name,
@@ -374,6 +394,30 @@ int wsa881x_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
 	return 0;
 }
 EXPORT_SYMBOL(wsa881x_codec_info_create_codec_entry);
+
+/*
+ * wsa881x_codec_get_dev_num - returns swr device number
+ * @component: Codec instance
+ *
+ * Return: swr device number on success or negative error
+ * code on failure.
+ */
+int wsa881x_codec_get_dev_num(struct snd_soc_component *component)
+{
+	struct wsa881x_priv *wsa881x;
+
+	if (!component)
+		return -EINVAL;
+
+	wsa881x = snd_soc_component_get_drvdata(component);
+	if (!wsa881x) {
+		pr_err("%s: wsa881x component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	return wsa881x->swr_slave->dev_num;
+}
+EXPORT_SYMBOL(wsa881x_codec_get_dev_num);
 
 static bool is_swr_slv_reg_readable(int reg)
 {
@@ -717,6 +761,22 @@ static int wsa881x_set_compander(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int wsa_get_temp(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct wsa881x_priv *wsa881x = snd_soc_component_get_drvdata(component);
+	int temp = 0;
+
+	wsa881x_get_temp(wsa881x->tz_pdata.tz_dev, &temp);
+	dev_err(component->dev, " temp = %d\n", temp);
+
+	ucontrol->value.integer.value[0] = temp;
+
+	return 0;
+}
+
 static int wsa881x_get_boost(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
@@ -793,7 +853,7 @@ static int wsa881x_get_boost_level(struct snd_kcontrol *kcontrol,
 			snd_soc_kcontrol_component(kcontrol);
 	u8 wsa_boost_level = 0;
 
-	wsa_boost_level = snd_soc_component_read32(component,
+	wsa_boost_level = snd_soc_component_read(component,
 				WSA881X_BOOST_PRESET_OUT1);
 	ucontrol->value.integer.value[0] = wsa_boost_level;
 	dev_dbg(component->dev, "%s: boost level = 0x%x\n", __func__,
@@ -805,6 +865,9 @@ static int wsa881x_get_boost_level(struct snd_kcontrol *kcontrol,
 static const struct snd_kcontrol_new wsa881x_snd_controls[] = {
 	SOC_SINGLE_EXT("COMP Switch", SND_SOC_NOPM, 0, 1, 0,
 		wsa881x_get_compander, wsa881x_set_compander),
+
+	SOC_SINGLE_EXT("WSA Temp", SND_SOC_NOPM, 0, UINT_MAX, 0,
+		wsa_get_temp, NULL),
 
 	SOC_SINGLE_EXT("BOOST Switch", SND_SOC_NOPM, 0, 1, 0,
 		wsa881x_get_boost, wsa881x_set_boost),
@@ -1033,7 +1096,7 @@ static int wsa881x_spkr_pa_event(struct snd_soc_dapm_widget *w,
 
 		break;
 	case SND_SOC_DAPM_POST_PMU:
-		if (!wsa881x->bolero_dev)
+		if (!wsa881x->parent_dev)
 			snd_soc_component_update_bits(component,
 					      WSA881X_SPKR_DRV_EN,
 					      0x80, 0x80);
@@ -1146,7 +1209,7 @@ static void wsa881x_init(struct snd_soc_component *component)
 	struct wsa881x_priv *wsa881x = snd_soc_component_get_drvdata(component);
 
 	wsa881x->version =
-			snd_soc_component_read32(component, WSA881X_CHIP_ID1);
+			snd_soc_component_read(component, WSA881X_CHIP_ID1);
 	wsa881x_regmap_defaults(wsa881x->regmap, wsa881x->version);
 	/* Enable software reset output from soundwire slave */
 	snd_soc_component_update_bits(component, WSA881X_SWR_RESET_EN,
@@ -1186,7 +1249,7 @@ static void wsa881x_init(struct snd_soc_component *component)
 	snd_soc_component_update_bits(component,
 			WSA881X_BOOST_SLOPE_COMP_ISENSE_FB,
 			0x03, 0x00);
-	if (snd_soc_component_read32(component, WSA881X_OTP_REG_0))
+	if (snd_soc_component_read(component, WSA881X_OTP_REG_0))
 		snd_soc_component_update_bits(component,
 				WSA881X_BOOST_PRESET_OUT1,
 				0xF0, 0x70);
@@ -1248,19 +1311,19 @@ static int32_t wsa881x_temp_reg_read(struct snd_soc_component *component,
 
 	snd_soc_component_update_bits(component, WSA881X_TADC_VALUE_CTL,
 				0x01, 0x00);
-	wsa_temp_reg->dmeas_msb = snd_soc_component_read32(
+	wsa_temp_reg->dmeas_msb = snd_soc_component_read(
 					component, WSA881X_TEMP_MSB);
-	wsa_temp_reg->dmeas_lsb = snd_soc_component_read32(
+	wsa_temp_reg->dmeas_lsb = snd_soc_component_read(
 					component, WSA881X_TEMP_LSB);
 	snd_soc_component_update_bits(component, WSA881X_TADC_VALUE_CTL,
 					0x01, 0x01);
-	wsa_temp_reg->d1_msb = snd_soc_component_read32(
+	wsa_temp_reg->d1_msb = snd_soc_component_read(
 					component, WSA881X_OTP_REG_1);
-	wsa_temp_reg->d1_lsb = snd_soc_component_read32(
+	wsa_temp_reg->d1_lsb = snd_soc_component_read(
 					component, WSA881X_OTP_REG_2);
-	wsa_temp_reg->d2_msb = snd_soc_component_read32(
+	wsa_temp_reg->d2_msb = snd_soc_component_read(
 					component, WSA881X_OTP_REG_3);
-	wsa_temp_reg->d2_lsb = snd_soc_component_read32(
+	wsa_temp_reg->d2_lsb = snd_soc_component_read(
 					component, WSA881X_OTP_REG_4);
 
 	wsa881x_resource_acquire(component, DISABLE);
@@ -1276,6 +1339,10 @@ static int wsa881x_probe(struct snd_soc_component *component)
 
 	if (!wsa881x)
 		return -EINVAL;
+
+	if (!component->name_prefix)
+		return -EINVAL;
+
 	snd_soc_component_init_regmap(component, wsa881x->regmap);
 
 	dev = wsa881x->swr_slave;
@@ -1307,7 +1374,7 @@ static void wsa881x_remove(struct snd_soc_component *component)
 }
 
 static const struct snd_soc_component_driver soc_codec_dev_wsa881x = {
-	.name = DRV_NAME,
+	.name = "",
 	.probe = wsa881x_probe,
 	.remove = wsa881x_remove,
 	.controls = wsa881x_snd_controls,
@@ -1380,7 +1447,7 @@ static int wsa881x_event_notify(struct notifier_block *nb,
 {
 	u16 event = (val & 0xffff);
 	struct wsa881x_priv *wsa881x = container_of(nb, struct wsa881x_priv,
-						    bolero_nblock);
+						    parent_nblock);
 
 	if (!wsa881x)
 		return -EINVAL;
@@ -1396,7 +1463,7 @@ static int wsa881x_event_notify(struct notifier_block *nb,
 		break;
 	case BOLERO_SLV_EVT_PA_ON_POST_FSCLK:
 	case BOLERO_SLV_EVT_PA_ON_POST_FSCLK_ADIE_LB:
-		if ((snd_soc_component_read32(wsa881x->component,
+		if ((snd_soc_component_read(wsa881x->component,
 				WSA881X_SPKR_DAC_CTL) & 0x80) == 0x80)
 			snd_soc_component_update_bits(wsa881x->component,
 					      WSA881X_SPKR_DRV_EN,
@@ -1409,6 +1476,51 @@ static int wsa881x_event_notify(struct notifier_block *nb,
 	return 0;
 }
 
+static struct snd_soc_dai_driver wsa_dai[] = {
+	{
+		.name = "",
+		.playback = {
+			.stream_name = "",
+			.rates = WSA881X_RATES | WSA881X_FRAC_RATES,
+			.formats = WSA881X_FORMATS,
+			.rate_max = 192000,
+			.rate_min = 8000,
+			.channels_min = 1,
+			.channels_max = 2,
+		},
+	},
+};
+
+static int wsa881x_enable_supplies(struct device * dev,
+					struct wsa881x_priv *priv)
+{
+	int ret = 0;
+
+	/* Parse power supplies */
+	msm_cdc_get_power_supplies(dev, &priv->regulator,
+					&priv->num_supplies);
+	if (!priv->regulator || (priv->num_supplies <= 0)) {
+			dev_err(dev, "%s: no power supplies defined\n", __func__);
+			return -EINVAL;
+	}
+
+	ret = msm_cdc_init_supplies(dev, &priv->supplies,
+					priv->regulator, priv->num_supplies);
+	if (!priv->supplies) {
+		dev_err(dev, "%s: Cannot init wsa supplies\n",
+								__func__);
+		return ret;
+	}
+
+	ret = msm_cdc_enable_static_supplies(dev, priv->supplies,
+						priv->regulator,
+						priv->num_supplies);
+	if (ret)
+		dev_err(dev, "%s: wsa static supply enable failed!\n",
+					__func__);
+	return ret;
+}
+
 static int wsa881x_swr_probe(struct swr_device *pdev)
 {
 	int ret = 0;
@@ -1416,11 +1528,18 @@ static int wsa881x_swr_probe(struct swr_device *pdev)
 	u8 devnum = 0;
 	bool pin_state_current = false;
 	struct wsa_ctrl_platform_data *plat_data = NULL;
+	char buffer[MAX_NAME_LEN];
+	int dev_index = 0;
 
 	wsa881x = devm_kzalloc(&pdev->dev, sizeof(struct wsa881x_priv),
 			    GFP_KERNEL);
 	if (!wsa881x)
 		return -ENOMEM;
+
+	ret = wsa881x_enable_supplies(&pdev->dev, wsa881x);
+	if (ret)
+		return -EINVAL;
+
 	wsa881x->wsa_rst_np = of_parse_phandle(pdev->dev.of_node,
 					     "qcom,spkr-sd-n-node", 0);
 	if (!wsa881x->wsa_rst_np) {
@@ -1437,6 +1556,7 @@ static int wsa881x_swr_probe(struct swr_device *pdev)
 		dev_dbg(&pdev->dev, "%s: reset gpio %d\n", __func__,
 			wsa881x->pd_gpio);
 	}
+
 	swr_set_dev_data(pdev, wsa881x);
 
 	wsa881x->swr_slave = pdev;
@@ -1487,8 +1607,10 @@ static int wsa881x_swr_probe(struct swr_device *pdev)
 		dev_dbg(&pdev->dev,
 			"%s get devnum %d for dev addr %lx failed\n",
 			__func__, devnum, pdev->addr);
+		ret = -EPROBE_DEFER;
 		goto dev_err;
 	}
+
 	pdev->dev_num = devnum;
 
 	wsa881x->regmap = devm_regmap_init_swr(pdev,
@@ -1500,28 +1622,64 @@ static int wsa881x_swr_probe(struct swr_device *pdev)
 		goto dev_err;
 	}
 
-	ret = snd_soc_register_component(&pdev->dev, &soc_codec_dev_wsa881x,
-				     NULL, 0);
+	devm_regmap_qti_debugfs_register(&pdev->dev, wsa881x->regmap);
+
+	wsa881x->driver = devm_kzalloc(&pdev->dev,
+						sizeof(struct snd_soc_component_driver), GFP_KERNEL);
+	if (!wsa881x->driver) {
+		ret = -ENOMEM;
+		goto dev_err;
+	}
+
+	memcpy(wsa881x->driver, &soc_codec_dev_wsa881x,
+						sizeof(struct snd_soc_component_driver));
+
+	wsa881x->dai_driver = devm_kzalloc(&pdev->dev,
+						sizeof(struct snd_soc_dai_driver), GFP_KERNEL);
+	if (!wsa881x->dai_driver) {
+			ret = -ENOMEM;
+			goto dev_err;
+	}
+
+	memcpy(wsa881x->dai_driver, wsa_dai, sizeof(struct snd_soc_dai_driver));
+
+	ret = of_property_read_u32(pdev->dev.of_node,
+				"wsa_dev_index", &dev_index);
 	if (ret) {
-		dev_err(&pdev->dev, "%s: Codec registration failed\n",
+		dev_err(&pdev->dev, "%s: cannot read wsa_dev_index, ret = %d\n",
 			__func__);
 		goto dev_err;
 	}
 
-	wsa881x->bolero_np = of_parse_phandle(pdev->dev.of_node,
-					      "qcom,bolero-handle", 0);
-	if (wsa881x->bolero_np) {
-		wsa881x->bolero_dev =
-				of_find_device_by_node(wsa881x->bolero_np);
-		if (wsa881x->bolero_dev) {
-			plat_data = dev_get_platdata(&wsa881x->bolero_dev->dev);
+	snprintf(buffer, sizeof(buffer), "wsa-codec.%d", dev_index);
+	wsa881x->driver->name = kstrndup(buffer, strlen(buffer), GFP_KERNEL);
+
+	snprintf(buffer, sizeof(buffer), "wsa_rx%d", dev_index);
+	wsa881x->dai_driver->name =
+				kstrndup(buffer, strlen(buffer), GFP_KERNEL);
+
+	snprintf(buffer, sizeof(buffer), "WSA881X_AIF%d Playback", dev_index);
+	wsa881x->dai_driver->playback.stream_name =
+				kstrndup(buffer, strlen(buffer), GFP_KERNEL);
+
+	/* Number of DAI's used is 1 */
+	ret = snd_soc_register_component(&pdev->dev,
+				wsa881x->driver, wsa881x->dai_driver, 1);
+
+	wsa881x->parent_np = of_parse_phandle(pdev->dev.of_node,
+					      "qcom,lpass-cdc-handle", 0);
+	if (wsa881x->parent_np) {
+		wsa881x->parent_dev =
+				of_find_device_by_node(wsa881x->parent_np);
+		if (wsa881x->parent_dev) {
+			plat_data = dev_get_platdata(&wsa881x->parent_dev->dev);
 			if (plat_data) {
-				wsa881x->bolero_nblock.notifier_call =
+				wsa881x->parent_nblock.notifier_call =
 							wsa881x_event_notify;
 				if (plat_data->register_notifier)
 					plat_data->register_notifier(
 						plat_data->handle,
-						&wsa881x->bolero_nblock,
+						&wsa881x->parent_nblock,
 						true);
 				wsa881x->register_notifier =
 						plat_data->register_notifier;
@@ -1531,11 +1689,11 @@ static int wsa881x_swr_probe(struct swr_device *pdev)
 					__func__);
 			}
 		} else {
-			dev_err(&pdev->dev, "%s: bolero dev not found\n",
+			dev_err(&pdev->dev, "%s: parent dev not found\n",
 				__func__);
 		}
 	} else {
-		dev_info(&pdev->dev, "%s: bolero node not found\n", __func__);
+		dev_info(&pdev->dev, "%s: parent node not found\n", __func__);
 	}
 
 	mutex_init(&wsa881x->res_lock);
@@ -1563,7 +1721,7 @@ static int wsa881x_swr_remove(struct swr_device *pdev)
 
 	if (wsa881x->register_notifier)
 		wsa881x->register_notifier(wsa881x->handle,
-					   &wsa881x->bolero_nblock, false);
+					   &wsa881x->parent_nblock, false);
 	debugfs_remove_recursive(debugfs_wsa881x_dent);
 	debugfs_wsa881x_dent = NULL;
 	mutex_destroy(&wsa881x->res_lock);
@@ -1571,6 +1729,9 @@ static int wsa881x_swr_remove(struct swr_device *pdev)
 	snd_soc_unregister_component(&pdev->dev);
 	if (wsa881x->pd_gpio)
 		gpio_free(wsa881x->pd_gpio);
+	kfree(wsa881x->driver->name);
+	kfree(wsa881x->dai_driver->name);
+	kfree(wsa881x->dai_driver->playback.stream_name);
 	swr_set_dev_data(pdev, NULL);
 	return 0;
 }
