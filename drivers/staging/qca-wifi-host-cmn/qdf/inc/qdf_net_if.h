@@ -1,0 +1,93 @@
+/*
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for
+ * any purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/**
+ * DOC: qdf_net_if
+ * QCA driver framework (QDF) network interface management APIs
+ */
+
+#if !defined(__QDF_NET_IF_H)
+#define __QDF_NET_IF_H
+
+/* Include Files */
+#include <qdf_types.h>
+#include <i_qdf_net_if.h>
+
+struct qdf_net_if;
+
+#ifdef ENHANCED_OS_ABSTRACTION
+/**
+ * qdf_net_if_create_dummy_if() - create dummy interface
+ * @nif: interface handle
+ *
+ * This function will create a dummy network interface
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS
+qdf_net_if_create_dummy_if(struct qdf_net_if *nif);
+
+/**
+ * qdf_net_if_get_dev_by_name() - Find a network device by its name
+ * @nif_name: network device name
+ *
+ * This function retrieves the network device by its name
+ *
+ * Return: qdf network device
+ */
+struct qdf_net_if *
+qdf_net_if_get_dev_by_name(char *nif_name);
+
+/**
+ * qdf_net_if_release_dev() - Release reference to network device
+ * @nif: network device
+ *
+ * This function releases reference to the network device
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS
+qdf_net_if_release_dev(struct qdf_net_if *nif);
+#else
+static inline QDF_STATUS
+qdf_net_if_create_dummy_if(struct qdf_net_if *nif)
+{
+	return __qdf_net_if_create_dummy_if(nif);
+}
+
+static inline struct qdf_net_if *
+qdf_net_if_get_dev_by_name(char *nif_name)
+{
+	return __qdf_net_if_get_dev_by_name(nif_name);
+}
+
+static inline QDF_STATUS
+qdf_net_if_release_dev(struct qdf_net_if *nif)
+{
+	return __qdf_net_if_release_dev(nif);
+}
+#endif
+
+/**
+ * qdf_net_if_get_devname() - Retrieve netdevice name
+ * @nif: Abstraction of netdevice
+ *
+ * Return: netdevice name
+ */
+char *qdf_net_if_get_devname(struct qdf_net_if *nif);
+#endif /* __QDF_NET_IF_H */

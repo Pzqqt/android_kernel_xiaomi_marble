@@ -1,0 +1,152 @@
+/*
+ * Copyright (c) 2018, 2020-2021 The Linux Foundation. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for
+ * any purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/**
+ * DOC: target_if_cp_stats.h
+ *
+ * This header file provide declarations required for Rx and Tx events from
+ * firmware
+ */
+
+#ifndef __TARGET_IF_CP_STATS_H__
+#define __TARGET_IF_CP_STATS_H__
+
+#include <target_if.h>
+#include <wlan_lmac_if_def.h>
+#include <wlan_cp_stats_utils_api.h>
+
+#ifdef QCA_SUPPORT_CP_STATS
+
+/**
+ * target_if_cp_stats_get_rx_ops() - get rx ops
+ * @tx_ops: pointer to lmac tx ops
+ *
+ * Return: pointer to rx ops
+ */
+static inline struct wlan_lmac_if_cp_stats_rx_ops *
+target_if_cp_stats_get_rx_ops(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_rx_ops *rx_ops;
+
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		cp_stats_err("rx_ops is NULL");
+		return NULL;
+	}
+
+	return &rx_ops->cp_stats_rx_ops;
+}
+
+/**
+ * target_if_cp_stats_get_tx_ops() - get tx ops
+ * @tx_ops: pointer to lmac tx ops
+ *
+ * Return: pointer to tx ops
+ */
+static inline struct wlan_lmac_if_cp_stats_tx_ops *
+target_if_cp_stats_get_tx_ops(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_tx_ops *tx_ops;
+
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		cp_stats_err("tx_ops is NULL");
+		return NULL;
+	}
+
+	return &tx_ops->cp_stats_tx_ops;
+}
+
+/**
+ * target_if_cp_stats_register_tx_ops() - define cp_stats lmac tx ops functions
+ * @tx_ops: pointer to lmac tx ops
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS
+target_if_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
+
+#ifdef WLAN_SUPPORT_LEGACY_CP_STATS_HANDLERS
+/**
+ * @target_if_cp_stats_register_legacy_event_handler() - Register handler
+ * specific to legacy components
+ * @psoc: pointer to psoc object
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes on
+ * failure
+ */
+QDF_STATUS
+target_if_cp_stats_register_legacy_event_handler(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * @target_if_cp_stats_unregister_legacy_event_handler() - Unregister handler
+ * specific to legacy components
+ * @psoc: pointer to psoc object
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes on
+ * failure
+ */
+QDF_STATUS
+target_if_cp_stats_unregister_legacy_event_handler(
+						struct wlan_objmgr_psoc *psoc);
+#else
+
+static inline QDF_STATUS
+target_if_cp_stats_register_legacy_event_handler(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+target_if_cp_stats_unregister_legacy_event_handler(
+						struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif  /* WLAN_SUPPORT_LEGACY_CP_STATS_HANDLERS */
+
+#ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
+/**
+ * get_infra_cp_stats_id() - convert from to wmi_ctrl_path_stats_id
+ * @type: type from enum infra_cp_stats_id
+ *
+ * Return: wmi_ctrl_path_stats_id code for success or -EINVAL
+ * for failure
+ */
+uint32_t get_infra_cp_stats_id(enum infra_cp_stats_id type);
+
+/**
+ * get_infra_cp_stats_action() - convert action codes from
+ * enum infra_cp_stats_action to wmi_ctrl_path_stats_action
+ * @action: action code from enum infra_cp_stats_action
+ *
+ * Return: wmi_ctrl_path_stats_action code for success or -EINVAL
+ * for failure
+ */
+uint32_t get_infra_cp_stats_action(enum infra_cp_stats_action action);
+#endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */
+
+#else
+static inline QDF_STATUS
+target_if_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* QCA_SUPPORT_CP_STATS */
+
+#endif /* __TARGET_IF_CP_STATS_H__ */
