@@ -1,0 +1,1022 @@
+;Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+
+;Permission to use, copy, modify, and/or distribute this software for
+;any purpose with or without fee is hereby granted, provided that the
+;above copyright notice and this permission notice appear in all
+;copies.
+
+;THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+;WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+;WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+;AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+;DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+;PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+;TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+;PERFORMANCE OF THIS SOFTWARE.
+
+;parse_qdf_trace.cmm - This script parses QDF trace table and produces an output
+;containing the details of table records(max. 4000 records) with their enums.
+;The modules whose qdf trace records are covered in this script are: HDD,
+;SME,PE,WMA,WMI.
+;This script picks up the enums for module ID, code and data part from the dump
+;only, for the records of modules: SME,PE,WMA and WMI. For HDD module, code type
+;enums are hardcoded in script(hddcodetype).
+;The script also relies on message id's placed in interface header file of
+;the driver for the message types(enums) like: halmsgtype, limmsgtype, mgmttype
+;and WMI_EVT_ID.
+;For the above message id's, if some message ID's are changed later, since they
+;do not use symbols from dump, this script might show incorrect data.
+;So message ID's(hard-coded in script) should always be in sync with the driver code.
+
+;How to use the script:-
+;1.Collect a crash dump and generate a Crash Report using CrashScope.
+;2.Open Crash Report then select APPS, listed under Load dumps in simulator and
+;load it(It will load the dump in trace32 simulator).
+;3.After load completion change the directory to parse_qdf_trace.cmm script
+;containing directory(using cd command at bottom space of simulator).
+;4.To run the script on the loaded dump, enter command: "do parse_qdf_trace.cmm".
+;5.select a folder, create a file and select it to store the output of script.
+
+;Author:
+;Date:          06/30/2020
+;History:-
+;Date           Modified by    Modification Information
+;--------------------------------------------------------------------
+
+
+ENTRY &FILE
+
+IF "&FILE"==""
+(
+DIALOG.file *.txt
+ENTRY &FILE
+)
+
+OPEN #1 "&FILE" /Create /Write /Append
+
+;present in legacy code script
+;added and removed enums to sync with current driver code
+Var.NEW  char [0x21C][50] \halmsgtype
+
+Var.SET \halmsgtype[0x20]="SIR_HAL_RADAR_DETECTED_IND"
+Var.SET \halmsgtype[0x21]="SIR_HAL_ADD_STA_REQ"
+Var.SET \halmsgtype[0x22]="SIR_HAL_ADD_STA_RSP"
+Var.SET \halmsgtype[0x23]="SIR_HAL_DELETE_STA_REQ"
+Var.SET \halmsgtype[0x24]="SIR_HAL_DELETE_STA_RSP"
+Var.SET \halmsgtype[0x25]="SIR_HAL_ADD_BSS_REQ"
+;6 unused
+Var.SET \halmsgtype[0x27]="SIR_HAL_DELETE_BSS_REQ"
+Var.SET \halmsgtype[0x28]="SIR_HAL_DELETE_BSS_RSP"
+;9 to 16 unused
+Var.SET \halmsgtype[0x31]="SIR_HAL_SEND_BEACON_REQ"
+;18 unused
+Var.SET \halmsgtype[0x33]="SIR_HAL_SET_BSSKEY_RSP"
+;20 unused
+Var.SET \halmsgtype[0x35]="SIR_HAL_SET_STAKEY_RSP"
+Var.SET \halmsgtype[0x36]="SIR_HAL_UPDATE_EDCA_PROFILE_IND"
+Var.SET \halmsgtype[0x37]="SIR_HAL_UPDATE_BEACON_IND"
+;24 unused
+Var.SET \halmsgtype[0x39]="SIR_HAL_CHNL_SWITCH_REQ"
+Var.SET \halmsgtype[0x3A]="SIR_HAL_ADD_TS_REQ"
+Var.SET \halmsgtype[0x3B]="SIR_HAL_DEL_TS_REQ"
+;28 to 33 macros unused
+Var.SET \halmsgtype[0x42]="SIR_HAL_MISSED_BEACON_IND"
+Var.SET \halmsgtype[0x43]="SIR_HAL_SWITCH_CHANNEL_RSP"
+Var.SET \halmsgtype[0x44]="SIR_HAL_PWR_SAVE_CFG"
+;37 to 42 unused
+Var.SET \halmsgtype[0x4B]="SIR_HAL_IBSS_STA_ADD"
+Var.SET \halmsgtype[0x4C]="SIR_HAL_TIMER_ADJUST_ADAPTIVE_THRESHOLD_IND"
+Var.SET \halmsgtype[0x4D]="SIR_HAL_SET_LINK_STATE"
+Var.SET \halmsgtype[0x4E]="SIR_HAL_DELETE_BSS_HO_FAIL_REQ"
+Var.SET \halmsgtype[0x4F]="SIR_HAL_DELETE_BSS_HO_FAIL_RSP"
+;48 to 57 unused
+Var.SET \halmsgtype[0x5A]="SIR_HAL_SET_STA_BCASTKEY_REQ"
+Var.SET \halmsgtype[0x5B]="SIR_HAL_SET_STA_BCASTKEY_RSP"
+Var.SET \halmsgtype[0x5C]="SIR_HAL_ADD_TS_RSP"
+Var.SET \halmsgtype[0x5D]="SIR_HAL_DPU_MIC_ERROR"
+;62 unused
+Var.SET \halmsgtype[0x5F]="SIR_HAL_TIMER_CHIP_MONITOR_TIMEOUT"
+Var.SET \halmsgtype[0x60]="SIR_HAL_TIMER_TRAFFIC_ACTIVITY_REQ"
+Var.SET \halmsgtype[0x61]="SIR_HAL_TIMER_ADC_RSSI_STATS"
+;66 unused
+Var.SET \halmsgtype[0x63]="SIR_HAL_SET_MIMOPS_REQ"
+Var.SET \halmsgtype[0x64]="SIR_HAL_SET_MIMOPS_RSP"
+Var.SET \halmsgtype[0x65]="SIR_HAL_SYS_READY_IND"
+Var.SET \halmsgtype[0x66]="SIR_HAL_SET_TX_POWER_REQ"
+Var.SET \halmsgtype[0x67]="SIR_HAL_SET_TX_POWER_RSP"
+Var.SET \halmsgtype[0x68]="SIR_HAL_GET_TX_POWER_REQ"
+;73 to 89 unused
+Var.SET \halmsgtype[0x7A]="SIR_HAL_SET_KEY_DONE"
+Var.SET \halmsgtype[0x7B]="SIR_HAL_BTC_SET_CFG"
+;92 unused
+Var.SET \halmsgtype[0x7D]="SIR_HAL_HANDLE_FW_MBOX_RSP"
+Var.SET \halmsgtype[0x7E]="SIR_HAL_SEND_PROBE_RSP_TMPL"
+Var.SET \halmsgtype[0x7F]="SIR_LIM_ADDR2_MISS_IND"
+;96 & 97 unused
+Var.SET \halmsgtype[0x82]="SIR_HAL_SET_MAX_TX_POWER_REQ"
+Var.SET \halmsgtype[0x83]="SIR_HAL_SET_MAX_TX_POWER_RSP"
+Var.SET \halmsgtype[0x84]="SIR_HAL_SET_HOST_OFFLOAD"
+;101 t0 108 unused
+Var.SET \halmsgtype[0x8D]="SIR_HAL_AGGR_QOS_REQ"
+Var.SET \halmsgtype[0x8E]="SIR_HAL_AGGR_QOS_RSP"
+;111 unused
+Var.SET \halmsgtype[0x90]="SIR_HAL_P2P_NOA_ATTR_IND"
+;113 to 114 unused
+Var.SET \halmsgtype[0x93]="SIR_HAL_WLAN_SUSPEND_IND"
+Var.SET \halmsgtype[0x94]="SIR_HAL_WLAN_RESUME_REQ"
+Var.SET \halmsgtype[0x95]="SIR_HAL_SET_KEEP_ALIVE"
+Var.SET \halmsgtype[0x96]="SIR_HAL_SET_NS_OFFLOAD"
+;119 unused
+Var.SET \halmsgtype[0x98]="SIR_HAL_SOC_ANTENNA_MODE_REQ"
+Var.SET \halmsgtype[0x99]="SIR_HAL_SOC_ANTENNA_MODE_RESP"
+;122 unused
+;#ifdef WLAN_FEATURE_PACKET_FILTERING
+Var.SET \halmsgtype[0x9B]="SIR_HAL_8023_MULTICAST_LIST_REQ"
+Var.SET \halmsgtype[0x9C]="SIR_HAL_RECEIVE_FILTER_SET_FILTER_REQ"
+Var.SET \halmsgtype[0x9D]="SIR_HAL_PACKET_COALESCING_FILTER_MATCH_COUNT_REQ"
+Var.SET \halmsgtype[0x9E]="SIR_HAL_PACKET_COALESCING_FILTER_MATCH_COUNT_RSP"
+Var.SET \halmsgtype[0x9F]="SIR_HAL_RECEIVE_FILTER_CLEAR_FILTER_REQ"
+;#endif /* WLAN_FEATURE_PACKET_FILTERING */
+;128 unused
+;#ifdef WLAN_FEATURE_GTK_OFFLOAD
+Var.SET \halmsgtype[0xA1]="SIR_HAL_GTK_OFFLOAD_REQ"
+Var.SET \halmsgtype[0xA2]="SIR_HAL_GTK_OFFLOAD_GETINFO_REQ"
+Var.SET \halmsgtype[0xA3]="SIR_HAL_GTK_OFFLOAD_GETINFO_RSP"
+;#endif /* WLAN_FEATURE_GTK_OFFLOAD */
+;#ifdef FEATURE_WLAN_ESE
+Var.SET \halmsgtype[0xA4]="SIR_HAL_TSM_STATS_REQ"
+Var.SET \halmsgtype[0xA5]="SIR_HAL_TSM_STATS_RSP"
+;#endif
+Var.SET \halmsgtype[0xA6]="SIR_HAL_SET_TM_LEVEL_REQ"
+Var.SET \halmsgtype[0xA7]="SIR_HAL_UPDATE_OP_MODE"
+;136 & 137 unused
+Var.SET \halmsgtype[0xAA]="SIR_HAL_ROAM_SCAN_OFFLOAD_REQ"
+Var.SET \halmsgtype[0xAB]="SIR_HAL_ROAM_PRE_AUTH_STATUS_IND"
+;140 unused
+Var.SET \halmsgtype[0xAD]="SIR_HAL_TRAFFIC_STATS_IND"
+;#ifdef WLAN_FEATURE_11W
+Var.SET \halmsgtype[0xAE]="SIR_HAL_EXCLUDE_UNENCRYPTED_IND"
+;#endif
+;#ifdef FEATURE_WLAN_TDLS
+Var.SET \halmsgtype[0xAF]="SIR_HAL_TDLS_LINK_ESTABLISH_REQ"
+Var.SET \halmsgtype[0xB0]="SIR_HAL_TDLS_LINK_ESTABLISH_REQ_RSP"
+;145 unused
+;#endif
+Var.SET \halmsgtype[0xB2]="SIR_HAL_STOP_SCAN_OFFLOAD_REQ"
+Var.SET \halmsgtype[0xB3]="SIR_HAL_RX_SCAN_EVENT"
+Var.SET \halmsgtype[0xB4]="SIR_HAL_DHCP_START_IND"
+Var.SET \halmsgtype[0xB5]="SIR_HAL_DHCP_STOP_IND"
+;150 unused
+Var.SET \halmsgtype[0xB7]="SIR_HAL_LPHB_CONF_IND"
+Var.SET \halmsgtype[0xB8]="SIR_HAL_ADD_PERIODIC_TX_PTRN_IND"
+Var.SET \halmsgtype[0xB9]="SIR_HAL_DEL_PERIODIC_TX_PTRN_IND"
+Var.SET \halmsgtype[0xBA]="SIR_HAL_PDEV_DUAL_MAC_CFG_REQ"
+Var.SET \halmsgtype[0xBB]="SIR_HAL_PDEV_MAC_CFG_RESP"
+;156 and 158 unused
+Var.SET \halmsgtype[0xBF]="SIR_HAL_RATE_UPDATE_IND"
+Var.SET \halmsgtype[0xC0]="SIR_HAL_FLUSH_LOG_TO_FW"
+Var.SET \halmsgtype[0xC1]="SIR_HAL_PDEV_SET_PCL_TO_FW"
+;#ifdef WLAN_MWS_INFO_DEBUGFS
+Var.SET \halmsgtype[0xC2]="SIR_HAL_GET_MWS_COEX_INFO_REQ"
+;#endif /* WLAN_MWS_INFO_DEBUGFS */
+Var.SET \halmsgtype[0xC3]="SIR_HAL_CLI_SET_CMD"
+;#ifndef REMOVE_PKT_LOG
+Var.SET \halmsgtype[0xC4]="SIR_HAL_PKTLOG_ENABLE_REQ"
+;#endif
+;165 unused
+Var.SET \halmsgtype[0xC6]="SIR_HAL_START_SCAN_OFFLOAD_REQ"
+Var.SET \halmsgtype[0xC7]="SIR_HAL_UPDATE_CHAN_LIST_REQ"
+;168 unused
+Var.SET \halmsgtype[0xC9]="SIR_CSA_OFFLOAD_EVENT"
+Var.SET \halmsgtype[0xCA]="SIR_HAL_SET_MAX_TX_POWER_PER_BAND_REQ"
+;171 unused
+Var.SET \halmsgtype[0xCC]="SIR_HAL_UPDATE_MEMBERSHIP"
+Var.SET \halmsgtype[0xCD]="SIR_HAL_UPDATE_USERPOS"
+;#ifdef FEATURE_WLAN_TDLS
+;174 unused
+Var.SET \halmsgtype[0xCF]="SIR_HAL_UPDATE_TDLS_PEER_STATE"
+Var.SET \halmsgtype[0xD0]="SIR_HAL_TDLS_SHOULD_DISCOVER"
+Var.SET \halmsgtype[0xD1]="SIR_HAL_TDLS_SHOULD_TEARDOWN"
+Var.SET \halmsgtype[0xD2]="SIR_HAL_TDLS_PEER_DISCONNECTED"
+;#endif
+Var.SET \halmsgtype[0xD3]="SIR_HAL_BEACON_TX_SUCCESS_IND"
+;180 to 184 unused
+Var.SET \halmsgtype[0xD9]="SIR_HAL_INIT_THERMAL_INFO_CMD"
+Var.SET \halmsgtype[0xDA]="SIR_HAL_SET_THERMAL_LEVEL"
+;#ifdef FEATURE_WLAN_ESE
+Var.SET \halmsgtype[0xDB]="SIR_HAL_SET_PLM_REQ"
+;#endif
+Var.SET \halmsgtype[0xDC]="SIR_HAL_SET_TX_POWER_LIMIT"
+Var.SET \halmsgtype[0xDD]="SIR_HAL_SET_SAP_INTRABSS_DIS"
+Var.SET \halmsgtype[0xDE]="SIR_HAL_MODEM_POWER_STATE_IND"
+Var.SET \halmsgtype[0xDF]="SIR_HAL_DISASSOC_TX_COMP"
+Var.SET \halmsgtype[0xE0]="SIR_HAL_DEAUTH_TX_COMP"
+Var.SET \halmsgtype[0xE1]="SIR_HAL_UPDATE_RX_NSS"
+;#ifdef WLAN_FEATURE_STATS_EXT
+Var.SET \halmsgtype[0xE2]="SIR_HAL_STATS_EXT_REQUEST"
+;195 to 197 unused
+Var.SET \halmsgtype[0xE6]="SIR_HAL_EXTSCAN_GET_CAPABILITIES_REQ"
+Var.SET \halmsgtype[0xE7]="SIR_HAL_EXTSCAN_START_REQ"
+Var.SET \halmsgtype[0xE8]="SIR_HAL_EXTSCAN_STOP_REQ"
+Var.SET \halmsgtype[0xE9]="SIR_HAL_EXTSCAN_SET_BSS_HOTLIST_REQ"
+Var.SET \halmsgtype[0xEA]="SIR_HAL_EXTSCAN_RESET_BSS_HOTLIST_REQ"
+Var.SET \halmsgtype[0xEB]="SIR_HAL_EXTSCAN_SET_SIGNF_CHANGE_REQ"
+Var.SET \halmsgtype[0xEC]="SIR_HAL_EXTSCAN_RESET_SIGNF_CHANGE_REQ"
+Var.SET \halmsgtype[0xED]="SIR_HAL_EXTSCAN_GET_CACHED_RESULTS_REQ"
+;#endif /* FEATURE_WLAN_EXTSCAN */
+;#ifdef FEATURE_WLAN_CH_AVOID
+Var.SET \halmsgtype[0xEE]="SIR_HAL_CH_AVOID_UPDATE_REQ"
+;#endif
+;#ifdef WLAN_FEATURE_LINK_LAYER_STATS
+Var.SET \halmsgtype[0xEF]="SIR_HAL_LL_STATS_CLEAR_REQ"
+Var.SET \halmsgtype[0xF0]="SIR_HAL_LL_STATS_SET_REQ"
+Var.SET \halmsgtype[0xF1]="SIR_HAL_LL_STATS_GET_REQ"
+Var.SET \halmsgtype[0xF2]="SIR_HAL_LL_STATS_RESULTS_RSP"
+;211 unused
+Var.SET \halmsgtype[0xF4]="SIR_HAL_NAN_REQUEST"
+;#endif /* WLAN_FEATURE_NAN */
+;#ifdef FEATURE_WLAN_AUTO_SHUTDOWN
+Var.SET \halmsgtype[0xF5]="SIR_HAL_SET_AUTO_SHUTDOWN_TIMER_REQ"
+;#endif
+Var.SET \halmsgtype[0xF6]="SIR_HAL_SET_BASE_MACADDR_IND"
+;215 unused
+Var.SET \halmsgtype[0xF8]="SIR_HAL_LINK_STATUS_GET_REQ"
+;#ifdef WLAN_FEATURE_EXTWOW_SUPPORT
+Var.SET \halmsgtype[0xF9]="SIR_HAL_CONFIG_EXT_WOW"
+Var.SET \halmsgtype[0xFA]="SIR_HAL_CONFIG_APP_TYPE1_PARAMS"
+Var.SET \halmsgtype[0xFB]="SIR_HAL_CONFIG_APP_TYPE2_PARAMS"
+;#endif
+Var.SET \halmsgtype[0xFC]="SIR_HAL_GET_TEMPERATURE_REQ"
+Var.SET \halmsgtype[0xFD]="SIR_HAL_SET_SCAN_MAC_OUI_REQ"
+;#ifdef DHCP_SERVER_OFFLOAD
+Var.SET \halmsgtype[0xFE]="SIR_HAL_SET_DHCP_SERVER_OFFLOAD"
+;#endif /* DHCP_SERVER_OFFLOAD */
+Var.SET \halmsgtype[0xFF]="SIR_HAL_LED_FLASHING_REQ"
+;224 unused
+;#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+Var.SET \halmsgtype[0x101]="SIR_HAL_ROAM_OFFLOAD_SYNCH_IND"
+Var.SET \halmsgtype[0x102]="SIR_HAL_ROAM_OFFLOAD_SYNCH_FAIL"
+Var.SET \halmsgtype[0x103]="SIR_HAL_ROAM_INVOKE"
+;#endif
+;228 unused
+Var.SET \halmsgtype[0x105]="SIR_HAL_SET_MAS"
+Var.SET \halmsgtype[0x106]="SIR_HAL_SET_MIRACAST"
+;#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
+Var.SET \halmsgtype[0x107]="SIR_HAL_UPDATE_Q2Q_IE_IND"
+;#endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
+Var.SET \halmsgtype[0x108]="SIR_HAL_CONFIG_STATS_FACTOR"
+Var.SET \halmsgtype[0x109]="SIR_HAL_CONFIG_GUARD_TIME"
+;234 unused
+Var.SET \halmsgtype[0x10B]="SIR_HAL_ENTER_PS_REQ"
+Var.SET \halmsgtype[0x10C]="SIR_HAL_EXIT_PS_REQ"
+Var.SET \halmsgtype[0x10D]="SIR_HAL_ENABLE_UAPSD_REQ"
+Var.SET \halmsgtype[0x10E]="SIR_HAL_DISABLE_UAPSD_REQ"
+Var.SET \halmsgtype[0x10F]="SIR_HAL_GATEWAY_PARAM_UPDATE_REQ"
+;240 to 312 unused
+Var.SET \halmsgtype[0x159]="SIR_HAL_SET_EPNO_LIST_REQ"
+;314 and 315 unused
+Var.SET \halmsgtype[0x15C]="SIR_HAL_SET_PASSPOINT_LIST_REQ"
+Var.SET \halmsgtype[0x15D]="SIR_HAL_RESET_PASSPOINT_LIST_REQ"
+;318 unused
+Var.SET \halmsgtype[0x15F]="SIR_HAL_OCB_SET_CONFIG_CMD"
+Var.SET \halmsgtype[0x160]="SIR_HAL_OCB_SET_UTC_TIME_CMD"
+Var.SET \halmsgtype[0x161]="SIR_HAL_OCB_START_TIMING_ADVERT_CMD"
+Var.SET \halmsgtype[0x162]="SIR_HAL_OCB_STOP_TIMING_ADVERT_CMD"
+Var.SET \halmsgtype[0x163]="SIR_HAL_OCB_GET_TSF_TIMER_CMD"
+Var.SET \halmsgtype[0x164]="SIR_HAL_DCC_GET_STATS_CMD"
+Var.SET \halmsgtype[0x165]="SIR_HAL_DCC_CLEAR_STATS_CMD"
+Var.SET \halmsgtype[0x166]="SIR_HAL_DCC_UPDATE_NDL_CMD"
+;327 unused
+Var.SET \halmsgtype[0x168]="SIR_HAL_START_STOP_LOGGING"
+Var.SET \halmsgtype[0x169]="SIR_HAL_PDEV_SET_HW_MODE"
+Var.SET \halmsgtype[0x16A]="SIR_HAL_PDEV_SET_HW_MODE_RESP"
+Var.SET \halmsgtype[0x16B]="SIR_HAL_PDEV_HW_MODE_TRANS_IND"
+Var.SET \halmsgtype[0x16C]="SIR_HAL_BAD_PEER_TX_CTL_INI_CMD"
+Var.SET \halmsgtype[0x16D]="SIR_HAL_SET_RSSI_MONITOR_REQ"
+Var.SET \halmsgtype[0x16E]="SIR_HAL_SET_IE_INFO"
+Var.SET \halmsgtype[0x16F]="SIR_HAL_LRO_CONFIG_CMD"
+;336 unused
+Var.SET \halmsgtype[0x171]="SIR_HAL_HT40_OBSS_SCAN_IND"
+Var.SET \halmsgtype[0x172]="SIR_HAL_TSF_GPIO_PIN_REQ"
+Var.SET \halmsgtype[0x173]="SIR_HAL_ADD_BCN_FILTER_CMDID"
+Var.SET \halmsgtype[0x174]="SIR_HAL_REMOVE_BCN_FILTER_CMDID"
+Var.SET \halmsgtype[0x175]="SIR_HAL_APF_GET_CAPABILITIES_REQ"
+Var.SET \halmsgtype[0x176]="SIR_HAL_APF_SET_INSTRUCTIONS_REQ"
+Var.SET \halmsgtype[0x177]="SIR_HAL_SET_WISA_PARAMS"
+Var.SET \halmsgtype[0x178]="SIR_HAL_SET_ADAPT_DWELLTIME_PARAMS"
+Var.SET \halmsgtype[0x179]="SIR_HAL_SET_PDEV_IE_REQ"
+;346 to 359 unused
+Var.SET \halmsgtype[0x188]="SIR_HAL_SEND_FREQ_RANGE_CONTROL_IND"
+;361 unused
+Var.SET \halmsgtype[0x18A]="SIR_HAL_POWER_DBG_CMD"
+Var.SET \halmsgtype[0x18B]="SIR_HAL_SET_DTIM_PERIOD"
+;364 unused
+Var.SET \halmsgtype[0x18D]="SIR_HAL_SHORT_RETRY_LIMIT_CNT"
+Var.SET \halmsgtype[0x18E]="SIR_HAL_LONG_RETRY_LIMIT_CNT"
+Var.SET \halmsgtype[0x18F]="SIR_HAL_UPDATE_TX_FAIL_CNT_TH"
+Var.SET \halmsgtype[0x190]="SIR_HAL_POWER_DEBUG_STATS_REQ"
+Var.SET \halmsgtype[0x191]="SIR_HAL_SET_WOW_PULSE_CMD"
+;370 unused
+Var.SET \halmsgtype[0x193]="SIR_HAL_SET_PER_ROAM_CONFIG_CMD"
+Var.SET \halmsgtype[0x194]="SIR_HAL_RX_CHN_STATUS_EVENT"
+Var.SET \halmsgtype[0x195]="SIR_HAL_GET_RCPI_REQ"
+;374 to 377 unused
+;#ifdef WLAN_FEATURE_LINK_LAYER_STATS
+Var.SET \halmsgtype[0x19A]="SIR_HAL_LL_STATS_EXT_SET_THRESHOLD"
+;#endif
+;Var.SET \halmsgtype[0x19B]="SIR_HAL_SET_DBS_SCAN_SEL_PARAMS"
+;379
+Var.SET \halmsgtype[0x19B]="SIR_HAL_HIDDEN_SSID_RESTART_RSP"
+;379
+Var.SET \halmsgtype[0x19C]="SIR_HAL_INIT_ROAM_OFFLOAD_PARAM"
+;381 to 386 unused
+Var.SET \halmsgtype[0x1A3]="SIR_HAL_GET_PEER_INFO_EXT"
+Var.SET \halmsgtype[0x1A4]="SIR_HAL_SET_ARP_STATS_REQ"
+Var.SET \halmsgtype[0x1A5]="SIR_HAL_GET_ARP_STATS_REQ"
+Var.SET \halmsgtype[0x1A6]="SIR_HAL_SET_LIMIT_OFF_CHAN"
+Var.SET \halmsgtype[0x1A7]="SIR_HAL_SET_DEL_PMKID_CACHE"
+Var.SET \halmsgtype[0x1A8]="SIR_HAL_HLP_IE_INFO"
+Var.SET \halmsgtype[0x1A9]="SIR_HAL_OBSS_DETECTION_REQ"
+Var.SET \halmsgtype[0x1AA]="SIR_HAL_OBSS_DETECTION_INFO"
+Var.SET \halmsgtype[0x1AB]="SIR_HAL_INVOKE_NEIGHBOR_REPORT"
+Var.SET \halmsgtype[0x1AC]="SIR_HAL_OBSS_COLOR_COLLISION_REQ"
+Var.SET \halmsgtype[0x1AD]="SIR_HAL_OBSS_COLOR_COLLISION_INFO"
+Var.SET \halmsgtype[0x1AE]="SIR_HAL_SEND_ADDBA_REQ"
+Var.SET \halmsgtype[0x1AF]="SIR_HAL_GET_ROAM_SCAN_STATS"
+Var.SET \halmsgtype[0x1B0]="SIR_HAL_SEND_AP_VDEV_UP"
+Var.SET \halmsgtype[0x1B1]="SIR_HAL_SEND_BCN_RSP"
+Var.SET \halmsgtype[0x1B2]="SIR_HAL_CFG_VENDOR_ACTION_TB_PPDU"
+Var.SET \halmsgtype[0x1B3]="SIR_HAL_BEACON_DEBUG_STATS_REQ"
+Var.SET \halmsgtype[0x1B4]="SIR_HAL_ROAM_BLACKLIST_MSG"
+Var.SET \halmsgtype[0x1B5]="SIR_HAL_SET_MOTION_DET_CONFIG"
+Var.SET \halmsgtype[0x1B6]="SIR_HAL_SET_MOTION_DET_ENABLE"
+Var.SET \halmsgtype[0x1B7]="SIR_HAL_SET_MOTION_DET_BASE_LINE_CONFIG"
+Var.SET \halmsgtype[0x1B8]="SIR_HAL_SET_MOTION_DET_BASE_LINE_ENABLE"
+Var.SET \halmsgtype[0x1B9]="SIR_HAL_SET_THERMAL_THROTTLE_CFG"
+Var.SET \halmsgtype[0x1BA]="SIR_HAL_SET_THERMAL_MGMT"
+Var.SET \halmsgtype[0x1BB]="SIR_HAL_SEND_PEER_UNMAP_CONF"
+Var.SET \halmsgtype[0x1BC]="SIR_HAL_GET_ISOLATION"
+Var.SET \halmsgtype[0x1BD]="SIR_HAL_SET_ROAM_TRIGGERS"
+Var.SET \halmsgtype[0x1BE]="SIR_HAL_ROAM_SCAN_CH_REQ"
+Var.SET \halmsgtype[0x1BF]="SIR_HAL_REQ_SEND_DELBA_REQ_IND"
+Var.SET \halmsgtype[0x1C0]="SIR_HAL_SEND_MAX_TX_POWER"
+Var.SET \halmsgtype[0x1FF]="SIR_HAL_MSG_TYPES_END"
+
+;present in legacy code script
+;added and removed enums to sync with current driver code
+Var.NEW  char [256][50] \limmsgtype
+
+Var.SET \limmsgtype[0xB4]="SIR_BB_XPORT_MGMT_MSG"
+;5 and 0x10 unused
+Var.SET \limmsgtype[0xC1]="SIR_LIM_DELETE_STA_CONTEXT_IND"
+;0x12 unused
+Var.SET \limmsgtype[0xC3]="SIR_LIM_UPDATE_BEACON"
+Var.SET \limmsgtype[0xC5]="SIR_LIM_RX_INVALID_PEER"
+;D0: 0 and 1 unused
+Var.SET \limmsgtype[0xD2]="SIR_LIM_JOIN_FAIL_TIMEOUT"
+Var.SET \limmsgtype[0xD3]="SIR_LIM_AUTH_FAIL_TIMEOUT"
+Var.SET \limmsgtype[0xD4]="SIR_LIM_AUTH_RSP_TIMEOUT"
+Var.SET \limmsgtype[0xD5]="SIR_LIM_ASSOC_FAIL_TIMEOUT"
+Var.SET \limmsgtype[0xD6]="SIR_LIM_REASSOC_FAIL_TIMEOUT"
+Var.SET \limmsgtype[0xD7]="SIR_LIM_HEART_BEAT_TIMEOUT"
+;8, 9 and A unused
+Var.SET \limmsgtype[0xDB]="SIR_LIM_PROBE_HB_FAILURE_TIMEOUT"
+Var.SET \limmsgtype[0xDC]="SIR_LIM_ADDTS_RSP_TIMEOUT"
+;0xD to 0x12 unused
+Var.SET \limmsgtype[0xE3]="SIR_LIM_LINK_TEST_DURATION_TIMEOUT"
+;0x14 to 0x16 unused
+Var.SET \limmsgtype[0xE7]="SIR_LIM_CNF_WAIT_TIMEOUT"
+;0x18 unused
+Var.SET \limmsgtype[0xE9]="SIR_LIM_UPDATE_OLBC_CACHEL_TIMEOUT"
+;0x1A, 0x1B, 0x1C unused
+Var.SET \limmsgtype[0xED]="SIR_LIM_WPS_OVERLAP_TIMEOUT"
+Var.SET \limmsgtype[0xEE]="SIR_LIM_FT_PREAUTH_RSP_TIMEOUT"
+;0x21 and 0x22 unused
+Var.SET \limmsgtype[0xF3]="SIR_LIM_BEACON_GEN_IND"
+;0x24 , 0x25 unused
+Var.SET \limmsgtype[0xF6]="SIR_LIM_DISASSOC_ACK_TIMEOUT"
+Var.SET \limmsgtype[0xF7]="SIR_LIM_DEAUTH_ACK_TIMEOUT"
+Var.SET \limmsgtype[0xF8]="SIR_LIM_PERIODIC_JOIN_PROBE_REQ_TIMEOUT"
+;0x29, 0x2A, 0x2B and 0x2C unused
+Var.SET \limmsgtype[0xFD]="SIR_LIM_AUTH_RETRY_TIMEOUT"
+Var.SET \limmsgtype[0xFE]="SIR_LIM_AUTH_SAE_TIMEOUT"
+Var.SET \limmsgtype[0xFF]="SIR_LIM_MSG_TYPES_END"
+
+
+;present in legacy code script
+;added and removed enums to sync with current driver code
+Var.NEW char [16][50] \mgmttype
+
+Var.SET \mgmttype[0x0]="SIR_MAC_MGMT_ASSOC_REQ"
+Var.SET \mgmttype[0x1]="SIR_MAC_MGMT_ASSOC_RSP"
+Var.SET \mgmttype[0x2]="SIR_MAC_MGMT_REASSOC_REQ"
+Var.SET \mgmttype[0x3]="SIR_MAC_MGMT_REASSOC_RSP"
+Var.SET \mgmttype[0x4]="SIR_MAC_MGMT_PROBE_REQ"
+Var.SET \mgmttype[0x5]="SIR_MAC_MGMT_PROBE_RSP"
+Var.SET \mgmttype[0x6]="SIR_MAC_MGMT_TIME_ADVERT"
+Var.SET \mgmttype[0x8]="SIR_MAC_MGMT_BEACON"
+Var.SET \mgmttype[0x9]="SIR_MAC_MGMT_ATIM"
+Var.SET \mgmttype[0xA]="SIR_MAC_MGMT_DISASSOC"
+Var.SET \mgmttype[0xB]="SIR_MAC_MGMT_AUTH"
+Var.SET \mgmttype[0xC]="SIR_MAC_MGMT_DEAUTH"
+Var.SET \mgmttype[0xD]="SIR_MAC_MGMT_ACTION"
+Var.SET \mgmttype[0xF]="SIR_MAC_MGMT_RESERVED15"
+
+;present in legacy code script
+;added and removed enums to sync with current driver code
+Var.NEW  char [256][100] \hddcodetype
+
+Var.SET \hddcodetype[0x00]="TRACE_CODE_HDD_OPEN_REQUEST"
+Var.SET \hddcodetype[0x01]="TRACE_CODE_HDD_STOP_REQUEST"
+Var.SET \hddcodetype[0x02]="TRACE_CODE_HDD_TX_TIMEOUT"
+Var.SET \hddcodetype[0x03]="TRACE_CODE_HDD_P2P_DEV_ADDR_IOCTL"
+Var.SET \hddcodetype[0x04]="TRACE_CODE_HDD_SETSUSPENDMODE_IOCTL"
+Var.SET \hddcodetype[0x05]="TRACE_CODE_HDD_SETROAMTRIGGER_IOCTL"
+Var.SET \hddcodetype[0x06]="TRACE_CODE_HDD_GETROAMTRIGGER_IOCTL"
+Var.SET \hddcodetype[0x07]="TRACE_CODE_HDD_SETROAMSCANPERIOD_IOCTL"
+Var.SET \hddcodetype[0x08]="TRACE_CODE_HDD_GETROAMSCANPERIOD_IOCTL"
+Var.SET \hddcodetype[0x09]="TRACE_CODE_HDD_SETROAMDELTA_IOCTL"
+Var.SET \hddcodetype[0x0A]="TRACE_CODE_HDD_GETROAMDELTA_IOCTL"
+Var.SET \hddcodetype[0x0B]="TRACE_CODE_HDD_GETBAND_IOCTL"
+Var.SET \hddcodetype[0x0C]="TRACE_CODE_HDD_GETCOUNTRYREV_IOCTL"
+Var.SET \hddcodetype[0x0D]="TRACE_CODE_HDD_SETROAMSCANCHANNELS_IOCTL"
+Var.SET \hddcodetype[0x0E]="TRACE_CODE_HDD_GETROAMSCANCHANNELS_IOCTL"
+Var.SET \hddcodetype[0x0F]="TRACE_CODE_HDD_HOSTAPD_OPEN_REQUEST"
+Var.SET \hddcodetype[0x10]="TRACE_CODE_HDD_HOSTAPD_STOP_REQUEST"
+Var.SET \hddcodetype[0x11]="TRACE_CODE_HDD_HOSTAPD_UNINIT_REQUEST"
+Var.SET \hddcodetype[0x12]="TRACE_CODE_HDD_SOFTAP_TX_TIMEOUT"
+Var.SET \hddcodetype[0x13]="TRACE_CODE_HDD_HOSTAPD_SET_MAC_ADDR"
+Var.SET \hddcodetype[0x14]="TRACE_CODE_HDD_HOSTAPD_P2P_SET_NOA_IOCTL"
+Var.SET \hddcodetype[0x15]="TRACE_CODE_HDD_HOSTAPD_P2P_SET_PS_IOCTL"
+Var.SET \hddcodetype[0x16]="TRACE_CODE_HDD_HOSTAPD_SET_SAP_CHANNEL_LIST_IOCTL"
+Var.SET \hddcodetype[0x17]="TRACE_CODE_HDD_ADD_VIRTUAL_INTF"
+Var.SET \hddcodetype[0x18]="TRACE_CODE_HDD_DEL_VIRTUAL_INTF"
+Var.SET \hddcodetype[0x19]="TRACE_CODE_HDD_CHANGE_VIRTUAL_INTF"
+Var.SET \hddcodetype[0x1A]="TRACE_CODE_HDD_CFG80211_START_AP"
+Var.SET \hddcodetype[0x1B]="TRACE_CODE_HDD_CFG80211_CHANGE_BEACON"
+Var.SET \hddcodetype[0x1C]="TRACE_CODE_HDD_CFG80211_STOP_AP"
+Var.SET \hddcodetype[0x1D]="TRACE_CODE_HDD_CFG80211_CHANGE_BSS"
+Var.SET \hddcodetype[0x1E]="TRACE_CODE_HDD_CFG80211_ADD_KEY"
+Var.SET \hddcodetype[0x1F]="TRACE_CODE_HDD_CFG80211_GET_KEY"
+Var.SET \hddcodetype[0x20]="TRACE_CODE_HDD_CFG80211_SET_DEFAULT_KEY"
+Var.SET \hddcodetype[0x21]="TRACE_CODE_HDD_CFG80211_CONNECT"
+Var.SET \hddcodetype[0x22]="TRACE_CODE_HDD_CFG80211_DISCONNECT"
+Var.SET \hddcodetype[0x23]="TRACE_CODE_HDD_CFG80211_JOIN_IBSS"
+Var.SET \hddcodetype[0x24]="TRACE_CODE_HDD_CFG80211_LEAVE_IBSS"
+Var.SET \hddcodetype[0x25]="TRACE_CODE_HDD_CFG80211_SET_WIPHY_PARAMS"
+Var.SET \hddcodetype[0x26]="TRACE_CODE_HDD_CFG80211_SET_TXPOWER"
+Var.SET \hddcodetype[0x27]="TRACE_CODE_HDD_CFG80211_GET_TXPOWER"
+Var.SET \hddcodetype[0x28]="TRACE_CODE_HDD_CFG80211_SET_CHANNEL"
+Var.SET \hddcodetype[0x29]="TRACE_CODE_HDD_CFG80211_ADD_BEACON"
+Var.SET \hddcodetype[0x2A]="TRACE_CODE_HDD_CFG80211_SET_BEACON"
+Var.SET \hddcodetype[0x2B]="TRACE_CODE_HDD_CFG80211_CHANGE_IFACE"
+Var.SET \hddcodetype[0x2C]="TRACE_CODE_HDD_CHANGE_STATION"
+Var.SET \hddcodetype[0x2D]="TRACE_CODE_HDD_CFG80211_UPDATE_BSS"
+Var.SET \hddcodetype[0x2E]="TRACE_CODE_HDD_CFG80211_SCAN"
+Var.SET \hddcodetype[0x2F]="TRACE_CODE_HDD_REMAIN_ON_CHANNEL"
+Var.SET \hddcodetype[0x30]="TRACE_CODE_HDD_REMAINCHANREADYHANDLER"
+Var.SET \hddcodetype[0x31]="TRACE_CODE_HDD_CFG80211_CANCEL_REMAIN_ON_CHANNEL"
+Var.SET \hddcodetype[0x32]="TRACE_CODE_HDD_ACTION"
+Var.SET \hddcodetype[0x33]="TRACE_CODE_HDD_MGMT_TX_CANCEL_WAIT"
+Var.SET \hddcodetype[0x34]="TRACE_CODE_HDD_CFG80211_GET_STA"
+Var.SET \hddcodetype[0x35]="TRACE_CODE_HDD_CFG80211_SET_POWER_MGMT"
+Var.SET \hddcodetype[0x36]="TRACE_CODE_HDD_CFG80211_DEL_STA"
+Var.SET \hddcodetype[0x37]="TRACE_CODE_HDD_CFG80211_ADD_STA"
+Var.SET \hddcodetype[0x38]="TRACE_CODE_HDD_CFG80211_SET_PMKSA"
+Var.SET \hddcodetype[0x39]="TRACE_CODE_HDD_CFG80211_UPDATE_FT_IES"
+Var.SET \hddcodetype[0x3A]="TRACE_CODE_HDD_CFG80211_TDLS_MGMT"
+Var.SET \hddcodetype[0x3B]="TRACE_CODE_HDD_CFG80211_TDLS_OPER"
+Var.SET \hddcodetype[0x3C]="TRACE_CODE_HDD_CFG80211_SET_REKEY_DATA"
+Var.SET \hddcodetype[0x3D]="TRACE_CODE_HDD_UNSUPPORTED_IOCTL"
+Var.SET \hddcodetype[0x3E]="TRACE_CODE_HDD_SETROAMSCANCHANNELMINTIME_IOCTL"
+Var.SET \hddcodetype[0x3F]="TRACE_CODE_HDD_GETROAMSCANCHANNELMINTIME_IOCTL"
+Var.SET \hddcodetype[0x40]="TRACE_CODE_HDD_STORE_JOIN_REQ"
+Var.SET \hddcodetype[0x41]="TRACE_CODE_HDD_CLEAR_JOIN_REQ"
+Var.SET \hddcodetype[0x42]="TRACE_CODE_HDD_ISSUE_JOIN_REQ"
+Var.SET \hddcodetype[0x43]="TRACE_CODE_HDD_CFG80211_RESUME_WLAN"
+Var.SET \hddcodetype[0x44]="TRACE_CODE_HDD_CFG80211_SUSPEND_WLAN"
+Var.SET \hddcodetype[0x45]="TRACE_CODE_HDD_CFG80211_SET_MAC_ACL"
+Var.SET \hddcodetype[0x46]="TRACE_CODE_HDD_CFG80211_TESTMODE"
+Var.SET \hddcodetype[0x47]="TRACE_CODE_HDD_CFG80211_DUMP_SURVEY"
+Var.SET \hddcodetype[0x48]="TRACE_CODE_HDD_CFG80211_SCHED_SCAN_START"
+Var.SET \hddcodetype[0x49]="TRACE_CODE_HDD_CFG80211_SCHED_SCAN_STOP"
+Var.SET \hddcodetype[0x4A]="TRACE_CODE_HDD_CFG80211_DEL_PMKSA"
+Var.SET \hddcodetype[0x4B]="TRACE_CODE_HDD_SEND_MGMT_TX"
+;New CFG80211 enums to be added before this comment
+;TRACE_CODE_HDD_RX_SME_MSG is used as code for MTRACE commands
+;and also update the below index value
+Var.SET \hddcodetype[0x4C]="TRACE_CODE_HDD_RX_SME_MSG"
+
+&TRACETYPESIZE=v.value(sizeof(qdf_trace_record_t))
+&TRACESIZE=v.value(sizeof(g_qdf_trace_tbl))
+&TRACEMAXINDEX=v.value(&TRACESIZE/&TRACETYPESIZE)
+
+
+&HEAD=v.value(g_qdf_trace_data.head)
+&TAIL=v.value(g_qdf_trace_data.tail)
+&NUM=v.value(g_qdf_trace_data.num)
+&num_last=v.value(g_qdf_trace_data.num_since_last_dump)
+&enable=v.value(g_qdf_trace_data.enable)
+
+
+IF ((&HEAD>=&TRACEMAXINDEX)||(&TAIL>=&TRACEMAXINDEX)||(&TAIL==&HEAD))
+(
+  GOTO ENDSCRIPT
+)
+
+&INDEX=&HEAD
+
+TRACESTART:
+
+WRITE #1 "INDEX " &INDEX
+
+&QTIME=v.value(g_qdf_trace_tbl[&INDEX].qtime)
+&TIME=v.value(g_qdf_trace_tbl[&INDEX].time)
+&MODULE=v.value(g_qdf_trace_tbl[&INDEX].module)
+&CODE=v.value(g_qdf_trace_tbl[&INDEX].code)
+&SESSION=v.value(g_qdf_trace_tbl[&INDEX].session)
+&DATA=v.value(g_qdf_trace_tbl[&INDEX].data)
+&PID=v.value(g_qdf_trace_tbl[&INDEX].pid)
+
+
+WRITE #1 "CODE: " &CODE
+WRITE #1 "TIME: "  &TIME
+WRITE #1 "QTIME: "  &QTIME
+WRITE #1 "MODULE: "  &MODULE
+WRITE #1 "DATA: "  &DATA
+WRITE #1 "PID: "  &PID
+
+Var.NEW  QDF_MODULE_ID \module
+Var.Set \module=&MODULE
+Var.Write #1 "MODULE_NAME: " \module
+
+;added WMI module script code
+;WMI module
+IF (&MODULE==0x31)
+(
+  &tmp = v.value(&CODE&0x7F)
+  &tmp1 = v.value(&CODE>>7)
+  &tmp2 = v.value(&tmp1<<12)
+  &code = v.value(&tmp|&tmp2)
+
+  IF (&DATA==0x0)
+  (
+    Var.NEW WMI_CMD_ID \wmicmdcode
+    Var.Set \wmicmdcode=&code
+    Var.Write #1 "CODE_wmicmdcode: " \wmicmdcode  " [" %Hex &code "]"
+  )
+  ELSE
+  (
+    Var.Write #1 "CODE_wmievtcode: " %STRING \WMI_EVT_ID[&code] " [" %Hex &code "]"
+  )
+
+  WRITE #1 "DATA: " &DATA
+
+  IF (&SESSION==0xFF)
+  (
+    WRITE #1 "NO SESSION"
+  )
+  ELSE
+  (
+    WRITE #1 "SESSION: " &SESSION
+  )
+)
+
+;present in legacy code script
+;modified If condition to accommodate 0x4C enum
+;HDD_Module
+IF (&MODULE==0x33)
+(
+
+  IF ((&CODE>=0x0)&&(&CODE<=0x4C))
+  (
+    Var.Write #1 "CODE: " %STRING \hddcodetype[&CODE] " [" %Hex &CODE "]"
+    WRITE #1 "DATA: " &DATA
+  )
+  ELSE
+  (
+    IF (&CODE==0x4B)
+    (
+      Var.NEW  eRoamCmdStatus \csrstatus
+      Var.Set \csrstatus=&DATA
+      Var.Write #1 "DATA_csrstatus: "\csrstatus " [" %Hex &DATA "]"
+    )
+    ELSE
+    (
+      WRITE #1 "CODE: " &CODE
+      WRITE #1 "DATA: " &DATA
+    )
+  )
+
+  IF (&SESSION==0xFF)
+  (
+    WRITE #1 "NO SESSION"
+  )
+  ELSE
+  (
+    WRITE #1 "SESSION: " &SESSION
+  )
+)
+
+;present in legacy code script
+;modified different If condition for the code msgs.
+;added If condition for particular data msgs.
+;SME_Module
+IF (&MODULE==0x34)
+(
+  IF ((&CODE>=0x0)&&(&CODE<=0x60))
+  (
+    Var.NEW  enum smecodetype \smecode
+    Var.Set \smecode=&CODE
+    Var.Write #1 "CODE: " \smecode " [" %Hex &CODE "]"
+  )
+  ELSE
+  (
+    IF ((&CODE>=0xFA)&&(&CODE<=0xFC))
+    (
+      Var.NEW  enum smecodetype \smecode
+      Var.Set \smecode=&CODE
+      Var.Write #1 "CODE: " \smecode " [" %Hex &CODE "]"
+    )
+    IF ((&CODE>=0x1000)&&(&CODE<0x1400))
+    (
+      &code= v.value(&CODE-0x1000)
+      Var.Write #1 "CODE: " %STRING \halmsgtype[&code] " [" %Hex &code "]"
+    )
+    IF ((&CODE>=0x1400)&&(&CODE<=14A3))
+    (
+      Var.NEW  enum eWniMsgTypes \smemsg
+      Var.Set \smemsg=&CODE
+      Var.Write #1 "CODE: " \smemsg  " [" %Hex &CODE "]"
+    )
+  )
+  IF ((&DATA>=0x1000)&&(&DATA<=0x11C0))
+  (
+    &data= v.value(&DATA-0x1000)
+    Var.Write #1 "DATA_\halmsgtype: " %STRING \halmsgtype[&data] " [" %Hex &data "]"
+  )
+  ELSE
+  (
+    WRITE #1 "DATA: " &DATA
+  )
+
+  IF (&SESSION==0xFF)
+  (
+    WRITE #1 "NO SESSION"
+  )
+  ELSE
+  (
+    WRITE #1 "SESSION: " &SESSION
+  )
+)
+
+;present in legacy code script
+;modified If conditions to sync with driver code.
+;added If conditions for halmsgtype, limmsgtype, mlmmsgtype and
+;wnimsgtype code types. Inside those If condition added
+;conditions for their data part.
+;PE_Module
+IF (&MODULE==0x35)
+(
+  IF (&CODE>=0x0)&&(&CODE<=0xF)
+  (
+    Var.NEW  enum pecodetype \pecode
+    Var.Set \pecode=&CODE
+    Var.Write #1 "CODE: " \pecode " [" %Hex &CODE "]"
+  )
+
+;PEcodetype code
+;0 TRACE_CODE_MLM_STATE
+  IF (&CODE==0x0)
+  (
+    Var.NEW  tLimMlmStates \mlmstate
+    Var.Set \mlmstate=&DATA
+    Var.Write #1 "DATA_mlmstate: " \mlmstate " [" %Hex &DATA "]"
+  )
+
+;1 TRACE_CODE_SME_STATE
+  IF (&CODE==0x1)
+  (
+    Var.NEW  tLimSmeStates \smestate
+    Var.Set \smestate=&DATA
+    Var.Write #1 "DATA_smestate: " \smestate " [" %Hex &DATA "]"
+  )
+
+;2 TRACE_CODE_TX_MGMT
+  IF (&CODE==0x2)
+  (
+    WRITE #1 "DATA: " &DATA
+  )
+
+;3 TRACE_CODE_RX_MGMT
+  IF (&CODE==0x3)
+  (
+    &SERIAL=v.value(&DATA>>16)
+    &SUBTYPE=v.value(&DATA&0xFF)
+    IF (&SUBTYPE<=0xF)
+    (
+      Var.Write #1 "DATA_mgmttype: " %STRING \mgmttype[&SUBTYPE]
+      WRITE #1 "SEQ NUM: " &SERIAL
+    )
+    else
+    (
+      WRITE #1 "INCORRECT DATA"
+    )
+  )
+
+;4 TRACE_CODE_RX_MGMT_TSF
+  IF (&CODE==0x4)
+  (
+    WRITE #1 "BEACON TS: " &DATA
+  )
+
+;5 TRACE_CODE_TX_COMPLETE
+  IF (&CODE==0x5)
+  (
+    Var.Write #1 "DATA_mgmttype: " %STRING \mgmttype[&DATA] " [" %Hex &DATA "]"
+  )
+
+;6 TRACE_CODE_TX_SME_MSG
+  IF (&CODE==0x6)
+  (
+    &MOD=v.value(&DATA>>8)
+    &MSG=v.value(&DATA&0xFF)
+    IF (&DATA>=0x1300)&&(&DATA<=13FE)
+    (
+      Var.Write #1 "DATA_limmsgtype: " %STRING \limmsgtype[&MSG] " [" %Hex &MSG "]"
+    )
+    IF (&MOD==0x14)&&(&DATA>=0x1400)
+    (
+      Var.NEW  enum eWniMsgTypes \smemsg
+      Var.Set \smemsg=&DATA
+      Var.Write #1 "DATA_eWniMsgTypes: " \smemsg " [" %Hex &DATA "]"
+    )
+  )
+
+;7 TRACE_CODE_RX_SME_MSG
+  IF (&CODE==0x7)
+  (
+    &MOD=v.value(&DATA>>8)
+    IF (&MOD==0x14)
+    (
+      IF (&DATA>=0x1400)&&(&DATA<=0x14A3)
+      (
+        Var.NEW  enum eWniMsgTypes \smemsg
+        Var.Set \smemsg=&DATA
+        Var.Write #1 "DATA_eWniMsgTypes: " \smemsg " [" %Hex &DATA "]"
+      )
+    )
+  )
+
+;8 TRACE_CODE_TX_WMA_MSG
+  IF (&CODE==0x8)
+  (
+    &MOD=v.value(&DATA>>8)
+    &MSG=v.value(&DATA&0xFFF)
+    IF (&MOD==0x10)
+    (
+      Var.Write #1 "DATA_halmsgtype: " %STRING \halmsgtype[&MSG] " [" %Hex &MSG "]"
+    )
+  )
+
+;9 TRACE_CODE_RX_WMA_MSG
+  IF (&CODE==0x9)
+  (
+    &MOD=v.value(&DATA>>8)
+    &MSG=v.value(&DATA&0xFFF)
+    IF (&MOD==0x10)
+    (
+      Var.Write #1 "DATA_halmsgtype: " %STRING \halmsgtype[&MSG] " [" %Hex &MSG "]"
+    )
+  )
+
+;10 TRACE_CODE_TX_LIM_MSG
+  IF (&CODE==0xA)
+  (
+    IF ((&DATA>=0x3E8)&&(&DATA<=0x410))
+    (
+      Var.NEW  enum mlmmsgtype \mlmmsg
+      Var.Set \mlmmsg=&DATA
+      Var.Write #1 "DATA_mlmmsgtype: " \mlmmsg " [" %Hex &DATA "]"
+    )
+    IF (&DATA>=0x1300)&&(&DATA<=13FE)
+    (
+      &MSG=v.value(&DATA&0xFF)
+      Var.Write #1 "DATA_limmsgtype: " %STRING \limmsgtype[&MSG] " [" %Hex &MSG "]"
+    )
+    &DATA=v.value(&DATA&0xFFFF)
+    IF ((&DATA>=0x1400)&&(&DATA<=14A3))
+    (
+      Var.NEW  enum eWniMsgTypes \smemsg
+      Var.Set \smemsg=&DATA
+      Var.Write #1 "DATA_eWniMsgTypes: " \smemsg " [" %Hex &DATA "]"
+    )
+  )
+
+;11 TRACE_CODE_RX_LIM_MSG
+  IF (&CODE==0xB)
+  (
+    IF (&DATA>=0x1300)&&(&DATA<=13FE)
+    (
+      &MSG=v.value(&DATA&0xFF)
+      Var.Write #1 "DATA_limmsgtype: " %STRING \limmsgtype[&MSG]  " [" %Hex &MSG "]"
+    )
+    &DATA=v.value(&DATA&0xFFFF)
+    IF (&DATA>=0x1400)&&(&DATA<=14A3)
+    (
+      Var.NEW  enum eWniMsgTypes \smemsg
+      Var.Set \smemsg=&DATA
+      Var.Write #1 "DATA_eWniMsgTypes: " \smemsg " [" %Hex &DATA "]"
+    )
+  )
+
+;12 TRACE_CODE_RX_MGMT_DROP
+  IF (&CODE==0xC)
+  (
+    Var.NEW  tMgmtFrmDropReason \dropreason
+    Var.Set \dropreason=&DATA
+    Var.Write #1 "DATA_dropreason: " \dropreason " [" %Hex &DATA "]"
+  )
+
+;13/14 TRACE_CODE_TIMER_ACTIVATE/DEACTIVATE
+  IF (&CODE==0xD)||(&CODE==0xE)
+  (
+    IF (&DATA>=0x0)&&(&DATA<=0x16)
+    (
+      Var.NEW enum limtimertype \limtimermsg
+      Var.Set \limtimermsg=&DATA
+      Var.Write #1 "DATA_limtimertype: " \limtimermsg " [" %Hex &DATA "]"
+    )
+    IF (&DATA>=0x1400)&&(&DATA<=14A3)
+    (
+      Var.NEW  enum eWniMsgTypes \smemsg
+      Var.Set \smemsg=&DATA
+      Var.Write #1 "DATA_eWniMsgTypes: " \smemsg " [" %Hex &DATA "]"
+    )
+  )
+
+;HalMsgType code
+  IF (&CODE>=0x1020)&&(&CODE<=0x11C0)
+  (
+    &code=v.value(&CODE-0x1000)
+    Var.Write #1 "CODE_halmsgtype: " %STRING \halmsgtype[&code] " [" %Hex &code "]"
+
+    &data=v.value(&DATA&0xFFFF)
+    IF ((&data>=0x1000)&&(&data<=11C0))
+    (
+      &val=v.value(&data-0x1000)
+      Var.Write #1 "DATA_halmsgtype: " %STRING \halmsgtype[&val] " [" %Hex &val "]"
+    )
+    IF ((&data>=0x1300)&&(&data<=13FE))
+    (
+      &val=v.value(&data-0x1300)
+      Var.Write #1 "DATA_limmsgtype: " %STRING \limmsgtype[&val] " [" %Hex &val "]"
+    )
+    IF ((&data>=0x1400)&&(&data<=14A3))
+    (
+      Var.NEW  enum eWniMsgTypes \smemsg
+      Var.Set \smemsg=&data
+      Var.Write #1 "DATA_eWniMsgTypes: " \smemsg  " [" %Hex &data "]"
+    )
+  )
+
+;WniMsgType code
+  IF (&CODE>=0x1400)&&(&CODE<=0x14A3)
+  (
+    Var.NEW  enum eWniMsgTypes \smemsg
+    Var.Set \smemsg=&CODE
+    Var.Write #1 "CODE_eWniMsgTypes: " \smemsg " [" %Hex &CODE "]"
+
+    &data=v.value(&DATA&0xFFFF)
+    IF ((&data>=0x1000)&&(&data<=11C0))
+    (
+      &val=v.value(&data-0x1000)
+      Var.Write #1 "DATA_halmsgtype: " %STRING \halmsgtype[&val] " [" %Hex &val "]"
+    )
+    IF ((&data>=0x1300)&&(&data<=13FE))
+    (
+      &val=v.value(&data-0x1300)
+      Var.Write #1 "DATA_limmsgtype: " %STRING \limmsgtype[&val] " [" %Hex &val "]"
+    )
+    IF ((&data>=0x1400)&&(&data<=14A3))
+    (
+      Var.NEW  enum eWniMsgTypes \smemsg
+      Var.Set \smemsg=&data
+      Var.Write #1 "DATA_eWniMsgTypes: " \smemsg  " [" %Hex &data "]"
+    )
+  )
+
+;Limmsgtype code
+  IF ((&CODE>=0x1300)&&(&CODE<=13FE))
+  (
+    &code=v.value(&CODE-0x1300)
+    Var.Write #1 "CODE_limmsgtype: " %STRING \limmsgtype[&code] " [" %Hex &code "]"
+
+    &data=v.value(&DATA&0xFFFF)
+    IF ((&data>=0x1000)&&(&data<=11C0))
+    (
+      &val=v.value(&data-0x1000)
+      Var.Write #1 "DATA_halmsgtype: " %STRING \halmsgtype[&val] " [" %Hex &val "]"
+    )
+    IF ((&data>=0x1300)&&(&data<=13FE))
+    (
+      &val=v.value(&data-0x1300)
+      Var.Write #1 "DATA_limmsgtype: " %STRING \limmsgtype[&val] " [" %Hex &val "]"
+    )
+    IF ((&data>=0x1400)&&(&data<=14A3))
+    (
+      Var.NEW  enum eWniMsgTypes \smemsg
+      Var.Set \smemsg=&data
+      Var.Write #1 "DATA_eWniMsgTypes: " \smemsg  " [" %Hex &data "]"
+    )
+  )
+
+;mlmmsgtype code
+  IF ((&CODE>=0x3E8)&&(&CODE<=0x410))
+  (
+    Var.NEW  enum mlmmsgtype \mlmmsg
+    Var.Set \mlmmsg=&CODE
+    Var.Write #1 "CODE_mlmmsgtype: " \mlmmsg " [" %Hex &CODE "]"
+
+    &data=v.value(&DATA&0xFFFF)
+    IF ((&data>=0x3E8)&&(&data<=0x410))
+    (
+      Var.NEW  enum mlmmsgtype \mlmmsg
+      Var.Set \mlmmsg=&data
+      Var.Write #1 "DATA_mlmmsgtype: " \mlmmsg " [" %Hex &data "]"
+    )
+    IF ((&data>=0x1000)&&(&data<=11C0))
+    (
+      &val=v.value(&data-0x1000)
+      Var.Write #1 "DATA_halmsgtype: " %STRING \halmsgtype[&val] " [" %Hex &val "]"
+    )
+    IF ((&data>=0x1300)&&(&data<=13FE))
+    (
+      &val=v.value(&data-0x1300)
+      Var.Write #1 "DATA_limmsgtype: " %STRING \limmsgtype[&val] " [" %Hex &val "]"
+    )
+    IF ((&data>=0x1400)&&(&data<=14A3))
+    (
+      Var.NEW  enum eWniMsgTypes \smemsg
+      Var.Set \smemsg=&data
+      Var.Write #1 "DATA_eWniMsgTypes: " \smemsg  " [" %Hex &data "]"
+    )
+  )
+
+  IF (&SESSION==0xFF)
+  (
+    WRITE #1 "NO SESSION"
+  )
+  ELSE
+  (
+    WRITE #1 "SESSION: " &SESSION
+  )
+)
+
+;added WMA module script code
+;WMA module
+IF (&MODULE==0x36)
+(
+  IF ((&CODE>=0x0)&&(&CODE<=0x60))
+  (
+    Var.NEW  enum wmamsgtype \wmacode
+    Var.Set \wmacode=&CODE
+    Var.Write #1 "CODE: " \wmacode " [" %Hex &CODE "]"
+  )
+  IF ((&CODE>=0x1000)&&(&CODE<0x1400))
+  (
+    &code= v.value(&CODE-0x1000)
+    Var.Write #1 "CODE: " %STRING \halmsgtype[&code] " [" %Hex &code "]"
+  )
+  IF ((&CODE>=0x1400)&&(&CODE<=14A3))
+  (
+    Var.NEW  enum eWniMsgTypes \smemsg
+    Var.Set \smemsg=&CODE
+    Var.Write #1 "DATA_eWniMsgTypes: " \smemsg  " [" %Hex &CODE "]"
+  )
+  WRITE #1 "DATA: " &DATA
+
+  IF (&SESSION==0xFF)
+  (
+    WRITE #1 "NO SESSION"
+  )
+  ELSE
+  (
+    WRITE #1 "SESSION: " &SESSION
+  )
+)
+
+WRITE #1 " "
+
+&INDEX=v.value((&INDEX+1)%(&TRACEMAXINDEX))
+
+  IF (&INDEX!=&HEAD)
+  (
+    GOTO TRACESTART
+  )
+
+
+
+ENDSCRIPT:
+CLOSE #1
+ENDDO
