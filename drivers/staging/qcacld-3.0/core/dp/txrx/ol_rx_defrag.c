@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -813,6 +814,7 @@ ol_rx_defrag(ol_txrx_pdev_handle pdev,
 	switch (peer->security[index].sec_type) {
 	case htt_sec_type_tkip:
 		tkip_demic = 1;
+		fallthrough;
 	/* fall-through to rest of tkip ops */
 	case htt_sec_type_tkip_nomic:
 		while (cur) {

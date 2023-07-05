@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -73,6 +73,7 @@
 #include <wlan_crypto_global_api.h>
 #include "cdp_txrx_host_stats.h"
 #include "target_if_cm_roam_event.h"
+#include "hif.h"
 
 /**
  * WMA_SET_VDEV_IE_SOURCE_HOST - Flag to identify the source of VDEV SET IE
@@ -2887,6 +2888,71 @@ static void wma_wake_event_log_reason(t_wma_handle *wma,
 }
 
 /**
+ * wma_wow_wakeup_host_trigger_ssr() - Trigger SSR on host wakeup
+ * @handle: wma handle
+ * @reason: Host wakeup reason
+ *
+ * This function triggers SSR if host is woken up by fw with reason as pagefault
+ *
+ * Return: None
+ */
+static void
+wma_wow_wakeup_host_trigger_ssr(t_wma_handle *wma, uint32_t reason)
+{
+	uint8_t pagefault_wakeups_for_ssr;
+	uint32_t interval_for_pagefault_wakeup_counts;
+	qdf_time_t curr_time;
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
+
+	if (!mac) {
+		wma_debug("NULL mac ptr");
+		return;
+	}
+	if (WOW_REASON_PAGE_FAULT != reason)
+		return;
+
+	if (!mac->sme.ssr_on_pagefault_cb) {
+		wma_debug("NULL SSR on pagefault cb");
+		return;
+	}
+
+	if (!wlan_pmo_enable_ssr_on_page_fault(wma->psoc))
+		return;
+
+	if (wmi_get_runtime_pm_inprogress(wma->wmi_handle)) {
+		wma_debug("Ignore run time pm wakeup");
+		return;
+	}
+
+	pagefault_wakeups_for_ssr =
+			wlan_pmo_get_max_pagefault_wakeups_for_ssr(wma->psoc);
+
+	interval_for_pagefault_wakeup_counts =
+		wlan_pmo_get_interval_for_pagefault_wakeup_counts(wma->psoc);
+
+	curr_time = qdf_get_time_of_the_day_ms();
+
+	if (wma->num_page_fault_wakeups == pagefault_wakeups_for_ssr) {
+		qdf_mem_copy(&wma->pagefault_wakeups_ts[0],
+			     &wma->pagefault_wakeups_ts[1],
+			     (pagefault_wakeups_for_ssr - 1) *
+			     sizeof(qdf_time_t));
+		wma->num_page_fault_wakeups--;
+	}
+
+	wma->pagefault_wakeups_ts[wma->num_page_fault_wakeups++] = curr_time;
+
+	wma_nofl_debug("num pagefault wakeups %d", wma->num_page_fault_wakeups);
+
+	if (wma->num_page_fault_wakeups < pagefault_wakeups_for_ssr)
+		return;
+
+	if (curr_time - wma->pagefault_wakeups_ts[0] <=
+					interval_for_pagefault_wakeup_counts)
+		mac->sme.ssr_on_pagefault_cb();
+}
+
+/**
  * wma_wow_wakeup_host_event() - wakeup host event handler
  * @handle: wma handle
  * @event: event data
@@ -2918,6 +2984,11 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event, uint32_t len)
 	}
 
 	wma_wake_event_log_reason(wma, wake_info);
+	wma_wow_wakeup_host_trigger_ssr(wma, wake_info->wake_reason);
+
+	if (wake_info->wake_reason == WOW_REASON_LOCAL_DATA_UC_DROP)
+		hif_pm_runtime_set_delay(cds_get_context(QDF_MODULE_ID_HIF),
+					 WOW_LARGE_RX_RTPM_DELAY);
 
 	ucfg_pmo_psoc_wakeup_host_event_received(wma->psoc);
 
@@ -5290,6 +5361,7 @@ static void wma_send_set_key_rsp(uint8_t vdev_id, bool pairwise,
 			     QDF_MAC_ADDR_SIZE);
 		wma_send_msg_high_priority(wma, WMA_SET_STAKEY_RSP,
 					   key_info_uc, 0);
+		wlan_release_peer_key_wakelock(wma->pdev, crypto_key->macaddr);
 	} else {
 		key_info_mc = qdf_mem_malloc(sizeof(*key_info_mc));
 		if (!key_info_mc)
@@ -5349,14 +5421,6 @@ void wma_update_set_key(uint8_t session_id, bool pairwise,
 
 	if (iface)
 		iface->is_waiting_for_key = false;
-
-	if (!pairwise && iface) {
-		/* Its GTK release the wake lock */
-		wma_debug("Release set key wake lock");
-		qdf_runtime_pm_allow_suspend(
-				&iface->vdev_set_key_runtime_wakelock);
-		wma_release_wakelock(&iface->vdev_set_key_wakelock);
-	}
 
 	wma_send_set_key_rsp(session_id, pairwise, key_index);
 }

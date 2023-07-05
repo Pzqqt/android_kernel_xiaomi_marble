@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -532,6 +532,17 @@ void lim_set_twt_peer_capabilities(struct mac_context *mac_ctx,
 				    tDot11fIEhe_op *he_op)
 {}
 #endif
+
+/**
+ * lim_get_basic_rates() - Get basic rates for the given frequency
+ * @b_rates: Pointer to rates
+ * @chan_freq: frequency for which rates are required
+ *
+ * This api will get basic rates for the given frequency
+ *
+ * Return: void
+ */
+void lim_get_basic_rates(tSirMacRateSet *b_rates, uint32_t chan_freq);
 
 /**
  * lim_fill_pe_session() - Lim fill pe session

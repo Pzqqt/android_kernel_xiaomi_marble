@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -337,6 +337,36 @@ cm_update_rso_adaptive_11r(struct wlan_rso_11r_params *dst,
 			   struct rso_config *rso_cfg)
 {
 	dst->is_adaptive_11r = rso_cfg->is_adaptive_11r_connection;
+}
+
+QDF_STATUS
+cm_exclude_rm_partial_scan_freq(struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id, uint8_t param_value)
+{
+	QDF_STATUS status;
+
+	wlan_cm_set_exclude_rm_partial_scan_freq(psoc, param_value);
+	status = wlan_cm_tgt_exclude_rm_partial_scan_freq(psoc, vdev_id,
+							  param_value);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_debug("fail to exclude roam partial scan channels");
+
+	return status;
+}
+
+QDF_STATUS cm_roam_full_scan_6ghz_on_disc(struct wlan_objmgr_psoc *psoc,
+					  uint8_t vdev_id,
+					  uint8_t param_value)
+{
+	QDF_STATUS status;
+
+	wlan_cm_roam_set_full_scan_6ghz_on_disc(psoc, param_value);
+	status = wlan_cm_tgt_send_roam_full_scan_6ghz_on_disc(psoc, vdev_id,
+							      param_value);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_debug("fail to send 6 GHz channels inclusion in full scan");
+
+	return status;
 }
 #else
 static inline void
@@ -1593,6 +1623,13 @@ cm_check_band_freq_match(enum band_info band, qdf_freq_t freq)
 	if (band == BAND_5G && WLAN_REG_IS_5GHZ_CH_FREQ(freq))
 		return true;
 
+	/*
+	 * Not adding the band check for now as band_info will be soon
+	 * replaced with reg_wifi_band enum
+	 */
+	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(freq))
+		return true;
+
 	return false;
 }
 
@@ -2210,6 +2247,8 @@ cm_roam_scan_offload_fill_scan_params(struct wlan_objmgr_psoc *psoc,
 	/* Parameters updated after association is complete */
 	wlan_scan_cfg_get_passive_dwelltime(psoc,
 					    &scan_params->dwell_time_passive);
+	wlan_scan_cfg_get_min_dwelltime_6g(psoc,
+					   &scan_params->min_dwell_time_6ghz);
 	/*
 	 * Here is the formula,
 	 * T(HomeAway) = N * T(dwell) + (N+1) * T(cs)
@@ -2740,6 +2779,7 @@ cm_roam_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	struct rso_config *rso_cfg;
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_pdev *pdev;
+	struct cm_roam_values_copy temp;
 
 	start_req = qdf_mem_malloc(sizeof(*start_req));
 	if (!start_req)
@@ -2796,6 +2836,18 @@ cm_roam_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	start_req->wlan_roam_rt_stats_config =
 			wlan_cm_get_roam_rt_stats(psoc, ROAM_RT_STATS_ENABLE);
 
+	start_req->wlan_roam_ho_delay_config =
+			wlan_cm_roam_get_ho_delay_config(psoc);
+
+	start_req->wlan_exclude_rm_partial_scan_freq =
+				wlan_cm_get_exclude_rm_partial_scan_freq(psoc);
+
+	start_req->wlan_roam_full_scan_6ghz_on_disc =
+				wlan_cm_roam_get_full_scan_6ghz_on_disc(psoc);
+
+	wlan_cm_roam_cfg_get_value(psoc, vdev_id, ROAM_RSSI_DIFF_6GHZ, &temp);
+	start_req->wlan_roam_rssi_diff_6ghz = temp.uint_value;
+
 	status = wlan_cm_tgt_send_roam_start_req(psoc, vdev_id, start_req);
 	if (QDF_IS_STATUS_ERROR(status))
 		mlme_debug("fail to send roam start");
@@ -2825,6 +2877,7 @@ cm_roam_update_config_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	struct rso_config *rso_cfg;
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_pdev *pdev;
+	struct cm_roam_values_copy temp;
 
 	cm_roam_set_roam_reason_better_ap(psoc, vdev_id, false);
 
@@ -2879,6 +2932,18 @@ cm_roam_update_config_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 					      reason);
 	update_req->wlan_roam_rt_stats_config =
 			wlan_cm_get_roam_rt_stats(psoc, ROAM_RT_STATS_ENABLE);
+
+	update_req->wlan_roam_ho_delay_config =
+			wlan_cm_roam_get_ho_delay_config(psoc);
+
+	update_req->wlan_exclude_rm_partial_scan_freq =
+				wlan_cm_get_exclude_rm_partial_scan_freq(psoc);
+
+	update_req->wlan_roam_full_scan_6ghz_on_disc =
+				wlan_cm_roam_get_full_scan_6ghz_on_disc(psoc);
+
+	wlan_cm_roam_cfg_get_value(psoc, vdev_id, ROAM_RSSI_DIFF_6GHZ, &temp);
+	update_req->wlan_roam_rssi_diff_6ghz = temp.uint_value;
 
 	status = wlan_cm_tgt_send_roam_update_req(psoc, vdev_id, update_req);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -3560,7 +3625,7 @@ cm_roam_switch_to_deinit(struct wlan_objmgr_pdev *pdev,
 			if (QDF_IS_STATUS_ERROR(status))
 				mlme_err("ROAM: Unable to clear roam scan mode");
 		}
-
+		break;
 	case WLAN_ROAM_INIT:
 		break;
 
@@ -3937,7 +4002,7 @@ cm_roam_switch_to_roam_start(struct wlan_objmgr_pdev *pdev,
 					    WLAN_ROAMING_IN_PROG);
 			break;
 		}
-		/* fallthrough */
+		fallthrough;
 	case WLAN_ROAM_INIT:
 	case WLAN_ROAM_DEINIT:
 	case WLAN_ROAM_SYNCH_IN_PROG:
@@ -3999,7 +4064,7 @@ cm_roam_switch_to_roam_sync(struct wlan_objmgr_pdev *pdev,
 		 * transition to WLAN_ROAM_SYNCH_IN_PROG not allowed otherwise
 		 * if we're already RSO stopped, fall through to return failure
 		 */
-		/* fallthrough */
+		fallthrough;
 	case WLAN_ROAM_INIT:
 	case WLAN_ROAM_DEINIT:
 	case WLAN_ROAM_SYNCH_IN_PROG:
@@ -4500,6 +4565,8 @@ cm_restore_default_roaming_params(struct wlan_mlme_psoc_ext_obj *mlme_obj,
 			mlme_obj->cfg.lfr.neighbor_lookup_rssi_threshold;
 	cfg_params->roam_rssi_diff =
 			mlme_obj->cfg.lfr.roam_rssi_diff;
+	cfg_params->roam_rssi_diff_6ghz =
+			mlme_obj->cfg.lfr.roam_rssi_diff_6ghz;
 	cfg_params->bg_rssi_threshold =
 			mlme_obj->cfg.lfr.bg_rssi_threshold;
 
@@ -4984,6 +5051,10 @@ static void cm_roam_start_init(struct wlan_objmgr_psoc *psoc,
 	wlan_cm_roam_cfg_set_value(psoc, vdev_id,
 				   IS_11R_CONNECTION, &src_cfg);
 
+	src_cfg.uint_value = mlme_obj->cfg.lfr.roam_rssi_diff_6ghz;
+	wlan_cm_roam_cfg_set_value(psoc, vdev_id,
+				   ROAM_RSSI_DIFF_6GHZ, &src_cfg);
+
 	if (!mlme_obj->cfg.lfr.roam_scan_offload_enabled)
 		return;
 	/*
@@ -5067,6 +5138,7 @@ QDF_STATUS cm_start_roam_invoke(struct wlan_objmgr_psoc *psoc,
 	struct qdf_mac_addr connected_bssid;
 	uint8_t vdev_id = vdev->vdev_objmgr.vdev_id;
 	bool roam_offload_enabled = cm_roam_offload_enabled(psoc);
+	struct rso_config *rso_cfg;
 
 	roam_control_bitmap = mlme_get_operations_bitmap(psoc, vdev_id);
 	if (roam_offload_enabled && (roam_control_bitmap ||
@@ -5085,6 +5157,10 @@ QDF_STATUS cm_start_roam_invoke(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		return QDF_STATUS_E_NULL_VALUE;
+
 	/* Ignore BSSID and channel validation for FW host roam */
 	if (source == CM_ROAMING_FW)
 		goto send_evt;
@@ -5095,13 +5171,17 @@ QDF_STATUS cm_start_roam_invoke(struct wlan_objmgr_psoc *psoc,
 			qdf_mem_free(cm_req);
 			return QDF_STATUS_E_NOSUPPORT;
 		}
+
 		cm_req->roam_req.req.forced_roaming = true;
+		if (source == CM_ROAMING_HOST)
+			rso_cfg->is_forced_roaming = true;
 		source = CM_ROAMING_NUD_FAILURE;
 		goto send_evt;
 	}
 
 	if (qdf_is_macaddr_broadcast(bssid)) {
 		qdf_copy_macaddr(&cm_req->roam_req.req.bssid, bssid);
+		qdf_copy_macaddr(&rso_cfg->roam_invoke_bssid, bssid);
 		mlme_debug("Roam only if better candidate found else stick to current AP");
 		goto send_evt;
 	}
@@ -5124,6 +5204,15 @@ QDF_STATUS cm_start_roam_invoke(struct wlan_objmgr_psoc *psoc,
 
 send_evt:
 	cm_req->roam_req.req.source = source;
+
+	/* Storing source information in rso cfg as if FW aborts
+	 * roam host will delete roam req from queue.
+	 * In roam invoke failure, host will read rso cfg params
+	 * information and disconnect if needed.
+	 */
+	if (source == CM_ROAMING_HOST ||
+	    source == CM_ROAMING_NUD_FAILURE)
+		rso_cfg->roam_invoke_source = source;
 
 	cm_req->roam_req.req.vdev_id = vdev_id;
 	/*
@@ -6013,5 +6102,20 @@ cm_send_rso_stop(struct wlan_objmgr_vdev *vdev)
 						     false);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+cm_roam_send_ho_delay_config(struct wlan_objmgr_psoc *psoc,
+			     uint8_t vdev_id, uint16_t param_value)
+{
+	QDF_STATUS status;
+
+	wlan_cm_roam_set_ho_delay_config(psoc, param_value);
+	status = wlan_cm_tgt_send_roam_ho_delay_config(psoc,
+						       vdev_id, param_value);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_debug("fail to send roam HO delay config");
+
+	return status;
 }
 #endif  /* WLAN_FEATURE_ROAM_OFFLOAD */

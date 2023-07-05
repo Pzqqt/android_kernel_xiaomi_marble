@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1209,9 +1209,12 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params,
 		return -ENODEV;
 
 	err = wlan_hdd_validate_context(hdd_ctx);
-	if (err)
-		return err;
-
+	if (0 != err) {
+		if (pld_is_low_power_mode(hdd_ctx->parent_dev))
+			hdd_debug("low power mode (Deep Sleep/Hibernate)");
+		else
+			return err;
+	}
 
 	/* If Wifi is off, return success for system suspend */
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
@@ -1506,10 +1509,11 @@ int wlan_hdd_bus_resume(enum qdf_suspend_type type)
 out:
 	hif_system_pm_set_state_suspended(hif_ctx);
 	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state() ||
-		cds_is_fw_down())
+	    cds_is_fw_down())
 		return 0;
 
-	QDF_BUG(false);
+	if (status != -ETIMEDOUT)
+		QDF_BUG(false);
 
 	return status;
 }
@@ -1908,8 +1912,13 @@ static int wlan_hdd_pld_suspend(struct device *dev,
 		return -ENODEV;
 
 	errno = wlan_hdd_validate_context(hdd_ctx);
-	if (errno)
-		return errno;
+	if (0 != errno) {
+		if (pld_is_low_power_mode(hdd_ctx->parent_dev))
+			hdd_debug("low power mode (Deep Sleep/Hibernate)");
+		else
+			return errno;
+	}
+
 	/*
 	 * Flush the idle shutdown before ops start.This is done here to avoid
 	 * the deadlock as idle shutdown waits for the dsc ops

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -168,6 +168,7 @@ cm_fw_roam_sync_start_ind(struct wlan_objmgr_vdev *vdev,
 	wlan_blm_update_bssid_connect_params(pdev,
 					     connected_bssid,
 					     BLM_AP_DISCONNECTED);
+
 	if (IS_ROAM_REASON_STA_KICKOUT(sync_ind->roam_reason)) {
 		struct reject_ap_info ap_info;
 
@@ -837,6 +838,13 @@ cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 
 	cm_process_roam_keys(vdev, rsp, cm_id);
 
+	if (!wlan_vdev_mlme_is_mlo_link_vdev(vdev)) {
+		mlo_roam_copy_partner_info(connect_rsp, roam_synch_data);
+		mlo_roam_update_connected_links(vdev, connect_rsp);
+	}
+
+	mlme_cm_osif_connect_complete(vdev, connect_rsp);
+
 	/**
 	 * Don't send roam_sync complete for MLO link vdevs.
 	 * Send only for legacy STA/MLO STA vdev.
@@ -859,8 +867,6 @@ cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		}
 		wlan_cm_tgt_send_roam_sync_complete_cmd(psoc, vdev_id);
 
-		mlo_roam_copy_partner_info(connect_rsp, roam_synch_data);
-		mlo_roam_update_connected_links(vdev, connect_rsp);
 	}
 	cm_connect_info(vdev, true, &connect_rsp->bssid, &connect_rsp->ssid,
 			connect_rsp->freq);
@@ -873,7 +879,7 @@ cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			 CM_PREFIX_REF(vdev_id, cm_id));
 		goto error;
 	}
-	mlme_cm_osif_connect_complete(vdev, connect_rsp);
+
 	mlme_cm_osif_roam_complete(vdev);
 	mlme_debug(CM_PREFIX_FMT, CM_PREFIX_REF(vdev_id, cm_id));
 	if (!wlan_vdev_mlme_is_mlo_link_vdev(vdev))
@@ -1007,16 +1013,74 @@ end:
 	return status;
 }
 
+static QDF_STATUS
+cm_disconnect_roam_invoke_fail(struct wlan_objmgr_vdev *vdev,
+			       wlan_cm_id cm_id)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	bool nud_disconnect;
+	struct wlan_objmgr_psoc *psoc;
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+	struct rso_config *rso_cfg;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		mlme_err(CM_PREFIX_FMT "psoc not found",
+			 CM_PREFIX_REF(vdev_id, cm_id));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		mlme_err(CM_PREFIX_FMT "rso cfg not found",
+			 CM_PREFIX_REF(vdev_id, cm_id));
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	nud_disconnect = mlme_obj->cfg.lfr.disconnect_on_nud_roam_invoke_fail;
+	mlme_debug(CM_PREFIX_FMT "disconnect on NUD %d, source %d forced roaming %d",
+		   CM_PREFIX_REF(vdev_id, cm_id),
+		   nud_disconnect, rso_cfg->roam_invoke_source,
+		   rso_cfg->is_forced_roaming);
+
+	/*
+	 * If reassoc MAC from user space is broadcast MAC as:
+	 * "wpa_cli DRIVER FASTREASSOC ff:ff:ff:ff:ff:ff 0",
+	 * user space invoked roaming candidate selection will base on firmware
+	 * score algorithm, current connection will be kept if current AP has
+	 * highest score. It is requirement from customer which can avoid
+	 * ping-pong roaming.
+	 */
+	if (qdf_is_macaddr_broadcast(&rso_cfg->roam_invoke_bssid)) {
+		qdf_zero_macaddr(&rso_cfg->roam_invoke_bssid);
+		return status;
+	}
+
+	if (rso_cfg->roam_invoke_source == CM_ROAMING_HOST ||
+	    (rso_cfg->roam_invoke_source == CM_ROAMING_NUD_FAILURE &&
+	     nud_disconnect) || rso_cfg->is_forced_roaming) {
+		rso_cfg->roam_invoke_source = CM_SOURCE_INVALID;
+		rso_cfg->is_forced_roaming = false;
+		status = mlo_disconnect(vdev, CM_ROAM_DISCONNECT,
+					REASON_USER_TRIGGERED_ROAM_FAILURE,
+					NULL);
+	}
+
+	return status;
+}
+
 QDF_STATUS cm_fw_roam_invoke_fail(struct wlan_objmgr_psoc *psoc,
 				  uint8_t vdev_id)
 {
 	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
-	wlan_cm_id cm_id;
-	enum wlan_cm_source source;
+	wlan_cm_id cm_id = CM_ID_INVALID;
 	struct cnx_mgr *cm_ctx;
-	struct cm_roam_req *roam_req = NULL;
-	struct qdf_mac_addr bssid;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
 						    vdev_id,
@@ -1033,36 +1097,12 @@ QDF_STATUS cm_fw_roam_invoke_fail(struct wlan_objmgr_psoc *psoc,
 		goto error;
 	}
 
-	roam_req = cm_get_first_roam_command(vdev);
-	if (!roam_req) {
-		mlme_err("Failed to find roam req from list");
-		status = QDF_STATUS_E_FAILURE;
-		goto error;
-	}
-
-	cm_id = roam_req->cm_id;
-	source = roam_req->req.source;
-	bssid = roam_req->req.bssid;
-
 	status = cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_ROAM_INVOKE_FAIL,
 				     sizeof(wlan_cm_id), &cm_id);
-
 	if (QDF_IS_STATUS_ERROR(status))
 		cm_remove_cmd(cm_ctx, &cm_id);
-	/*
-	 * If reassoc MAC from user space is broadcast MAC as:
-	 * "wpa_cli DRIVER FASTREASSOC ff:ff:ff:ff:ff:ff 0",
-	 * user space invoked roaming candidate selection will base on firmware
-	 * score algorithm, current connection will be kept if current AP has
-	 * highest score. It is requirement from customer which can avoid
-	 * ping-pong roaming.
-	 */
-	if (qdf_is_macaddr_broadcast(&bssid))
-		mlme_debug("Keep current connection");
-	else if (source == CM_ROAMING_HOST || source == CM_ROAMING_NUD_FAILURE)
-		status = mlo_disconnect(vdev, CM_ROAM_DISCONNECT,
-					REASON_USER_TRIGGERED_ROAM_FAILURE,
-					NULL);
+
+	cm_disconnect_roam_invoke_fail(vdev, cm_id);
 
 error:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);

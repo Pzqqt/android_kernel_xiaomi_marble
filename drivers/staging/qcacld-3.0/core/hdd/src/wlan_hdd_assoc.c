@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -166,9 +166,7 @@ u8 ccp_rsn_oui_13[HDD_RSN_OUI_SIZE] = {0x50, 0x6F, 0x9A, 0x01};
 #define ASSOC_RSP_IES_OFFSET 6  /* Capability(2) + AID(2) + Status Code(2) */
 #define ASSOC_REQ_IES_OFFSET 4  /* Capability(2) + LI(2) */
 
-#define HDD_PEER_AUTHORIZE_WAIT 10
-
-/**
+/*
  * beacon_filter_table - table of IEs used for beacon filtering
  */
 static const int beacon_filter_table[] = {
@@ -386,17 +384,6 @@ struct hdd_adapter *hdd_get_sta_connection_in_progress(
 		    (QDF_P2P_DEVICE_MODE == adapter->device_mode)) {
 			if (hdd_cm_is_connecting(adapter)) {
 				hdd_debug("vdev_id %d: Connection is in progress",
-					  adapter->vdev_id);
-				hdd_adapter_dev_put_debug(adapter, dbgid);
-				if (next_adapter)
-					hdd_adapter_dev_put_debug(next_adapter,
-								  dbgid);
-				return adapter;
-			} else if (hdd_cm_is_vdev_associated(adapter) &&
-				   sme_is_sta_key_exchange_in_progress(
-							hdd_ctx->mac_handle,
-							adapter->vdev_id)) {
-				hdd_debug("vdev_id %d: Key exchange is in progress",
 					  adapter->vdev_id);
 				hdd_adapter_dev_put_debug(adapter, dbgid);
 				if (next_adapter)
@@ -1039,39 +1026,10 @@ void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 	hdd_exit();
 }
 
-/**
- * hdd_set_peer_authorized_event() - set peer_authorized_event
- * @vdev_id: vdevid
- *
- * Return: None
- */
-static void hdd_set_peer_authorized_event(uint32_t vdev_id)
-{
-	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_adapter *adapter = NULL;
-
-	if (!hdd_ctx)
-		return;
-
-	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
-	if (!adapter) {
-		hdd_err("Invalid vdev_id");
-		return;
-	}
-	complete(&adapter->sta_authorized_event);
-}
-
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
 static inline
 void hdd_set_unpause_queue(void *soc, struct hdd_adapter *adapter)
 {
-	unsigned long rc;
-	/* wait for event from firmware to set the event */
-	rc = wait_for_completion_timeout(
-			&adapter->sta_authorized_event,
-			msecs_to_jiffies(HDD_PEER_AUTHORIZE_WAIT));
-	if (!rc)
-		hdd_debug("timeout waiting for sta_authorized_event");
 
 	cdp_fc_vdev_unpause(soc, adapter->vdev_id,
 			    OL_TXQ_PAUSE_REASON_PEER_UNAUTHORIZED,
@@ -1139,15 +1097,9 @@ QDF_STATUS hdd_change_peer_state(struct hdd_adapter *adapter,
 		/* Reset scan reject params on successful set key */
 		hdd_debug("Reset scan reject params");
 		hdd_init_scan_reject_params(adapter->hdd_ctx);
-#ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
-		/* make sure event is reset */
-		INIT_COMPLETION(adapter->sta_authorized_event);
-#endif
 
-		err = sme_set_peer_authorized(
-				peer_mac,
-				hdd_set_peer_authorized_event,
-				adapter->vdev_id);
+		err = sme_set_peer_authorized(peer_mac,
+					      adapter->vdev_id);
 		if (err != QDF_STATUS_SUCCESS) {
 			hdd_err("Failed to set the peer state to authorized");
 			return QDF_STATUS_E_FAULT;
@@ -2499,6 +2451,9 @@ struct osif_cm_ops osif_ops = {
 	.netif_queue_control_cb = hdd_cm_netif_queue_control,
 	.napi_serialize_control_cb = hdd_cm_napi_serialize_control,
 	.save_gtk_cb = hdd_cm_save_gtk,
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	.roam_rt_stats_event_cb = wlan_hdd_cfg80211_roam_events_callback,
+#endif
 #ifdef WLAN_FEATURE_FILS_SK
 	.set_hlp_data_cb = hdd_cm_set_hlp_data,
 #endif
@@ -2507,6 +2462,9 @@ struct osif_cm_ops osif_ops = {
 #ifdef FEATURE_WLAN_ESE
 	.cckm_preauth_complete_cb = hdd_cm_cckm_preauth_complete,
 #endif
+#endif
+#ifdef WLAN_BOOST_CPU_FREQ_IN_ROAM
+	.perfd_set_cpufreq_cb = hdd_cm_perfd_set_cpufreq,
 #endif
 };
 

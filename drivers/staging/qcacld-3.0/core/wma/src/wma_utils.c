@@ -2781,15 +2781,18 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 		iface_link_stats->rssi_data += WMA_TGT_NOISE_FLOOR_DBM;
 		iface_link_stats->rssi_ack += WMA_TGT_NOISE_FLOOR_DBM;
 	}
-	wma_debug("db2dbm: %d, rssi_mgmt: %d, rssi_data: %d, rssi_ack: %d",
-		 db2dbm_enabled, iface_link_stats->rssi_mgmt,
-		 iface_link_stats->rssi_data, iface_link_stats->rssi_ack);
 
 	/* Copy roaming state */
 	iface_stat->info.roaming = link_stats->roam_state;
 	/* Copy time slicing duty cycle */
 	iface_stat->info.time_slice_duty_cycle =
 		link_stats->time_slice_duty_cycle;
+
+	wma_debug("db2dbm: %d, rssi_mgmt: %d, rssi_data: %d, rssi_ack: %d, beacon_rx %u, time_slice_duty_cycle %u",
+		  db2dbm_enabled, iface_link_stats->rssi_mgmt,
+		  iface_link_stats->rssi_data, iface_link_stats->rssi_ack,
+		  iface_link_stats->beacon_rx,
+		  iface_stat->info.time_slice_duty_cycle);
 
 	iface_ac_stats = &iface_stat->ac_stats[0];
 	for (count = 0; count < link_stats->num_ac; count++) {

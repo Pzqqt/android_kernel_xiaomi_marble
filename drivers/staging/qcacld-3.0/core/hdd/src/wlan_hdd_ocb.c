@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -427,7 +427,6 @@ static int hdd_ocb_set_config_req(struct hdd_adapter *adapter,
 					WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
 					WLAN_CONTROL_PATH);
 
-	/* fall through */
 end:
 	osif_request_put(request);
 
@@ -1515,7 +1514,6 @@ __wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
 		goto end;
 	}
 
-	/* fall through */
 end:
 	osif_request_put(request);
 
@@ -1785,7 +1783,6 @@ static int __wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
 		goto end;
 	}
 
-	/* fall through */
 end:
 	osif_request_put(request);
 
@@ -2087,7 +2084,6 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 		goto end;
 	}
 
-	/* fall through */
 end:
 	osif_request_put(request);
 

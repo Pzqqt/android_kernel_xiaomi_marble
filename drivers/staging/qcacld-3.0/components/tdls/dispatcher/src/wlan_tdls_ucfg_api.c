@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -882,23 +883,6 @@ QDF_STATUS ucfg_tdls_notify_reset_adapter(struct wlan_objmgr_vdev *vdev)
 					QDF_MODULE_ID_TDLS,
 					QDF_MODULE_ID_OS_IF, &msg);
 	return status;
-}
-
-void ucfg_tdls_notify_sta_connect(uint8_t vdev_id,
-				  bool tdls_chan_swit_prohibited,
-				  bool tdls_prohibited,
-				  struct wlan_objmgr_vdev *vdev)
-{
-	wlan_tdls_notify_sta_connect(vdev_id, tdls_chan_swit_prohibited,
-				     tdls_prohibited, vdev);
-}
-
-void ucfg_tdls_notify_sta_disconnect(uint8_t vdev_id,
-				     bool lfr_roam, bool user_disconnect,
-				     struct wlan_objmgr_vdev *vdev)
-{
-	wlan_tdls_notify_sta_disconnect(vdev_id, lfr_roam, user_disconnect,
-					vdev);
 }
 
 QDF_STATUS ucfg_tdls_set_operating_mode(

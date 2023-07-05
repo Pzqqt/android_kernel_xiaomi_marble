@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -401,7 +401,7 @@ QDF_STATUS ucfg_cm_check_ft_status(struct wlan_objmgr_pdev *pdev,
 				   mlme_priv->connect_info.ft_info.ft_state);
 			break;
 		}
-		/* fallthrough */
+		fallthrough;
 	default:
 		mlme_debug("Unhandled state:%d",
 			   mlme_priv->connect_info.ft_info.ft_state);
@@ -494,5 +494,32 @@ ucfg_cm_roam_send_rt_stats_config(struct wlan_objmgr_pdev *pdev,
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 
 	return cm_roam_send_rt_stats_config(psoc, vdev_id, param_value);
+}
+
+QDF_STATUS
+ucfg_cm_roam_send_ho_delay_config(struct wlan_objmgr_pdev *pdev,
+				  uint8_t vdev_id, uint16_t param_value)
+{
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+
+	return cm_roam_send_ho_delay_config(psoc, vdev_id, param_value);
+}
+
+QDF_STATUS
+ucfg_cm_exclude_rm_partial_scan_freq(struct wlan_objmgr_pdev *pdev,
+				     uint8_t vdev_id, uint8_t param_value)
+{
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+
+	return cm_exclude_rm_partial_scan_freq(psoc, vdev_id, param_value);
+}
+
+QDF_STATUS ucfg_cm_roam_full_scan_6ghz_on_disc(struct wlan_objmgr_pdev *pdev,
+					       uint8_t vdev_id,
+					       uint8_t param_value)
+{
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+
+	return cm_roam_full_scan_6ghz_on_disc(psoc, vdev_id, param_value);
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */

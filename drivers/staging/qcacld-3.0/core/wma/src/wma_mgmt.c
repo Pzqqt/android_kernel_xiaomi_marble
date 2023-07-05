@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1607,15 +1607,13 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	    || params->encryptType == eSIR_ED_WPI
 #endif /* FEATURE_WLAN_WAPI */
 	    ) {
-		if (!params->no_ptk_4_way)
+		if (!params->no_ptk_4_way) {
 			cmd->need_ptk_4_way = 1;
-		wma_nofl_debug("Acquire set key wake lock for %d ms",
-			       WMA_VDEV_SET_KEY_WAKELOCK_TIMEOUT);
-		wma_acquire_wakelock(&intr->vdev_set_key_wakelock,
-			WMA_VDEV_SET_KEY_WAKELOCK_TIMEOUT);
-		qdf_runtime_pm_prevent_suspend(
-			&intr->vdev_set_key_runtime_wakelock);
+			wlan_acquire_peer_key_wakelock(wma->pdev,
+						       cmd->peer_mac);
+		}
 	}
+
 	if (params->wpa_rsn >> 1)
 		cmd->need_gtk_2_way = 1;
 
@@ -3800,13 +3798,12 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 
 	mgmt_rx_params = qdf_mem_malloc(sizeof(*mgmt_rx_params));
 	if (!mgmt_rx_params) {
-		wma_err("memory allocation failed");
 		return -ENOMEM;
 	}
 
 	if (wmi_extract_mgmt_rx_params(wma_handle->wmi_handle,
 			data, mgmt_rx_params, &bufp) != QDF_STATUS_SUCCESS) {
-		wma_err("Extraction of mgmt rx params failed");
+		wma_err_rl("Extraction of mgmt rx params failed");
 		qdf_mem_free(mgmt_rx_params);
 		return -EINVAL;
 	}
@@ -3814,8 +3811,8 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 	if (mgmt_rx_params->buf_len > data_len ||
 	    !mgmt_rx_params->buf_len ||
 	    !bufp) {
-		wma_err("Invalid data_len %u, buf_len %u bufp %pK",
-			data_len, mgmt_rx_params->buf_len, bufp);
+		wma_err_rl("Invalid data_len %u, buf_len %u bufp %pK",
+			   data_len, mgmt_rx_params->buf_len, bufp);
 		qdf_mem_free(mgmt_rx_params);
 		return -EINVAL;
 	}

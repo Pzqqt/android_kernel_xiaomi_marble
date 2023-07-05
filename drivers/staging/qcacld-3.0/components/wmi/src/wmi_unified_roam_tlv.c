@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -2061,6 +2061,7 @@ wmi_fill_roam_sync_buffer(struct wlan_objmgr_vdev *vdev,
 			  WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf)
 {
 	wmi_roam_synch_event_fixed_param *synch_event;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	wmi_channel *chan = NULL;
 	wmi_key_material *key;
 	wmi_key_material_ext *key_ft;
@@ -2085,6 +2086,9 @@ wmi_fill_roam_sync_buffer(struct wlan_objmgr_vdev *vdev,
 		  roam_sync_ind->rssi,
 		  roam_sync_ind->isBeacon);
 
+	cdp_update_roaming_peer_in_vdev(soc, synch_event->vdev_id,
+					roam_sync_ind->bssid.bytes,
+					synch_event->auth_status);
 	/*
 	 * If lengths of bcn_probe_rsp, reassoc_req and reassoc_rsp are zero in
 	 * synch_event driver would have received bcn_probe_rsp, reassoc_req
@@ -2249,6 +2253,7 @@ extract_roam_sync_event_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	uint32_t bcn_probe_rsp_len;
 	uint32_t reassoc_rsp_len;
 	uint32_t reassoc_req_len;
+	wmi_pdev_hw_mode_transition_event_fixed_param *hw_mode_trans_param;
 
 	if (!evt_buf) {
 		wmi_debug("Empty roam_sync_event param buf");
@@ -2264,6 +2269,15 @@ extract_roam_sync_event_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	synch_event = param_buf->fixed_param;
 	if (!synch_event) {
 		wmi_debug("received null event data from target");
+		return QDF_STATUS_E_FAILURE;
+	}
+	hw_mode_trans_param = param_buf->hw_mode_transition_fixed_param;
+	if (hw_mode_trans_param &&
+	    hw_mode_trans_param->num_vdev_mac_entries >
+	    param_buf->num_wmi_pdev_set_hw_mode_response_vdev_mac_mapping) {
+		wmi_debug("invalid vdev mac entries %d %d in roam sync",
+			  hw_mode_trans_param->num_vdev_mac_entries,
+			  param_buf->num_wmi_pdev_set_hw_mode_response_vdev_mac_mapping);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -2626,6 +2640,7 @@ extract_roam_event_tlv(wmi_unified_t wmi_handle, void *evt_buf, uint32_t len,
 	wmi_roam_event_fixed_param *wmi_event = NULL;
 	WMI_ROAM_EVENTID_param_tlvs *param_buf = NULL;
 	struct cm_hw_mode_trans_ind *hw_mode_trans_ind;
+	wmi_pdev_hw_mode_transition_event_fixed_param *hw_mode_trans_param;
 
 	if (!evt_buf) {
 		wmi_debug("Empty roam_sync_event param buf");
@@ -2652,6 +2667,15 @@ extract_roam_event_tlv(wmi_unified_t wmi_handle, void *evt_buf, uint32_t len,
 		wmi_err("Invalid vdev id from firmware: %u",
 			roam_event->vdev_id);
 		return -EINVAL;
+	}
+	hw_mode_trans_param = param_buf->hw_mode_transition_fixed_param;
+	if (hw_mode_trans_param &&
+	    hw_mode_trans_param->num_vdev_mac_entries >
+	    param_buf->num_wmi_pdev_set_hw_mode_response_vdev_mac_mapping) {
+		wmi_debug("invalid vdev mac entries %d %d",
+			  hw_mode_trans_param->num_vdev_mac_entries,
+			  param_buf->num_wmi_pdev_set_hw_mode_response_vdev_mac_mapping);
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	roam_event->reason =
@@ -4043,6 +4067,7 @@ wmi_fill_rso_start_scan_tlv(struct wlan_roam_scan_offload_params *rso_req,
 
 	scan_tlv->dwell_time_active = src_scan_params->dwell_time_active;
 	scan_tlv->dwell_time_passive = src_scan_params->dwell_time_passive;
+	scan_tlv->min_dwell_time_6ghz = src_scan_params->min_dwell_time_6ghz;
 	scan_tlv->burst_duration = src_scan_params->burst_duration;
 	scan_tlv->min_rest_time = src_scan_params->min_rest_time;
 	scan_tlv->max_rest_time = src_scan_params->max_rest_time;

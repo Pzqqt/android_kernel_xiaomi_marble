@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1174,7 +1174,7 @@ static void hdd_update_timestamp(struct hdd_adapter *adapter)
 		hdd_warn("Reach the max continuous error count");
 
 		/* If reach MAX_CONTINUOUS_ERROR_CNT, treat it as valid pair */
-		/* fallthrough */
+		fallthrough;
 	case HDD_TS_STATUS_READY:
 		adapter->last_target_time = adapter->cur_target_time;
 		adapter->last_target_global_tsf_time =
@@ -1484,7 +1484,7 @@ static enum hdd_tsf_op_result hdd_tsf_sync_init(struct hdd_adapter *adapter)
 	}
 
 	if (!adapter->enable_dynamic_tsf_sync) {
-		hdd_err("TSF sync feature not enabled");
+		hdd_debug("TSF sync feature not enabled");
 		return HDD_TSF_OP_FAIL;
 	}
 

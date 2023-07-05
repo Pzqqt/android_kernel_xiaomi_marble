@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -243,6 +244,23 @@ void wma_set_he_vdev_param(struct wma_txrx_node *intr, WMI_VDEV_PARAM param_id,
 uint32_t wma_get_he_vdev_param(struct wma_txrx_node *intr,
 			       WMI_VDEV_PARAM param_id);
 
+/**
+ * wma_prevent_suspend_on_obss_color_collision() - prevent suspend on obss color
+ *						collision
+ * @vdev: pointer to vdev object
+ *
+ * Return: none
+ */
+void wma_prevent_suspend_on_obss_color_collision(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wma_allow_suspend_after_obss_color_change() - allow suspend on obss color
+ *						change
+ * @vdev: pointer to vdev object
+ *
+ * Return: none
+ */
+void wma_allow_suspend_after_obss_color_change(struct wlan_objmgr_vdev *vdev);
 #else
 static inline void wma_print_he_cap(tDot11fIEhe_cap *he_cap)
 {
@@ -333,6 +351,15 @@ static inline uint32_t wma_get_he_vdev_param(struct wma_txrx_node *intr,
 	return 0;
 }
 
+static inline void wma_prevent_suspend_on_obss_color_collision(
+						struct wlan_objmgr_vdev *vdev)
+{
+}
+
+static inline void wma_allow_suspend_after_obss_color_change(
+						struct wlan_objmgr_vdev *vdev)
+{
+}
 #endif
 
 #endif /* __WMA_HE_H */

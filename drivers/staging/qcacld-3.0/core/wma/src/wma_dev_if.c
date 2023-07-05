@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -688,7 +688,7 @@ static QDF_STATUS wma_vdev_self_peer_delete(tp_wma_handle wma_handle,
 				vdev_id);
 			wma_handle_vdev_detach(wma_handle, pdel_vdev_req_param);
 			mlme_vdev_self_peer_delete_resp(pdel_vdev_req_param);
-			cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
+			cds_trigger_recovery(QDF_SELF_PEER_DEL_FAILED);
 			return status;
 		}
 	} else if (iface->type == WMI_VDEV_TYPE_STA) {
@@ -751,7 +751,7 @@ QDF_STATUS wma_vdev_detach(struct del_vdev_params *pdel_vdev_req_param)
 
 send_fail_rsp:
 	wma_err("rcvd del_self_sta without del_bss; vdev_id:%d", vdev_id);
-	cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
+	cds_trigger_recovery(QDF_DEL_SELF_STA_FAILED);
 	status = QDF_STATUS_E_FAILURE;
 	return status;
 }
@@ -1297,6 +1297,8 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 		return QDF_STATUS_E_INVAL;
 
 	mlme_obj->mgmt.generic.tx_pwrlimit = rsp->max_allowed_tx_power;
+	wma_debug("Max allowed tx power: %d", rsp->max_allowed_tx_power);
+
 	if (iface->type == WMI_VDEV_TYPE_STA)
 		assoc_type = mlme_get_assoc_type(vdev_mlme->vdev);
 
@@ -1407,20 +1409,6 @@ wma_vdev_set_param(wmi_unified_t wmi_handle, uint32_t if_id,
 	param.param_value = param_value;
 
 	return wmi_unified_vdev_set_param_send(wmi_handle, &param);
-}
-
-/**
- * wma_set_peer_authorized_cb() - set peer authorized callback function
- * @wma_ctx: wma handle
- * @auth_cb: peer authorized callback
- *
- * Return: none
- */
-void wma_set_peer_authorized_cb(void *wma_ctx, wma_peer_authorized_fp auth_cb)
-{
-	tp_wma_handle wma_handle = (tp_wma_handle) wma_ctx;
-
-	wma_handle->peer_authorized_cb = auth_cb;
 }
 
 /**
@@ -1684,6 +1672,7 @@ peer_detach:
 			cdp_peer_delete(soc, vdev_id, peer_addr, bitmap);
 	}
 
+	wlan_release_peer_key_wakelock(wma->pdev, peer_mac);
 	wma_remove_objmgr_peer(wma, wma->interfaces[vdev_id].vdev, peer_mac);
 
 	wma->interfaces[vdev_id].peer_count--;

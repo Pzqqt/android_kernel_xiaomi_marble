@@ -34,6 +34,16 @@ ifneq ($(ANDROID_BUILD_TOP),)
 endif
 endif
 
+found = $(shell if grep -qF "struct link_station_parameters" $(srctree)/include/net/cfg80211.h; then echo "yes"; else echo "no"; fi;)
+ifeq ($(findstring yes, $(found)), yes)
+cppflags-y += -DCFG80211_LINK_STA_PARAMS_PRESENT
+endif
+
+found = $(shell if grep -qF "unsigned int link_id, u16 punct_bitmap" $(srctree)/include/net/cfg80211.h; then echo "yes" ;else echo "no" ;fi;)
+ifeq ($(findstring yes, $(found)), yes)
+cppflags-y += -DCFG80211_RU_PUNCT_NOTIFY
+endif
+
 include $(WLAN_ROOT)/configs/$(patsubst "%",%,$(CONFIG_QCA_CLD_WLAN_PROFILE))_defconfig
 
 # set DEVNAME, MODNAME
@@ -1599,6 +1609,7 @@ PKT_CAPTURE_OBJS := $(PKT_CAPTURE_DIR)/core/src/wlan_pkt_capture_main.o \
 		$(PKT_CAPTURE_DIR)/core/src/wlan_pkt_capture_data_txrx.o \
 		$(PKT_CAPTURE_DIR)/dispatcher/src/wlan_pkt_capture_ucfg_api.o \
 		$(PKT_CAPTURE_DIR)/dispatcher/src/wlan_pkt_capture_tgt_api.o \
+		$(PKT_CAPTURE_DIR)/dispatcher/src/wlan_pkt_capture_api.o \
 		$(PKT_CAPTURE_TARGET_IF_DIR)/src/target_if_pkt_capture.o \
 		$(PKT_CAPTURE_OS_IF_DIR)/src/os_if_pkt_capture.o
 endif
@@ -2429,6 +2440,33 @@ endif
 
 $(call add-wlan-objs,coex,$(COEX_OBJS))
 
+###### COAP ########
+COAP_HDD_SRC := core/hdd/src
+COAP_OS_IF_SRC := os_if/coap/src
+COAP_TGT_SRC := components/target_if/coap/src
+COAP_CORE_SRC  := components/coap/core/src
+COAP_DISPATCHER_SRC := components/coap/dispatcher/src
+COAP_WMI_SRC := components/wmi/src
+
+COAP_OS_IF_INC  := -I$(WLAN_ROOT)/os_if/coap/inc
+COAP_TGT_INC := -I$(WLAN_ROOT)/components/target_if/coap/inc
+COAP_DISPATCHER_INC := -I$(WLAN_ROOT)/components/coap/dispatcher/inc
+COAP_CORE_INC := -I$(WLAN_ROOT)/components/coap/core/inc
+COAP_WMI_INC := -I$(WLAN_ROOT)/components/wmi/inc
+
+ifeq ($(CONFIG_WLAN_FEATURE_COAP), y)
+COAP_OBJS := \
+	$(COAP_HDD_SRC)/wlan_hdd_coap.o \
+	$(COAP_OS_IF_SRC)/wlan_cfg80211_coap.o \
+	$(COAP_TGT_SRC)/target_if_coap.o  \
+	$(COAP_CORE_SRC)/wlan_coap_main.o  \
+	$(COAP_DISPATCHER_SRC)/wlan_coap_tgt_api.o \
+	$(COAP_DISPATCHER_SRC)/wlan_coap_ucfg_api.o \
+	$(COAP_WMI_SRC)/wmi_unified_coap_tlv.o
+endif
+
+$(call add-wlan-objs,coap,$(COAP_OBJS))
+
 ############## HTC ##########
 HTC_DIR := htc
 HTC_INC := -I$(WLAN_COMMON_INC)/$(HTC_DIR)
@@ -2945,6 +2983,12 @@ INCS +=		$(COEX_OS_IF_INC)
 INCS +=		$(COEX_TGT_INC)
 INCS +=		$(COEX_DISPATCHER_INC)
 INCS +=		$(COEX_CORE_INC)
+################ COAP ################
+INCS +=		$(COAP_OS_IF_INC)
+INCS +=		$(COAP_TGT_INC)
+INCS +=		$(COAP_DISPATCHER_INC)
+INCS +=		$(COAP_CORE_INC)
+INCS +=		$(COAP_WMI_INC)
 
 ccflags-y += $(INCS)
 
@@ -2956,7 +3000,6 @@ cppflags-$(CONFIG_THERMAL_STATS_SUPPORT) += -DTHERMAL_STATS_SUPPORT
 cppflags-$(CONFIG_PTT_SOCK_SVC_ENABLE) += -DPTT_SOCK_SVC_ENABLE
 cppflags-$(CONFIG_FEATURE_WLAN_WAPI) += -DFEATURE_WLAN_WAPI
 cppflags-$(CONFIG_FEATURE_WLAN_WAPI) += -DATH_SUPPORT_WAPI
-cppflags-$(CONFIG_AGEIE_ON_SCAN_RESULTS) += -DWLAN_ENABLE_AGEIE_ON_SCAN_RESULTS
 cppflags-$(CONFIG_SOFTAP_CHANNEL_RANGE) += -DSOFTAP_CHANNEL_RANGE
 cppflags-$(CONFIG_FEATURE_WLAN_SCAN_PNO) += -DFEATURE_WLAN_SCAN_PNO
 cppflags-$(CONFIG_WLAN_FEATURE_PACKET_FILTERING) += -DWLAN_FEATURE_PACKET_FILTERING
@@ -3009,6 +3052,7 @@ WLAN_TWT_SAP_STA_COUNT ?= 32
 ccflags-y += -DWLAN_TWT_SAP_STA_COUNT=$(WLAN_TWT_SAP_STA_COUNT)
 endif
 
+cppflags-$(CONFIG_ENABLE_LOW_POWER_MODE) += -DCONFIG_ENABLE_LOW_POWER_MODE
 cppflags-$(CONFIG_WLAN_TWT_SAP_PDEV_COUNT) += -DWLAN_TWT_AP_PDEV_COUNT_NUM_PHY
 cppflags-$(CONFIG_WLAN_DISABLE_EXPORT_SYMBOL) += -DWLAN_DISABLE_EXPORT_SYMBOL
 cppflags-$(CONFIG_WIFI_POS_CONVERGED) += -DWIFI_POS_CONVERGED
@@ -3059,6 +3103,7 @@ endif
 cppflags-$(CONFIG_PLD_PCIE_INIT_FLAG) += -DCONFIG_PLD_PCIE_INIT
 cppflags-$(CONFIG_WLAN_FEATURE_DP_RX_THREADS) += -DFEATURE_WLAN_DP_RX_THREADS
 cppflags-$(CONFIG_WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT) += -DWLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT
+cppflags-$(CONFIG_FEATURE_HIF_LATENCY_PROFILE_ENABLE) += -DHIF_LATENCY_PROFILE_ENABLE
 cppflags-$(CONFIG_FEATURE_HAL_DELAYED_REG_WRITE) += -DFEATURE_HAL_DELAYED_REG_WRITE
 cppflags-$(CONFIG_FEATURE_HAL_RECORD_SUSPEND_WRITE) += -DFEATURE_HAL_RECORD_SUSPEND_WRITE
 cppflags-$(CONFIG_QCA_OL_DP_SRNG_LOCK_LESS_ACCESS) += -DQCA_OL_DP_SRNG_LOCK_LESS_ACCESS
@@ -3691,6 +3736,10 @@ cppflags-$(CONFIG_WLAN_FEATURE_PKT_CAPTURE) += -DWLAN_FEATURE_PKT_CAPTURE
 
 cppflags-$(CONFIG_WLAN_FEATURE_PKT_CAPTURE_V2) += -DWLAN_FEATURE_PKT_CAPTURE_V2
 
+cppflags-$(CONFIG_DP_RX_UDP_OVER_PEER_ROAM) += -DDP_RX_UDP_OVER_PEER_ROAM
+
+cppflags-$(CONFIG_WLAN_BOOST_CPU_FREQ_IN_ROAM) += -DWLAN_BOOST_CPU_FREQ_IN_ROAM
+
 cppflags-$(CONFIG_QCA_WIFI_EMULATION) += -DQCA_WIFI_EMULATION
 cppflags-$(CONFIG_SHADOW_V2) += -DCONFIG_SHADOW_V2
 cppflags-$(CONFIG_QCA6290_HEADERS_DEF) += -DQCA6290_HEADERS_DEF
@@ -4131,7 +4180,7 @@ ccflags-y += -DWLAN_PDEV_MAX_VDEVS=$(CONFIG_WLAN_PDEV_MAX_VDEVS)
 CONFIG_WLAN_PSOC_MAX_VDEVS ?= $(CONFIG_WLAN_MAX_VDEVS)
 ccflags-y += -DWLAN_PSOC_MAX_VDEVS=$(CONFIG_WLAN_PSOC_MAX_VDEVS)
 
-CONFIG_MAX_SCAN_CACHE_SIZE ?= 300
+CONFIG_MAX_SCAN_CACHE_SIZE ?= 500
 ccflags-y += -DMAX_SCAN_CACHE_SIZE=$(CONFIG_MAX_SCAN_CACHE_SIZE)
 CONFIG_SCAN_MAX_REST_TIME ?= 0
 ccflags-y += -DSCAN_MAX_REST_TIME=$(CONFIG_SCAN_MAX_REST_TIME)
@@ -4307,6 +4356,9 @@ endif
 ifeq ($(CONFIG_DP_HW_TX_DELAY_STATS_ENABLE), y)
 cppflags-y += -DHW_TX_DELAY_STATS_ENABLE
 endif
+
+# Flag to enable Constrained Application Protocol feature
+cppflags-$(CONFIG_WLAN_FEATURE_COAP) += -DWLAN_FEATURE_COAP
 
 KBUILD_CPPFLAGS += $(cppflags-y)
 

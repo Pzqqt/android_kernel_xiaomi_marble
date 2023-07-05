@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -211,37 +212,6 @@ void ucfg_tdls_teardown_links_sync(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS ucfg_tdls_notify_reset_adapter(struct wlan_objmgr_vdev *vdev);
 
 /**
- * ucfg_tdls_notify_sta_connect() - notify sta connect to TDLS
- * @vdev_id: pointer to soc object
- * @tdls_chan_swit_prohibited: indicates channel switch capability
- * @tdls_prohibited: indicates tdls allowed or not
- * @vdev: vdev object manager
- *
- * Notify sta connect event to TDLS component
- *
- * Return: None
- */
-void ucfg_tdls_notify_sta_connect(uint8_t vdev_id,
-				  bool tdls_chan_swit_prohibited,
-				  bool tdls_prohibited,
-				  struct wlan_objmgr_vdev *vdev);
-
-/**
- * ucfg_tdls_notify_sta_disconnect() - notify sta disconnect
- * @vdev_id: pointer to soc object
- * @lfr_roam: indicate, whether disconnect due to lfr roam
- * @bool user_disconnect: disconnect from user space
- * @vdev: vdev object manager
- *
- * Notify sta disconnect event to TDLS component
- *
- * Return: None
- */
-void ucfg_tdls_notify_sta_disconnect(uint8_t vdev_id,
-				     bool lfr_roam, bool user_disconnect,
-				     struct wlan_objmgr_vdev *vdev);
-
-/**
  * ucfg_tdls_set_operating_mode() - set operating mode
  * @set_mode_params: set mode params
  *
@@ -422,20 +392,6 @@ static inline
 void ucfg_tdls_notify_connect_failure(struct wlan_objmgr_psoc *psoc)
 {
 }
-
-static inline
-void ucfg_tdls_notify_sta_connect(uint8_t vdev_id,
-				  bool tdls_chan_swit_prohibited,
-				  bool tdls_prohibited,
-				  struct wlan_objmgr_vdev *vdev)
-{
-}
-
-static inline
-void ucfg_tdls_notify_sta_disconnect(uint8_t vdev_id,
-				     bool lfr_roam, bool user_disconnect,
-				     struct wlan_objmgr_vdev *vdev)
-{}
 
 static inline
 struct wlan_objmgr_vdev *ucfg_get_tdls_vdev(struct wlan_objmgr_psoc *psoc,

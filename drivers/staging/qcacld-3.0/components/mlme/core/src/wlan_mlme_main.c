@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -176,6 +176,89 @@ QDF_STATUS mlme_get_peer_mic_len(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
 	return QDF_STATUS_SUCCESS;
 }
 
+void
+wlan_acquire_peer_key_wakelock(struct wlan_objmgr_pdev *pdev, uint8_t *mac_addr)
+{
+	uint8_t pdev_id;
+	struct wlan_objmgr_peer *peer;
+	struct peer_mlme_priv_obj *peer_priv;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc)
+		return;
+
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	peer = wlan_objmgr_get_peer(psoc, pdev_id, mac_addr,
+				    WLAN_LEGACY_MAC_ID);
+	if (!peer)
+		return;
+
+	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
+							  WLAN_UMAC_COMP_MLME);
+	if (!peer_priv) {
+		wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_MAC_ID);
+		return;
+	}
+
+	if (peer_priv->is_key_wakelock_set) {
+		wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_MAC_ID);
+		return;
+	}
+
+	mlme_debug(QDF_MAC_ADDR_FMT ": Acquire set key wake lock for %d ms",
+		   QDF_MAC_ADDR_REF(mac_addr),
+		   MLME_PEER_SET_KEY_WAKELOCK_TIMEOUT);
+	qdf_wake_lock_timeout_acquire(&peer_priv->peer_set_key_wakelock,
+				      MLME_PEER_SET_KEY_WAKELOCK_TIMEOUT);
+	qdf_runtime_pm_prevent_suspend(
+			&peer_priv->peer_set_key_runtime_wakelock);
+	peer_priv->is_key_wakelock_set = true;
+
+	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_MAC_ID);
+}
+
+void
+wlan_release_peer_key_wakelock(struct wlan_objmgr_pdev *pdev, uint8_t *mac_addr)
+{
+	uint8_t pdev_id;
+	struct wlan_objmgr_peer *peer;
+	struct peer_mlme_priv_obj *peer_priv;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc)
+		return;
+
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	peer = wlan_objmgr_get_peer(psoc, pdev_id, mac_addr,
+				    WLAN_LEGACY_MAC_ID);
+	if (!peer)
+		return;
+
+	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
+							  WLAN_UMAC_COMP_MLME);
+	if (!peer_priv) {
+		wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_MAC_ID);
+		return;
+	}
+
+	if (!peer_priv->is_key_wakelock_set) {
+		wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_MAC_ID);
+		return;
+	}
+
+	peer_priv->is_key_wakelock_set = false;
+	mlme_debug(QDF_MAC_ADDR_FMT ": Release set key wake lock",
+		   QDF_MAC_ADDR_REF(mac_addr));
+	qdf_wake_lock_release(&peer_priv->peer_set_key_wakelock,
+			      WIFI_POWER_EVENT_WAKELOCK_WMI_CMD_RSP);
+	qdf_runtime_pm_allow_suspend(
+			&peer_priv->peer_set_key_runtime_wakelock);
+
+	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_MAC_ID);
+}
+
 QDF_STATUS
 mlme_peer_object_created_notification(struct wlan_objmgr_peer *peer,
 				      void *arg)
@@ -202,6 +285,10 @@ mlme_peer_object_created_notification(struct wlan_objmgr_peer *peer,
 		qdf_mem_free(peer_priv);
 	}
 
+	qdf_wake_lock_create(&peer_priv->peer_set_key_wakelock, "peer_set_key");
+	qdf_runtime_lock_init(&peer_priv->peer_set_key_runtime_wakelock);
+	peer_priv->is_key_wakelock_set = false;
+
 	return status;
 }
 
@@ -223,6 +310,10 @@ mlme_peer_object_destroyed_notification(struct wlan_objmgr_peer *peer,
 		mlme_legacy_err(" peer MLME component object is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	peer_priv->is_key_wakelock_set = false;
+	qdf_runtime_lock_deinit(&peer_priv->peer_set_key_runtime_wakelock);
+	qdf_wake_lock_destroy(&peer_priv->peer_set_key_wakelock);
 
 	status = wlan_objmgr_peer_component_obj_detach(peer,
 						       WLAN_UMAC_COMP_MLME,
@@ -354,6 +445,28 @@ static void mlme_init_wds_config_cfg(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+#ifdef CONFIG_BAND_6GHZ
+/**
+ * mlme_init_standard_6ghz_conn_policy() - initialize standard 6GHz
+ *                                         policy connection flag
+ * @psoc: Pointer to PSOC
+ * @gen: pointer to generic CFG items
+ *
+ * Return: None
+ */
+static void mlme_init_standard_6ghz_conn_policy(struct wlan_objmgr_psoc *psoc,
+						struct wlan_mlme_generic *gen)
+{
+	gen->std_6ghz_conn_policy =
+		cfg_get(psoc, CFG_6GHZ_STANDARD_CONNECTION_POLICY);
+}
+#else
+static void mlme_init_standard_6ghz_conn_policy(struct wlan_objmgr_psoc *psoc,
+						struct wlan_mlme_generic *gen)
+{
+}
+#endif
+
 /**
  * mlme_init_mgmt_hw_tx_retry_count_cfg() - initialize mgmt hw tx retry count
  * @psoc: Pointer to PSOC
@@ -459,8 +572,11 @@ static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 	gen->monitor_mode_concurrency =
 		cfg_get(psoc, CFG_MONITOR_MODE_CONCURRENCY);
 	gen->tx_retry_multiplier = cfg_get(psoc, CFG_TX_RETRY_MULTIPLIER);
+	gen->enable_he_mcs0_for_6ghz_mgmt =
+		cfg_get(psoc, CFG_ENABLE_HE_MCS0_MGMT_6GHZ);
 	mlme_init_wds_config_cfg(psoc, gen);
 	mlme_init_mgmt_hw_tx_retry_count_cfg(psoc, gen);
+	mlme_init_standard_6ghz_conn_policy(psoc, gen);
 }
 
 static void mlme_init_edca_ani_cfg(struct wlan_objmgr_psoc *psoc,
@@ -684,6 +800,7 @@ static void mlme_init_timeout_cfg(struct wlan_objmgr_psoc *psoc,
 	timeouts->join_failure_timeout =
 			cfg_get(psoc, CFG_JOIN_FAILURE_TIMEOUT);
 	timeouts->join_failure_timeout_ori = timeouts->join_failure_timeout;
+	timeouts->probe_req_retry_timeout = JOIN_PROBE_REQ_TIMER_MS;
 	timeouts->auth_failure_timeout =
 			cfg_get(psoc, CFG_AUTH_FAILURE_TIMEOUT);
 	timeouts->auth_rsp_timeout =
@@ -1904,6 +2021,7 @@ static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 	lfr->roam_preauth_retry_count =
 		cfg_get(psoc, CFG_LFR3_ROAM_PREAUTH_RETRY_COUNT);
 	lfr->roam_rssi_diff = cfg_get(psoc, CFG_LFR_ROAM_RSSI_DIFF);
+	lfr->roam_rssi_diff_6ghz = cfg_get(psoc, CFG_LFR_ROAM_RSSI_DIFF_6GHZ);
 	lfr->bg_rssi_threshold = cfg_get(psoc, CFG_LFR_ROAM_BG_RSSI_TH);
 	lfr->roam_scan_offload_enabled =
 		cfg_get(psoc, CFG_LFR_ROAM_SCAN_OFFLOAD_ENABLED);

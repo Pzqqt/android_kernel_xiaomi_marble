@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -67,8 +68,7 @@
 
 #ifdef TXRX_PRINT_ENABLE
 
-#include <stdarg.h>             /* va_list */
-#include <qdf_types.h>          /* qdf_vprint */
+#include "qdf_types.h"          /* qdf_vprint */
 
 #define ol_txrx_alert(params...) \
 	QDF_TRACE_FATAL(QDF_MODULE_ID_TXRX, params)

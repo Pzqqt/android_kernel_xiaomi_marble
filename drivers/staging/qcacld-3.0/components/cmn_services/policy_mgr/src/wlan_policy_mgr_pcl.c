@@ -3062,14 +3062,7 @@ uint32_t policy_mgr_mode_specific_get_channel(
 	return freq;
 }
 
-/**
- * policy_mgr_get_connection_count_with_ch_freq() - Get number of active
- * connections on the channel frequecy
- * @ch_freq: channel frequency
- *
- * Return: number of active connection on the specific frequency
- */
-static uint32_t policy_mgr_get_connection_count_with_ch_freq(uint32_t ch_freq)
+uint32_t policy_mgr_get_connection_count_with_ch_freq(uint32_t ch_freq)
 {
 	uint32_t i;
 	uint32_t count = 0;

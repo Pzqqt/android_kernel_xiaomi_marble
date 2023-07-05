@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2014, 2017-2019, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,7 +26,33 @@
 
 extern struct sock *cesium_nl_srv_sock;
 
+/**
+ * hdd_ioctl() - ioctl handler (wrapper) for wlan network interfaces
+ * @net_dev: device upon which the ioctl was received
+ * @ifr: ioctl request information
+ * @cmd: ioctl command
+ *
+ * This function acts as an SSR-protecting wrapper to __hdd_ioctl()
+ * which is where the ioctls are really handled.
+ *
+ * Return: 0 on success, non-zero on error
+ */
 int hdd_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd);
+
+/**
+ * hdd_dev_private_ioctl() - private ioctl handler for wlan network interfaces
+ * @net_dev: device upon which the ioctl was received
+ * @ifr: ioctl request information
+ * @data: pointer to the raw command data in the ioctl request
+ * @cmd: ioctl command
+ *
+ * For Kernel 5.15+, this function acts as an SSR-protecting wrapper
+ * to __hdd_ioctl(), which is where the ioctls are really handled.
+ *
+ * Return: 0 on success, non-zero on error
+ */
+int hdd_dev_private_ioctl(struct net_device *dev, struct ifreq *ifr,
+			  void __user *data, int cmd);
 int wlan_hdd_set_mc_rate(struct hdd_adapter *adapter, int target_rate);
 
 /**

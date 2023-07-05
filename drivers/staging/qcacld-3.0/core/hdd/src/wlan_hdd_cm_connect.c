@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1181,6 +1181,7 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	bool is_roam_offload = false;
 	bool is_roam = rsp->is_reassoc;
 	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
+	uint8_t uapsd_mask = 0;
 	uint32_t phymode;
 	uint32_t time_buffer_size;
 	struct hdd_adapter *assoc_link_adapter;
@@ -1256,19 +1257,6 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	 * hdd_send_ft_assoc_response,
 	 */
 
-	/* send peer status indication to oem app */
-	vdev_mlme = wlan_objmgr_vdev_get_comp_private_obj(vdev,
-							  WLAN_UMAC_COMP_MLME);
-	if (vdev_mlme) {
-		hdd_send_peer_status_ind_to_app(
-			&rsp->bssid,
-			ePeerConnected,
-			vdev_mlme->ext_vdev_ptr->connect_info.timing_meas_cap,
-			adapter->vdev_id,
-			&vdev_mlme->ext_vdev_ptr->connect_info.chan_info,
-			adapter->device_mode);
-	}
-
 	hdd_ipa_set_tx_flow_info();
 	hdd_place_marker(adapter, "ASSOCIATION COMPLETE", NULL);
 
@@ -1305,6 +1293,16 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 		adapter->is_link_up_service_needed = false;
 	}
 
+	vdev_mlme = wlan_objmgr_vdev_get_comp_private_obj(vdev,
+							  WLAN_UMAC_COMP_MLME);
+	if (vdev_mlme)
+		uapsd_mask =
+			vdev_mlme->ext_vdev_ptr->connect_info.uapsd_per_ac_bitmask;
+
+	cdp_hl_fc_set_td_limit(soc, adapter->vdev_id,
+			       sta_ctx->conn_info.chan_freq);
+	hdd_wmm_assoc(adapter, false, uapsd_mask);
+
 	if (!rsp->is_wps_connection &&
 	    (sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_NONE ||
 	     sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_OPEN_SYSTEM ||
@@ -1316,9 +1314,35 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 		/* If roaming is set check if FW roaming/LFR3  */
 		ucfg_mlme_get_roaming_offload(hdd_ctx->psoc, &is_roam_offload);
 
-	if (is_roam_offload)
+	if (is_roam_offload || !is_roam) {
+		/* For FW_ROAM/LFR3 OR connect */
 		/* for LFR 3 get authenticated info from resp */
-		is_auth_required = hdd_cm_is_roam_auth_required(sta_ctx, rsp);
+		if (is_roam)
+			is_auth_required =
+				hdd_cm_is_roam_auth_required(sta_ctx, rsp);
+		if (is_auth_required)
+			wlan_acquire_peer_key_wakelock(hdd_ctx->pdev,
+						       rsp->bssid.bytes);
+		hdd_roam_register_sta(adapter, &rsp->bssid, is_auth_required);
+	} else {
+		/* for host roam/LFR2 */
+		hdd_cm_set_peer_authenticate(adapter, &rsp->bssid,
+					     is_auth_required);
+	}
+
+	hdd_debug("Enabling queues");
+	hdd_cm_netif_queue_enable(adapter);
+
+	/* send peer status indication to oem app */
+	if (vdev_mlme) {
+		hdd_send_peer_status_ind_to_app(
+			&rsp->bssid,
+			ePeerConnected,
+			vdev_mlme->ext_vdev_ptr->connect_info.timing_meas_cap,
+			adapter->vdev_id,
+			&vdev_mlme->ext_vdev_ptr->connect_info.chan_info,
+			adapter->device_mode);
+	}
 
 	if (ucfg_ipa_is_enabled() && !is_auth_required)
 		ucfg_ipa_wlan_evt(hdd_ctx->pdev, adapter->dev,
@@ -1350,12 +1374,6 @@ hdd_cm_connect_success_post_user_update(struct wlan_objmgr_vdev *vdev,
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	struct hdd_adapter *adapter;
-	struct hdd_station_ctx *sta_ctx;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	struct vdev_mlme_obj *mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	uint8_t uapsd_mask = 0;
-	bool is_auth_required = true;
-	bool is_roam_offload = false;
 	bool is_roam = rsp->is_reassoc;
 
 	if (!hdd_ctx) {
@@ -1369,45 +1387,11 @@ hdd_cm_connect_success_post_user_update(struct wlan_objmgr_vdev *vdev,
 		return;
 	}
 
-	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (mlme_obj)
-		uapsd_mask =
-			mlme_obj->ext_vdev_ptr->connect_info.uapsd_per_ac_bitmask;
-	if (is_roam) {
-		/* If roaming is set check if FW roaming/LFR3  */
-		ucfg_mlme_get_roaming_offload(hdd_ctx->psoc, &is_roam_offload);
-	} else {
+	if (!is_roam) {
 		/* call only for connect */
 		qdf_runtime_pm_allow_suspend(&hdd_ctx->runtime_context.connect);
 		hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_CONNECT);
 	}
-
-	cdp_hl_fc_set_td_limit(soc, adapter->vdev_id,
-			       sta_ctx->conn_info.chan_freq);
-	hdd_wmm_assoc(adapter, false, uapsd_mask);
-
-	if (!rsp->is_wps_connection &&
-	    (sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_NONE ||
-	     sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_OPEN_SYSTEM ||
-	     sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_SHARED_KEY ||
-	     hdd_cm_is_fils_connection(rsp)))
-		is_auth_required = false;
-
-	if (is_roam_offload || !is_roam) {
-		/* For FW_ROAM/LFR3 OR connect */
-		/* for LFR 3 get authenticated info from resp */
-		if (is_roam)
-			is_auth_required =
-				hdd_cm_is_roam_auth_required(sta_ctx, rsp);
-		hdd_roam_register_sta(adapter, &rsp->bssid, is_auth_required);
-	} else {
-		/* for host roam/LFR2 */
-		hdd_cm_set_peer_authenticate(adapter, &rsp->bssid,
-					     is_auth_required);
-	}
-
-	hdd_debug("Enabling queues");
-	hdd_cm_netif_queue_enable(adapter);
 
 	hdd_cm_clear_pmf_stats(adapter);
 

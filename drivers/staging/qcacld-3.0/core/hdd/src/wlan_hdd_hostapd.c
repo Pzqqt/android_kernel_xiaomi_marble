@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -67,6 +67,7 @@
 #include "qdf_str.h"
 #include "qdf_types.h"
 #include "qdf_trace.h"
+#include "qdf_net_if.h"
 #include "wlan_hdd_cfg.h"
 #include "wlan_policy_mgr_api.h"
 #include "wlan_hdd_tsf.h"
@@ -781,7 +782,8 @@ static int __hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
 
 	hdd_update_dynamic_mac(hdd_ctx, &adapter->mac_addr, &mac_addr);
 	memcpy(&adapter->mac_addr, psta_mac_addr->sa_data, ETH_ALEN);
-	memcpy(dev->dev_addr, psta_mac_addr->sa_data, ETH_ALEN);
+	qdf_net_update_net_device_dev_addr(dev, psta_mac_addr->sa_data,
+					   ETH_ALEN);
 	hdd_exit();
 	return 0;
 }
@@ -1432,6 +1434,10 @@ static int calcuate_max_phy_rate(int mode, int nss, int ch_width,
 	if (mode == SIR_SME_PHY_MODE_HT) {
 		/* check for HT Mode */
 		maxidx = ht_mcs_idx;
+		if (maxidx > 7) {
+			hdd_err("ht_mcs_idx %d is incorrect", ht_mcs_idx);
+			return maxrate;
+		}
 		if (nss == 1) {
 			supported_mcs_rate = supported_mcs_rate_nss1;
 		} else if (nss == 2) {
@@ -3054,7 +3060,7 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 		memset(&dot11_rsn_ie, 0, sizeof(tDot11fIERSN));
 		ret = sme_unpack_rsn_ie(mac_handle, rsn_ie, rsn_ie_len,
 					&dot11_rsn_ie, false);
-		if (DOT11F_FAILED(ret)) {
+		if (!DOT11F_SUCCEEDED(ret)) {
 			hdd_err("unpack failed, 0x%x", ret);
 			return -EINVAL;
 		}
@@ -3095,7 +3101,7 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 		ret = dot11f_unpack_ie_wpa(MAC_CONTEXT(mac_handle),
 					   rsn_ie, rsn_ie_len,
 					   &dot11_wpa_ie, false);
-		if (DOT11F_FAILED(ret)) {
+		if (!DOT11F_SUCCEEDED(ret)) {
 			hdd_err("unpack failed, 0x%x", ret);
 			return -EINVAL;
 		}
@@ -3166,6 +3172,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
 	QDF_STATUS status;
 	int ret = 0;
 	struct hdd_adapter *adapter = (netdev_priv(dev));
+	struct hdd_beacon_data *beacon = adapter->session.ap.beacon;
 	struct hdd_context *hdd_ctx = NULL;
 	struct hdd_adapter *sta_adapter;
 	struct hdd_station_ctx *sta_ctx;
@@ -3176,6 +3183,11 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
 	struct wlan_objmgr_vdev *vdev;
 	bool strict;
 	uint32_t sta_cnt = 0;
+	struct ch_params ch_params = {0};
+	const u8 *rsn_ie, *rsnxe_ie;
+	struct wlan_crypto_params crypto_params = {0};
+	bool capable, is_wps;
+	int32_t keymgmt;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -3205,6 +3217,32 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
 		return ret;
 	}
 
+	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(target_chan_freq)) {
+		rsn_ie = wlan_get_ie_ptr_from_eid(WLAN_EID_RSN,
+						  beacon->tail,
+						  beacon->tail_len);
+		rsnxe_ie = wlan_get_ie_ptr_from_eid(WLAN_ELEMID_RSNXE,
+						    beacon->tail,
+						    beacon->tail_len);
+		if (rsn_ie)
+			wlan_crypto_rsnie_check(&crypto_params, rsn_ie);
+
+		keymgmt = wlan_crypto_get_param(sap_ctx->vdev,
+						WLAN_CRYPTO_PARAM_KEY_MGMT);
+		if (keymgmt < 0) {
+			hdd_err_rl("Invalid keymgmt");
+			return -EINVAL;
+		}
+
+		is_wps = adapter->device_mode == QDF_P2P_GO_MODE ? true : false;
+		capable = wlan_cm_6ghz_allowed_for_akm(hdd_ctx->psoc, keymgmt,
+						       crypto_params.rsn_caps,
+						       rsnxe_ie, 0, is_wps);
+		if (!capable) {
+			hdd_err_rl("6Ghz channel switch not capable");
+			return -EINVAL;
+		}
+	}
 	sta_adapter = hdd_get_adapter(hdd_ctx, QDF_STA_MODE);
 	ucfg_policy_mgr_get_conc_rule1(hdd_ctx->psoc, &conc_rule1);
 	/*
@@ -3256,7 +3294,9 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
 		hdd_err("Channel switch in progress!!");
 		return -EBUSY;
 	}
-
+	ch_params.ch_width = target_bw;
+	target_bw = wlansap_get_csa_chanwidth_from_phymode(
+			sap_ctx, target_chan_freq, &ch_params);
 	/*
 	 * Do SAP concurrency check to cover channel switch case as following:
 	 * There is already existing SAP+GO combination but due to upper layer
@@ -3273,7 +3313,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
 				hdd_ctx->psoc,
 				policy_mgr_convert_device_mode_to_qdf_type(
 					adapter->device_mode),
-				target_chan_freq,
+				target_chan_freq, policy_mgr_get_bw(target_bw),
 				adapter->vdev_id,
 				forced,
 				sap_ctx->csa_reason)) {
@@ -3825,9 +3865,14 @@ const struct net_device_ops net_ops_struct = {
 	.ndo_tx_timeout = hdd_softap_tx_timeout,
 	.ndo_get_stats = hdd_get_stats,
 	.ndo_set_mac_address = hdd_hostapd_set_mac_address,
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0)
 	.ndo_do_ioctl = hdd_ioctl,
+#endif
 	.ndo_change_mtu = hdd_hostapd_change_mtu,
 	.ndo_select_queue = hdd_select_queue,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
+	.ndo_siocdevprivate = hdd_dev_private_ioctl,
+#endif
 };
 
 #ifdef WLAN_FEATURE_TSF_PTP
@@ -4139,7 +4184,7 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 	dev->mtu = HDD_DEFAULT_MTU;
 	dev->tx_queue_len = HDD_NETDEV_TX_QUEUE_LEN;
 
-	qdf_mem_copy(dev->dev_addr, mac_addr, sizeof(tSirMacAddr));
+	qdf_net_update_net_device_dev_addr(dev, mac_addr, sizeof(tSirMacAddr));
 	qdf_mem_copy(adapter->mac_addr.bytes, mac_addr, sizeof(tSirMacAddr));
 
 	adapter->offloads_configured = false;
@@ -5108,6 +5153,12 @@ static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 	bool go_11ac_override = 0;
 	bool sap_11ac_override = 0;
 
+	/*
+	 * No need to override for Go/Sap on 6 GHz band
+	 */
+	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_cfg->chan_freq))
+		return 0;
+
 	ucfg_mlme_get_sap_force_11n_for_11ac(hdd_ctx->psoc,
 					     &sap_force_11n_for_11ac);
 	ucfg_mlme_get_go_force_11n_for_11ac(hdd_ctx->psoc,
@@ -5670,24 +5721,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 			goto deliver_start_err;
 		}
 	}
-	/*
-	 * For STA+SAP concurrency support from GUI, first STA connection gets
-	 * triggered and while it is in progress, SAP start also comes up.
-	 * Once STA association is successful, STA connect event is sent to
-	 * kernel which gets queued in kernel workqueue and supplicant won't
-	 * process M1 received from AP and send M2 until this NL80211_CONNECT
-	 * event is received. Workqueue is not scheduled as RTNL lock is already
-	 * taken by hostapd thread which has issued start_bss command to driver.
-	 * Driver cannot complete start_bss as the pending command at the head
-	 * of the SME command pending list is hw_mode_update for STA session
-	 * which cannot be processed as SME is in WAITforKey state for STA
-	 * interface. The start_bss command for SAP interface is queued behind
-	 * the hw_mode_update command and so it cannot be processed until
-	 * hw_mode_update command is processed. This is causing a deadlock so
-	 * disconnect the STA interface first if connection or key exchange is
-	 * in progress and then start SAP interface.
-	 */
-	hdd_abort_ongoing_sta_connection(hdd_ctx);
 
 	mac_handle = hdd_ctx->mac_handle;
 
@@ -5909,7 +5942,10 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 					     config->RSNWPAReqIE[1] + 2,
 					     config->RSNWPAReqIE);
 
-		if (QDF_STATUS_SUCCESS == status) {
+		if (status != QDF_STATUS_SUCCESS) {
+			ret = -EINVAL;
+			goto error;
+		} else {
 			/* Now copy over all the security attributes you have
 			 * parsed out. Use the cipher type in the RSN IE
 			 */
@@ -5958,7 +5994,10 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 					 config->RSNWPAReqIE[1] + 2,
 					 config->RSNWPAReqIE);
 
-			if (QDF_STATUS_SUCCESS == status) {
+			if (status != QDF_STATUS_SUCCESS) {
+				ret = -EINVAL;
+				goto error;
+			} else {
 				(WLAN_HDD_GET_AP_CTX_PTR(adapter))->
 				encryption_type = rsn_encrypt_type;
 				hdd_debug("CSR Encryption: %d mcEncryption: %d num_akm_suites:%d",
@@ -6443,13 +6482,6 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	hdd_debug("Event flags 0x%lx(%s) Device_mode %s(%d)",
 		  adapter->event_flags, (adapter->dev)->name,
 		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
-
-	/*
-	 * If a STA connection is in progress in another adapter, disconnect
-	 * the STA and complete the SAP operation. STA will reconnect
-	 * after SAP stop is done.
-	 */
-	hdd_abort_ongoing_sta_connection(hdd_ctx);
 
 	if (adapter->device_mode == QDF_SAP_MODE) {
 		wlan_hdd_del_station(adapter, NULL);

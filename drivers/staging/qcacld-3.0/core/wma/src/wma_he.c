@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1522,4 +1522,31 @@ uint32_t wma_get_he_vdev_param(struct wma_txrx_node *intr,
 		break;
 	}
 	return 0;
+}
+
+void wma_prevent_suspend_on_obss_color_collision(struct wlan_objmgr_vdev *vdev)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv)
+		return;
+
+	qdf_wake_lock_timeout_acquire(&mlme_priv->bss_color_change_wakelock,
+				      MAX_WAKELOCK_FOR_BSS_COLOR_CHANGE);
+	qdf_runtime_pm_prevent_suspend(
+			&mlme_priv->bss_color_change_runtime_lock);
+}
+
+void wma_allow_suspend_after_obss_color_change(struct wlan_objmgr_vdev *vdev)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv)
+		return;
+
+	qdf_runtime_pm_allow_suspend(
+			&mlme_priv->bss_color_change_runtime_lock);
+	qdf_wake_lock_release(&mlme_priv->bss_color_change_wakelock, 0);
 }

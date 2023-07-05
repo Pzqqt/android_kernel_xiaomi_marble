@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -428,7 +428,7 @@ static uint8_t lim_calculate_dot11_mode(struct mac_context *mac_ctx,
 			return MLME_DOT11_MODE_11AC;
 		else if (bcn->HTCaps.present)
 			return MLME_DOT11_MODE_11N;
-		/* fallthrough */
+		fallthrough;
 	case MLME_DOT11_MODE_11AC:
 	case MLME_DOT11_MODE_11AC_ONLY:
 		if ((bcn->VHTCaps.present ||
@@ -439,12 +439,12 @@ static uint8_t lim_calculate_dot11_mode(struct mac_context *mac_ctx,
 			return MLME_DOT11_MODE_11AC;
 		else if (bcn->HTCaps.present)
 			return MLME_DOT11_MODE_11N;
-		/* fallthrough */
+		fallthrough;
 	case MLME_DOT11_MODE_11N:
 	case MLME_DOT11_MODE_11N_ONLY:
 		if (bcn->HTCaps.present)
 			return MLME_DOT11_MODE_11N;
-		/* fallthrough */
+		fallthrough;
 	default:
 			return new_dot11_mode;
 	}
@@ -758,11 +758,8 @@ void lim_fill_ft_session(struct mac_context *mac,
 	}
 	ft_session->encryptType = pe_session->encryptType;
 	ft_session->limRmfEnabled = pe_session->limRmfEnabled;
-
-	if ((ft_session->limRFBand == REG_BAND_2G) &&
-		(ft_session->htSupportedChannelWidthSet ==
-		eHT_CHANNEL_WIDTH_40MHZ))
-		lim_init_obss_params(mac, ft_session);
+	/* Load default OBSS parameters to session entry */
+	lim_init_obss_params(mac, ft_session);
 
 	ft_session->enableHtSmps = pe_session->enableHtSmps;
 	ft_session->htSmpsvalue = pe_session->htSmpsvalue;

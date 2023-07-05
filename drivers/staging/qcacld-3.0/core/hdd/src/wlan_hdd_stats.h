@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -397,21 +397,14 @@ wlan_hdd_cfg80211_stats_ext2_callback(hdd_handle_t hdd_handle,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * wlan_hdd_cfg80211_roam_events_callback() - roam_events_callback
- * @hdd_handle: opaque handle to the hdd context
- * @idx: TLV index in roam stats event
  * @roam_stats: roam events stats
+ * @idx: TLV index in roam stats event
  *
  * Return: void
  */
 void
-wlan_hdd_cfg80211_roam_events_callback(hdd_handle_t hdd_handle, uint8_t idx,
-				       struct roam_stats_event *roam_stats);
-#else
-static inline void
-wlan_hdd_cfg80211_roam_events_callback(hdd_handle_t hdd_handle, uint8_t idx,
-				       struct roam_stats_event *roam_stats)
-{
-}
+wlan_hdd_cfg80211_roam_events_callback(struct roam_stats_event *roam_stats,
+				       uint8_t idx);
 #endif /* End of WLAN_FEATURE_ROAM_OFFLOAD */
 
 /**

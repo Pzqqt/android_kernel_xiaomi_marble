@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -55,6 +55,7 @@
 #include "wlan_tdls_tgt_api.h"
 #include "lim_process_fils.h"
 #include "wma.h"
+#include "wma_he.h"
 #include <../../core/src/wlan_cm_vdev_api.h>
 #include <wlan_mlo_mgr_sta.h>
 
@@ -2382,6 +2383,8 @@ lim_handle_bss_color_change_ie(struct mac_context *mac_ctx,
 			lim_send_obss_color_collision_cfg(
 				mac_ctx, session,
 				OBSS_COLOR_COLLISION_DETECTION);
+			wma_allow_suspend_after_obss_color_change(
+								session->vdev);
 		}
 		lim_send_bss_color_change_ie_update(mac_ctx, session);
 	}

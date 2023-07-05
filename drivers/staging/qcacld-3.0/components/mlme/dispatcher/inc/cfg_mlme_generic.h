@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -179,6 +179,29 @@ enum wlan_wds_mode {
 		"rf_test_mode_enabled", \
 		0, \
 		"rf test mode Enable Flag")
+
+#ifdef CONFIG_BAND_6GHZ
+/*
+ * standard_6ghz_connection_policy - Enable 6 GHz standard connection policy
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to set standard 6 GHz policies where STA will be
+ * allowed to scan and connect to any 6 GHz AP.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ */
+#define CFG_6GHZ_STANDARD_CONNECTION_POLICY CFG_INI_BOOL( \
+		"standard_6ghz_connection_policy", \
+		1, \
+		"6ghz standard 6 GHZ connection policy")
+#define CFG_6GHZ_STD_CONN_POLICY	CFG(CFG_6GHZ_STANDARD_CONNECTION_POLICY)
+#else
+#define CFG_6GHZ_STD_CONN_POLICY
+#endif
 
 /*
  * <ini>
@@ -683,6 +706,26 @@ enum wlan_wds_mode {
 
 /*
  * <ini>
+ * enable_he_mcs0_for_mgmt_6ghz- if disabled FW will use 6Mbps 11A rate
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * If this ini is disabled firmware will use 6Mbps 11A rate
+ *
+ * Supported Feature: STA/SAP
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_HE_MCS0_MGMT_6GHZ CFG_INI_BOOL( \
+	"enable_he_mcs0_for_mgmt_6ghz", \
+	0, \
+	"MCS0 rate for 6ghz mgmt frames")
+
+/*
+ * <ini>
  * bmiss_skip_full_scan - To decide whether firmware does channel map based
  * partial scan or partial scan followed by full scan in case no candidate is
  * found in partial scan.
@@ -964,6 +1007,7 @@ enum wlan_wds_mode {
 	CFG(CFG_ITO_REPEAT_COUNT) \
 	CFG(CFG_ENABLE_BEACON_RECEPTION_STATS) \
 	CFG(CFG_MGMT_RETRY_MAX) \
+	CFG(CFG_ENABLE_HE_MCS0_MGMT_6GHZ) \
 	CFG(CFG_BMISS_SKIP_FULL_SCAN) \
 	CFG(CFG_ENABLE_RING_BUFFER) \
 	CFG(CFG_DFS_CHAN_AGEOUT_TIME) \
@@ -973,5 +1017,6 @@ enum wlan_wds_mode {
 	CFG(CFG_RF_TEST_MODE_SUPP_ENABLED) \
 	CFG_WDS_MODE_ALL \
 	CFG(CFG_TX_RETRY_MULTIPLIER) \
-	CFG(CFG_MGMT_FRAME_HW_TX_RETRY_COUNT)
+	CFG(CFG_MGMT_FRAME_HW_TX_RETRY_COUNT)\
+	CFG_6GHZ_STD_CONN_POLICY
 #endif /* __CFG_MLME_GENERIC_H */

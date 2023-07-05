@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1249,6 +1250,35 @@
 	5, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Enable roam based on rssi")
+
+/*
+ * <ini>
+ * RoamRssiDiff6GHz - Enable roam to 6 GHz AP based on rssi
+ * @Min: 0
+ * @Max: 100
+ * @Default: 5
+ *
+ * This INI is used to decide whether to roam to 6 GHz AP or not based on RSSI.
+ * AP1 is the currently associated AP(2.4 GHz / 5 GHz) and AP2(6 GHz) is chosen
+ * for roaming. The Roaming will happen only if AP2 has better Signal Quality
+ * and it has a RSSI better than AP1. RoamRssiDiff6GHz is the number of units
+ * (typically measured in dB) AP2 is better than AP1.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ROAM_RSSI_DIFF_6GHZ CFG_INI_UINT( \
+	"RoamRssiDiff6GHz", \
+	0, \
+	100, \
+	5, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Enable 6 GHz roam based on rssi")
 
 /*
  * <ini>
@@ -2907,6 +2937,7 @@
 	CFG(CFG_LFR_MAWC_FEATURE_ENABLED) \
 	CFG(CFG_LFR_FAST_TRANSITION_ENABLED) \
 	CFG(CFG_LFR_ROAM_RSSI_DIFF) \
+	CFG(CFG_LFR_ROAM_RSSI_DIFF_6GHZ) \
 	CFG(CFG_LFR_ROAM_BG_RSSI_TH) \
 	CFG(CFG_LFR_ENABLE_WES_MODE) \
 	CFG(CFG_LFR_ROAM_SCAN_OFFLOAD_ENABLED) \

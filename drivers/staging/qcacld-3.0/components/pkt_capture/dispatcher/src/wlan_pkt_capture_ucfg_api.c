@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -229,15 +230,10 @@ ucfg_pkt_capture_process_mgmt_tx_data(struct wlan_objmgr_pdev *pdev,
 				      qdf_nbuf_t nbuf,
 				      uint8_t status)
 {
-	if (pkt_capture_is_tx_mgmt_enable(pdev))
-		return pkt_capture_process_mgmt_tx_data(
+	return pkt_capture_process_mgmt_tx_data(
 					pdev, params, nbuf,
 					pkt_capture_mgmt_status_map(status));
 
-	else {
-		qdf_nbuf_free(nbuf);
-		return QDF_STATUS_SUCCESS;
-	}
 }
 
 void

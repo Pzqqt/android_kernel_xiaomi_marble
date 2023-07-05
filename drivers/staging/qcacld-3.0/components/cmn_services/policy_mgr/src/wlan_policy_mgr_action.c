@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -333,7 +333,7 @@ QDF_STATUS policy_mgr_update_connection_info(struct wlan_objmgr_psoc *psoc,
 					uint32_t vdev_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	uint32_t conn_index = 0, ch_freq;
+	uint32_t conn_index = 0, ch_freq, cur_freq;
 	bool found = false;
 	struct policy_mgr_vdev_entry_info conn_table_entry;
 	enum policy_mgr_chain_mode chain_mask = POLICY_MGR_ONE_ONE;
@@ -380,6 +380,8 @@ QDF_STATUS policy_mgr_update_connection_info(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	cur_freq = pm_conc_connection_list[conn_index].freq;
+
 	mode = policy_mgr_get_mode(conn_table_entry.type,
 					conn_table_entry.sub_type);
 	ch_freq = conn_table_entry.mhz;
@@ -406,6 +408,13 @@ QDF_STATUS policy_mgr_update_connection_info(struct wlan_objmgr_psoc *psoc,
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 	/* do we need to change the HW mode */
 	policy_mgr_check_n_start_opportunistic_timer(psoc);
+
+	if (policy_mgr_is_conc_sap_present_on_sta_freq(psoc, mode, cur_freq))
+		policy_mgr_update_indoor_concurrency(psoc, vdev_id, 0,
+						     SWITCH_WITH_CONCURRENCY);
+	else
+		policy_mgr_update_indoor_concurrency(psoc, vdev_id, cur_freq,
+						     SWITCH_WITHOUT_CONCURRENCY);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2355,10 +2364,17 @@ policy_mgr_valid_sap_conc_channel_check(struct wlan_objmgr_psoc *psoc,
 	/*
 	 * If interference is 0, it could be STA/SAP SCC,
 	 * check further if SAP can start on STA home channel or
-	 * select other band channel if not .
+	 * select other band channel if not.
 	 */
-	if (!ch_freq)
+	if (!ch_freq) {
+		if (!policy_mgr_any_other_vdev_on_same_mac_as_freq(psoc,
+								   sap_ch_freq,
+								   sap_vdev_id))
+			return QDF_STATUS_SUCCESS;
+
 		ch_freq = sap_ch_freq;
+	}
+
 	if (!ch_freq)
 		return QDF_STATUS_SUCCESS;
 

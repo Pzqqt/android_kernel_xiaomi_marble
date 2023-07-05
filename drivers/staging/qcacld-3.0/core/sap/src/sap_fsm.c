@@ -2526,7 +2526,7 @@ static QDF_STATUS wlansap_update_pre_cac_end(struct sap_context *sap_context,
 	QDF_STATUS qdf_status;
 
 	sap_context->isCacEndNotified = true;
-	mac->sap.SapDfsInfo.sap_radar_found_status = false;
+	sap_context->sap_radar_found_status = false;
 	sap_context->fsm_state = SAP_STARTED;
 
 	sap_warn("pre cac end notify on %d: move to state SAP_STARTED", intf);
@@ -2606,7 +2606,7 @@ static QDF_STATUS sap_cac_end_notify(mac_handle_t mac_handle,
 				return qdf_status;
 			}
 			sap_context->isCacEndNotified = true;
-			mac->sap.SapDfsInfo.sap_radar_found_status = false;
+			sap_context->sap_radar_found_status = false;
 			sap_debug("sapdfs: Start beacon request on sapctx[%pK]",
 				  sap_context);
 
@@ -2915,7 +2915,7 @@ static QDF_STATUS sap_goto_starting(struct sap_context *sap_ctx,
 	/* Reset radar found flag before start sap, the flag will
 	 * be set when radar found in CAC wait.
 	 */
-	mac_ctx->sap.SapDfsInfo.sap_radar_found_status = false;
+	sap_ctx->sap_radar_found_status = false;
 
 	sap_debug("session: %d", sap_ctx->sessionId);
 
@@ -3172,6 +3172,84 @@ static void sap_check_and_update_vdev_ch_params(struct sap_context *sap_ctx)
 		  sap_ctx->ch_params.ch_width);
 }
 
+static qdf_freq_t sap_get_safe_channel_freq(struct sap_context *sap_ctx)
+{
+	qdf_freq_t freq;
+
+	freq = sap_ctx->freq_before_pre_cac;
+	if (!freq)
+		freq = sap_random_channel_sel(sap_ctx);
+
+	sap_debug("new selected freq %d as target chan as current freq unsafe %d",
+		  freq, sap_ctx->chan_freq);
+
+	return freq;
+}
+
+/**
+ * sap_fsm_send_csa_restart_req() - send csa start event
+ * @mac_ctx: mac ctx
+ * @sap_ctx: SAP context
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+sap_fsm_send_csa_restart_req(struct mac_context *mac_ctx,
+			     struct sap_context *sap_ctx)
+{
+	QDF_STATUS status;
+
+	status = policy_mgr_check_and_set_hw_mode_for_channel_switch(
+				mac_ctx->psoc, sap_ctx->sessionId,
+				mac_ctx->sap.SapDfsInfo.target_chan_freq,
+				POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH_SAP);
+
+	/*
+	 * If hw_mode_status is QDF_STATUS_E_FAILURE, mean HW
+	 * mode change was required but driver failed to set HW
+	 * mode so ignore CSA for the channel.
+	 */
+	if (status == QDF_STATUS_E_FAILURE) {
+		sap_err("HW change required but failed to set hw mode");
+		return status;
+	}
+
+	/*
+	 * If hw_mode_status is QDF_STATUS_SUCCESS mean HW mode
+	 * change was required and was successfully requested so
+	 * the channel switch will continue after HW mode change
+	 * completion.
+	 */
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		sap_info("Channel change will continue after HW mode change");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return sme_csa_restart(mac_ctx, sap_ctx->sessionId);
+}
+
+/**
+ * sap_fsm_handle_check_safe_channel() - handle channel Avoid event event during
+ *                                       cac
+ * @mac_ctx: global MAC context
+ *
+ * Return: QDF_STATUS
+ */
+static void sap_fsm_handle_check_safe_channel(struct mac_context *mac_ctx,
+					      struct sap_context *sap_ctx)
+{
+	if (policy_mgr_is_safe_channel(mac_ctx->psoc, sap_ctx->chan_freq))
+		return;
+
+	mac_ctx->sap.SapDfsInfo.target_chan_freq =
+					sap_get_safe_channel_freq(sap_ctx);
+	/*
+	 * The selected channel is not safe channel. Hence,
+	 * change the sap channel to a safe channel.
+	 */
+	sap_fsm_send_csa_restart_req(mac_ctx, sap_ctx);
+}
+
 /**
  * sap_fsm_state_starting() - utility function called from sap fsm
  * @sap_ctx: SAP context
@@ -3280,7 +3358,7 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 							       mac_handle);
 			} else {
 				sap_debug("skip cac timer");
-				mac_ctx->sap.SapDfsInfo.sap_radar_found_status = false;
+				sap_ctx->sap_radar_found_status = false;
 				/*
 				 * If hostapd starts AP on dfs channel,
 				 * hostapd will wait for CAC START/CAC END
@@ -3294,6 +3372,13 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 				wlansap_start_beacon_req(sap_ctx);
 			}
 		}
+		/*
+		 * During CSA, it might be possible that ch avoidance event to
+		 * avoid the sap frequency is received. So, check after CSA,
+		 * whether sap frequency is safe if not restart sap to a safe
+		 * channel.
+		 */
+		sap_fsm_handle_check_safe_channel(mac_ctx, sap_ctx);
 	} else if (msg == eSAP_MAC_START_FAILS ||
 		 msg == eSAP_HDD_STOP_INFRA_BSS) {
 			qdf_status = sap_fsm_handle_start_failure(sap_ctx, msg,
@@ -3326,48 +3411,6 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 	}
 
 	return qdf_status;
-}
-
-/**
- * sap_fsm_send_csa_restart_req() - send csa start event
- * @mac_ctx: mac ctx
- * @sap_ctx: SAP context
- *
- * Return: QDF_STATUS
- */
-static inline QDF_STATUS
-sap_fsm_send_csa_restart_req(struct mac_context *mac_ctx,
-			     struct sap_context *sap_ctx)
-{
-	QDF_STATUS status;
-
-	status = policy_mgr_check_and_set_hw_mode_for_channel_switch(
-				mac_ctx->psoc, sap_ctx->sessionId,
-				mac_ctx->sap.SapDfsInfo.target_chan_freq,
-				POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH_SAP);
-
-	/*
-	 * If hw_mode_status is QDF_STATUS_E_FAILURE, mean HW
-	 * mode change was required but driver failed to set HW
-	 * mode so ignore CSA for the channel.
-	 */
-	if (status == QDF_STATUS_E_FAILURE) {
-		sap_err("HW change required but failed to set hw mode");
-		return status;
-	}
-
-	/*
-	 * If hw_mode_status is QDF_STATUS_SUCCESS mean HW mode
-	 * change was required and was successfully requested so
-	 * the channel switch will continue after HW mode change
-	 * completion.
-	 */
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		sap_info("Channel change will continue after HW mode change");
-		return QDF_STATUS_SUCCESS;
-	}
-
-	return sme_csa_restart(mac_ctx, sap_ctx->sessionId);
 }
 
 /**
@@ -4259,7 +4302,7 @@ qdf_freq_t sap_indicate_radar(struct sap_context *sap_ctx)
 		return sap_ctx->chan_freq;
 
 	/* set the Radar Found flag in SapDfsInfo */
-	mac->sap.SapDfsInfo.sap_radar_found_status = true;
+	sap_ctx->sap_radar_found_status = true;
 
 	if (sap_ctx->freq_before_pre_cac) {
 		sap_info("sapdfs: set chan freq before pre cac %d as target chan",

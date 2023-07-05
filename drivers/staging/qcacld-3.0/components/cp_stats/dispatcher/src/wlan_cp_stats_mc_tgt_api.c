@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -992,7 +992,7 @@ tgt_mc_cp_stats_prepare_n_send_raw_station_stats(struct wlan_objmgr_psoc *psoc,
 	peer = wlan_objmgr_get_peer(psoc, last_req->pdev_id,
 				    last_req->peer_mac_addr, WLAN_CP_STATS_ID);
 	if (!peer) {
-		cp_stats_err("peer object is null");
+		cp_stats_debug("peer object is null");
 		goto end;
 	}
 

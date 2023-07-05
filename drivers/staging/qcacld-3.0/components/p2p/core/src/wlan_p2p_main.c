@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1408,7 +1408,7 @@ QDF_STATUS p2p_status_connect(struct wlan_objmgr_vdev *vdev)
 		 * since no scan before 4-way handshake and
 		 * won't enter state P2P_CLIENT_CONNECTING_STATE_2:
 		 */
-		/* fallthrough */
+		fallthrough;
 	case P2P_CLIENT_CONNECTING_STATE_2:
 		p2p_status_update(p2p_soc_obj,
 				  P2P_CLIENT_COMPLETED_STATE);

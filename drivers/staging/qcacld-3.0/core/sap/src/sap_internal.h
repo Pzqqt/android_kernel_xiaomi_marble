@@ -132,6 +132,7 @@ struct sap_context {
 
 	/* Include the SME(CSR) sessionId here */
 	uint8_t sessionId;
+	uint8_t sap_radar_found_status;
 
 	/* vdev object corresponding to sessionId */
 	struct wlan_objmgr_vdev *vdev;

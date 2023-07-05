@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -675,7 +675,6 @@ static int dp_rx_thread_loop(void *arg)
 	dp_info("exiting (%s) id %d pid %d", qdf_get_current_comm(),
 		rx_thread->id, qdf_get_current_pid());
 	qdf_event_set(&rx_thread->shutdown_event);
-	qdf_exit_thread(QDF_STATUS_SUCCESS);
 
 	return 0;
 }
@@ -753,7 +752,6 @@ static int dp_rx_refill_thread_loop(void *arg)
 	dp_info("exiting (%s) pid %d", qdf_get_current_comm(),
 		qdf_get_current_pid());
 	qdf_event_set(&rx_thread->shutdown_event);
-	qdf_exit_thread(QDF_STATUS_SUCCESS);
 
 	return 0;
 }
@@ -782,8 +780,13 @@ static void dp_rx_tm_thread_napi_init(struct dp_rx_thread *rx_thread)
 {
 	/* Todo - optimize to use only one dummy netdev for all thread napis */
 	init_dummy_netdev(&rx_thread->netdev);
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 18, 0))
+	netif_napi_add_weight(&rx_thread->netdev, &rx_thread->napi,
+			      dp_rx_tm_thread_napi_poll, 64);
+#else
 	netif_napi_add(&rx_thread->netdev, &rx_thread->napi,
 		       dp_rx_tm_thread_napi_poll, 64);
+#endif
 	napi_enable(&rx_thread->napi);
 }
 

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,103 +24,21 @@
 #include "wlan_pkt_capture_mon_thread.h"
 #include "cds_ieee80211_common.h"
 #include "wlan_mgmt_txrx_utils_api.h"
-#include "cdp_txrx_ctrl.h"
 #include "cfg_ucfg_api.h"
 #include "wlan_mgmt_txrx_utils_api.h"
+
+/*
+ * The following commit was introduced in v5.17:
+ * cead18552660 ("exit: Rename complete_and_exit to kthread_complete_and_exit")
+ * Use the old name for kernels before 5.17
+ */
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 17, 0))
+#define kthread_complete_and_exit(c, s) complete_and_exit(c, s)
+#endif
 
 void pkt_capture_mon(struct pkt_capture_cb_context *cb_ctx, qdf_nbuf_t msdu,
 		     struct wlan_objmgr_vdev *vdev, uint16_t ch_freq)
 {
-	struct radiotap_header *rthdr;
-	uint8_t rtlen, type, sub_type;
-	struct ieee80211_frame *wh;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
-	cdp_config_param_type val;
-	uint16_t status;
-	tSirMacAuthFrameBody *auth;
-	struct pkt_capture_vdev_priv *vdev_priv;
-
-	rthdr = (struct radiotap_header *)qdf_nbuf_data(msdu);
-	rtlen = rthdr->it_len;
-	wh = (struct ieee80211_frame *)(qdf_nbuf_data(msdu) + rtlen);
-	type = (wh)->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
-	sub_type = (wh)->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
-
-	vdev_priv = pkt_capture_vdev_get_priv(vdev);
-	if (!vdev_priv) {
-		pkt_capture_err("packet capture vdev priv is NULL");
-		return;
-	}
-
-	/*
-	 *  Update channel only if successful AUTH Resp is received.
-	 *  This is done so that EAPOL M1 data frame have correct
-	 *  channel
-	 */
-	if ((type == IEEE80211_FC0_TYPE_MGT) &&
-	    (sub_type == MGMT_SUBTYPE_AUTH)) {
-		uint8_t chan = wlan_reg_freq_to_chan(pdev, ch_freq);
-
-		auth = (tSirMacAuthFrameBody *)(qdf_nbuf_data(msdu) + rtlen +
-			sizeof(tSirMacMgmtHdr));
-
-		if (auth->authTransactionSeqNumber == SIR_MAC_AUTH_FRAME_2 ||
-		    auth->authTransactionSeqNumber == SIR_MAC_AUTH_FRAME_4) {
-			if (auth->authStatusCode == STATUS_SUCCESS) {
-				val.cdp_pdev_param_monitor_chan = chan;
-				cdp_txrx_set_pdev_param(
-					soc, wlan_objmgr_pdev_get_pdev_id(pdev),
-					CDP_MONITOR_CHANNEL, val);
-
-				val.cdp_pdev_param_mon_freq = ch_freq;
-				cdp_txrx_set_pdev_param(
-					soc, wlan_objmgr_pdev_get_pdev_id(pdev),
-					CDP_MONITOR_FREQUENCY, val);
-			}
-		}
-	}
-
-	/*
-	 *  Update channel to last connected channel in case of assoc/reassoc
-	 *  response failure and save current chan in case of success
-	 */
-	if ((type == IEEE80211_FC0_TYPE_MGT) &&
-	    ((sub_type == MGMT_SUBTYPE_ASSOC_RESP) ||
-	    (sub_type == MGMT_SUBTYPE_REASSOC_RESP))) {
-		if(qdf_nbuf_len(msdu) < (rtlen + sizeof(tSirMacMgmtHdr) +
-		   SIR_MAC_ASSOC_RSP_STATUS_CODE_OFFSET)) {
-			pkt_capture_err("Packet length is less than expected");
-			qdf_nbuf_free(msdu);
-			return;
-		}
-
-		status = (uint16_t)(*(qdf_nbuf_data(msdu) + rtlen +
-			 sizeof(tSirMacMgmtHdr) +
-			 SIR_MAC_ASSOC_RSP_STATUS_CODE_OFFSET));
-
-		if (status == STATUS_SUCCESS) {
-			vdev_priv->last_freq = vdev_priv->curr_freq;
-			vdev_priv->curr_freq = ch_freq;
-		} else {
-			uint8_t chan_num;
-			chan_num = wlan_reg_freq_to_chan(pdev,
-							 vdev_priv->last_freq);
-
-			val.cdp_pdev_param_monitor_chan = chan_num;
-			cdp_txrx_set_pdev_param(
-				soc, wlan_objmgr_pdev_get_pdev_id(pdev),
-				CDP_MONITOR_CHANNEL, val);
-
-			val.cdp_pdev_param_mon_freq = vdev_priv->last_freq;
-			cdp_txrx_set_pdev_param(
-				soc, wlan_objmgr_pdev_get_pdev_id(pdev),
-				CDP_MONITOR_FREQUENCY, val);
-
-			vdev_priv->curr_freq = vdev_priv->last_freq;
-		}
-	}
-
 	if (cb_ctx->mon_cb(cb_ctx->mon_ctx, msdu) != QDF_STATUS_SUCCESS) {
 		pkt_capture_err("Frame Rx to HDD failed");
 		qdf_nbuf_free(msdu);
@@ -305,6 +224,11 @@ pkt_capture_process_from_queue(struct pkt_capture_mon_context *mon_ctx)
 
 	spin_lock_bh(&mon_ctx->mon_queue_lock);
 	while (!list_empty(&mon_ctx->mon_thread_queue)) {
+		if (!test_bit(PKT_CAPTURE_REGISTER_EVENT,
+			      &mon_ctx->mon_event_flag)) {
+			complete(&mon_ctx->mon_register_event);
+			break;
+		}
 		pkt = list_first_entry(&mon_ctx->mon_thread_queue,
 				       struct pkt_capture_mon_pkt, list);
 		list_del(&pkt->list);
@@ -342,7 +266,7 @@ static int pkt_capture_mon_thread(void *arg)
 	mon_ctx = (struct pkt_capture_mon_context *)arg;
 	set_user_nice(current, -1);
 #ifdef MSM_PLATFORM
-	set_wake_up_idle(true);
+	qdf_set_wake_up_idle(true);
 #endif
 
 	/**
@@ -415,7 +339,7 @@ static int pkt_capture_mon_thread(void *arg)
 		}
 	}
 	pkt_capture_debug("Exiting packet capture mon thread");
-	complete_and_exit(&mon_ctx->mon_shutdown, 0);
+	kthread_complete_and_exit(&mon_ctx->mon_shutdown, 0);
 
 	return 0;
 }

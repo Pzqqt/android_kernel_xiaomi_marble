@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -239,7 +239,21 @@ tdls_calc_channels_from_staparams(struct tdls_update_peer_params *req_info,
 }
 
 #ifdef WLAN_FEATURE_11AX
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
+#if defined(CFG80211_LINK_STA_PARAMS_PRESENT)
+static void
+wlan_cfg80211_tdls_extract_6ghz_params(struct tdls_update_peer_params *req_info,
+				       struct station_parameters *params)
+{
+	if (!params->link_sta_params.he_6ghz_capa) {
+		osif_debug("6 Ghz he_capa not present");
+		return;
+	}
+
+	qdf_mem_copy(&req_info->he_6ghz_cap,
+		     params->link_sta_params.he_6ghz_capa,
+		     sizeof(req_info->he_6ghz_cap));
+}
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
 static void
 wlan_cfg80211_tdls_extract_6ghz_params(struct tdls_update_peer_params *req_info,
 				       struct station_parameters *params)
@@ -261,6 +275,34 @@ wlan_cfg80211_tdls_extract_6ghz_params(struct tdls_update_peer_params *req_info,
 }
 #endif
 
+#ifdef CFG80211_LINK_STA_PARAMS_PRESENT
+static void
+wlan_cfg80211_tdls_extract_he_params(struct tdls_update_peer_params *req_info,
+				     struct station_parameters *params)
+{
+	if (params->link_sta_params.he_capa_len < MIN_TDLS_HE_CAP_LEN) {
+		osif_debug("he_capa_len %d less than MIN_TDLS_HE_CAP_LEN",
+			   params->link_sta_params.he_capa_len);
+		return;
+	}
+
+	if (!params->link_sta_params.he_capa) {
+		osif_debug("he_capa not present");
+		return;
+	}
+
+	req_info->he_cap_len = params->link_sta_params.he_capa_len;
+	if (req_info->he_cap_len > MAX_TDLS_HE_CAP_LEN)
+		req_info->he_cap_len = MAX_TDLS_HE_CAP_LEN;
+
+	qdf_mem_copy(&req_info->he_cap, params->link_sta_params.he_capa,
+		     req_info->he_cap_len);
+
+	wlan_cfg80211_tdls_extract_6ghz_params(req_info, params);
+
+	return;
+}
+#else
 static void
 wlan_cfg80211_tdls_extract_he_params(struct tdls_update_peer_params *req_info,
 				     struct station_parameters *params)
@@ -287,6 +329,7 @@ wlan_cfg80211_tdls_extract_he_params(struct tdls_update_peer_params *req_info,
 
 	return;
 }
+#endif
 
 #else
 static void
@@ -296,6 +339,99 @@ wlan_cfg80211_tdls_extract_he_params(struct tdls_update_peer_params *req_info,
 }
 #endif
 
+#ifdef CFG80211_LINK_STA_PARAMS_PRESENT
+static void
+wlan_cfg80211_tdls_extract_params(struct tdls_update_peer_params *req_info,
+				  struct station_parameters *params,
+				  bool tdls_11ax_support)
+{
+	int i;
+
+	osif_debug("sta cap %d, uapsd_queue %d, max_sp %d",
+		   params->capability,
+		   params->uapsd_queues, params->max_sp);
+
+	if (!req_info) {
+		osif_err("reg_info is NULL");
+		return;
+	}
+	req_info->capability = params->capability;
+	req_info->uapsd_queues = params->uapsd_queues;
+	req_info->max_sp = params->max_sp;
+
+	if (params->supported_channels_len)
+		tdls_calc_channels_from_staparams(req_info, params);
+
+	if (params->supported_oper_classes_len > WLAN_MAX_SUPP_OPER_CLASSES) {
+		osif_debug("received oper classes:%d, resetting it to max supported: %d",
+			   params->supported_oper_classes_len,
+			   WLAN_MAX_SUPP_OPER_CLASSES);
+		params->supported_oper_classes_len = WLAN_MAX_SUPP_OPER_CLASSES;
+	}
+
+	qdf_mem_copy(req_info->supported_oper_classes,
+		     params->supported_oper_classes,
+		     params->supported_oper_classes_len);
+	req_info->supported_oper_classes_len =
+		params->supported_oper_classes_len;
+
+	if (params->ext_capab_len)
+		qdf_mem_copy(req_info->extn_capability, params->ext_capab,
+			     sizeof(req_info->extn_capability));
+
+	if (params->link_sta_params.ht_capa) {
+		req_info->htcap_present = 1;
+		qdf_mem_copy(&req_info->ht_cap, params->link_sta_params.ht_capa,
+			     sizeof(struct htcap_cmn_ie));
+	}
+
+	req_info->supported_rates_len =
+				params->link_sta_params.supported_rates_len;
+
+	/* Note : The Maximum sizeof supported_rates sent by the Supplicant is
+	 * 32. The supported_rates array , for all the structures propogating
+	 * till Add Sta to the firmware has to be modified , if the supplicant
+	 * (ieee80211) is modified to send more rates.
+	 */
+
+	/* To avoid Data Currption , set to max length to SIR_MAC_MAX_SUPP_RATES
+	 */
+	if (req_info->supported_rates_len > WLAN_MAC_MAX_SUPP_RATES)
+		req_info->supported_rates_len = WLAN_MAC_MAX_SUPP_RATES;
+
+	if (req_info->supported_rates_len) {
+		qdf_mem_copy(req_info->supported_rates,
+			     params->link_sta_params.supported_rates,
+			     req_info->supported_rates_len);
+		osif_debug("Supported Rates with Length %d",
+			   req_info->supported_rates_len);
+
+		for (i = 0; i < req_info->supported_rates_len; i++)
+			osif_debug("[%d]: %0x", i,
+				   req_info->supported_rates[i]);
+	}
+
+	if (params->link_sta_params.vht_capa) {
+		req_info->vhtcap_present = 1;
+		qdf_mem_copy(&req_info->vht_cap,
+			     params->link_sta_params.vht_capa,
+			     sizeof(struct vhtcap));
+	}
+
+	if (params->link_sta_params.ht_capa ||
+	    params->link_sta_params.vht_capa ||
+	    (params->sta_flags_set & BIT(NL80211_STA_FLAG_WME)))
+		req_info->is_qos_wmm_sta = true;
+	if (params->sta_flags_set & BIT(NL80211_STA_FLAG_MFP)) {
+		osif_debug("TDLS peer pmf capable");
+		req_info->is_pmf = 1;
+	}
+	if (tdls_11ax_support)
+		wlan_cfg80211_tdls_extract_he_params(req_info, params);
+	else
+		osif_debug("tdls ax disabled");
+}
+#else
 static void
 wlan_cfg80211_tdls_extract_params(struct tdls_update_peer_params *req_info,
 				  struct station_parameters *params,
@@ -384,6 +520,7 @@ wlan_cfg80211_tdls_extract_params(struct tdls_update_peer_params *req_info,
 	else
 		osif_debug("tdls ax disabled");
 }
+#endif
 
 int wlan_cfg80211_tdls_update_peer(struct wlan_objmgr_vdev *vdev,
 				   const uint8_t *mac,
@@ -890,6 +1027,50 @@ error:
 	return ret;
 }
 
+#ifdef TDLS_MGMT_VERSION5
+static void
+wlan_cfg80211_tdls_indicate_discovery(struct tdls_osif_indication *ind)
+{
+	struct vdev_osif_priv *osif_vdev;
+
+	osif_vdev = wlan_vdev_get_ospriv(ind->vdev);
+
+	cfg80211_tdls_oper_request(osif_vdev->wdev->netdev,
+				   ind->peer_mac, -1,
+				   NL80211_TDLS_DISCOVERY_REQ,
+				   false, GFP_KERNEL);
+}
+
+static void
+wlan_cfg80211_tdls_indicate_setup(struct tdls_osif_indication *ind)
+{
+	struct vdev_osif_priv *osif_vdev;
+	int link_id = -1;
+
+	osif_vdev = wlan_vdev_get_ospriv(ind->vdev);
+	if (wlan_vdev_mlme_is_mlo_vdev(ind->vdev))
+		link_id = wlan_vdev_get_link_id(ind->vdev);
+
+	osif_debug("Indication to request TDLS setup on link id %d", link_id);
+	cfg80211_tdls_oper_request(osif_vdev->wdev->netdev,
+				   ind->peer_mac, link_id,
+				   NL80211_TDLS_SETUP, false,
+				   GFP_KERNEL);
+}
+
+static void
+wlan_cfg80211_tdls_indicate_teardown(struct tdls_osif_indication *ind)
+{
+	struct vdev_osif_priv *osif_vdev;
+
+	osif_vdev = wlan_vdev_get_ospriv(ind->vdev);
+
+	osif_debug("Teardown reason %d", ind->reason);
+	cfg80211_tdls_oper_request(osif_vdev->wdev->netdev,
+				   ind->peer_mac, -1, NL80211_TDLS_TEARDOWN,
+				   ind->reason, GFP_KERNEL);
+}
+#else
 static void
 wlan_cfg80211_tdls_indicate_discovery(struct tdls_osif_indication *ind)
 {
@@ -927,6 +1108,7 @@ wlan_cfg80211_tdls_indicate_teardown(struct tdls_osif_indication *ind)
 				   ind->peer_mac, NL80211_TDLS_TEARDOWN,
 				   ind->reason, GFP_KERNEL);
 }
+#endif
 
 void wlan_cfg80211_tdls_event_callback(void *user_data,
 				       enum tdls_event_type type,
@@ -977,6 +1159,7 @@ void wlan_cfg80211_tdls_event_callback(void *user_data,
 	case TDLS_EVENT_ANTENNA_SWITCH:
 		tdls_priv->tdls_antenna_switch_status = ind->status;
 		complete(&tdls_priv->tdls_antenna_switch_comp);
+		break;
 	default:
 		break;
 	}

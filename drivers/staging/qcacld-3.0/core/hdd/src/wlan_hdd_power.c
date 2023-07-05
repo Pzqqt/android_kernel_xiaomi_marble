@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2505,8 +2505,12 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	}
 
 	rc = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != rc)
-		return rc;
+	if (0 != rc) {
+		if (pld_is_low_power_mode(hdd_ctx->parent_dev))
+			hdd_debug("low power mode (Deep Sleep/Hibernate)");
+		else
+			return rc;
+	}
 
 	if (ucfg_pmo_get_suspend_mode(hdd_ctx->psoc) == PMO_SUSPEND_NONE) {
 		hdd_info_rl("Suspend is not supported");
@@ -2751,8 +2755,12 @@ static int _wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	}
 
 	errno = wlan_hdd_validate_context(hdd_ctx);
-	if (errno)
-		return errno;
+	if (0 != errno) {
+		if (pld_is_low_power_mode(hdd_ctx->parent_dev))
+			hdd_debug("low power mode (Deep Sleep/Hibernate)");
+		else
+			return errno;
+	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_ctx)
@@ -2779,8 +2787,12 @@ int wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 
 	errno = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != errno)
-		return errno;
+	if (0 != errno) {
+		if (pld_is_low_power_mode(hdd_ctx->parent_dev))
+			hdd_debug("low power mode (Deep Sleep/Hibernate)");
+		else
+			return errno;
+	}
 
 	/*
 	 * Flush the idle shutdown before ops start.This is done here to avoid
@@ -3013,7 +3025,6 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 	switch (type) {
 	/* Automatically determine transmit power */
 	case NL80211_TX_POWER_AUTOMATIC:
-	/* Fall through */
 	case NL80211_TX_POWER_LIMITED:
 	/* Limit TX power by the mBm parameter */
 		status = sme_set_max_tx_power(mac_handle, bssid, selfmac, dbm);

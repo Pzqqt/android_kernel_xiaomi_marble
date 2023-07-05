@@ -1,6 +1,6 @@
  /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1583,7 +1583,7 @@ int wma_extscan_hotlist_match_event_handler(void *handle,
 		return -ENOMEM;
 
 	dest_ap = &dest_hotlist->ap[0];
-	dest_hotlist->numOfAps = event->total_entries;
+	dest_hotlist->numOfAps = numap;
 	dest_hotlist->requestId = event->config_request_id;
 
 	if (event->first_entry_index +
@@ -1749,6 +1749,7 @@ static int wma_group_num_bss_to_scan_id(const u_int8_t *cmd_param_info,
 	struct extscan_cached_scan_results *t_cached_result;
 	struct extscan_cached_scan_result *t_scan_id_grp;
 	int i, j;
+	uint32_t total_scan_num_results = 0;
 	tSirWifiScanResult *ap;
 
 	param_buf = (WMI_EXTSCAN_CACHED_RESULTS_EVENTID_param_tlvs *)
@@ -1759,16 +1760,19 @@ static int wma_group_num_bss_to_scan_id(const u_int8_t *cmd_param_info,
 	t_cached_result = cached_result;
 	t_scan_id_grp = &t_cached_result->result[0];
 
-	if ((t_cached_result->num_scan_ids *
-	     QDF_MIN(t_scan_id_grp->num_results,
-		     param_buf->num_bssid_list)) > param_buf->num_bssid_list) {
-		wma_err("num_scan_ids %d, num_results %d num_bssid_list %d",
-			 t_cached_result->num_scan_ids,
-			 t_scan_id_grp->num_results,
-			 param_buf->num_bssid_list);
+	for (i = 0; i < t_cached_result->num_scan_ids; i++) {
+		total_scan_num_results += t_scan_id_grp->num_results;
+		t_scan_id_grp++;
+	}
+
+	if (total_scan_num_results > param_buf->num_bssid_list) {
+		wma_err("total_scan_num_results %d, num_bssid_list %d",
+			total_scan_num_results,
+			param_buf->num_bssid_list);
 		return -EINVAL;
 	}
 
+	t_scan_id_grp = &t_cached_result->result[0];
 	wma_debug("num_scan_ids:%d",
 			t_cached_result->num_scan_ids);
 	for (i = 0; i < t_cached_result->num_scan_ids; i++) {
@@ -1779,8 +1783,7 @@ static int wma_group_num_bss_to_scan_id(const u_int8_t *cmd_param_info,
 			return -ENOMEM;
 
 		ap = &t_scan_id_grp->ap[0];
-		for (j = 0; j < QDF_MIN(t_scan_id_grp->num_results,
-					param_buf->num_bssid_list); j++) {
+		for (j = 0; j < t_scan_id_grp->num_results; j++) {
 			ap->channel = src_hotlist->channel;
 			ap->ts = WMA_MSEC_TO_USEC(src_rssi->tstamp);
 			ap->rtt = src_hotlist->rtt;
@@ -2604,7 +2607,8 @@ void wma_handle_roam_sync_timeout(tp_wma_handle wma_handle,
 					CM_ROAM_NOTIF_ROAM_ABORT);
 }
 
-void cm_invalid_roam_reason_handler(uint32_t vdev_id, enum cm_roam_notif notif)
+void cm_invalid_roam_reason_handler(uint32_t vdev_id, enum cm_roam_notif notif,
+				    uint32_t reason)
 {
 	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
@@ -2618,7 +2622,7 @@ void cm_invalid_roam_reason_handler(uint32_t vdev_id, enum cm_roam_notif notif)
 	    notif == CM_ROAM_NOTIF_SCAN_END)
 		cm_report_roam_rt_stats(wma_handle->psoc, vdev_id,
 					ROAM_RT_STATS_TYPE_SCAN_STATE,
-					NULL, notif, 0);
+					NULL, notif, 0, reason);
 }
 #endif
 
@@ -2783,7 +2787,7 @@ cm_handle_roam_reason_invoke_roam_fail(uint8_t vdev_id,	uint32_t notif_params,
 						notif_params);
 	cm_report_roam_rt_stats(wma_handle->psoc, vdev_id,
 				ROAM_RT_STATS_TYPE_INVOKE_FAIL_REASON,
-				NULL, notif_params, 0);
+				NULL, notif_params, 0, 0);
 }
 
 void

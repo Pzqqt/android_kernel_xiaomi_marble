@@ -604,6 +604,7 @@ int ucfg_nan_register_hdd_callbacks(struct wlan_objmgr_psoc *psoc,
 	}
 
 	psoc_obj->cb_obj.ndi_open = cb_obj->ndi_open;
+	psoc_obj->cb_obj.ndi_set_mode = cb_obj->ndi_set_mode;
 	psoc_obj->cb_obj.ndi_start = cb_obj->ndi_start;
 	psoc_obj->cb_obj.ndi_delete = cb_obj->ndi_delete;
 	psoc_obj->cb_obj.ndi_close = cb_obj->ndi_close;

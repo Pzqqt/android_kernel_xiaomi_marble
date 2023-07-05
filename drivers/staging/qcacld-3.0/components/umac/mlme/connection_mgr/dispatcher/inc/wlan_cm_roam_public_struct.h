@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -292,6 +292,7 @@ struct rso_cfg_params {
 	uint32_t full_roam_scan_period;
 	bool enable_scoring_for_roam;
 	uint8_t roam_rssi_diff;
+	uint8_t roam_rssi_diff_6ghz;
 	uint8_t bg_rssi_threshold;
 	uint16_t roam_scan_home_away_time;
 	uint8_t roam_scan_n_probes;
@@ -493,6 +494,9 @@ struct owe_transition_mode_info {
  * @lost_link_rssi: lost link RSSI
  * @roam_sync_frame_ind: roam sync frame ind
  * @roam_band_bitmask: This allows the driver to roam within this band
+ * @roam_invoke_source: roam invoke source
+ * @roam_invoke_bssid: mac address used for roam invoke
+ * @is_forced_roaming: bool value indicating if its forced roaming
  */
 struct rso_config {
 #ifdef WLAN_FEATURE_HOST_ROAM
@@ -539,6 +543,9 @@ struct rso_config {
 	int32_t lost_link_rssi;
 	struct roam_synch_frame_ind roam_sync_frame_ind;
 	uint32_t roam_band_bitmask;
+	enum wlan_cm_source roam_invoke_source;
+	struct qdf_mac_addr roam_invoke_bssid;
+	bool is_forced_roaming;
 };
 
 /**
@@ -645,6 +652,7 @@ struct rso_config_params {
  * @MBO_OCE_ENABLED_AP: MBO/OCE enabled network
  * @LOST_LINK_RSSI: lost link RSSI
  * @ROAM_BAND: Allowed band for roaming in FW
+ * @ROAM_RSSI_DIFF_6GHZ: roam rssi diff for 6 GHz AP
  */
 enum roam_cfg_param {
 	RSSI_CHANGE_THRESHOLD,
@@ -675,6 +683,7 @@ enum roam_cfg_param {
 	LOST_LINK_RSSI,
 	ROAM_BAND,
 	HI_RSSI_SCAN_RSSI_DELTA,
+	ROAM_RSSI_DIFF_6GHZ,
 };
 
 /**
@@ -1278,6 +1287,7 @@ struct wlan_roam_fils_params {
  * @vdev_id: vdev id
  * @dwell_time_passive: dwell time in msec on passive channels
  * @dwell_time_active: dwell time in msec on active channels
+ * @min_dwell_time_6ghz: minimum dwell time in msec for 6 GHz channel
  * @burst_duration: Burst duration time in msec
  * @min_rest_time: min time in msec on the BSS channel,only valid if atleast
  * one VDEV is active
@@ -1308,6 +1318,7 @@ struct wlan_roam_scan_params {
 	uint32_t vdev_id;
 	uint32_t dwell_time_passive;
 	uint32_t dwell_time_active;
+	uint32_t min_dwell_time_6ghz;
 	uint32_t burst_duration;
 	uint32_t min_rest_time;
 	uint32_t max_rest_time;
@@ -1575,8 +1586,8 @@ struct wlan_roam_offload_scan_rssi_params {
 	int max_drop_rssi_5g;
 	uint32_t good_rssi_threshold;
 	bool early_stop_scan_enable;
-	uint32_t roam_earlystop_thres_min;
-	uint32_t roam_earlystop_thres_max;
+	int32_t roam_earlystop_thres_min;
+	int32_t roam_earlystop_thres_max;
 	int dense_rssi_thresh_offset;
 	int dense_min_aps_cnt;
 	int initial_dense_status;
@@ -1710,6 +1721,13 @@ enum roam_rt_stats_params {
  * @disconnect_params: disconnect params
  * @idle_params: idle params
  * @wlan_roam_rt_stats_config: roam events stats config
+ * @wlan_roam_ho_delay_config: roam HO delay value
+ * @wlan_exclude_rm_partial_scan_freq: Include/exclude the channels in roam full
+ * scan that are already scanned as part of partial scan.
+ * @wlan_roam_full_scan_6ghz_on_disc: Include the 6 GHz channels in roam full
+ * scan only on prior discovery of any 6 GHz support in the environment.
+ * @wlan_roam_rssi_diff_6ghz: This value is used as to how better the RSSI of
+ * the new/roamable 6GHz AP should be for roaming.
  */
 struct wlan_roam_start_config {
 	struct wlan_roam_offload_scan_rssi_params rssi_params;
@@ -1729,6 +1747,10 @@ struct wlan_roam_start_config {
 	struct wlan_roam_disconnect_params disconnect_params;
 	struct wlan_roam_idle_params idle_params;
 	uint8_t wlan_roam_rt_stats_config;
+	uint16_t wlan_roam_ho_delay_config;
+	uint8_t wlan_exclude_rm_partial_scan_freq;
+	uint8_t wlan_roam_full_scan_6ghz_on_disc;
+	uint8_t wlan_roam_rssi_diff_6ghz;
 	/* other wmi cmd structures */
 };
 
@@ -1778,6 +1800,13 @@ struct wlan_roam_stop_config {
  * @idle_params: idle params
  * @roam_triggers: roam triggers parameters
  * @wlan_roam_rt_stats_config: roam events stats config
+ * @wlan_roam_ho_delay_config: roam HO delay value
+ * @wlan_exclude_rm_partial_scan_freq: Include/exclude the channels in roam full
+ * scan that are already scanned as part of partial scan.
+ * @wlan_roam_full_scan_6ghz_on_disc: Include the 6 GHz channels in roam full
+ * scan only on prior discovery of any 6 GHz support in the environment.
+ * @wlan_roam_rssi_diff_6ghz: This value is used as to how better the RSSI of
+ * the new/roamable 6GHz AP should be for roaming.
  */
 struct wlan_roam_update_config {
 	struct wlan_roam_beacon_miss_cnt beacon_miss_cnt;
@@ -1792,6 +1821,10 @@ struct wlan_roam_update_config {
 	struct wlan_roam_idle_params idle_params;
 	struct wlan_roam_triggers roam_triggers;
 	uint8_t wlan_roam_rt_stats_config;
+	uint16_t wlan_roam_ho_delay_config;
+	uint8_t wlan_exclude_rm_partial_scan_freq;
+	uint8_t wlan_roam_full_scan_6ghz_on_disc;
+	uint8_t wlan_roam_rssi_diff_6ghz;
 };
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
@@ -2257,6 +2290,11 @@ struct roam_pmkid_req_event {
  * @send_roam_abort: send roam abort
  * @send_roam_disable_config: send roam disable config
  * @send_roam_rt_stats_config: Send roam events vendor command param value to FW
+ * @send_roam_ho_delay_config: Send roam Hand-off delay value to FW
+ * @send_exclude_rm_partial_scan_freq: Include/exclude the channels in roam full
+ * scan that are already scanned as part of partial scan.
+ * @send_roam_full_scan_6ghz_on_disc: Include the 6 GHz channels in roam full
+ * scan only on prior discovery of any 6 GHz support in the environment.
  */
 struct wlan_cm_roam_tx_ops {
 	QDF_STATUS (*send_vdev_set_pcl_cmd)(struct wlan_objmgr_vdev *vdev,
@@ -2287,6 +2325,15 @@ struct wlan_cm_roam_tx_ops {
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	QDF_STATUS (*send_roam_rt_stats_config)(struct wlan_objmgr_vdev *vdev,
 						uint8_t vdev_id, uint8_t value);
+	QDF_STATUS (*send_roam_ho_delay_config)(struct wlan_objmgr_vdev *vdev,
+						uint8_t vdev_id,
+						uint16_t value);
+	QDF_STATUS (*send_exclude_rm_partial_scan_freq)(
+						struct wlan_objmgr_vdev *vdev,
+						uint8_t value);
+	QDF_STATUS (*send_roam_full_scan_6ghz_on_disc)(
+						struct wlan_objmgr_vdev *vdev,
+						uint8_t value);
 #endif
 };
 

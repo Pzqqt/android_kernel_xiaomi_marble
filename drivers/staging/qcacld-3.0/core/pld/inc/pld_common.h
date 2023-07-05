@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -162,6 +162,16 @@ enum pld_platform_cap_flag {
 	PLD_HAS_EXTERNAL_SWREG = 0x01,
 	PLD_HAS_UART_ACCESS = 0x02,
 	PLD_HAS_DRV_SUPPORT = 0x04,
+};
+
+/**
+ * enum pld_wfc_mode - WFC Mode
+ * @PLD_WFC_MODE_OFF: WFC Inactive
+ * @PLD_WFC_MODE_ON: WFC Active
+ */
+enum pld_wfc_mode {
+	PLD_WFC_MODE_OFF,
+	PLD_WFC_MODE_ON,
 };
 
 /**
@@ -399,6 +409,7 @@ struct pld_dev_mem_info {
 };
 
 #define PLD_MAX_TIMESTAMP_LEN 32
+#define PLD_WLFW_MAX_BUILD_ID_LEN 128
 #define PLD_MAX_DEV_MEM_NUM 4
 
 /**
@@ -427,6 +438,7 @@ struct pld_soc_info {
 	char fw_build_timestamp[PLD_MAX_TIMESTAMP_LEN + 1];
 	struct pld_device_version device_version;
 	struct pld_dev_mem_info dev_mem_info[PLD_MAX_DEV_MEM_NUM];
+	char fw_build_id[PLD_WLFW_MAX_BUILD_ID_LEN + 1];
 };
 
 /**
@@ -928,6 +940,15 @@ int pld_qmi_send(struct device *dev, int type, void *cmd,
 		 int (*cb)(void *ctx, void *event, int event_len));
 bool pld_is_fw_dump_skipped(struct device *dev);
 
+#ifdef CONFIG_ENABLE_LOW_POWER_MODE
+int pld_is_low_power_mode(struct device *dev);
+#else
+static inline int pld_is_low_power_mode(struct device *dev)
+{
+	return 0;
+}
+#endif
+
 /**
  * pld_is_pdr() - Check WLAN PD is Restarted
  *
@@ -1113,6 +1134,15 @@ int pld_thermal_register(struct device *dev, unsigned long state, int mon_id);
  * Return: None
  */
 void pld_thermal_unregister(struct device *dev, int mon_id);
+
+/**
+ * pld_set_wfc_mode() - Sent WFC mode to FW via platform driver
+ * @dev: The device structure
+ * @wfc_mode: WFC Modes (0 => Inactive, 1 => Active)
+ *
+ * Return: Error code on error
+ */
+int pld_set_wfc_mode(struct device *dev, enum pld_wfc_mode wfc_mode);
 
 /**
  * pld_bus_width_type_to_str() - Helper function to convert PLD bandwidth level

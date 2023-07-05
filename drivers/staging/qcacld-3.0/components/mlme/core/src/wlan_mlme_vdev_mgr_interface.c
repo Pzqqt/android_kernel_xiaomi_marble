@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1309,6 +1309,10 @@ static void mlme_ext_handler_destroy(struct vdev_mlme_obj *vdev_mlme)
 {
 	if (!vdev_mlme || !vdev_mlme->ext_vdev_ptr)
 		return;
+	qdf_runtime_lock_deinit(
+		&vdev_mlme->ext_vdev_ptr->bss_color_change_runtime_lock);
+	qdf_wake_lock_destroy(
+		&vdev_mlme->ext_vdev_ptr->bss_color_change_wakelock);
 	mlme_free_self_disconnect_ies(vdev_mlme->vdev);
 	mlme_free_peer_disconnect_ies(vdev_mlme->vdev);
 	mlme_free_sae_auth_retry(vdev_mlme->vdev);
@@ -1339,6 +1343,12 @@ QDF_STATUS vdevmgr_mlme_ext_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 	vdev_mlme->ext_vdev_ptr->connect_info.fils_con_info = NULL;
 	mlme_init_wait_for_key_timer(vdev_mlme->vdev,
 				     &vdev_mlme->ext_vdev_ptr->wait_key_timer);
+
+	qdf_wake_lock_create(
+			&vdev_mlme->ext_vdev_ptr->bss_color_change_wakelock,
+			"bss_color_change_wakelock");
+	qdf_runtime_lock_init(
+		&vdev_mlme->ext_vdev_ptr->bss_color_change_runtime_lock);
 
 	sme_get_vdev_type_nss(wlan_vdev_mlme_get_opmode(vdev_mlme->vdev),
 			      &vdev_mlme->proto.generic.nss_2g,

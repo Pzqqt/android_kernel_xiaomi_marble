@@ -983,6 +983,8 @@ int pld_pcie_get_soc_info(struct device *dev, struct pld_soc_info *info)
 		info->dev_mem_info[i].start = cnss_info.dev_mem_info[i].start;
 		info->dev_mem_info[i].size = cnss_info.dev_mem_info[i].size;
 	}
+	strlcpy(info->fw_build_id, cnss_info.fw_build_id,
+		sizeof(info->fw_build_id));
 
 	return 0;
 }
@@ -1032,5 +1034,30 @@ void pld_pcie_device_self_recovery(struct device *dev,
 	}
 	cnss_self_recovery(dev, cnss_reason);
 }
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+int pld_pcie_set_wfc_mode(struct device *dev,
+			  enum pld_wfc_mode wfc_mode)
+{
+	struct cnss_wfc_cfg cfg;
+	int ret;
+
+	switch (wfc_mode) {
+	case PLD_WFC_MODE_OFF:
+		cfg.mode = CNSS_WFC_MODE_OFF;
+		break;
+	case PLD_WFC_MODE_ON:
+		cfg.mode = CNSS_WFC_MODE_ON;
+		break;
+	default:
+		ret = -EINVAL;
+		goto out;
+	}
+
+	ret = cnss_set_wfc_mode(dev, cfg);
+out:
+	return ret;
+}
+#endif
 #endif
 #endif

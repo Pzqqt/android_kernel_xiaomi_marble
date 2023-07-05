@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2538,13 +2538,13 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	if (lim_is_fils_connection(pe_session)) {
 		populate_dot11f_fils_params(mac_ctx, frm, pe_session);
 		aes_block_size_len = AES_BLOCK_SIZE;
-		if (wlan_get_ie_ptr_from_eid(WLAN_ELEMID_FRAGMENT,
-					     add_ie, add_ie_len))
+		if (add_ie_len && wlan_get_ie_ptr_from_eid(WLAN_ELEMID_FRAGMENT,
+							   add_ie, add_ie_len))
 			frag_ie_present = true;
 	}
 
 	/* Strip and append HLP container IE only if it is fragmented */
-	if (frag_ie_present &&
+	if (frag_ie_present && add_ie_len &&
 	    wlan_get_ext_ie_ptr_from_ext_id(SIR_FILS_HLP_OUI_TYPE,
 					    SIR_FILS_HLP_OUI_LEN, add_ie,
 					    add_ie_len)) {
@@ -2578,7 +2578,8 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	}
 
 	/* RSNX IE for SAE PWE derivation based on H2E */
-	if (wlan_get_ie_ptr_from_eid(WLAN_ELEMID_RSNXE, add_ie, add_ie_len)) {
+	if (add_ie_len &&
+	    wlan_get_ie_ptr_from_eid(WLAN_ELEMID_RSNXE, add_ie, add_ie_len)) {
 		rsnx_ie = qdf_mem_malloc(WLAN_MAX_IE_LEN + 2);
 		if (!rsnx_ie)
 			goto end;
@@ -2593,7 +2594,8 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		rsnx_ie_len = rsnx_ie[1] + 2;
 	}
 	/* MSCS ext ie */
-	if (wlan_get_ext_ie_ptr_from_ext_id(MSCS_OUI_TYPE, MSCS_OUI_SIZE,
+	if (add_ie_len &&
+	    wlan_get_ext_ie_ptr_from_ext_id(MSCS_OUI_TYPE, MSCS_OUI_SIZE,
 					    add_ie, add_ie_len)) {
 		mscs_ext_ie = qdf_mem_malloc(WLAN_MAX_IE_LEN + 2);
 		if (!mscs_ext_ie)
@@ -2618,8 +2620,10 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	 * TLVs with same attribute in a single IE.
 	 * Strip off the MBO IE from add_ie and append it at the end.
 	 */
-	if (wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_MBO_OUI,
-	    SIR_MAC_MBO_OUI_SIZE, add_ie, add_ie_len)) {
+	if (add_ie_len &&
+	    wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_MBO_OUI,
+					    SIR_MAC_MBO_OUI_SIZE, add_ie,
+					    add_ie_len)) {
 		mbo_ie = qdf_mem_malloc(DOT11F_IE_MBO_IE_MAX_LEN + 2);
 		if (!mbo_ie)
 			goto end;
@@ -2660,7 +2664,8 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	 * Append the IEs just before MBO IEs as MBO IEs have to be at the
 	 * end of the frame.
 	 */
-	if (wlan_get_ie_ptr_from_eid(WLAN_ELEMID_VENDOR, add_ie, add_ie_len)) {
+	if (add_ie_len &&
+	    wlan_get_ie_ptr_from_eid(WLAN_ELEMID_VENDOR, add_ie, add_ie_len)) {
 		vendor_ies = qdf_mem_malloc(MAX_VENDOR_IES_LEN + 2);
 		if (vendor_ies) {
 			current_len = add_ie_len;
@@ -2836,7 +2841,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			  frame, (uint16_t)(sizeof(tSirMacMgmtHdr) + payload));
 
-	min_rid = lim_get_min_session_txrate(pe_session);
+	min_rid = lim_get_min_session_txrate(pe_session, NULL);
 	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_ASSOC_START_EVENT,
 			      pe_session, QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
 	lim_diag_mgmt_tx_event_report(mac_ctx, mac_hdr,
@@ -2880,6 +2885,40 @@ end:
 }
 
 /**
+ * lim_get_addba_rsp_ptr() - Search the pointer to addba response
+ * @ie: the pointer to entire frame
+ * @ie_len: length of ie
+ *
+ * Host reserved 8 bytes for CCMP header trailer and initialize them
+ * as 0 when rmf enabled & key installed and tx addba rsp frame. So,
+ * search the pointer to addba response and then unpack the frame.
+ *
+ * Return: the pointer to addba response
+ */
+static uint8_t *
+lim_get_addba_rsp_ptr(uint8_t *ie, uint32_t ie_len)
+{
+	uint32_t left = ie_len;
+	uint8_t *ptr = ie;
+	uint8_t category, action;
+	uint32_t addba_rsp_len = sizeof(tDot11faddba_rsp);
+
+	while (left >= addba_rsp_len) {
+		category  = ptr[0];
+		action = ptr[1];
+
+		if (category == ACTION_CATEGORY_BACK &&
+		    action == ADDBA_RESPONSE)
+			return ptr;
+
+		left--;
+		ptr++;
+	}
+
+	return NULL;
+}
+
+/**
  * lim_addba_rsp_tx_complete_cnf() - Confirmation for add BA response OTA
  * @context: pointer to global mac
  * @buf: buffer which is nothing but entire ADD BA frame
@@ -2895,11 +2934,13 @@ static QDF_STATUS lim_addba_rsp_tx_complete_cnf(void *context,
 {
 	struct mac_context *mac_ctx = (struct mac_context *)context;
 	tSirMacMgmtHdr *mac_hdr;
-	tDot11faddba_rsp rsp;
+	tDot11faddba_rsp rsp = {0};
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	uint32_t frame_len;
+	uint32_t rsp_len;
 	QDF_STATUS status;
 	uint8_t *data;
+	uint8_t *addba_rsp_ptr;
+	uint32_t data_len;
 	struct wmi_mgmt_params *mgmt_params = (struct wmi_mgmt_params *)params;
 
 	if (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK)
@@ -2919,16 +2960,29 @@ static QDF_STATUS lim_addba_rsp_tx_complete_cnf(void *context,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	data_len = (uint32_t)qdf_nbuf_get_data_len(buf);
+	if (data_len < (sizeof(*mac_hdr) + sizeof(rsp))) {
+		pe_err("Invalid data len %d", data_len);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	addba_rsp_ptr = lim_get_addba_rsp_ptr(
+				data + sizeof(*mac_hdr),
+				data_len - sizeof(*mac_hdr));
+	if (!addba_rsp_ptr) {
+		pe_debug("null addba_rsp_ptr");
+		qdf_trace_hex_dump(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+				   (void *)data, data_len);
+		addba_rsp_ptr = (uint8_t *)data + sizeof(*mac_hdr);
+	}
 	mac_hdr = (tSirMacMgmtHdr *)data;
-	qdf_mem_zero((void *)&rsp, sizeof(tDot11faddba_rsp));
-	frame_len = sizeof(rsp);
-	status = dot11f_unpack_addba_rsp(mac_ctx, (uint8_t *)data +
-					 sizeof(*mac_hdr), frame_len,
-					 &rsp, false);
+	rsp_len = sizeof(rsp);
+	status = dot11f_unpack_addba_rsp(mac_ctx, addba_rsp_ptr,
+					 rsp_len, &rsp, false);
 
 	if (DOT11F_FAILED(status)) {
 		pe_err("Failed to unpack and parse (0x%08x, %d bytes)",
-			status, frame_len);
+			status, rsp_len);
 		goto error;
 	}
 
@@ -3392,7 +3446,7 @@ alloc_packet:
 			 session->peSessionId, mac_hdr->fc.subType));
 
 	mac_ctx->auth_ack_status = LIM_ACK_NOT_RCD;
-	min_rid = lim_get_min_session_txrate(session);
+	min_rid = lim_get_min_session_txrate(session, NULL);
 	peer_rssi = mac_ctx->lim.bss_rssi;
 	lim_diag_mgmt_tx_event_report(mac_ctx, mac_hdr,
 				      session, QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
@@ -6051,6 +6105,8 @@ static void lim_tx_mgmt_frame(struct mac_context *mac_ctx, uint8_t vdev_id,
 	struct pe_session *session;
 	uint16_t auth_ack_status;
 	enum rateid min_rid = RATEID_DEFAULT;
+	qdf_freq_t *pre_auth_freq = NULL;
+	qdf_freq_t ch_freq = 0;
 
 	session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
 	if (!session) {
@@ -6063,7 +6119,23 @@ static void lim_tx_mgmt_frame(struct mac_context *mac_ctx, uint8_t vdev_id,
 	qdf_mtrace(QDF_MODULE_ID_PE, QDF_MODULE_ID_WMA, TRACE_CODE_TX_MGMT,
 		   session->peSessionId, 0);
 
-	min_rid = lim_get_min_session_txrate(session);
+	if (fc->subType == SIR_MAC_MGMT_AUTH) {
+		tpSirFTPreAuthReq pre_auth_req;
+		uint16_t auth_algo = *(uint16_t *)(frame +
+						   sizeof(tSirMacMgmtHdr));
+
+		if (auth_algo == eSIR_AUTH_TYPE_SAE) {
+			if (session->ftPEContext.pFTPreAuthReq) {
+				pre_auth_req =
+					     session->ftPEContext.pFTPreAuthReq;
+				ch_freq = pre_auth_req->pre_auth_channel_freq;
+			}
+			pre_auth_freq = &ch_freq;
+		}
+		pe_debug("TX SAE pre-auth frame on freq %d", ch_freq);
+	}
+
+	min_rid = lim_get_min_session_txrate(session, pre_auth_freq);
 
 	qdf_status = wma_tx_frameWithTxComplete(mac_ctx, packet,
 					 (uint16_t)msg_len,

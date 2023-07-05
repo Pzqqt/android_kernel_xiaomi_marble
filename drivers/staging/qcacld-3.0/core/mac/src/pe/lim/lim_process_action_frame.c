@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1829,7 +1829,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 				pe_debug("p2p session active drop BTM frame");
 				break;
 			}
-			/* fallthrough */
+			fallthrough;
 		case WNM_NOTIF_REQUEST:
 		case WNM_NOTIF_RESPONSE:
 			rssi = WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
@@ -1972,7 +1972,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 				break;
 			}
 			/* send the frame to supplicant */
-			/* fallthrough */
+			fallthrough;
 		case SIR_MAC_ACTION_VENDOR_SPECIFIC_CATEGORY:
 		case SIR_MAC_PROT_ACTION_VENDOR_SPECIFIC_CATEGORY:
 		case SIR_MAC_ACTION_2040_BSS_COEXISTENCE:
@@ -2167,7 +2167,7 @@ void lim_process_action_frame_no_session(struct mac_context *mac, uint8_t *pBd)
 					vendor_specific->Oui[3]);
 				break;
 			}
-			/* fallthrough */
+			fallthrough;
 		case SIR_MAC_ACTION_GAS_INITIAL_REQUEST:
 		case SIR_MAC_ACTION_GAS_INITIAL_RESPONSE:
 		case SIR_MAC_ACTION_GAS_COMEBACK_REQUEST:
@@ -2185,8 +2185,8 @@ void lim_process_action_frame_no_session(struct mac_context *mac, uint8_t *pBd)
 					RXMGMT_FLAG_NONE);
 			break;
 		default:
-			pe_warn("Unhandled public action frame: %x",
-				       action_hdr->actionID);
+			pe_info_rl("Unhandled public action frame: %x",
+				   action_hdr->actionID);
 			break;
 		}
 		break;

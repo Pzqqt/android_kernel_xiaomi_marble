@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -924,10 +924,12 @@ cm_akm_roam_allowed(struct wlan_objmgr_psoc *psoc,
  * cm_invalid_roam_reason_handler() - Handler for invalid roam reason
  * @vdev_id: vdev id
  * @notif: roam notification of type enum cm_roam_notif
+ * @reason: Notif param value from the roam event that carries trigger reason
  *
  * Return: QDF_STATUS
  */
-void cm_invalid_roam_reason_handler(uint32_t vdev_id, enum cm_roam_notif notif);
+void cm_invalid_roam_reason_handler(uint32_t vdev_id, enum cm_roam_notif notif,
+				    uint32_t reason);
 
 /**
  * cm_handle_roam_reason_ho_failed() - Handler for roam due to ho failure
@@ -1044,6 +1046,7 @@ wlan_cm_get_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
  * @roam_info: Roam stats from the roam stats event
  * @value:     Notif param value from the roam event
  * @idx:       TLV index in roam stats event
+ * @reason:    Notif param value from the roam event that carries trigger reason
  *
  * Gathers the roam stats from the roam event and the roam stats event and
  * sends them to hdd for filling the vendor attributes.
@@ -1054,7 +1057,7 @@ void cm_report_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
 			     uint8_t vdev_id,
 			     enum roam_rt_stats_type events,
 			     struct roam_stats_event *roam_info,
-			     uint32_t value, uint8_t idx);
+			     uint32_t value, uint8_t idx, uint32_t reason);
 /**
  * cm_roam_candidate_event_handler() - CM callback to save roam
  * candidate entry in scan db
@@ -1076,6 +1079,76 @@ cm_roam_candidate_event_handler(struct wlan_objmgr_psoc *psoc,
  */
 bool wlan_cm_is_roam_sync_in_progress(struct wlan_objmgr_psoc *psoc,
 				      uint8_t vdev_id);
+
+/**
+ * wlan_cm_roam_set_ho_delay_config() - Set roam hand-off delay
+ * @psoc: PSOC pointer
+ * @roam_ho_delay: vendor configured roam HO delay value
+ *
+ * Return: none
+ */
+void
+wlan_cm_roam_set_ho_delay_config(struct wlan_objmgr_psoc *psoc,
+				 uint16_t roam_ho_delay);
+
+/**
+ * wlan_cm_roam_get_ho_delay_config() - Get roam hand-off delay
+ * @psoc: PSOC pointer
+ *
+ * Return: Roam HO delay value
+ */
+uint16_t
+wlan_cm_roam_get_ho_delay_config(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_cm_set_exclude_rm_partial_scan_freq() - set value to include/exclude
+ * the partial scan channels in roam full scan.
+ * @psoc: PSOC pointer
+ * @exclude_rm_partial_scan_freq: Include/exclude the channels in roam full scan
+ * that are already scanned as part of partial scan.
+ *
+ * Return: none
+ */
+void
+wlan_cm_set_exclude_rm_partial_scan_freq(struct wlan_objmgr_psoc *psoc,
+					 uint8_t exclude_rm_partial_scan_freq);
+
+/**
+ * wlan_cm_get_exclude_rm_partial_scan_freq() - Get value to include/exclude
+ * the partial scan channels in roam full scan.
+ * @psoc: PSOC pointer
+ *
+ * Return: value to include/exclude the partial scan channels in roam full scan
+ */
+uint8_t
+wlan_cm_get_exclude_rm_partial_scan_freq(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_cm_roam_set_full_scan_6ghz_on_disc() - set value to include the 6 GHz
+ * channels in roam full scan only on prior discovery of any 6 GHz support in
+ * the environment.
+ * @psoc: PSOC pointer
+ * @roam_full_scan_6ghz_on_disc: Include the 6 GHz channels in roam full scan:
+ * 1 - Include only on prior discovery of any 6 GHz support in the environment
+ * 0 - Include all the supported 6 GHz channels by default
+ *
+ * Return: none
+ */
+void
+wlan_cm_roam_set_full_scan_6ghz_on_disc(struct wlan_objmgr_psoc *psoc,
+					uint8_t roam_full_scan_6ghz_on_disc);
+
+/**
+ * wlan_cm_roam_get_full_scan_6ghz_on_disc() - Get value to include the 6 GHz
+ * channels in roam full scan only on prior discovery of any 6 GHz support in
+ * the environment.
+ * @psoc: PSOC pointer
+ *
+ * Return:
+ * 1 - Include only on prior discovery of any 6 GHz support in the environment
+ * 0 - Include all the supported 6 GHz channels by default
+ */
+uint8_t wlan_cm_roam_get_full_scan_6ghz_on_disc(struct wlan_objmgr_psoc *psoc);
 #else
 static inline
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
@@ -1233,7 +1306,7 @@ static inline void
 cm_report_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
 			uint8_t vdev_id, enum roam_rt_stats_type events,
 			struct roam_stats_event *roam_info,
-			uint32_t value, uint8_t idx)
+			uint32_t value, uint8_t idx, uint32_t reason)
 {}
 
 static inline QDF_STATUS
@@ -1248,6 +1321,24 @@ wlan_cm_is_roam_sync_in_progress(struct wlan_objmgr_psoc *psoc,
 				 uint8_t vdev_id)
 {
 	return false;
+}
+
+static inline uint16_t
+wlan_cm_roam_get_ho_delay_config(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint8_t
+wlan_cm_get_exclude_rm_partial_scan_freq(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint8_t
+wlan_cm_roam_get_full_scan_6ghz_on_disc(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 

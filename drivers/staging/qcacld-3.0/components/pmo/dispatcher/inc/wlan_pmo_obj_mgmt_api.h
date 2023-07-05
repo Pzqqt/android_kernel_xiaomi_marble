@@ -291,6 +291,34 @@ wlan_pmo_get_sap_mode_bus_suspend(struct wlan_objmgr_psoc *psoc);
 bool
 wlan_pmo_get_go_mode_bus_suspend(struct wlan_objmgr_psoc *psoc);
 
+/*
+ * wlan_pmo_enable_ssr_on_page_fault: Enable/disable ssr on pagefault
+ * @psoc: objmgr psoc
+ *
+ * Return: True if SSR is enabled on pagefault
+ */
+bool wlan_pmo_enable_ssr_on_page_fault(struct wlan_objmgr_psoc *psoc);
+
+/*
+ * wlan_pmo_get_max_pagefault_wakeups_for_ssr: get max pagefault wakeups for ssr
+ * @psoc: objmgr psoc
+ *
+ * Return: Max pagefault wakeups for SSR
+ */
+uint8_t
+wlan_pmo_get_max_pagefault_wakeups_for_ssr(struct wlan_objmgr_psoc *psoc);
+
+/*
+ * wlan_pmo_get_interval_for_pagefault_wakeup_counts: get ssr interval for
+ * pagefault
+ * @psoc: objmgr psoc
+ *
+ * Return: SSR interval for pagefault
+ */
+uint32_t
+wlan_pmo_get_interval_for_pagefault_wakeup_counts(
+						struct wlan_objmgr_psoc *psoc);
+
 #else /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 static inline QDF_STATUS pmo_init(void)
@@ -452,6 +480,25 @@ static inline bool
 wlan_pmo_get_go_mode_bus_suspend(struct wlan_objmgr_psoc *psoc)
 {
 	return false;
+}
+
+static inline bool
+wlan_pmo_enable_ssr_on_page_fault(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+
+static inline uint8_t
+wlan_pmo_get_max_pagefault_wakeups_for_ssr(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint32_t
+wlan_pmo_get_interval_for_pagefault_wakeup_counts(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
 }
 
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
