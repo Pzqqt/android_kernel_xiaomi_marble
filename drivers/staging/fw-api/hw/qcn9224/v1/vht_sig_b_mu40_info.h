@@ -1,0 +1,134 @@
+
+/*
+ * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+
+
+
+
+
+
+
+
+
+#ifndef _VHT_SIG_B_MU40_INFO_H_
+#define _VHT_SIG_B_MU40_INFO_H_
+#if !defined(__ASSEMBLER__)
+#endif
+
+#define NUM_OF_DWORDS_VHT_SIG_B_MU40_INFO 2
+
+
+struct vht_sig_b_mu40_info {
+#ifndef WIFI_BIT_ORDER_BIG_ENDIAN
+             uint32_t length                                                  : 17, // [16:0]
+                      mcs                                                     :  4, // [20:17]
+                      tail                                                    :  6, // [26:21]
+                      reserved_0                                              :  2, // [28:27]
+                      mu_user_number                                          :  3; // [31:29]
+             uint32_t length_copy                                             : 17, // [16:0]
+                      mcs_copy                                                :  4, // [20:17]
+                      tail_copy                                               :  6, // [26:21]
+                      reserved_1                                              :  5; // [31:27]
+#else
+             uint32_t mu_user_number                                          :  3, // [31:29]
+                      reserved_0                                              :  2, // [28:27]
+                      tail                                                    :  6, // [26:21]
+                      mcs                                                     :  4, // [20:17]
+                      length                                                  : 17; // [16:0]
+             uint32_t reserved_1                                              :  5, // [31:27]
+                      tail_copy                                               :  6, // [26:21]
+                      mcs_copy                                                :  4, // [20:17]
+                      length_copy                                             : 17; // [16:0]
+#endif
+};
+
+
+
+
+#define VHT_SIG_B_MU40_INFO_LENGTH_OFFSET                                           0x00000000
+#define VHT_SIG_B_MU40_INFO_LENGTH_LSB                                              0
+#define VHT_SIG_B_MU40_INFO_LENGTH_MSB                                              16
+#define VHT_SIG_B_MU40_INFO_LENGTH_MASK                                             0x0001ffff
+
+
+
+
+#define VHT_SIG_B_MU40_INFO_MCS_OFFSET                                              0x00000000
+#define VHT_SIG_B_MU40_INFO_MCS_LSB                                                 17
+#define VHT_SIG_B_MU40_INFO_MCS_MSB                                                 20
+#define VHT_SIG_B_MU40_INFO_MCS_MASK                                                0x001e0000
+
+
+
+
+#define VHT_SIG_B_MU40_INFO_TAIL_OFFSET                                             0x00000000
+#define VHT_SIG_B_MU40_INFO_TAIL_LSB                                                21
+#define VHT_SIG_B_MU40_INFO_TAIL_MSB                                                26
+#define VHT_SIG_B_MU40_INFO_TAIL_MASK                                               0x07e00000
+
+
+
+
+#define VHT_SIG_B_MU40_INFO_RESERVED_0_OFFSET                                       0x00000000
+#define VHT_SIG_B_MU40_INFO_RESERVED_0_LSB                                          27
+#define VHT_SIG_B_MU40_INFO_RESERVED_0_MSB                                          28
+#define VHT_SIG_B_MU40_INFO_RESERVED_0_MASK                                         0x18000000
+
+
+
+
+#define VHT_SIG_B_MU40_INFO_MU_USER_NUMBER_OFFSET                                   0x00000000
+#define VHT_SIG_B_MU40_INFO_MU_USER_NUMBER_LSB                                      29
+#define VHT_SIG_B_MU40_INFO_MU_USER_NUMBER_MSB                                      31
+#define VHT_SIG_B_MU40_INFO_MU_USER_NUMBER_MASK                                     0xe0000000
+
+
+
+
+#define VHT_SIG_B_MU40_INFO_LENGTH_COPY_OFFSET                                      0x00000004
+#define VHT_SIG_B_MU40_INFO_LENGTH_COPY_LSB                                         0
+#define VHT_SIG_B_MU40_INFO_LENGTH_COPY_MSB                                         16
+#define VHT_SIG_B_MU40_INFO_LENGTH_COPY_MASK                                        0x0001ffff
+
+
+
+
+#define VHT_SIG_B_MU40_INFO_MCS_COPY_OFFSET                                         0x00000004
+#define VHT_SIG_B_MU40_INFO_MCS_COPY_LSB                                            17
+#define VHT_SIG_B_MU40_INFO_MCS_COPY_MSB                                            20
+#define VHT_SIG_B_MU40_INFO_MCS_COPY_MASK                                           0x001e0000
+
+
+
+
+#define VHT_SIG_B_MU40_INFO_TAIL_COPY_OFFSET                                        0x00000004
+#define VHT_SIG_B_MU40_INFO_TAIL_COPY_LSB                                           21
+#define VHT_SIG_B_MU40_INFO_TAIL_COPY_MSB                                           26
+#define VHT_SIG_B_MU40_INFO_TAIL_COPY_MASK                                          0x07e00000
+
+
+
+
+#define VHT_SIG_B_MU40_INFO_RESERVED_1_OFFSET                                       0x00000004
+#define VHT_SIG_B_MU40_INFO_RESERVED_1_LSB                                          27
+#define VHT_SIG_B_MU40_INFO_RESERVED_1_MSB                                          31
+#define VHT_SIG_B_MU40_INFO_RESERVED_1_MASK                                         0xf8000000
+
+
+
+
+#endif
