@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
+/* Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -32,7 +32,7 @@
 
 
 struct mon_destination_ring {
-#ifndef WIFI_BIT_ORDER_BIG_ENDIAN
+#ifndef BIG_ENDIAN_HOST
              uint32_t stat_buf_virt_addr_31_0                                 : 32;  
              uint32_t stat_buf_virt_addr_63_32                                : 32;  
              uint32_t ppdu_id                                                 : 32;  

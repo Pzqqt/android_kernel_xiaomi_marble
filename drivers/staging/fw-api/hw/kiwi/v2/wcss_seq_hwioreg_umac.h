@@ -1,6 +1,5 @@
-
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -236,6 +235,11 @@
 #define HWIO_REO_R0_REO2SW1_RING_MSI2_BASE_LSB_ADDR(x)                                                     ((x) + 0x53c)
 #define HWIO_REO_R0_REO2SW1_RING_MSI2_BASE_MSB_ADDR(x)                                                     ((x) + 0x540)
 #define HWIO_REO_R0_REO2SW1_RING_MSI2_DATA_ADDR(x)                                                         ((x) + 0x544)
+#define HWIO_REO_R0_REO2SW1_RING_MISC_1_ADDR(x)                                                            ((x) + 0x558)
+#define HWIO_REO_R0_REO2SW1_RING_MISC_1_TIME_THRESHOLD_TO_UPDATE_BMSK                                       0xffff0000
+#define HWIO_REO_R0_REO2SW1_RING_MISC_1_TIME_THRESHOLD_TO_UPDATE_SHFT                                               16
+#define HWIO_REO_R0_REO2SW1_RING_MISC_1_NUM_THRESHOLD_TO_UPDATE_BMSK                                              0x3f
+#define HWIO_REO_R0_REO2SW1_RING_MISC_1_NUM_THRESHOLD_TO_UPDATE_SHFT                                                 0
 #define HWIO_REO_R0_REO2SW2_RING_BASE_LSB_ADDR(x)                                                          ((x) + 0x55c)
 #define HWIO_REO_R0_REO2SW0_RING_BASE_LSB_ADDR(x)                                                          ((x) + 0x8a4)
 #define HWIO_REO_R0_REO2SW0_RING_BASE_MSB_RING_SIZE_BMSK                                                    0xfffff00

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -65,10 +65,10 @@ typedef  enum  {
     WMI_SERVICE_GPIO=25,                    /* GPIO service */
     WMI_SERVICE_STA_DTIM_PS_MODULATED_DTIM=26, /* Modulated DTIM support */
     WMI_STA_UAPSD_BASIC_AUTO_TRIG=27,       /* Basic version of station UAPSD AC Trigger Generation Method with
-                                             * variable tigger periods (service, delay, and suspend intervals) */
+                                             * variable trigger periods (service, delay, and suspend intervals) */
     WMI_STA_UAPSD_VAR_AUTO_TRIG=28,         /* Station UAPSD AC Trigger Generation Method with variable
                                              * trigger periods (service, delay, and suspend intervals) */
-    WMI_SERVICE_STA_KEEP_ALIVE=29,          /* Serivce to support the STA KEEP ALIVE mechanism */
+    WMI_SERVICE_STA_KEEP_ALIVE=29,          /* Service to support the STA KEEP ALIVE mechanism */
     WMI_SERVICE_TX_ENCAP=30,                /* Packet type for TX encapsulation */
     WMI_SERVICE_AP_PS_DETECT_OUT_OF_SYNC=31, /* detect out-of-sync sleeping stations */
     WMI_SERVICE_EARLY_RX=32,                /* adaptive early-rx feature */
@@ -523,8 +523,8 @@ typedef  enum  {
     WMI_SERVICE_WAPI_CONCURRENCY_SUPPORTED = 277, /* Indicates FW support for WAPI concurrency */
     WMI_SERVICE_SAP_CONNECTED_D3WOW = 278,  /* Indicates FW support for D3WoW for SAP connected case */
     WMI_SERVICE_GO_CONNECTED_D3WOW = 279,   /* Indicates FW support for D3WoW for P2P GO connected case */
-    WMI_SERVICE_EXT_TPC_REG_SUPPORT = 280, /* Support for new 6G TPC power limits */
-    WMI_SERVICE_REG_CC_EXT_EVENT_SUPPORT = 281, /* Support for Extended REG_CC Event with additional params for 6G */
+    WMI_SERVICE_EXT_TPC_REG_SUPPORT = 280, /* Support for new 6 GHz TPC power limits */
+    WMI_SERVICE_REG_CC_EXT_EVENT_SUPPORT = 281, /* Support for Extended REG_CC Event with additional params for 6 GHz */
     WMI_SERVICE_NDI_TXBF_SUPPORT = 282, /* Indicates FW support for Tx beamforming with NDI VDEV */
     WMI_SERVICE_ENABLE_LOWER_6G_EDGE_CH_SUPP = 283, /* Indicates FW support for enabling lower 6 GHz edge channel 5935 */
     WMI_SERVICE_DISABLE_UPPER_6G_EDGE_CH_SUPP = 284, /* Indicates FW support for disabling upper 6 GHz edge channel 7115 */
@@ -563,7 +563,7 @@ typedef  enum  {
     WMI_SERVICE_DYNAMIC_VDEV_MAC_ADDR_UPDATE_SUPPORT = 310, /* FW supports dynamic vdev mac address updating */
     WMI_SERVICE_SAWF_LEVEL0 = 311, /* FW supports WMI_SAWF_SVC_CLASS CFG_CMD + DISABLE_CMD msgs */
     WMI_SERVICE_RTT_11AZ_NTB_SUPPORT = 312, /* FW support for 11AZ non trigger based ranging */
-    WMI_SERVICE_RTT_11AZ_TB_SUPPORT = 313, /* FW support for 11AZ trigger based ranging */
+    WMI_SERVICE_RTT_11AZ_TB_SUPPORT = 313, /* FW support for 11AZ trigger based ranging ISTA role */
     WMI_SERVICE_RTT_11AZ_MAC_SEC_SUPPORT = 314, /* FW support for 11AZ secure FTM */
     WMI_SERVICE_RTT_11AZ_MAC_PHY_SEC_SUPPORT = 315, /* FW support for 11AZ secure LTF + FTM */
     WMI_SERVICE_SPECTRAL_SESSION_INFO_SUPPORT = 316, /* Information corresponding to each Spectral scan session will be sent by the FW before the reports corresponding to that session are sent */
@@ -602,7 +602,36 @@ typedef  enum  {
     WMI_SERVICE_MULTIPLE_VDEV_RESTART_BITMAP_SUPPORT = 349, /* Extended Multiple VDEV Restart with Bitmap Support */
     WMI_SERVICE_WMI_SERVICE_WPA3_SHA384_ROAM_SUPPORT = 350, /* Indicates FW supports WPA3 SHA384 roaming */
     WMI_SERVICE_ODD_LIVEDUMP_SUPPORT = 351, /* Support for ODD Livedump from the FW */
-
+    WMI_SERVICE_EIRP_PREFERRED_SUPPORT = 352, /* Support for OOBE feature where only EIRP powers will be sent in 6 GHz TPC WMI */
+    WMI_SERVICE_RTT_TX_RX_CHAIN_IDX_SUPPORT = 353, /* FW Supports configuring Tx and Rx Chainmask in intiator and Responder */
+    WMI_SERVICE_RESTRICTED_TWT = 354, /* Support for R-TWT feature */
+    WMI_SERVICE_SLO_SUPPORTED = 355, /* Support for Single Link 11BE */
+    WMI_SERVICE_RTT_11AZ_TB_RSTA_SUPPORT = 356, /* FW support for 11AZ trigger based ranging Responder (RSTA) role */
+    WMI_SERVICE_SUPPORT_11D_FOR_HOST_SCAN = 357,
+    WMI_SERVICE_DETERMINISTIC_SCHEDULER_LEVEL0 = 358, /* FW supports 12.2 level scheduler mode disable commands and stats */
+    WMI_SERVICE_COORDINATED_AP_TDMA = 359, /* Support for Coordinated-AP TDMA feature */
+    WMI_SERVICE_HPA_SUPPORT = 360, /* Support for Host Platform Authentication */
+    WMI_SERVICE_WMSK_COMPACTION_RX_TLVS = 361, /* Support word mask subscription for rx tlv compaction */
+    WMI_SERVICE_PRE_RX_TO = 362, /* Support for Pre RX timeout */
+    WMI_SERVICE_TDLS_CONCURRENCY_SUPPORT = 363, /* Support for TDLS concurrency in FW */
+    WMI_SERVICE_SELF_MLD_ROAM_BETWEEN_DBS_AND_HBS = 364, /* Suppport roam between DBS(2G+5G/6G) to HBS(5G+6G) with self AP MLD. */
+    WMI_SERVICE_PEER_METADATA_V1A_V1B_SUPPORT = 365, /* Support rx peer meta data v1a and v1b */
+    WMI_SERVICE_CFR_CAPTURE_PDEV_ID_SOC = 366, /* Host can send PDEV_ID_SOC with CFR capture request and FW can derive pdev_id from TA address */
+    WMI_SERVICE_11BE_MLO_TDLS_SUPPORT = 367, /* Indicates FW supports 11be MLO TDLS. Host should enable 11be on TDLS only when FW indicates the support. */
+    WMI_SERVICE_MANUAL_ULOFDMA_TRIGGER_SUPPORT = 368, /* Support for Host triggered Manual UL OFDMA trigger frame feature */
+    WMI_SERVICE_STANDALONE_SOUND = 369, /* FW supports standalone sounding */
+    WMI_SERVICE_AFC_RESP_BINARY_FORMAT_SUPPORTED = 370, /* Service bit to indicate the supported AFC payload response format */
+    WMI_SERVICE_CCA_BUSY_INFO_FOREACH_20MHZ = 371, /* FW supports reporting of CCA busy info for each 20Mhz subband of wideband scan channel */
+    WMI_SERVICE_MLO_TSF_SYNC = 372, /* FW supports TSF sync across multiple chips */
+    WMI_SERVICE_RF_PATH_SEL_INIT_SUPPORT = 373, /* FW supports RF Path selection using WMI Init command field */
+    WMI_SERVICE_VDEV_PARAM_CHWIDTH_WITH_NOTIFY_SUPPORT = 374, /* FW supports VDEV param channel width switch with OMN/OMI notification  */
+    WMI_SERVICE_RESTRICTED_TWT_REQUESTER = 375, /* Indicates FW supports Restricted TWT REQUESTER */
+    WMI_SERVICE_RESTRICTED_TWT_RESPONDER = 376, /* Indicates FW supports Restricted TWT RESPONDER */
+    WMI_SERVICE_AUX_MAC_SUPPORT = 377,
+    WMI_SERVICE_NAN_PAIRING_PEER_CREATE_BY_HOST = 378, /* Indicate FW supports creation of PASN Peer by Host for NAN pairing usecase */
+    WMI_SERVICE_MLO_TID_TO_LINK_MAPPING_SUPPORT = 379, /* Indicates FW supports TID-TO-LINK mapping */
+    WMI_SERVICE_PER_LINK_STATS_SUPPORT = 380, /* Indicates FW supports per link stats for MLO */
+    WMI_SERVICE_N_LINK_MLO_SUPPORT = 381,  /* Indicate FW supports N MLO link & vdev re-purpose between links */
 
     WMI_MAX_EXT2_SERVICE
 

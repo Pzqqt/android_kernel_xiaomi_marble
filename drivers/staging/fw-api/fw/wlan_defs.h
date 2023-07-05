@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2016, 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -106,7 +106,7 @@
  */
 #define MAX_SPATIAL_STREAM_ANY MAX_SPATIAL_STREAM_ANY_V2 /* DEPRECATED */
 
-/* defines to set Packet extension values whic can be 0 us, 8 usec or 16 usec */
+/* defines to set Packet extension values which can be 0, 8, or 16 usec */
 /* NOTE: Below values cannot be changed without breaking WMI Compatibility */
 #define MAX_HE_NSS               8
 #define MAX_HE_MODULATION        8
@@ -149,7 +149,7 @@ typedef enum {
     MODE_11AX_HE80_2G = 23,
 #endif
 
-#if defined(SUPPORT_11BE) && SUPPORT_11BE
+#if (defined(SUPPORT_11BE) && SUPPORT_11BE) || defined(SUPPORT_11BE_ROM)
     MODE_11BE_EHT20 = 24,
     MODE_11BE_EHT40 = 25,
     MODE_11BE_EHT80 = 26,
@@ -248,7 +248,7 @@ typedef enum {
         ((mode) == MODE_11AX_HE80_2G))
 #endif /* SUPPORT_11AX */
 
-#if defined(SUPPORT_11BE) && SUPPORT_11BE
+#if (defined(SUPPORT_11BE) && SUPPORT_11BE) || defined(SUPPORT_11BE_ROM)
 #define IS_MODE_EHT(mode) (((mode) == MODE_11BE_EHT20) || \
         ((mode) == MODE_11BE_EHT40)     || \
         ((mode) == MODE_11BE_EHT80)     || \
@@ -458,6 +458,10 @@ typedef struct {
     A_UINT32 low_5ghz_chan;
     A_UINT32 high_5ghz_chan;
     A_UINT32 wireless_modes_ext; /* REGDMN MODE ext */
+    A_UINT32 low_2ghz_chan_ext;
+    A_UINT32 high_2ghz_chan_ext;
+    A_UINT32 low_5ghz_chan_ext;
+    A_UINT32 high_5ghz_chan_ext;
 } HAL_REG_CAPABILITIES;
 
 #ifdef NUM_SPATIAL_STREAM
@@ -477,8 +481,8 @@ typedef struct {
 
 /*
  * Used to update rate-control logic with the status of the tx-completion.
- * In host-based implementation of the rate-control feature, this struture is used to
- * create the payload for HTT message/s from target to host.
+ * In host-based implementation of the rate-control feature, this structure
+ * is used to create the payload for HTT message/s from target to host.
  */
 #ifndef CONFIG_MOVE_RC_STRUCT_TO_MACCORE
   #if (NUM_SPATIAL_STREAM > 3)
@@ -680,7 +684,7 @@ typedef struct {
 #endif
 
 /**
- * strucutre describing host memory chunk.
+ * structure describing host memory chunk.
  */
 typedef struct {
    A_UINT32   tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wlan_host_memory_chunk */
@@ -809,9 +813,9 @@ struct wlan_dbg_tx_stats_v1 {
     A_UINT32 sw_retry_failure;
     /* illegal rate phy errors  */
     A_UINT32 illgl_rate_phy_err;
-    /* wal pdev continous xretry */
+    /* wal pdev continuous xretry */
     A_UINT32 pdev_cont_xretry;
-    /* wal pdev continous xretry */
+    /* wal pdev continuous xretry */
     A_UINT32 pdev_tx_timeout;
     /* wal pdev resets  */
     A_UINT32 pdev_resets;
@@ -861,9 +865,9 @@ struct wlan_dbg_tx_stats_v2 {
     A_UINT32 sw_retry_failure;
     /* illegal rate phy errors  */
     A_UINT32 illgl_rate_phy_err;
-    /* wal pdev continous xretry */
+    /* wal pdev continuous xretry */
     A_UINT32 pdev_cont_xretry;
-    /* wal pdev continous xretry */
+    /* wal pdev continuous xretry */
     A_UINT32 pdev_tx_timeout;
     /* wal pdev resets  */
     A_UINT32 pdev_resets;
@@ -972,8 +976,7 @@ struct wlan_dbg_mem_stats {
 };
 
 struct wlan_dbg_peer_stats {
-
-	A_INT32 dummy; /* REMOVE THIS ONCE REAL PEER STAT COUNTERS ARE ADDED */
+    A_INT32 dummy; /* REMOVE THIS ONCE REAL PEER STAT COUNTERS ARE ADDED */
 };
 
 /*
@@ -1017,7 +1020,7 @@ typedef struct {
  * TEMPORARY: leave rssi_chain3 in place for AR900B builds until code using
  * rssi_chain3 has been converted to use wlan_dbg_rx_rate_info_v2_t.
  */
-	A_UINT32 rssi_chain3;
+    A_UINT32 rssi_chain3;
 } wlan_dbg_rx_rate_info_v1b_t;
 
 #if defined(AR900B)
@@ -1733,7 +1736,7 @@ typedef struct {
      */
     A_UINT32 link_info;
 /*  This TLV is followed by array of mlo_glb_link:
- *  mlo_glb_link will have mutiple instances equal to num of hw links
+ *  mlo_glb_link will have multiple instances equal to num of hw links
  *  received by no_of_link
  *      mlo_glb_link glb_link_info[];
  */
@@ -1744,7 +1747,14 @@ A_COMPILE_TIME_ASSERT(check_mlo_glb_link_info_8byte_size_quantum,
 
 typedef enum {
     MLO_SHMEM_CRASH_PARTNER_CHIPS = 1,
+    MLO_SHMEM_CRASH_SW_PANIC      = 2,
+    MLO_SHMEM_CRASH_SW_ASSERT     = 3,
 } MLO_SHMEM_CHIP_CRASH_REASON;
+
+typedef enum {
+    MLO_SHMEM_RECOVERY_CRASH_PARTNER_CHIPS = 1,
+    MLO_SHMEM_RECOVER_NON_MLO_MODE = 2,
+} MLO_SHMEM_CHIP_RECOVERY_MODE;
 
 /* glb link info structures used for scratchpad memory (crash and recovery) */
 typedef struct {
@@ -1754,17 +1764,29 @@ typedef struct {
      * crash reason, takes value in enum MLO_SHMEM_CHIP_CRASH_REASON
      */
     A_UINT32 crash_reason;
+    /**
+     * crash reason, takes value in enum MLO_SHMEM_CHIP_RECOVERY_MODE
+     */
+    A_UINT32 recovery_mode;
+    /* reserved: added for padding to A_UINT64 size, available for future use */
+    A_UINT32 reserved;
 } mlo_glb_per_chip_crash_info;
 
 A_COMPILE_TIME_ASSERT(check_mlo_glb_per_chip_crash_info,
         (((sizeof(mlo_glb_per_chip_crash_info) % sizeof(A_UINT64) == 0x0))));
 
 /** Helper macro for params GET/SET of mlo_glb_chip_crash_info */
-#define MLO_SHMEM_CHIP_CRASH_INFO_PARAM_NO_OF_CHIPS_GET(chip_info) MLO_SHMEM_GET_BITS(chip_info, 0, 2)
-#define MLO_SHMEM_CHIP_CRASH_INFO_PARAM_NO_OF_CHIPS_SET(chip_info, value) MLO_SHMEM_SET_BITS(chip_info, 0, 2, value)
+#define MLO_SHMEM_CHIP_CRASH_INFO_PARAM_NO_OF_CHIPS_GET(chip_info) \
+    (MLO_SHMEM_GET_BITS(chip_info, 0, 2) + \
+     (MLO_SHMEM_GET_BITS(chip_info, 12, 4) << 2))
+#define MLO_SHMEM_CHIP_CRASH_INFO_PARAM_NO_OF_CHIPS_SET(chip_info, value) \
+    do { \
+       MLO_SHMEM_SET_BITS(chip_info, 0, 2, ((value) & 0x03)); \
+       MLO_SHMEM_SET_BITS(chip_info, 12, 4, ((value) >> 2)); \
+} while (0)
 
-#define MLO_SHMEM_CHIP_CRASH_INFO_PARAM_VALID_CHIP_BMAP_GET(chip_info) MLO_SHMEM_GET_BITS(chip_info, 2, 3)
-#define MLO_SHMEM_CHIP_CRASH_INFO_PARAM_VALID_CHIP_BMAP_SET(chip_info, value) MLO_SHMEM_SET_BITS(chip_info, 2, 3, value)
+#define MLO_SHMEM_CHIP_CRASH_INFO_PARAM_VALID_CHIP_BMAP_GET(chip_info) MLO_SHMEM_GET_BITS(chip_info, 2, 8)
+#define MLO_SHMEM_CHIP_CRASH_INFO_PARAM_VALID_CHIP_BMAP_SET(chip_info, value) MLO_SHMEM_SET_BITS(chip_info, 2, 8, value)
 
 typedef struct {
     /* TLV tag and len; tag equals MLO_SHMEM_TLV_STRUCT_MLO_GLB_CHIP_CRASH_INFO */
@@ -1775,11 +1797,22 @@ typedef struct {
      *
      * [1:0]:  no_of_chips
      * [4:2]:  valid_chip_bmap
-     * [31:6]: reserved
+     * For number of chips beyond 3, extension fields are added.
+     * To maintain backward compatibility, with 3 chip board and
+     * old host driver, valid chip bmap is extended in continuation from
+     * existing bit 4 onwards, while extending no_of_chips information
+     * would overlap with old valid_chip_bmap, hence extended from
+     * bit 12:15. Now no_of_chip will have two parts, lower 2 bits from 0-1 and
+     * upper 4 bits from 12-15. SET-GET macros are modified accordingly.
+     * This helps in no change in respective processing files and don't need
+     * to maintain two copy of information for backward compatibility.
+     * [9:5]:  valid_chip_bmap_ext
+     * [15:12]: no_of_chips_ext
+     * [31:16]: reserved
      */
     A_UINT32 chip_info;
     /*  This TLV is followed by array of mlo_glb_per_chip_crash_info:
-     *  mlo_glb_per_chip_crash_info will have mutiple instances equal to num of partner chips
+     *  mlo_glb_per_chip_crash_info will have multiple instances equal to num of partner chips
      *  received by no_of_chips
      *  mlo_glb_per_chip_crash_info per_chip_crash_info[];
      */

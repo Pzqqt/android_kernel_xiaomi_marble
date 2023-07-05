@@ -14,14 +14,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
- 
- 
- 
- 
- 
- 
- 
-
 
 #ifndef _RX_PPDU_END_USER_STATS_H_
 #define _RX_PPDU_END_USER_STATS_H_
@@ -123,7 +115,7 @@ struct rx_ppdu_end_user_stats {
                       amsdu_msdu_count                                        : 16; // [31:16]
              uint32_t non_amsdu_msdu_count                                    : 16, // [15:0]
                       ucast_msdu_count                                        : 16; // [31:16]
-             uint32_t mcast_msdu_count                                        : 16, // [15:0]
+             uint32_t bcast_msdu_count                                        : 16, // [15:0]
                       mcast_bcast_msdu_count                                  : 16; // [31:16]
 #else
              struct   rx_rxpcu_classification_overview                          rxpcu_classification_details;
@@ -214,7 +206,7 @@ struct rx_ppdu_end_user_stats {
              uint32_t ucast_msdu_count                                        : 16, // [31:16]
                       non_amsdu_msdu_count                                    : 16; // [15:0]
              uint32_t mcast_bcast_msdu_count                                  : 16, // [31:16]
-                      mcast_msdu_count                                        : 16; // [15:0]
+                      bcast_msdu_count                                        : 16; // [15:0]
 #endif
 };
 
@@ -1801,9 +1793,8 @@ struct rx_ppdu_end_user_stats {
 			Field filled in by RX OLE
 			Set to 0 by RXPCU
 			
-			The number of MSDUs that are part of MPDUs without FCS error
-			
-			TODO: unicast AD1 or DA?
+			The number of MSDUs that are part of MPDUs without FCS error, 
+			that are directed to a unicast destination address
 			<legal all>
 */
 
@@ -1813,21 +1804,21 @@ struct rx_ppdu_end_user_stats {
 #define RX_PPDU_END_USER_STATS_UCAST_MSDU_COUNT_MASK                                0x00000000ffff0000
 
 
-/* Description		MCAST_MSDU_COUNT
+/* Description		BCAST_MSDU_COUNT
 
 			Field filled in by RX OLE
 			Set to 0 by RXPCU
 			
-			The number of MSDUs that are part of MPDUs without FCS error
+			The number of MSDUs that are part of MPDUs without FCS error, 
+			whose destination addresses are broadcast (0xFFFF_FFFF_FFFF)
 			
-			TODO: multicast AD1 or DA?
 			<legal all>
 */
 
-#define RX_PPDU_END_USER_STATS_MCAST_MSDU_COUNT_OFFSET                              0x0000000000000070
-#define RX_PPDU_END_USER_STATS_MCAST_MSDU_COUNT_LSB                                 32
-#define RX_PPDU_END_USER_STATS_MCAST_MSDU_COUNT_MSB                                 47
-#define RX_PPDU_END_USER_STATS_MCAST_MSDU_COUNT_MASK                                0x0000ffff00000000
+#define RX_PPDU_END_USER_STATS_BCAST_MSDU_COUNT_OFFSET                              0x0000000000000070
+#define RX_PPDU_END_USER_STATS_BCAST_MSDU_COUNT_LSB                                 32
+#define RX_PPDU_END_USER_STATS_BCAST_MSDU_COUNT_MSB                                 47
+#define RX_PPDU_END_USER_STATS_BCAST_MSDU_COUNT_MASK                                0x0000ffff00000000
 
 
 /* Description		MCAST_BCAST_MSDU_COUNT
@@ -1835,9 +1826,9 @@ struct rx_ppdu_end_user_stats {
 			Field filled in by RX OLE
 			Set to 0 by RXPCU
 			
-			The number of MSDUs that are part of MPDUs without FCS error
+			The number of MSDUs that are part of MPDUs without FCS error, 
+			whose destination addresses are either multicast or broadcast
 			
-			TODO: multicast/broadcast AD1 or DA?
 			<legal all>
 */
 
