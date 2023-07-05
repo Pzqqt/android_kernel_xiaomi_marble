@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -84,4 +85,44 @@ __qdf_net_if_release_dev(struct qdf_net_if  *nif)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0))
+/**
+ * qdf_net_update_net_device_dev_addr() - update net_device dev_addr
+ * @ndev: net_device
+ * @src_addr: source mac address
+ * @len: length
+ *
+ * kernel version 5.17 onwards made net_device->dev_addr as const unsigned char*
+ * so to update dev_addr, this function calls kernel api dev_addr_mod.
+ *
+ * Return: void
+ */
+static inline void
+__qdf_net_update_net_device_dev_addr(struct net_device *ndev,
+				     const void *src_addr,
+				     size_t len)
+{
+	dev_addr_mod(ndev, 0, src_addr, len);
+}
+#else /* (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)) */
+/**
+ * qdf_net_update_net_device_dev_addr() - update net_device dev_addr
+ * @ndev: net_device
+ * @src_addr: source mac address
+ * @len: length
+ *
+ * This function updates dev_addr in net_device using mem copy.
+ *
+ * Return: void
+ */
+static inline void
+__qdf_net_update_net_device_dev_addr(struct net_device *ndev,
+				     const void *src_addr,
+				     size_t len)
+{
+	memcpy(ndev->dev_addr, src_addr, len);
+}
+#endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)) */
+
 #endif /*__I_QDF_NET_IF_H */

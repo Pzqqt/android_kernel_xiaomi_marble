@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -200,6 +200,7 @@ struct latest_evt_history {
 
 struct ce_desc_hist {
 	qdf_atomic_t history_index[CE_COUNT_MAX];
+	uint8_t ce_id_hist_map[CE_COUNT_MAX];
 	bool enable[CE_COUNT_MAX];
 	bool data_enable[CE_COUNT_MAX];
 	qdf_mutex_t ce_dbg_datamem_lock[CE_COUNT_MAX];

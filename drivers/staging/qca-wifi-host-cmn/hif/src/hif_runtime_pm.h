@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -100,10 +101,14 @@ struct hif_runtime_pm_ctx {
 	qdf_runtime_lock_t prevent_linkdown_lock;
 	atomic_t pm_dp_rx_busy;
 	qdf_time_t dp_last_busy_timestamp;
+	int delay;
 #ifdef WLAN_OPEN_SOURCE
 	struct dentry *pm_dentry;
 #endif
 };
+
+#define HIF_RTPM_DELAY_MIN 100
+#define HIF_RTPM_DELAY_MAX 10000
 
 #include <linux/pm_runtime.h>
 
@@ -120,6 +125,19 @@ static inline int __hif_pm_runtime_get(struct device *dev)
 static inline int hif_pm_runtime_put_auto(struct device *dev)
 {
 	return pm_runtime_put_autosuspend(dev);
+}
+
+/**
+ * __hif_pm_runtime_set_delay() - Set delay to trigger RTPM suspend
+ * @dev: device structure
+ * @delay: delay in ms to be set
+ *
+ * Return: None
+ */
+static inline
+void __hif_pm_runtime_set_delay(struct device *dev, int delay)
+{
+	pm_runtime_set_autosuspend_delay(dev, delay);
 }
 
 void hif_pm_runtime_open(struct hif_softc *scn);

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -71,6 +71,7 @@ struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
 				       int mac_addr_is_aligned,
 				       uint8_t vdev_id,
 				       enum dp_mod_id id);
+bool dp_peer_find_by_id_valid(struct dp_soc *soc, uint16_t peer_id);
 
 /**
  * dp_peer_get_ref() - Returns peer object given the peer id
@@ -573,6 +574,27 @@ QDF_STATUS dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 void dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 			      uint8_t vdev_id, uint8_t *peer_mac_addr,
 			      uint8_t is_wds, uint32_t free_wds_count);
+
+#ifdef DP_RX_UDP_OVER_PEER_ROAM
+/**
+ * dp_rx_reset_roaming_peer() - Reset the roamed peer in vdev
+ * @soc - dp soc pointer
+ * @vdev_id - vdev id
+ * @peer_mac_addr - mac address of the peer
+ *
+ * This function resets the roamed peer auth status and mac address
+ * after peer map indication of same peer is received from firmware.
+ *
+ * Return: None
+ */
+void dp_rx_reset_roaming_peer(struct dp_soc *soc, uint8_t vdev_id,
+			      uint8_t *peer_mac_addr);
+#else
+static inline void dp_rx_reset_roaming_peer(struct dp_soc *soc, uint8_t vdev_id,
+					    uint8_t *peer_mac_addr)
+{
+}
+#endif
 
 #ifdef WLAN_FEATURE_11BE_MLO
 /**

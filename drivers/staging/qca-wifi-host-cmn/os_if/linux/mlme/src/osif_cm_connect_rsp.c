@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2015, 2020-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -838,16 +838,13 @@ bool osif_cm_is_unlink_bss_required(struct wlan_cm_connect_resp *rsp)
 	return false;
 }
 static inline void osif_check_and_unlink_bss(struct wlan_objmgr_vdev *vdev,
-					     struct vdev_osif_priv *osif_priv,
 					     struct wlan_cm_connect_resp *rsp)
 {
 	if (osif_cm_is_unlink_bss_required(rsp))
-		osif_cm_unlink_bss(vdev, osif_priv, &rsp->bssid, rsp->ssid.ssid,
-				   rsp->ssid.length);
+		osif_cm_unlink_bss(vdev, &rsp->bssid);
 }
 #else
 static inline void osif_check_and_unlink_bss(struct wlan_objmgr_vdev *vdev,
-					     struct vdev_osif_priv *osif_priv,
 					     struct wlan_cm_connect_resp *rsp)
 {}
 #endif
@@ -866,7 +863,7 @@ QDF_STATUS osif_connect_handler(struct wlan_objmgr_vdev *vdev,
 		       rsp->connect_status ? "FAILURE" : "SUCCESS", rsp->cm_id,
 		       rsp->reason, rsp->status_code, rsp->is_reassoc);
 
-	osif_check_and_unlink_bss(vdev, osif_priv, rsp);
+	osif_check_and_unlink_bss(vdev, rsp);
 
 	status = osif_validate_connect_and_reset_src_id(osif_priv, rsp);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -902,7 +899,7 @@ QDF_STATUS osif_failed_candidate_handler(struct wlan_objmgr_vdev *vdev,
 	 * connection on other links.
 	 */
 	if (!wlan_vdev_mlme_is_mlo_vdev(vdev))
-		osif_check_and_unlink_bss(vdev, osif_priv, rsp);
+		osif_check_and_unlink_bss(vdev, rsp);
 
 	return QDF_STATUS_SUCCESS;
 }

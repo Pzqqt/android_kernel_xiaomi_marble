@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1557,6 +1557,10 @@ struct wlan_ie_vhtop {
 	uint16_t vhtop_basic_mcs_set;
 } qdf_packed;
 
+#define WLAN_HE_PHYCAP_SU_BFER_OFFSET 3
+#define WLAN_HE_PHYCAP_SU_BFER_IDX 7
+#define WLAN_HE_PHYCAP_SU_BFER_BITS 1
+
 #define WLAN_HE_PHYCAP_160_SUPPORT BIT(2)
 #define WLAN_HE_PHYCAP_80_80_SUPPORT BIT(3)
 #define WLAN_HE_MACCAP_LEN 6
@@ -2855,7 +2859,6 @@ is_p2p_oui(const uint8_t *frm)
 		(frm[5] == P2P_WFA_VER);
 }
 
-#define WLAN_VENDOR_SON_IE_LEN 31
 /**
  * is_qca_son_oui() - If vendor IE is QCA WHC type
  * @frm: vendor IE pointer

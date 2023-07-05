@@ -84,12 +84,33 @@ reg_set_5dot9_ghz_chan_in_master_mode(struct wlan_regulatory_psoc_priv_obj
 {
 	soc_reg_obj->enable_5dot9_ghz_chan_in_master_mode = false;
 }
+
+static void
+reg_init_indoor_channel_list(struct wlan_regulatory_pdev_priv_obj
+			     *pdev_priv_obj)
+{
+	struct indoor_concurrency_list *list;
+	uint8_t i;
+
+	list = pdev_priv_obj->indoor_list;
+	for (i = 0; i < MAX_INDOOR_LIST_SIZE; i++, list++) {
+		list->freq = 0;
+		list->vdev_id = INVALID_VDEV_ID;
+		list->chan_range = NULL;
+	}
+}
 #else
 static void
 reg_set_5dot9_ghz_chan_in_master_mode(struct wlan_regulatory_psoc_priv_obj
 				      *soc_reg_obj)
 {
 	soc_reg_obj->enable_5dot9_ghz_chan_in_master_mode = true;
+}
+
+static void
+reg_init_indoor_channel_list(struct wlan_regulatory_pdev_priv_obj
+			     *pdev_priv_obj)
+{
 }
 #endif
 
@@ -381,6 +402,8 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 	reg_save_reg_rules_to_pdev(psoc_reg_rules, pdev_priv_obj);
 	pdev_priv_obj->chan_list_recvd =
 		psoc_priv_obj->chan_list_recvd[phy_id];
+
+	reg_init_indoor_channel_list(pdev_priv_obj);
 
 	status = wlan_objmgr_pdev_component_obj_attach(
 			pdev, WLAN_UMAC_COMP_REGULATORY, pdev_priv_obj,

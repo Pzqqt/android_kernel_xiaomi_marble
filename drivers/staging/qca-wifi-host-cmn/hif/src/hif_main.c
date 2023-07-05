@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -386,9 +386,54 @@ static const struct qwlan_hw qwlan_hw_list[] = {
 		.name = "QCA6490",
 	},
 	{
-		.id = WCN3990_v2_2,
+		.id = WCN3990_TALOS,
 		.subid = 0,
-		.name = "WCN3990_v2_2",
+		.name = "WCN3990",
+	},
+	{
+		.id = WCN3990_MOOREA,
+		.subid = 0,
+		.name = "WCN3990",
+	},
+	{
+		.id = WCN3990_SAIPAN,
+		.subid = 0,
+		.name = "WCN3990",
+	},
+	{
+		.id = WCN3990_RENNELL,
+		.subid = 0,
+		.name = "WCN3990",
+	},
+	{
+		.id = WCN3990_BITRA,
+		.subid = 0,
+		.name = "WCN3990",
+	},
+	{
+		.id = WCN3990_DIVAR,
+		.subid = 0,
+		.name = "WCN3990",
+	},
+	{
+		.id = WCN3990_ATHERTON,
+		.subid = 0,
+		.name = "WCN3990",
+	},
+	{
+		.id = WCN3990_STRAIT,
+		.subid = 0,
+		.name = "WCN3990",
+	},
+	{
+		.id = WCN3990_NETRANI,
+		.subid = 0,
+		.name = "WCN3990",
+	},
+	{
+		.id = WCN3990_CLARENCE,
+		.subid = 0,
+		.name = "WCN3990",
 	}
 };
 

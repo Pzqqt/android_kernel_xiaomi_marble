@@ -185,20 +185,23 @@ QDF_STATUS ucfg_scan_pno_start(struct wlan_objmgr_vdev *vdev,
 	return status;
 }
 
-void ucfg_scan_pno_add_all_valid_6g_channels(struct wlan_objmgr_vdev *vdev,
-					     struct pno_scan_req_params *req,
-					     uint8_t *num_scan_ch)
+void ucfg_scan_add_flags_to_pno_chan_list(struct wlan_objmgr_vdev *vdev,
+					  struct pno_scan_req_params *req,
+					  uint8_t *num_chan,
+					  uint32_t short_ssid,
+					  int list_idx)
 {
-	struct wlan_objmgr_pdev *pdev;
-	struct chan_list *pno_chan_list = &req->networks_list[0].pno_chan_list;
-	bool is_colocated_6ghz = req->scan_policy_colocated_6ghz;
+	struct chan_list *pno_chan_list =
+				    &req->networks_list[list_idx].pno_chan_list;
 
-	pdev = wlan_vdev_get_pdev(vdev);
-	if (!pdev)
-		return;
-
-	scm_add_all_valid_6g_channels(pdev, pno_chan_list, num_scan_ch,
-				      is_colocated_6ghz);
+	/* Add RNR flags to channels based on scan_mode_6g ini */
+	scm_add_channel_flags(vdev, pno_chan_list, num_chan,
+			      req->scan_policy_colocated_6ghz, true);
+	/* Filter RNR flags in pno channel list based on short ssid entry in
+	 * RNR db cache.
+	 */
+	scm_filter_rnr_flag_pno(vdev, short_ssid,
+				&req->networks_list[0].pno_chan_list);
 }
 
 QDF_STATUS ucfg_scan_pno_stop(struct wlan_objmgr_vdev *vdev)

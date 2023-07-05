@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -545,6 +545,18 @@ wlan_serialization_non_scan_cmd_status(struct wlan_objmgr_pdev *pdev,
 bool wlan_serialization_is_cmd_present_in_pending_queue(
 		struct wlan_objmgr_psoc *psoc,
 		struct wlan_serialization_command *cmd);
+
+/**
+ * wlan_ser_is_non_scan_cmd_type_in_vdev_queue() - check if a non scan cmd
+ * type is present in pending vdev queue, without checking the cmd id
+ * @vdev: vdev on which cmd need to be check
+ * @cmd_type: command type to check
+ *
+ * Return: true or false
+ */
+bool wlan_ser_is_non_scan_cmd_type_in_vdev_queue(struct wlan_objmgr_vdev *vdev,
+				enum wlan_serialization_cmd_type cmd_type);
+
 /**
  * wlan_serialization_is_cmd_present_in_active_queue() - Return if the command
  *			is already present in active queue

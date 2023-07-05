@@ -1257,6 +1257,31 @@ void hif_pm_set_link_state(struct hif_opaque_softc *hif_handle, uint8_t val);
  * Return: 1 link is up, 0 link is down
  */
 uint8_t hif_pm_get_link_state(struct hif_opaque_softc *hif_handle);
+
+/**
+ * hif_pm_runtime_set_delay() - Set delay to trigger RTPM suspend
+ * @hif_sc: HIF Context
+ * @delay: delay in ms to be set
+ *
+ * Return: Success if delay is set successfully
+ */
+QDF_STATUS hif_pm_runtime_set_delay(struct hif_opaque_softc *hif_ctx,
+				    int delay);
+
+/**
+ * hif_pm_runtime_restore_delay() - Restore delay value to default value
+ *
+ * Return: Success if reset done. E_ALREADY if delay same as config value
+ */
+QDF_STATUS hif_pm_runtime_restore_delay(struct hif_opaque_softc *hif_ctx);
+
+/**
+ * hif_pm_runtime_get_delay() -Get delay to trigger RTPM suspend
+ *
+ * Return: Delay in ms
+ */
+int hif_pm_runtime_get_delay(struct hif_opaque_softc *hif_ctx);
+
 #else
 struct hif_pm_runtime_lock {
 	const char *name;
@@ -1342,6 +1367,18 @@ void hif_pm_runtime_update_stats(struct hif_opaque_softc *hif_ctx,
 				 wlan_rtpm_dbgid rtpm_dbgid,
 				 enum hif_pm_htc_stats stats)
 {}
+
+static inline
+QDF_STATUS hif_pm_runtime_set_delay(struct hif_opaque_softc *hif_ctx, int delay)
+{ return QDF_STATUS_SUCCESS; }
+
+static inline
+QDF_STATUS hif_pm_runtime_restore_delay(struct hif_opaque_softc *hif_ctx)
+{ return QDF_STATUS_SUCCESS; }
+
+static inline
+int hif_pm_runtime_get_delay(struct hif_opaque_softc *hif_ctx)
+{ return 0; }
 #endif
 
 void hif_enable_power_management(struct hif_opaque_softc *hif_ctx,

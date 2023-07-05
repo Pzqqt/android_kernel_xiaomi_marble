@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -345,6 +346,10 @@ qdf_nbuf_t wbuff_buff_put(qdf_nbuf_t buf)
 
 	mslot = (slot_info & WBUFF_MSLOT_BITMASK) >> WBUFF_MSLOT_SHIFT;
 	pslot = (slot_info & WBUFF_PSLOT_BITMASK) >> WBUFF_PSLOT_SHIFT;
+
+	if (mslot >= WBUFF_MAX_MODULES || pslot >= WBUFF_MAX_POOLS)
+		return NULL;
+
 	qdf_nbuf_reset(buffer, wbuff.mod[mslot].reserve, wbuff.mod[mslot].
 		       align);
 	qdf_spin_lock_bh(&wbuff.mod[mslot].lock);

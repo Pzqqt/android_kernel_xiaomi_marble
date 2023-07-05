@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1957,23 +1957,28 @@ uint32_t hif_ce_history_max = HIF_CE_HISTORY_MAX;
  */
 #if defined(CONFIG_SLUB_DEBUG_ON)
 #define CE_DESC_HISTORY_BUFF_CNT  CE_COUNT_MAX
-#define IS_CE_DEBUG_ONLY_FOR_CE2_CE3  FALSE
+#define IS_CE_DEBUG_ONLY_FOR_CRIT_CE  0
 #else
-#define CE_DESC_HISTORY_BUFF_CNT  2
-#define IS_CE_DEBUG_ONLY_FOR_CE2_CE3  TRUE
+/* CE2, CE3, CE7 */
+#define CE_DESC_HISTORY_BUFF_CNT  3
+#define IS_CE_DEBUG_ONLY_FOR_CRIT_CE (BIT(2) | BIT(3) | BIT(7))
 #endif
 struct hif_ce_desc_event
 	hif_ce_desc_history_buff[CE_DESC_HISTORY_BUFF_CNT][HIF_CE_HISTORY_MAX];
 
 static struct hif_ce_desc_event *
-	hif_ce_debug_history_buf_get(unsigned int ce_id)
+	hif_ce_debug_history_buf_get(struct hif_softc *scn, unsigned int ce_id)
 {
-	hif_debug("get ce debug buffer ce_id %u, only_ce2/ce3=%d",
-		  ce_id, IS_CE_DEBUG_ONLY_FOR_CE2_CE3);
-	if (IS_CE_DEBUG_ONLY_FOR_CE2_CE3 &&
-	    (ce_id == CE_ID_2 || ce_id == CE_ID_3)) {
-		hif_ce_desc_history[ce_id] =
-			hif_ce_desc_history_buff[ce_id - CE_ID_2];
+	struct ce_desc_hist *ce_hist = &scn->hif_ce_desc_hist;
+
+	hif_debug("get ce debug buffer ce_id %u, only_ce2/ce3=%d, idx=%u",
+		  ce_id, IS_CE_DEBUG_ONLY_FOR_CRIT_CE,
+		  ce_hist->ce_id_hist_map[ce_id]);
+	if (IS_CE_DEBUG_ONLY_FOR_CRIT_CE &&
+	    (ce_id == CE_ID_2 || ce_id == CE_ID_3 || ce_id == CE_ID_7)) {
+		uint8_t idx = ce_hist->ce_id_hist_map[ce_id];
+
+		hif_ce_desc_history[ce_id] = hif_ce_desc_history_buff[idx];
 	} else {
 		hif_ce_desc_history[ce_id] =
 			hif_ce_desc_history_buff[ce_id];
@@ -1997,15 +2002,16 @@ alloc_mem_ce_debug_history(struct hif_softc *scn, unsigned int ce_id,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	/* For perf build, return directly for non ce2/ce3 */
-	if (IS_CE_DEBUG_ONLY_FOR_CE2_CE3 &&
+	if (IS_CE_DEBUG_ONLY_FOR_CRIT_CE &&
 	    ce_id != CE_ID_2 &&
-	    ce_id != CE_ID_3) {
+	    ce_id != CE_ID_3 &&
+	    ce_id != CE_ID_7) {
 		ce_hist->enable[ce_id] = false;
 		ce_hist->data_enable[ce_id] = false;
 		return QDF_STATUS_SUCCESS;
 	}
 
-	ce_hist->hist_ev[ce_id] = hif_ce_debug_history_buf_get(ce_id);
+	ce_hist->hist_ev[ce_id] = hif_ce_debug_history_buf_get(scn, ce_id);
 	ce_hist->enable[ce_id] = true;
 
 	if (src_nentries) {
@@ -4271,6 +4277,25 @@ err:
 	return rv;
 }
 
+#if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
+static inline void hif_gen_ce_id_history_idx_mapping(struct hif_softc *scn)
+{
+	struct ce_desc_hist *ce_hist = &scn->hif_ce_desc_hist;
+	uint8_t ce_id, hist_idx = 0;
+
+	for (ce_id = 0; ce_id < scn->ce_count; ce_id++) {
+		if (IS_CE_DEBUG_ONLY_FOR_CRIT_CE & (1 << ce_id))
+			ce_hist->ce_id_hist_map[ce_id] = hist_idx++;
+		else
+			ce_hist->ce_id_hist_map[ce_id] = -1;
+	}
+}
+#else
+static inline void hif_gen_ce_id_history_idx_mapping(struct hif_softc *scn)
+{
+}
+#endif
+
 /**
  * hif_config_ce() - configure copy engines
  * @scn: hif context
@@ -4310,6 +4335,7 @@ int hif_config_ce(struct hif_softc *scn)
 	 * index. Disable data storing
 	 */
 	reset_ce_debug_history(scn);
+	hif_gen_ce_id_history_idx_mapping(scn);
 
 	for (pipe_num = 0; pipe_num < scn->ce_count; pipe_num++) {
 		struct CE_attr *attr;

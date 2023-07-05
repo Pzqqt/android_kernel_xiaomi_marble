@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -248,6 +249,24 @@ QDF_STATUS scm_rnr_db_flush(struct wlan_objmgr_psoc *psoc);
  */
 void scm_update_rnr_from_scan_cache(struct wlan_objmgr_pdev *pdev);
 
+/**
+ * scm_filter_rnr_flag_pno() - Remove FLAG_SCAN_ONLY_IF_RNR_FOUND flag
+ *                             in channel if ssid is different for colocated AP,
+ *                             during pno scan request
+ * @vdev: vdev
+ * @short_ssid: short ssid
+ * @pno_chan_list: channel list
+ *
+ * Remove FLAG_SCAN_ONLY_IF_RNR_FOUND flag in channel if ssid is different for
+ * colocated AP, in pno scan request
+ *
+ * Return: None
+ */
+void
+scm_filter_rnr_flag_pno(struct wlan_objmgr_vdev *vdev,
+			uint32_t short_ssid,
+			struct chan_list *chan_list);
+
 #else
 static inline QDF_STATUS scm_channel_list_db_init(struct wlan_objmgr_psoc *psoc)
 {
@@ -258,6 +277,13 @@ static inline
 QDF_STATUS scm_channel_list_db_deinit(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+static inline void
+scm_filter_rnr_flag_pno(struct wlan_objmgr_vdev *vdev,
+			uint32_t short_ssid,
+			struct chan_list *chan_list)
+{
 }
 #endif
 

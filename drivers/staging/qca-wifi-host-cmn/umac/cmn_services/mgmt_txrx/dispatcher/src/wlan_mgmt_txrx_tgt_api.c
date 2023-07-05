@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -208,6 +209,15 @@ mgmt_get_public_action_subtype(uint8_t action_code)
 		break;
 	case PUB_ACTION_GAS_COMEBACK_RESPONSE:
 		frm_type = MGMT_ACTION_GAS_COMEBACK_RESPONSE;
+		break;
+	case PUB_ACTION_FTM_REQUEST:
+		frm_type = MGMT_ACTION_FTM_REQUEST;
+		break;
+	case PUB_ACTION_FTM_RESPONSE:
+		frm_type = MGMT_ACTION_FTM_RESPONSE;
+		break;
+	case PUB_ACTION_FILS_DISCOVERY:
+		frm_type = MGMT_ACTION_FILS_DISCOVERY;
 		break;
 	default:
 		frm_type = MGMT_FRM_UNSPECIFIED;
@@ -757,6 +767,38 @@ mgmt_get_rvs_action_subtype(uint8_t action_code)
 }
 
 /**
+ * mgmt_get_twt_action_subtype() - gets twt action subtype
+ * @action_code: action code
+ *
+ * This function returns the subtype for twt action
+ * category.
+ *
+ * Return: mgmt frame type
+ */
+static enum mgmt_frame_type
+mgmt_get_twt_action_subtype(uint8_t action_code)
+{
+	enum mgmt_frame_type frm_type;
+
+	switch (action_code) {
+	case TWT_SETUP:
+		frm_type = MGMT_ACTION_TWT_SETUP;
+		break;
+	case TWT_TEARDOWN:
+		frm_type = MGMT_ACTION_TWT_TEARDOWN;
+		break;
+	case TWT_INFORMATION:
+		frm_type = MGMT_ACTION_TWT_INFORMATION;
+		break;
+	default:
+		frm_type = MGMT_FRM_UNSPECIFIED;
+		break;
+	}
+
+	return frm_type;
+}
+
+/**
  * mgmt_txrx_get_action_frm_subtype() - gets action frm subtype
  * @mpdu_data_ptr: pointer to mpdu data
  *
@@ -841,6 +883,10 @@ mgmt_txrx_get_action_frm_subtype(uint8_t *mpdu_data_ptr)
 	case ACTION_CATEGORY_RVS:
 		frm_type =
 			mgmt_get_rvs_action_subtype(action_hdr->action_code);
+		break;
+	case ACTION_CATEGORY_USIG:
+		frm_type =
+			mgmt_get_twt_action_subtype(action_hdr->action_code);
 		break;
 	default:
 		frm_type = MGMT_FRM_UNSPECIFIED;

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -315,7 +315,7 @@ ce_sendlist_send_srng(struct CE_handle *copyeng,
 #endif
 /**
  * ce_recv_buf_enqueue_srng() - enqueue a recv buffer into a copy engine
- * @coyeng: copy engine handle
+ * @copyeng: copy engine handle
  * @per_recv_context: virtual address of the nbuf
  * @buffer: physical address of the nbuf
  *
@@ -1091,7 +1091,7 @@ static struct ce_ops ce_service_srng = {
 #endif
 };
 
-struct ce_ops *ce_services_srng()
+struct ce_ops *ce_services_srng(void)
 {
 	return &ce_service_srng;
 }

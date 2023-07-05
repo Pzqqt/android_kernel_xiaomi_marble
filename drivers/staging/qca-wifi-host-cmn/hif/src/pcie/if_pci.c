@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1691,6 +1691,30 @@ void hif_pci_close(struct hif_softc *hif_sc)
 
 #define BAR_NUM 0
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 18, 0))
+static inline int hif_pci_set_dma_mask(struct pci_dev *pci_dev, u64 mask)
+{
+	return dma_set_mask(&pci_dev->dev, mask);
+}
+
+static inline int hif_pci_set_coherent_dma_mask(struct pci_dev *pci_dev,
+						u64 mask)
+{
+	return dma_set_coherent_mask(&pci_dev->dev, mask);
+}
+#else /* (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 18, 0)) */
+static inline int hif_pci_set_dma_mask(struct pci_dev *pci_dev, u64 mask)
+{
+	return pci_set_dma_mask(pci_dev, mask);
+}
+
+static inline int hif_pci_set_coherent_dma_mask(struct pci_dev *pci_dev,
+						u64 mask)
+{
+	return pci_set_consistent_dma_mask(pci_dev, mask);
+}
+#endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 18, 0)) */
+
 static int hif_enable_pci_nopld(struct hif_pci_softc *sc,
 				struct pci_dev *pdev,
 				const struct pci_device_id *id)
@@ -1735,25 +1759,25 @@ static int hif_enable_pci_nopld(struct hif_pci_softc *sc,
 	/* if CONFIG_ARM_LPAE is enabled, we have to set 64 bits mask
 	 * for 32 bits device also.
 	 */
-	ret =  pci_set_dma_mask(pdev, DMA_BIT_MASK(64));
+	ret =  hif_pci_set_dma_mask(pdev, DMA_BIT_MASK(64));
 	if (ret) {
 		hif_err("Cannot enable 64-bit pci DMA");
 		goto err_dma;
 	}
-	ret = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(64));
+	ret = hif_pci_set_coherent_dma_mask(pdev, DMA_BIT_MASK(64));
 	if (ret) {
 		hif_err("Cannot enable 64-bit DMA");
 		goto err_dma;
 	}
 #else
-	ret = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
+	ret = hif_pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
 	if (ret) {
 		hif_err("Cannot enable 32-bit pci DMA");
 		goto err_dma;
 	}
-	ret = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(32));
+	ret = hif_pci_set_coherent_dma_mask(pdev, DMA_BIT_MASK(32));
 	if (ret) {
-		hif_err("Cannot enable 32-bit consistent DMA!");
+		hif_err("Cannot enable 32-bit coherent DMA!");
 		goto err_dma;
 	}
 #endif

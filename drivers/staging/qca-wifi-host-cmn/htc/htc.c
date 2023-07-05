@@ -1018,7 +1018,9 @@ void htc_stop(HTC_HANDLE HTCHandle)
 		endpoint = &target->endpoint[i];
 		if (endpoint->service_id == WMI_CONTROL_SVC)
 			htc_flush_endpoint_txlookupQ(target, i, false);
-		else if (endpoint->service_id == HTC_CTRL_RSVD_SVC)
+		else if (endpoint->service_id == HTC_CTRL_RSVD_SVC ||
+			 (endpoint->service_id == HTT_DATA_MSG_SVC &&
+			  !endpoint->ul_is_polled))
 			htc_flush_endpoint_txlookupQ(target, i, true);
 	}
 	HTC_INFO("%s: resetting endpoints state\n", __func__);

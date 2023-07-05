@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -387,12 +387,15 @@ send_mlo_link_set_active_cmd_tlv(wmi_unified_t wmi_handle,
 	case WMI_MLO_LINK_FORCE_ACTIVE_LINK_NUM:
 	case WMI_MLO_LINK_FORCE_INACTIVE_LINK_NUM:
 		num_link_num_param = param->num_link_entry;
-		/* fallthrough */
+		fallthrough;
 	case WMI_MLO_LINK_FORCE_ACTIVE:
 	case WMI_MLO_LINK_FORCE_INACTIVE:
 	case WMI_MLO_LINK_NO_FORCE:
 		num_vdev_bitmap = param->num_vdev_bitmap;
 		break;
+	default:
+		wmi_err("Invalid force reason: %d", force_mode);
+		return QDF_STATUS_E_INVAL;
 	}
 
 	len = sizeof(*cmd) +

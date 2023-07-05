@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2019,2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,12 +30,6 @@
 #include <qdf_module.h>
 #include <qdf_defer.h>
 
-/**
- * __qdf_defer_func() - defer work handler
- * @work: Pointer to defer work
- *
- * Return: none
- */
 void __qdf_defer_func(struct work_struct *work)
 {
 	__qdf_work_t *ctx = container_of(work, __qdf_work_t, work);
@@ -47,6 +42,19 @@ void __qdf_defer_func(struct work_struct *work)
 	ctx->fn(ctx->arg);
 }
 qdf_export_symbol(__qdf_defer_func);
+
+void __qdf_bh_func(unsigned long arg)
+{
+	__qdf_bh_t *ctx = (__qdf_bh_t *)arg;
+
+	if (!ctx->fn) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "No callback registered !!");
+		return;
+	}
+	ctx->fn(ctx->arg);
+}
+qdf_export_symbol(__qdf_bh_func);
 
 #ifdef ENHANCED_OS_ABSTRACTION
 void

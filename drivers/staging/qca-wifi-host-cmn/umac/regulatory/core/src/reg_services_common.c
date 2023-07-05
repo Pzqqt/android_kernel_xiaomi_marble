@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2118,7 +2118,7 @@ bool reg_is_freq_indoor(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
 
 	chan_enum = reg_get_chan_enum_for_freq(freq);
 
-	if (chan_enum == INVALID_CHANNEL) {
+	if (reg_is_chan_enum_invalid(chan_enum)) {
 		reg_err_rl("Invalid chan enum %d", chan_enum);
 		return false;
 	}
@@ -2146,7 +2146,7 @@ bool reg_is_freq_indoor_in_secondary_list(struct wlan_objmgr_pdev *pdev,
 
 	chan_enum = reg_get_chan_enum_for_freq(freq);
 
-	if (chan_enum == INVALID_CHANNEL) {
+	if (reg_is_chan_enum_invalid(chan_enum)) {
 		reg_err_rl("Invalid chan enum %d", chan_enum);
 		return false;
 	}
@@ -3441,7 +3441,7 @@ enum channel_state reg_get_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 
 	ch_idx = reg_get_chan_enum_for_freq(freq);
 
-	if (ch_idx == INVALID_CHANNEL)
+	if (reg_is_chan_enum_invalid(ch_idx))
 		return CHANNEL_STATE_INVALID;
 
 	pdev_priv_obj = reg_get_pdev_obj(pdev);
@@ -3462,7 +3462,7 @@ static uint32_t reg_get_channel_flags_for_freq(struct wlan_objmgr_pdev *pdev,
 
 	chan_enum = reg_get_chan_enum_for_freq(freq);
 
-	if (chan_enum == INVALID_CHANNEL) {
+	if (reg_is_chan_enum_invalid(chan_enum)) {
 		reg_err("chan freq is not valid");
 		return REGULATORY_CHAN_INVALID;
 	}
@@ -3487,7 +3487,7 @@ enum channel_state reg_get_channel_state_from_secondary_list_for_freq(
 
 	ch_idx = reg_get_chan_enum_for_freq(freq);
 
-	if (ch_idx == INVALID_CHANNEL)
+	if (reg_is_chan_enum_invalid(ch_idx))
 		return CHANNEL_STATE_INVALID;
 
 	pdev_priv_obj = reg_get_pdev_obj(pdev);
@@ -3509,7 +3509,7 @@ static uint32_t reg_get_channel_flags_from_secondary_list_for_freq(
 
 	chan_enum = reg_get_chan_enum_for_freq(freq);
 
-	if (chan_enum == INVALID_CHANNEL) {
+	if (reg_is_chan_enum_invalid(chan_enum)) {
 		reg_err_rl("chan freq %u is not valid", freq);
 		return REGULATORY_CHAN_INVALID;
 	}
@@ -3693,7 +3693,7 @@ reg_get_5g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 	reg_channels = pdev_priv_obj->cur_chan_list;
 
 	ch_indx = reg_get_chan_enum_for_freq(freq);
-	if (ch_indx == INVALID_CHANNEL)
+	if (reg_is_chan_enum_invalid(ch_indx))
 		return CHANNEL_STATE_INVALID;
 	if (bw == CH_WIDTH_5MHZ)
 		bw_enabled = true;
@@ -3765,7 +3765,7 @@ reg_get_2g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 		return chan_state;
 
 	chan_idx = reg_get_chan_enum_for_freq(oper_ch_freq);
-	if (chan_idx == INVALID_CHANNEL)
+	if (reg_is_chan_enum_invalid(chan_idx))
 		return CHANNEL_STATE_INVALID;
 	if (bw == CH_WIDTH_5MHZ)
 		bw_enabled = true;
@@ -3991,7 +3991,7 @@ reg_fill_channel_list_for_320(struct wlan_objmgr_pdev *pdev,
 	*update_bw = false;
 
 	chan_enum = reg_get_chan_enum_for_freq(freq);
-	if (chan_enum == INVALID_CHANNEL) {
+	if (reg_is_chan_enum_invalid(chan_enum)) {
 		reg_err("chan freq is not valid");
 		return;
 	}
@@ -4246,7 +4246,7 @@ static void reg_set_5g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 	}
 
 	chan_enum = reg_get_chan_enum_for_freq(freq);
-	if (chan_enum == INVALID_CHANNEL) {
+	if (reg_is_chan_enum_invalid(chan_enum)) {
 		reg_err("chan freq is not valid");
 		return;
 	}
@@ -4271,7 +4271,7 @@ static void reg_set_5g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 		sec_5g_chan_enum =
 			reg_get_chan_enum_for_freq(ch_params->mhz_freq_seg1 -
 					NEAREST_20MHZ_CHAN_FREQ_OFFSET);
-		if (sec_5g_chan_enum == INVALID_CHANNEL) {
+		if (reg_is_chan_enum_invalid(sec_5g_chan_enum)) {
 			reg_err("secondary channel freq is not valid");
 			return;
 		}
@@ -4425,7 +4425,7 @@ void reg_set_2g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 	uint16_t max_bw;
 
 	chan_enum = reg_get_chan_enum_for_freq(oper_freq);
-	if (chan_enum == INVALID_CHANNEL) {
+	if (reg_is_chan_enum_invalid(chan_enum)) {
 		reg_err("chan freq is not valid");
 		return;
 	}
@@ -4557,7 +4557,7 @@ uint8_t reg_get_channel_reg_power_for_freq(struct wlan_objmgr_pdev *pdev,
 
 	chan_enum = reg_get_chan_enum_for_freq(freq);
 
-	if (chan_enum == INVALID_CHANNEL) {
+	if (reg_is_chan_enum_invalid(chan_enum)) {
 		reg_err("channel is invalid");
 		return REG_INVALID_TXPOWER;
 	}
@@ -4662,7 +4662,7 @@ void reg_update_nol_ch_for_freq(struct wlan_objmgr_pdev *pdev,
 
 	for (i = 0; i < num_chan; i++) {
 		chan_enum = reg_get_chan_enum_for_freq(chan_freq_list[i]);
-		if (chan_enum == INVALID_CHANNEL) {
+		if (reg_is_chan_enum_invalid(chan_enum)) {
 			reg_err("Invalid freq in nol list, freq %d",
 				chan_freq_list[i]);
 			continue;
@@ -4712,7 +4712,7 @@ void reg_update_nol_history_ch_for_freq(struct wlan_objmgr_pdev *pdev,
 
 	for (i = 0; i < num_chan; i++) {
 		chan_enum = reg_get_chan_enum_for_freq(chan_list[i]);
-		if (chan_enum == INVALID_CHANNEL) {
+		if (reg_is_chan_enum_invalid(chan_enum)) {
 			reg_err("Invalid ch in nol list, chan %d",
 				chan_list[i]);
 			continue;
@@ -5108,6 +5108,72 @@ enum band_info reg_band_bitmap_to_band_info(uint32_t band_bitmap)
 	else
 		return BAND_UNKNOWN;
 }
+
+QDF_STATUS
+reg_add_indoor_concurrency(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			   uint32_t freq, enum phy_ch_width width)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	struct indoor_concurrency_list *list;
+	const struct bonded_channel_freq *range = NULL;
+	uint8_t i = 0;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (width > CH_WIDTH_20MHZ)
+		range = wlan_reg_get_bonded_chan_entry(freq, width);
+
+	list = &pdev_priv_obj->indoor_list[0];
+	for (i = 0; i < MAX_INDOOR_LIST_SIZE; i++, list++) {
+		if (list->freq == 0 && list->vdev_id == INVALID_VDEV_ID) {
+			list->freq = freq;
+			list->vdev_id = vdev_id;
+			list->chan_range = range;
+			reg_debug("Added freq %d vdev %d width %d at idx %d",
+				  freq, vdev_id, width, i);
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+	reg_err("Unable to add indoor concurrency for vdev %d freq %d width %d",
+		vdev_id, freq, width);
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+reg_remove_indoor_concurrency(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			      uint32_t freq)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	struct indoor_concurrency_list *list;
+	uint8_t i = 0;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	list = &pdev_priv_obj->indoor_list[0];
+	for (i = 0; i < MAX_INDOOR_LIST_SIZE; i++, list++) {
+		if (list->freq == freq ||
+		    (vdev_id != INVALID_VDEV_ID && list->vdev_id == vdev_id)) {
+			reg_debug("Removed freq %d from idx %d", list->freq, i);
+			list->freq = 0;
+			list->vdev_id = INVALID_VDEV_ID;
+			list->chan_range = NULL;
+			return QDF_STATUS_SUCCESS;
+		}
+		continue;
+	}
+	return QDF_STATUS_E_FAILURE;
+}
+
 #endif
 
 #if defined(CONFIG_BAND_6GHZ)
@@ -6420,8 +6486,8 @@ reg_process_ch_avoid_freq_ext(struct wlan_objmgr_psoc *psoc,
 			}
 		}
 
-		if (start_ch_idx == INVALID_CHANNEL ||
-		    end_ch_idx == INVALID_CHANNEL)
+		if (reg_is_chan_enum_invalid(start_ch_idx) ||
+		    reg_is_chan_enum_invalid(end_ch_idx))
 			continue;
 
 		for (ch_loop = start_ch_idx; ch_loop <= end_ch_idx;

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -42,6 +42,11 @@
 
 #ifdef __KERNEL__
 #include <generated/autoconf.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+#include <linux/stdarg.h>
+#else
+#include <stdarg.h>
+#endif
 #include <linux/list.h>
 #include <linux/mutex.h>
 #include <linux/types.h>
@@ -401,6 +406,12 @@ enum __qdf_net_wireless_evcode {
 
 #else
 #error "Compiling with an unknown compiler!!"
+#endif
+
+#ifndef fallthrough
+
+#define fallthrough do {} while (0) /* fallthrough */
+
 #endif
 
 #endif /* __I_QDF_TYPES_H */

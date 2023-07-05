@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -90,6 +90,22 @@ QDF_STATUS wlan_scan_cfg_set_passive_6g_dwelltime(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_scan_cfg_get_passive_6g_dwelltime(struct wlan_objmgr_psoc *psoc,
 						  uint32_t *dwell_time);
+
+/**
+ * wlan_scan_cfg_get_min_dwelltime_6g() - API to get minimum 6g dwelltime
+ * @psoc: pointer to psoc object
+ * @min_dwell_time_6ghz: minimum dwelltime 6g
+ *
+ * Return: QDF_STATUS
+ */
+void wlan_scan_cfg_get_min_dwelltime_6g(struct wlan_objmgr_psoc *psoc,
+					uint32_t *min_dwell_time_6ghz);
+#else
+static inline
+void wlan_scan_cfg_get_min_dwelltime_6g(struct wlan_objmgr_psoc *psoc,
+					uint32_t *min_dwell_time_6ghz)
+{
+}
 #endif
 
 /**

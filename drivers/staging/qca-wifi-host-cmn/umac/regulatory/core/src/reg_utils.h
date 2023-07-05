@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -255,15 +255,18 @@ QDF_STATUS reg_get_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
 #ifdef CONFIG_REG_CLIENT
 /**
  * reg_get_6g_power_type_for_ctry() - Return power type for 6G based on cntry IE
- * @ap_ctry: ptr to country string in country IE
- * @sta_ctry: ptr to sta programmed country
- * @pwr_type_6g: ptr to 6G power type
+ * @psoc: pointer to psoc
+ * @pdev: pointer to pdev
+ * @ap_ctry: pointer to country string in country IE
+ * @sta_ctry: pointer to sta programmed country
+ * @pwr_type_6g: pointer to 6G power type
  * @ctry_code_match: Check for country IE and sta country code match
  * @ap_pwr_type: AP's power type as advertised in HE ops IE
  * Return: QDF_STATUS
  */
 QDF_STATUS
 reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
+			       struct wlan_objmgr_pdev *pdev,
 			       uint8_t *ap_ctry, uint8_t *sta_ctry,
 			       enum reg_6g_ap_type *pwr_type_6g,
 			       bool *ctry_code_match,

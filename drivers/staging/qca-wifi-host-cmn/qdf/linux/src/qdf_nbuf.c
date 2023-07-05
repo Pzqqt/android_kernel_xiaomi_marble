@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,6 +41,7 @@
 #include <qdf_types.h>
 #include <net/ieee80211_radiotap.h>
 #include <pld_common.h>
+#include <qdf_crypto.h>
 
 #if defined(FEATURE_TSO)
 #include <net/ipv6.h>
@@ -72,6 +73,10 @@
 #define RADIOTAP_VHT_BW_40	1
 #define RADIOTAP_VHT_BW_80	4
 #define RADIOTAP_VHT_BW_160	11
+
+/* tx status */
+#define RADIOTAP_TX_STATUS_FAIL		1
+#define RADIOTAP_TX_STATUS_NOACK	2
 
 /* channel number to freq conversion */
 #define CHANNEL_NUM_14 14
@@ -1193,6 +1198,7 @@ __qdf_nbuf_set_rx_cksum(struct sk_buff *skb, qdf_nbuf_rx_cksum_t *cksum)
 		break;
 	case QDF_NBUF_RX_CKSUM_TCP_UDP_UNNECESSARY:
 		skb->ip_summed = CHECKSUM_UNNECESSARY;
+		skb->csum_level = cksum->csum_level;
 		break;
 	case QDF_NBUF_RX_CKSUM_TCP_UDP_HW:
 		skb->ip_summed = CHECKSUM_PARTIAL;
@@ -1327,42 +1333,56 @@ __qdf_nbuf_data_get_dhcp_subtype(uint8_t *data)
 	return subtype;
 }
 
+#define EAPOL_WPA_KEY_INFO_ACK BIT(7)
+#define EAPOL_WPA_KEY_INFO_MIC BIT(8)
+#define EAPOL_WPA_KEY_INFO_ENCR_KEY_DATA BIT(12) /* IEEE 802.11i/RSN only */
+
 /**
- * __qdf_nbuf_data_get_eapol_subtype() - get the subtype
- *            of EAPOL packet.
+ * __qdf_nbuf_data_get_eapol_subtype() - get the subtype of EAPOL packet.
  * @data: Pointer to EAPOL packet data buffer
  *
  * This func. returns the subtype of EAPOL packet.
+ *
+ * We can distinguish M1/M3 from M2/M4 by the ack bit in the keyinfo field
+ * The ralationship between the ack bit and EAPOL type is as follows:
+ *
+ *  EAPOL type  |   M1    M2   M3  M4
+ * --------------------------------------
+ *     Ack      |   1     0    1   0
+ * --------------------------------------
+ *
+ * Then, we can differentiate M1 from M3, M2 from M4 by below methods:
+ * M2/M4: by keyDataLength being AES_BLOCK_SIZE for FILS and 0 otherwise.
+ * M1/M3: by the mic/encrKeyData bit in the keyinfo field.
  *
  * Return: subtype of the EAPOL packet.
  */
 enum qdf_proto_subtype
 __qdf_nbuf_data_get_eapol_subtype(uint8_t *data)
 {
-	uint16_t eapol_key_info;
-	enum qdf_proto_subtype subtype = QDF_PROTO_INVALID;
-	uint16_t mask;
+	uint16_t key_info, key_data_length;
+	enum qdf_proto_subtype subtype;
 
-	eapol_key_info = (uint16_t)(*(uint16_t *)
-			(data + EAPOL_KEY_INFO_OFFSET));
+	key_info = qdf_ntohs((uint16_t)(*(uint16_t *)
+			(data + EAPOL_KEY_INFO_OFFSET)));
 
-	mask = eapol_key_info & EAPOL_MASK;
-	switch (mask) {
-	case EAPOL_M1_BIT_MASK:
-		subtype = QDF_PROTO_EAPOL_M1;
-		break;
-	case EAPOL_M2_BIT_MASK:
-		subtype = QDF_PROTO_EAPOL_M2;
-		break;
-	case EAPOL_M3_BIT_MASK:
-		subtype = QDF_PROTO_EAPOL_M3;
-		break;
-	case EAPOL_M4_BIT_MASK:
-		subtype = QDF_PROTO_EAPOL_M4;
-		break;
-	default:
-		break;
-	}
+	key_data_length = qdf_ntohs((uint16_t)(*(uint16_t *)
+				(data + EAPOL_KEY_DATA_LENGTH_OFFSET)));
+
+	if (key_info & EAPOL_WPA_KEY_INFO_ACK)
+		if (key_info &
+		    (EAPOL_WPA_KEY_INFO_MIC | EAPOL_WPA_KEY_INFO_ENCR_KEY_DATA))
+			subtype = QDF_PROTO_EAPOL_M3;
+		else
+			subtype = QDF_PROTO_EAPOL_M1;
+	else
+		if (key_data_length == 0 ||
+		    (!(key_info & EAPOL_WPA_KEY_INFO_MIC) &&
+		     (key_info & EAPOL_WPA_KEY_INFO_ENCR_KEY_DATA) &&
+		     key_data_length == AES_BLOCK_SIZE))
+			subtype = QDF_PROTO_EAPOL_M4;
+		else
+			subtype = QDF_PROTO_EAPOL_M2;
 
 	return subtype;
 }
@@ -4681,7 +4701,9 @@ qdf_nbuf_update_radiotap_eht_flags(struct mon_rx_status *rx_status,
 	put_unaligned_le32(rx_status->eht_data[5], &rtap_buf[rtap_len]);
 	rtap_len += 4;
 
-	for (user = 0; user < rx_status->num_eht_user_info_valid; user++) {
+	for (user = 0; user < EHT_USER_INFO_LEN &&
+	     rx_status->num_eht_user_info_valid &&
+	     user < rx_status->num_eht_user_info_valid; user++) {
 		put_unaligned_le32(rx_status->eht_user_info[user],
 				   &rtap_buf[rtap_len]);
 		rtap_len += 4;
@@ -4742,6 +4764,41 @@ static unsigned int qdf_nbuf_update_radiotap_ampdu_flags(
 #define QDF_MON_STATUS_GET_RSSI_IN_DBM(rx_status) \
 (rx_status->rssi_comb + rx_status->chan_noise_floor)
 #endif
+
+/**
+ * qdf_nbuf_update_radiotap_tx_flags() - Update radiotap header tx flags
+ * @rx_status: Pointer to rx_status.
+ * @rtap_buf: Buf to which tx info has to be updated.
+ * @rtap_len: Current length of radiotap buffer
+ *
+ * Return: Length of radiotap after tx flags updated.
+ */
+static unsigned int qdf_nbuf_update_radiotap_tx_flags(
+						struct mon_rx_status *rx_status,
+						uint8_t *rtap_buf,
+						uint32_t rtap_len)
+{
+	/*
+	 * IEEE80211_RADIOTAP_TX_FLAGS u16
+	 */
+
+	uint16_t tx_flags = 0;
+
+	rtap_len = qdf_align(rtap_len, 2);
+
+	switch (rx_status->tx_status) {
+	case RADIOTAP_TX_STATUS_FAIL:
+		tx_flags |= IEEE80211_RADIOTAP_F_TX_FAIL;
+		break;
+	case RADIOTAP_TX_STATUS_NOACK:
+		tx_flags |= IEEE80211_RADIOTAP_F_TX_NOACK;
+		break;
+	}
+	put_unaligned_le16(tx_flags, &rtap_buf[rtap_len]);
+	rtap_len += 2;
+
+	return rtap_len;
+}
 
 /**
  * qdf_nbuf_update_radiotap() - Update radiotap header from rx_status
@@ -4841,6 +4898,21 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	if ((rtap_len - length) > RADIOTAP_FIXED_HEADER_LEN) {
 		qdf_print("length is greater than RADIOTAP_FIXED_HEADER_LEN");
 		return 0;
+	}
+
+	/* update tx flags for pkt capture*/
+	if (rx_status->add_rtap_ext) {
+		length = rtap_len;
+		it_present_val |=
+			cpu_to_le32(1 << IEEE80211_RADIOTAP_TX_FLAGS);
+		rtap_len = qdf_nbuf_update_radiotap_tx_flags(rx_status,
+							     rtap_buf,
+							     rtap_len);
+
+		if ((rtap_len - length) > RADIOTAP_TX_FLAGS_LEN) {
+			qdf_print("length is greater than RADIOTAP_TX_FLAGS_LEN");
+			return 0;
+		}
 	}
 
 	if (rx_status->ht_flags) {

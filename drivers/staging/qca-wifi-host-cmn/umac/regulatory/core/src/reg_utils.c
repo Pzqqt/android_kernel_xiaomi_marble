@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -57,7 +57,7 @@ bool reg_chan_has_dfs_attribute_for_freq(struct wlan_objmgr_pdev *pdev,
 
 	ch_idx = reg_get_chan_enum_for_freq(freq);
 
-	if (ch_idx == INVALID_CHANNEL)
+	if (reg_is_chan_enum_invalid(ch_idx))
 		return false;
 
 	pdev_priv_obj = reg_get_pdev_obj(pdev);
@@ -376,20 +376,36 @@ QDF_STATUS reg_get_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
 }
 
 #ifdef CONFIG_REG_CLIENT
+#ifdef CONFIG_BAND_6GHZ
 QDF_STATUS
 reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
+			       struct wlan_objmgr_pdev *pdev,
 			       uint8_t *ap_ctry, uint8_t *sta_ctry,
 			       enum reg_6g_ap_type *pwr_type_6g,
 			       bool *ctry_code_match,
 			       enum reg_6g_ap_type ap_pwr_type)
 {
-	*pwr_type_6g = REG_INDOOR_AP;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
 
-	reg_debug("Country IE:%c%c, STA country:%c%c", ap_ctry[0],
-		  ap_ctry[1], sta_ctry[0], sta_ctry[1]);
+	*pwr_type_6g = ap_pwr_type;
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!pdev_priv_obj) {
+		reg_err("pdev priv obj null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	reg_debug("STA country: %c%c, AP country: %c%c, AP power type: %d",
+		  sta_ctry[0], sta_ctry[1], ap_ctry[0], ap_ctry[1],
+		  ap_pwr_type);
 
 	if (!qdf_mem_cmp(ap_ctry, sta_ctry, REG_ALPHA2_LEN)) {
 		*ctry_code_match = true;
+		if (ap_pwr_type == REG_VERY_LOW_POWER_AP) {
+			if (!pdev_priv_obj->reg_rules.num_of_6g_client_reg_rules[ap_pwr_type]) {
+				reg_err("VLP not supported, can't connect");
+				return QDF_STATUS_E_NOSUPPORT;
+			}
+		}
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -429,6 +445,18 @@ reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
+#else
+QDF_STATUS
+reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
+			       struct wlan_objmgr_pdev *pdev,
+			       uint8_t *ap_ctry, uint8_t *sta_ctry,
+			       enum reg_6g_ap_type *pwr_type_6g,
+			       bool *ctry_code_match,
+			       enum reg_6g_ap_type ap_pwr_type)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif
 
 #ifdef FEATURE_WLAN_CH_AVOID_EXT

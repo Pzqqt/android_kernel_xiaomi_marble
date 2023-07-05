@@ -1545,11 +1545,13 @@ enum ext_cap_bit_field {
  * @timestamp: time stamp of beacon/probe
  * @short_ssid: Short SSID
  * @bssid: BSSID
+ * @bss_params: bss params present in RNR IE
  */
 struct scan_rnr_info {
 	qdf_time_t timestamp;
 	uint32_t short_ssid;
 	struct qdf_mac_addr bssid;
+	uint8_t bss_params;
 };
 
 /**

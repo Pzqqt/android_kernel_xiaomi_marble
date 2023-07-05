@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -145,6 +145,8 @@
  * @QCA_NL80211_VENDOR_SUBCMD_THERMAL_INDEX: Report thermal event index
  * @QCA_NL80211_VENDOR_SUBCMD_CONFIG_TWT_INDEX: TWT config index
  * @QCA_NL80211_VENDOR_SUBCMD_PEER_CFR_CAPTURE_CFG_INDEX: CFR data event index
+ * @QCA_NL80211_VENDOR_SUBCMD_DRIVER_DISCONNECT_REASON_INDEX:
+ *	Driver disconnect reason index
  */
 
 enum qca_nl80211_vendor_subcmds_index {
@@ -238,6 +240,7 @@ enum qca_nl80211_vendor_subcmds_index {
 	QCA_NL80211_VENDOR_SUBCMD_WIFI_FW_STATS_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_MBSSID_TX_VDEV_STATUS_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_THERMAL_INDEX,
+	QCA_NL80211_VENDOR_SUBCMD_DRIVER_DISCONNECT_REASON_INDEX,
 #ifdef WLAN_SUPPORT_TWT
 	QCA_NL80211_VENDOR_SUBCMD_CONFIG_TWT_INDEX,
 #endif
@@ -499,6 +502,15 @@ static inline void wlan_cfg80211_unregister_netdevice(struct net_device *dev)
 #endif
 
 #ifdef CFG80211_SINGLE_NETDEV_MULTI_LINK_SUPPORT
+#ifdef CFG80211_RU_PUNCT_NOTIFY
+static inline
+void wlan_cfg80211_ch_switch_notify(struct net_device *dev,
+				    struct cfg80211_chan_def *chandef,
+				    unsigned int link_id)
+{
+	cfg80211_ch_switch_notify(dev, chandef, link_id, 0);
+}
+#else
 static inline
 void wlan_cfg80211_ch_switch_notify(struct net_device *dev,
 				    struct cfg80211_chan_def *chandef,
@@ -506,6 +518,7 @@ void wlan_cfg80211_ch_switch_notify(struct net_device *dev,
 {
 	cfg80211_ch_switch_notify(dev, chandef, link_id);
 }
+#endif
 #else
 static inline
 void wlan_cfg80211_ch_switch_notify(struct net_device *dev,

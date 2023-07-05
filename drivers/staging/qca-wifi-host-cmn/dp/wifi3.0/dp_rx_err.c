@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -651,7 +651,6 @@ _dp_rx_bar_frame_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	if (err_status == HAL_REO_ERROR_DETECTED) {
 		switch (error_code) {
 		case HAL_REO_ERR_BAR_FRAME_2K_JUMP:
-			/* fallthrough */
 		case HAL_REO_ERR_BAR_FRAME_OOR:
 			dp_rx_err_handle_bar(soc, peer, nbuf);
 			DP_STATS_INC(soc, rx.err.reo_error[error_code], 1);
@@ -806,6 +805,12 @@ dp_rx_bar_frame_handle(struct dp_soc *soc,
 	tid = hal_rx_mpdu_start_tid_get(soc->hal_soc,
 					rx_tlv_hdr);
 	pdev = dp_get_pdev_for_lmac_id(soc, rx_desc->pool_id);
+
+	if (!pdev) {
+		dp_rx_err_debug("%pK: pdev is null for pool_id = %d",
+				soc, rx_desc->pool_id);
+		return;
+	}
 
 	_dp_rx_bar_frame_handle(soc, nbuf, mpdu_desc_info, tid, err_status,
 				err_code);

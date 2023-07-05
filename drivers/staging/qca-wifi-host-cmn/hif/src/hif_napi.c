@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -82,7 +83,7 @@ static void hif_init_rx_thread_napi(struct qca_napi_info *napii)
 	struct qdf_net_if *nd = (struct qdf_net_if *)&napii->rx_thread_netdev;
 
 	qdf_net_if_create_dummy_if(nd);
-	netif_napi_add(&napii->rx_thread_netdev, &napii->rx_thread_napi,
+	netif_napi_add_ni(&napii->rx_thread_netdev, &napii->rx_thread_napi,
 		       hif_rxthread_napi_poll, 64);
 	napi_enable(&napii->rx_thread_napi);
 }
@@ -206,7 +207,8 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 
 		NAPI_DEBUG("adding napi=%pK to netdev=%pK (poll=%pK, bdgt=%d)",
 			   &(napii->napi), &(napii->netdev), poll, budget);
-		netif_napi_add(&(napii->netdev), &(napii->napi), poll, budget);
+		netif_napi_add_ni(&(napii->netdev), &(napii->napi),
+				      poll, budget);
 
 		NAPI_DEBUG("after napi_add");
 		NAPI_DEBUG("napi=0x%pK, netdev=0x%pK",

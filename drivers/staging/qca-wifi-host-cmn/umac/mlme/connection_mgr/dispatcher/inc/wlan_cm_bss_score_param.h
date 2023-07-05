@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -232,6 +232,7 @@ enum cm_security_idx {
  * @vendor_roam_score_algorithm: Preferred ETP vendor roam score algorithm
  * @check_6ghz_security: check security for 6Ghz candidate
  * @relaxed_6ghz_conn_policy: check for 6Ghz relaxed connection policy
+ * @standard_6ghz_conn_policy: check for 6 GHz standard connection policy
  * @key_mgmt_mask_6ghz: user configurable mask for 6ghz AKM
  * @mlsr_link_selection: MLSR link selection config
  * @roam_tgt_score_cap: Roam score capability
@@ -249,7 +250,9 @@ struct scoring_cfg {
 		 check_assoc_disallowed:1,
 		 vendor_roam_score_algorithm:1,
 		 check_6ghz_security:1,
-		 relaxed_6ghz_conn_policy:1;
+		 relaxed_6ghz_conn_policy:1,
+		 standard_6ghz_conn_policy:1;
+
 	uint32_t key_mgmt_mask_6ghz;
 #ifdef WLAN_FEATURE_11BE_MLO
 	uint8_t mlsr_link_selection;
@@ -421,6 +424,26 @@ void wlan_cm_set_relaxed_6ghz_conn_policy(struct wlan_objmgr_psoc *psoc,
  */
 bool wlan_cm_get_relaxed_6ghz_conn_policy(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * wlan_cm_set_standard_6ghz_conn_policy() - Set 6 GHz standard connection
+ *					     policy
+ * @psoc: pointer to psoc object
+ * @value: value to be set
+ *
+ * Return: void
+ */
+void wlan_cm_set_standard_6ghz_conn_policy(struct wlan_objmgr_psoc *psoc,
+					   bool value);
+
+/**
+ * wlan_cm_get_standard_6ghz_conn_policy() - Get 6Ghz standard connection
+ *					     policy
+ * @psoc: pointer to psoc object
+ *
+ * Return: value
+ */
+bool wlan_cm_get_standard_6ghz_conn_policy(struct wlan_objmgr_psoc *psoc);
+
 #else
 static inline bool
 wlan_cm_6ghz_allowed_for_akm(struct wlan_objmgr_psoc *psoc,
@@ -440,6 +463,18 @@ void wlan_cm_reset_check_6ghz_security(struct wlan_objmgr_psoc *psoc) {}
 
 static inline
 bool wlan_cm_get_check_6ghz_security(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline
+void wlan_cm_set_standard_6ghz_conn_policy(struct wlan_objmgr_psoc *psoc,
+					   uint32_t value)
+{
+}
+
+static inline
+bool wlan_cm_get_standard_6ghz_conn_policy(struct wlan_objmgr_psoc *psoc)
 {
 	return false;
 }

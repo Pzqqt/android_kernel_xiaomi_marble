@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -92,6 +92,10 @@ struct dbr_module_config;
 
 #ifdef QCA_SUPPORT_CP_STATS
 #include <wlan_cp_stats_public_structs.h>
+
+#ifdef WLAN_FEATURE_COAP
+#include "wlan_coap_public_structs.h"
+#endif
 
 /**
  * typedef cp_stats_event - Definition of cp stats event
@@ -1369,6 +1373,35 @@ struct wlan_lmac_if_twt_rx_ops {
 };
 #endif
 
+#ifdef WLAN_FEATURE_COAP
+/**
+ * struct wlan_lmac_if_coap_tx_ops - south bound tx function pointers for CoAP
+ * @attach: function pointer to attach CoAP component
+ * @detach: function pointer to detach CoAP component
+ * @offload_reply_enable: function pointer to enable CoAP offload reply
+ * @offload_reply_disable: function pointer to disable CoAP offload reply
+ * @offload_periodic_tx_enable: function pointer to enable CoAP offload
+ * periodic transmitting
+ * @offload_periodic_tx_disable: function pointer to disable CoAP offload
+ * periodic transmitting
+ * @offload_cache_get: function pointer to get cached CoAP messages
+ */
+struct wlan_lmac_if_coap_tx_ops {
+	QDF_STATUS (*attach)(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*detach)(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*offload_reply_enable)(struct wlan_objmgr_vdev *vdev,
+			struct coap_offload_reply_param *param);
+	QDF_STATUS (*offload_reply_disable)(struct wlan_objmgr_vdev *vdev,
+					    uint32_t req_id);
+	QDF_STATUS (*offload_periodic_tx_enable)(struct wlan_objmgr_vdev *vdev,
+			struct coap_offload_periodic_tx_param *param);
+	QDF_STATUS (*offload_periodic_tx_disable)(struct wlan_objmgr_vdev *vdev,
+						  uint32_t req_id);
+	QDF_STATUS (*offload_cache_get)(struct wlan_objmgr_vdev *vdev,
+					uint32_t req_id);
+};
+#endif
+
 /**
  * struct wlan_lmac_if_tx_ops - south bound tx function pointers
  * @mgmt_txrx_tx_ops: mgmt txrx tx ops
@@ -1467,6 +1500,10 @@ struct wlan_lmac_if_tx_ops {
 
 #if defined(WLAN_SUPPORT_TWT) && defined(WLAN_TWT_CONV_SUPPORTED)
 	struct wlan_lmac_if_twt_tx_ops twt_tx_ops;
+#endif
+
+#ifdef WLAN_FEATURE_COAP
+	struct wlan_lmac_if_coap_tx_ops coap_ops;
 #endif
 };
 

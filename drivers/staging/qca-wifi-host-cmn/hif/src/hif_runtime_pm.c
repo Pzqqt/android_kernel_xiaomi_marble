@@ -403,6 +403,7 @@ void hif_pm_runtime_start(struct hif_softc *scn)
 
 	qdf_atomic_set(&rpm_ctx->pm_state, HIF_PM_RUNTIME_STATE_ON);
 	hif_runtime_init(dev, scn->hif_config.runtime_pm_delay);
+	rpm_ctx->delay = scn->hif_config.runtime_pm_delay;
 	hif_runtime_pm_debugfs_create(scn);
 }
 
@@ -1595,6 +1596,70 @@ int hif_pm_runtime_allow_suspend(struct hif_opaque_softc *ol_sc,
 	spin_unlock_bh(&rpm_ctx->runtime_lock);
 
 	return 0;
+}
+
+QDF_STATUS hif_pm_runtime_set_delay(struct hif_opaque_softc *hif_ctx,
+				    int delay)
+
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_runtime_pm_ctx *rpm_ctx = hif_bus_get_rpm_ctx(scn);
+
+	if (!rpm_ctx)
+		return QDF_STATUS_E_EMPTY;
+
+	if (!hif_pci_pm_runtime_enabled(scn))
+		return QDF_STATUS_E_NOSUPPORT;
+
+	if (delay < HIF_RTPM_DELAY_MIN || delay > HIF_RTPM_DELAY_MAX) {
+		hif_err("Invalid delay value %d ms", delay);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	__hif_pm_runtime_set_delay(hif_bus_get_dev(scn), delay);
+	rpm_ctx->delay = delay;
+	hif_info_high("Runtime PM delay set: %d ms", delay);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS hif_pm_runtime_restore_delay(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_runtime_pm_ctx *rpm_ctx = hif_bus_get_rpm_ctx(scn);
+
+	if (!rpm_ctx)
+		return QDF_STATUS_E_EMPTY;
+
+	if (!hif_pci_pm_runtime_enabled(scn))
+		return QDF_STATUS_E_NOSUPPORT;
+
+	if (rpm_ctx->delay == scn->hif_config.runtime_pm_delay) {
+		hif_info_rl("Runtime PM delay already default: %d",
+			    rpm_ctx->delay);
+		return QDF_STATUS_E_ALREADY;
+	}
+
+	__hif_pm_runtime_set_delay(hif_bus_get_dev(scn),
+				   scn->hif_config.runtime_pm_delay);
+	rpm_ctx->delay = scn->hif_config.runtime_pm_delay;
+	hif_info_high("Runtime PM delay set: %d ms", rpm_ctx->delay);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+int hif_pm_runtime_get_delay(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_runtime_pm_ctx *rpm_ctx = hif_bus_get_rpm_ctx(scn);
+
+	if (!rpm_ctx)
+		return QDF_STATUS_E_EMPTY;
+
+	if (!hif_pci_pm_runtime_enabled(scn))
+		return QDF_STATUS_E_NOSUPPORT;
+
+	return rpm_ctx->delay;
 }
 
 /**

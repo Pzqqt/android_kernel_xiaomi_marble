@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2015,2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -83,6 +84,9 @@ static QDF_STATUS cm_fill_scan_req(struct cnx_mgr *cm_ctx,
 		req->scan_req.scan_priority = SCAN_PRIORITY_HIGH;
 
 	ch_freq = cm_req->req.chan_freq;
+	/* Try using freq hint to scan if chan freq is not set */
+	if (!ch_freq)
+		ch_freq = cm_req->req.chan_freq_hint;
 	if (ch_freq) {
 		state = wlan_reg_get_channel_state_for_freq(pdev,
 							    ch_freq);

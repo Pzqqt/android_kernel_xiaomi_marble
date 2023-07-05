@@ -48,6 +48,25 @@
 #define SET_RNR_FLAG_TO_ALL_6G_CHANNELS 0x3
 
 /**
+ * scm_add_channel_flags() - Update 6ghz channel flags in active/pno scan req
+ * @vdev: vdev
+ * @pno_chan_list: channel list
+ * @num_chan: number channels
+ * @is_colocated_6ghz_scan_enabled: Colacated 6ghz flag
+ * @is_pno_scan: is pno scan
+ *
+ * Add channel flags for 6ghz channels from active/pno scan request based on ini
+ *
+ * Return: None
+ */
+void
+scm_add_channel_flags(struct wlan_objmgr_vdev *vdev,
+		      struct chan_list *chan_list,
+		      uint8_t *num_chan,
+		      bool is_colocated_6ghz_scan_enabled,
+		      bool is_pno_scan);
+
+/**
  * scm_update_6ghz_channel_list() - Update 6ghz channel list in the scan req
  * @req: scan start request
  * @scan_obj: scan component object
@@ -93,6 +112,15 @@ void scm_add_all_valid_6g_channels(struct wlan_objmgr_pdev *pdev,
 				   bool is_colocated_6ghz);
 
 #else
+static inline void
+scm_add_channel_flags(struct wlan_objmgr_vdev *vdev,
+		      struct chan_list *pno_chan_list,
+		      uint8_t *num_chan,
+		      bool is_colocated_6ghz,
+		      bool is_pno_scan)
+{
+}
+
 static inline void
 scm_update_6ghz_channel_list(struct scan_start_request *req,
 			     struct wlan_scan_obj *scan_obj)

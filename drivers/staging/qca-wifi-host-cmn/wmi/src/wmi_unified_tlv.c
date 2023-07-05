@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -5693,6 +5693,7 @@ static QDF_STATUS send_process_ll_stats_get_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_buf_t buf;
 	uint8_t *buf_ptr;
 	int ret;
+	bool is_link_stats_over_qmi;
 
 	len = sizeof(*cmd);
 	buf = wmi_buf_alloc(wmi_handle, len);
@@ -5721,8 +5722,20 @@ static QDF_STATUS send_process_ll_stats_get_cmd_tlv(wmi_unified_t wmi_handle,
 		 QDF_MAC_ADDR_REF(get_req->peer_macaddr.bytes));
 
 	wmi_mtrace(WMI_REQUEST_LINK_STATS_CMDID, cmd->vdev_id, 0);
-	ret = wmi_unified_cmd_send_pm_chk(wmi_handle, buf, len,
-					  WMI_REQUEST_LINK_STATS_CMDID, true);
+	is_link_stats_over_qmi = is_service_enabled_tlv(
+			wmi_handle,
+			WMI_SERVICE_UNIFIED_LL_GET_STA_OVER_QMI_SUPPORT);
+
+	if (is_link_stats_over_qmi) {
+		ret = wmi_unified_cmd_send_over_qmi(
+					wmi_handle, buf, len,
+					WMI_REQUEST_LINK_STATS_CMDID);
+	} else {
+		ret = wmi_unified_cmd_send_pm_chk(
+					wmi_handle, buf, len,
+					WMI_REQUEST_LINK_STATS_CMDID, true);
+	}
+
 	if (ret) {
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
@@ -10511,12 +10524,21 @@ QDF_STATUS save_ext_service_bitmap_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	if (!soc->wmi_ext2_service_bitmap) {
+	if (!soc->wmi_ext2_service_bitmap ||
+	    (param_buf->num_wmi_service_ext_bitmap >
+	     soc->wmi_ext2_service_bitmap_len)) {
+		if (soc->wmi_ext2_service_bitmap) {
+			qdf_mem_free(soc->wmi_ext2_service_bitmap);
+			soc->wmi_ext2_service_bitmap = NULL;
+		}
 		soc->wmi_ext2_service_bitmap =
 			qdf_mem_malloc(param_buf->num_wmi_service_ext_bitmap *
 				       sizeof(uint32_t));
 		if (!soc->wmi_ext2_service_bitmap)
 			return QDF_STATUS_E_NOMEM;
+
+		soc->wmi_ext2_service_bitmap_len =
+			param_buf->num_wmi_service_ext_bitmap;
 	}
 
 	qdf_mem_copy(soc->wmi_ext2_service_bitmap,
@@ -16002,6 +16024,15 @@ extract_roam_scan_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 			dst->num_chan = MAX_ROAM_SCAN_CHAN;
 
 		src_chan = &param_buf->roam_scan_chan_info[chan_idx];
+
+		if ((dst->num_chan + chan_idx) >
+		    param_buf->num_roam_scan_chan_info) {
+			wmi_err("Invalid TLV. num_chan %d chan_idx %d num_roam_scan_chan_info %d",
+				dst->num_chan, chan_idx,
+				param_buf->num_roam_scan_chan_info);
+			return QDF_STATUS_SUCCESS;
+		}
+
 		for (i = 0; i < dst->num_chan; i++) {
 			dst->chan_freq[i] = src_chan->channel;
 			src_chan++;
@@ -16191,6 +16222,14 @@ extract_roam_11kv_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 
 	if (dst->num_freq > MAX_ROAM_SCAN_CHAN)
 		dst->num_freq = MAX_ROAM_SCAN_CHAN;
+
+	if ((dst->num_freq + rpt_idx) >
+	    param_buf->num_roam_neighbor_report_chan_info) {
+		wmi_err("Invalid TLV. num_freq %d rpt_idx %d num_roam_neighbor_report_chan_info %d",
+			dst->num_freq, rpt_idx,
+			param_buf->num_roam_scan_chan_info);
+		return QDF_STATUS_SUCCESS;
+	}
 
 	for (i = 0; i < dst->num_freq; i++) {
 		dst->freq[i] = src_freq->channel;
@@ -17910,6 +17949,10 @@ event_ids[wmi_roam_scan_chan_list_id] =
 #ifdef MULTI_CLIENT_LL_SUPPORT
 	event_ids[wmi_vdev_latency_event_id] = WMI_VDEV_LATENCY_LEVEL_EVENTID;
 #endif
+#ifdef WLAN_FEATURE_COAP
+	event_ids[wmi_wow_coap_buf_info_eventid] =
+		WMI_WOW_COAP_BUF_INFO_EVENTID;
+#endif
 }
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
@@ -18436,6 +18479,7 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 	wmi_cp_stats_attach_tlv(wmi_handle);
 	wmi_gpio_attach_tlv(wmi_handle);
 	wmi_11be_attach_tlv(wmi_handle);
+	wmi_coap_attach_tlv(wmi_handle);
 }
 qdf_export_symbol(wmi_tlv_attach);
 

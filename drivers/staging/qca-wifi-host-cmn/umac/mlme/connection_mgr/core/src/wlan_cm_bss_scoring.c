@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1677,6 +1677,7 @@ static int cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 	bool same_bucket = false;
 	bool ap_su_beam_former = false;
 	struct wlan_ie_vhtcaps *vht_cap;
+	struct wlan_ie_hecaps *he_cap;
 	struct scoring_cfg *score_config;
 	struct weight_cfg *weight_config;
 	uint32_t sta_nss;
@@ -1766,8 +1767,16 @@ static int cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 				score_config->rssi_score.bad_rssi_bucket_size);
 
 	vht_cap = (struct wlan_ie_vhtcaps *)util_scan_entry_vhtcap(entry);
-	if (vht_cap && vht_cap->su_beam_former)
+	he_cap = (struct wlan_ie_hecaps *)util_scan_entry_hecap(entry);
+
+	if (vht_cap && vht_cap->su_beam_former) {
 		ap_su_beam_former = true;
+	} else if (he_cap && QDF_GET_BITS(*(he_cap->he_phy_cap.phy_cap_bytes +
+		   WLAN_HE_PHYCAP_SU_BFER_OFFSET), WLAN_HE_PHYCAP_SU_BFER_IDX,
+		   WLAN_HE_PHYCAP_SU_BFER_BITS)) {
+		ap_su_beam_former = true;
+	}
+
 	if (phy_config->beamformee_cap && is_vht &&
 	    ap_su_beam_former &&
 	    (entry->rssi_raw > rssi_pref_5g_rssi_thresh) && !same_bucket)
@@ -2178,6 +2187,19 @@ bool wlan_cm_get_check_6ghz_security(struct wlan_objmgr_psoc *psoc)
 	return mlme_psoc_obj->psoc_cfg.score_config.check_6ghz_security;
 }
 
+void wlan_cm_set_standard_6ghz_conn_policy(struct wlan_objmgr_psoc *psoc,
+					   bool value)
+{
+	struct psoc_mlme_obj *mlme_psoc_obj;
+
+	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
+	if (!mlme_psoc_obj)
+		return;
+
+	mlme_debug("6ghz standard connection policy val %x", value);
+	mlme_psoc_obj->psoc_cfg.score_config.standard_6ghz_conn_policy = value;
+}
+
 void wlan_cm_set_relaxed_6ghz_conn_policy(struct wlan_objmgr_psoc *psoc,
 					  bool value)
 {
@@ -2200,6 +2222,17 @@ bool wlan_cm_get_relaxed_6ghz_conn_policy(struct wlan_objmgr_psoc *psoc)
 		return false;
 
 	return mlme_psoc_obj->psoc_cfg.score_config.relaxed_6ghz_conn_policy;
+}
+
+bool wlan_cm_get_standard_6ghz_conn_policy(struct wlan_objmgr_psoc *psoc)
+{
+	struct psoc_mlme_obj *mlme_psoc_obj;
+
+	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
+	if (!mlme_psoc_obj)
+		return false;
+
+	return mlme_psoc_obj->psoc_cfg.score_config.standard_6ghz_conn_policy;
 }
 
 void wlan_cm_set_6ghz_key_mgmt_mask(struct wlan_objmgr_psoc *psoc,
