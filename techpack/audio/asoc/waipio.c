@@ -43,7 +43,6 @@
 #include "msm-audio-defs.h"
 #include "msm_common.h"
 #include "msm_dailink.h"
-#include "hwid.h"
 
 #define DRV_NAME "waipio-asoc-snd"
 #define __CHIPSET__ "WAIPIO "
@@ -1164,34 +1163,6 @@ static struct snd_soc_dai_link msm_tdm_dai_links[] = {
 	},
 };
 
-static struct snd_soc_dai_link pre_msm_tdm_cs35l41_dai_links[] = {
-	{
-		.name = LPASS_BE_TERT_TDM_RX_0,
-		.stream_name = LPASS_BE_TERT_TDM_RX_0,
-		.playback_only = 1,
-		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
-			SND_SOC_DPCM_TRIGGER_POST},
-		.ops = &msm_common_be_ops,
-		.ignore_suspend = 1,
-		.ignore_pmdown_time = 1,
-		SND_SOC_DAILINK_REG(tert_tdm_rx_0_pre),
-	},
-};
-
-static struct snd_soc_dai_link pre_msm_tdm_cs35l41_dai_links_virt[] = {
-	{
-		.name = LPASS_BE_TERT_TDM_RX_0_VIRT,
-		.stream_name = LPASS_BE_TERT_TDM_RX_0_VIRT,
-		.playback_only = 1,
-		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
-			SND_SOC_DPCM_TRIGGER_POST},
-		.ops = &msm_common_be_ops,
-		.ignore_suspend = 1,
-		.ignore_pmdown_time = 1,
-		SND_SOC_DAILINK_REG(tert_tdm_rx_0_pre),
-	},
-};
-
 static struct snd_soc_dai_link msm_waipio_dai_links[
 #if 0
 			ARRAY_SIZE(msm_wsa_cdc_dma_be_dai_links) +
@@ -1415,11 +1386,6 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev, int w
 	int rc = 0;
 	u32 val = 0;
 	const struct of_device_id *match;
-	int i = 0;
-	u32 is_pre_dev_version = 0;
-	u32 is_pre_dev_platform = 0;
-	is_pre_dev_version = get_hw_id_value();
-	is_pre_dev_platform = get_hw_version_platform();
 
 	printk("<%s><%d>: E.\n", __func__, __LINE__);
 	match = of_match_node(waipio_asoc_machine_of_match, dev->of_node);
@@ -1487,22 +1453,6 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev, int w
 		rc = of_property_read_u32(dev->of_node,
 				"qcom,tdm-audio-intf", &val);
 		if (!rc && val) {
-			dev_dbg(dev, "%s(): tdm-audio-intf support present\n",
-				__func__);
-
-			if (((is_pre_dev_version == 0x10003) || (is_pre_dev_version == 0x10004)) && (is_pre_dev_platform == HARDWARE_PROJECT_L1)) {
-				dev_err(dev, "%s(): is_pre_dev_version: %x\n",__func__, is_pre_dev_version);
-				for (i = 0; i < ARRAY_SIZE(msm_tdm_dai_links); i++) {
-					if (!strcmp(msm_tdm_dai_links[i].name, LPASS_BE_TERT_TDM_RX_0)) {
-						memcpy(msm_tdm_dai_links + i, &pre_msm_tdm_cs35l41_dai_links,
-										sizeof(pre_msm_tdm_cs35l41_dai_links));
-					} else if (!strcmp(msm_tdm_dai_links[i].name, LPASS_BE_TERT_TDM_RX_0_VIRT)) {
-						memcpy(msm_tdm_dai_links + i, &pre_msm_tdm_cs35l41_dai_links_virt,
-										sizeof(pre_msm_tdm_cs35l41_dai_links_virt));
-					}
-				}
-			}
-
 			memcpy(msm_waipio_dai_links + total_links,
 					msm_tdm_dai_links,
 					sizeof(msm_tdm_dai_links));

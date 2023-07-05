@@ -6,8 +6,6 @@ else
 	KERNEL_BUILD := 0
 endif
 
-ccflags-y += -I$(srctree)/drivers/misc/hwid/
-
 ifeq ($(KERNEL_BUILD), 1)
 	# These are configurable via Kconfig for kernel-based builds
 	# Need to explicitly configure for Android-based builds
