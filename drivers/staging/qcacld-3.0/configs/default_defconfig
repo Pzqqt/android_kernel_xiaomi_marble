@@ -702,17 +702,17 @@ ifeq (y,$(filter y,$(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
 endif
 
 #Enable WLAN/Power debugfs feature only if debug_fs is enabled
-#ifeq ($(CONFIG_DEBUG_FS), y)
+ifeq ($(CONFIG_DEBUG_FS), y)
        # Flag to enable debugfs. Depends on CONFIG_DEBUG_FS in kernel
        # configuration.
-       # CONFIG_WLAN_DEBUGFS := y
+       CONFIG_WLAN_DEBUGFS := y
 
        # Flag to enable streamfs. Depends on CONFIG_DEBUG_FS and
        # CONFIG_RELAY in kernel configuration.
-#ifeq ($(CONFIG_RELAY), y)
-       # CONFIG_WLAN_STREAMFS := y
-#endif
-#endif
+ifeq ($(CONFIG_RELAY), y)
+       CONFIG_WLAN_STREAMFS := y
+endif
+endif
 
 ifeq ($(CONFIG_WLAN_DEBUGFS), y)
        CONFIG_WLAN_MWS_INFO_DEBUGFS := y
