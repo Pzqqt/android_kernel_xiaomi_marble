@@ -4819,7 +4819,7 @@ int pci_bridge_wait_for_secondary_bus(struct pci_dev *dev, char *reset_type,
 	if (pci_dev_is_disconnected(dev))
 		return 0;
 
-	if (!pci_is_bridge(dev))
+	if (!pci_is_bridge(dev) || !dev->bridge_d3)
 		return 0;
 
 	down_read(&pci_bus_sem);
