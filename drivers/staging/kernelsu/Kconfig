@@ -1,0 +1,17 @@
+menu "KernelSU"
+
+config KSU
+	tristate "KernelSU function support"
+	select OVERLAY_FS
+	default y
+	help
+	Enable kernel-level root privileges on Android System.
+
+config KSU_DEBUG
+	bool "KernelSU debug mode"
+	depends on KSU
+	default n
+	help
+	Enable KernelSU debug mode
+
+endmenu
