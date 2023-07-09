@@ -690,7 +690,7 @@
 
 #define CFG_IS_SAE_ENABLED CFG_INI_BOOL( \
 		"sae_enabled", \
-		0, \
+		1, \
 		"SAE feature control")
 #define __CFG_IS_SAE_ENABLED CFG(CFG_IS_SAE_ENABLED)
 #else
