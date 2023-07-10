@@ -206,7 +206,7 @@ static void aw_cali_svc_run_mute(struct aw_device *aw_dev, int8_t cali_result)
 	} else {
 		aw_dev_info(aw_dev->dev, "cali check disable");
 	}
-	aw_dev_info(aw_dev->dev, "done");
+	aw_dev_dbg(aw_dev->dev, "done");
 }
 
 static int aw_cali_svc_get_dev_re_range(struct aw_device *aw_dev,
@@ -496,7 +496,7 @@ static int aw_cali_svc_devs_cali_re(struct aw_device *aw_dev, unsigned int flag)
 	int ret;
 	struct list_head *dev_list = NULL;
 
-	aw_dev_info(aw_dev->dev, "enter");
+	aw_dev_dbg(aw_dev->dev, "enter");
 
 	ret = aw882xx_dev_get_list_head(&dev_list);
 	if (ret) {
@@ -1250,7 +1250,7 @@ static void aw_cali_attr_init(struct aw_device *aw_dev)
 {
 	int ret;
 
-	aw_dev_info(aw_dev->dev, "enter");
+	aw_dev_dbg(aw_dev->dev, "enter");
 
 	ret = sysfs_create_group(&aw_dev->dev->kobj, &aw_cali_attr_group);
 	if (ret < 0)
@@ -1970,7 +1970,7 @@ static ssize_t aw_cali_misc_read(struct file *filp, char __user *buf, size_t siz
 	int32_t temp_data1[AW_DEV_CH_MAX << 1] = {0};
 	uint32_t re_value[AW_DEV_RE_RANGE] = { 0 };
 
-	aw_dev_info(aw_dev->dev, "enter");
+	aw_dev_dbg(aw_dev->dev, "enter");
 
 	if (*pos) {
 		*pos = 0;
