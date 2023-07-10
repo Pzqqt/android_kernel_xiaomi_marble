@@ -201,7 +201,7 @@ static int aw_dev_set_vcalb(struct aw_device *aw_dev)
 
 	ret =  aw_dev->ops.aw_i2c_write(aw_dev, desc->vcalb_reg, reg_val);
 
-	aw_dev_info(aw_dev->dev, "done");
+	aw_dev_dbg(aw_dev->dev, "done");
 
 	return ret;
 }
@@ -406,7 +406,7 @@ static void aw_dev_pwd(struct aw_device *aw_dev, bool pwd)
 				pwd_desc->mask,
 				pwd_desc->disable);
 	}
-	aw_dev_info(aw_dev->dev, "done");
+	aw_dev_dbg(aw_dev->dev, "done");
 }
 
 static void aw_dev_amppd(struct aw_device *aw_dev, bool amppd)
@@ -424,7 +424,7 @@ static void aw_dev_amppd(struct aw_device *aw_dev, bool amppd)
 				amppd_desc->mask,
 				amppd_desc->disable);
 	}
-	aw_dev_info(aw_dev->dev, "done");
+	aw_dev_dbg(aw_dev->dev, "done");
 }
 
 static void aw_dev_mute(struct aw_device *aw_dev, bool mute)
@@ -446,7 +446,7 @@ static void aw_dev_mute(struct aw_device *aw_dev, bool mute)
 				mute_desc->disable);
 		aw_dev_fade_in(aw_dev);
 	}
-	aw_dev_info(aw_dev->dev, "done");
+	aw_dev_dbg(aw_dev->dev, "done");
 }
 
 static void aw_dev_uls_hmute(struct aw_device *aw_dev, bool uls_hmute)
@@ -467,7 +467,7 @@ static void aw_dev_uls_hmute(struct aw_device *aw_dev, bool uls_hmute)
 				uls_hmute_desc->mask,
 				uls_hmute_desc->disable);
 	}
-	aw_dev_info(aw_dev->dev, "done");
+	aw_dev_dbg(aw_dev->dev, "done");
 }
 
 
@@ -494,7 +494,7 @@ void aw882xx_dev_clear_int_status(struct aw_device *aw_dev)
 	aw882xx_dev_get_int_status(aw_dev, &int_status);
 	/*make suer int status is clear*/
 	aw882xx_dev_get_int_status(aw_dev, &int_status);
-	aw_dev_info(aw_dev->dev, "done");
+	aw_dev_dbg(aw_dev->dev, "done");
 }
 
 int aw882xx_dev_set_intmask(struct aw_device *aw_dev, bool flag)
@@ -508,7 +508,7 @@ int aw882xx_dev_set_intmask(struct aw_device *aw_dev, bool flag)
 	else
 		ret = aw_dev->ops.aw_i2c_write(aw_dev, desc->mask_reg,
 					desc->mask_default);
-	aw_dev_info(aw_dev->dev, "done");
+	aw_dev_dbg(aw_dev->dev, "done");
 	return ret;
 }
 
@@ -533,7 +533,7 @@ static int aw_dev_mode1_pll_check(struct aw_device *aw_dev)
 	if (ret < 0)
 		aw_dev_err(aw_dev->dev, "pll&clk check fail");
 	else
-		aw_dev_info(aw_dev->dev, "done");
+		aw_dev_dbg(aw_dev->dev, "done");
 
 	return ret;
 }
@@ -606,7 +606,7 @@ static int aw_dev_sysst_check(struct aw_device *aw_dev)
 	if (ret < 0)
 		aw_dev_err(aw_dev->dev, "check fail");
 	else
-		aw_dev_info(aw_dev->dev, "done");
+		aw_dev_dbg(aw_dev->dev, "done");
 
 	return ret;
 }
@@ -782,7 +782,7 @@ int aw882xx_dev_reg_update(struct aw_device *aw_dev, bool force)
 
 	aw_dev->cur_prof = aw_dev->set_prof;
 
-	aw_dev_info(aw_dev->dev, "done");
+	aw_dev_dbg(aw_dev->dev, "done");
 	return 0;
 }
 
@@ -974,7 +974,7 @@ int aw882xx_device_start(struct aw_device *aw_dev)
 	aw_dev_cali_re_update(aw_dev);
 
 	aw_dev->status = AW_DEV_PW_ON;
-	aw_dev_info(aw_dev->dev, "done");
+	aw_dev_dbg(aw_dev->dev, "done");
 	return 0;
 }
 
@@ -1014,7 +1014,7 @@ int aw882xx_device_stop(struct aw_device *aw_dev)
 	aw_dev_pwd(aw_dev, true);
 
 	ext_dsp_prof_write = AW_EXT_DSP_WRITE_NONE;
-	aw_dev_info(aw_dev->dev, "done");
+	aw_dev_dbg(aw_dev->dev, "done");
 	return 0;
 }
 

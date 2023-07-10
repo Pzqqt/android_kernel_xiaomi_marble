@@ -805,7 +805,7 @@ static int aw_dev_parse_dev_type(struct aw_device *aw_dev,
 	struct aw_cfg_dde *cfg_dde =
 		(struct aw_cfg_dde *)((char *)prof_hdr + prof_hdr->a_hdr_offset);
 
-	aw_dev_info(aw_dev->dev, "enter");
+	aw_dev_dbg(aw_dev->dev, "enter");
 
 	for (i = 0; i < prof_hdr->a_ddt_num; i++) {
 		if ((aw_dev->i2c->adapter->nr == cfg_dde[i].dev_bus) &&
@@ -847,7 +847,7 @@ static int aw_dev_parse_dev_default_type(struct aw_device *aw_dev,
 	struct aw_cfg_dde *cfg_dde =
 		(struct aw_cfg_dde *)((char *)prof_hdr + prof_hdr->a_hdr_offset);
 
-	aw_dev_info(aw_dev->dev, "enter");
+	aw_dev_dbg(aw_dev->dev, "enter");
 
 	for (i = 0; i < prof_hdr->a_ddt_num; i++) {
 		if ((aw_dev->index == cfg_dde[i].dev_index) &&
@@ -887,7 +887,7 @@ static int aw_dev_parse_skt_type(struct aw_device *aw_dev,
 	struct aw_cfg_dde *cfg_dde =
 		(struct aw_cfg_dde *)((char *)prof_hdr + prof_hdr->a_hdr_offset);
 
-	aw_dev_info(aw_dev->dev, "enter");
+	aw_dev_dbg(aw_dev->dev, "enter");
 
 	for (i = 0; i < prof_hdr->a_ddt_num; i++) {
 		if ((aw_dev->index == cfg_dde[i].dev_index) &&
@@ -1114,7 +1114,7 @@ static int aw_dev_parse_dev_type_v_1_0_0_0(struct aw_device *aw_dev,
 	struct aw_cfg_dde_v_1_0_0_0 *cfg_dde =
 		(struct aw_cfg_dde_v_1_0_0_0 *)((char *)prof_hdr + prof_hdr->a_hdr_offset);
 
-	aw_dev_info(aw_dev->dev, "enter");
+	aw_dev_dbg(aw_dev->dev, "enter");
 
 	for (i = 0; i < prof_hdr->a_ddt_num; i++) {
 		if ((cfg_dde[i].type == AW_DEV_TYPE_ID) &&
@@ -1145,7 +1145,7 @@ static int aw_dev_parse_dev_default_type_v_1_0_0_0(struct aw_device *aw_dev,
 	struct aw_cfg_dde_v_1_0_0_0 *cfg_dde =
 		(struct aw_cfg_dde_v_1_0_0_0 *)((char *)prof_hdr + prof_hdr->a_hdr_offset);
 
-	aw_dev_info(aw_dev->dev, "enter");
+	aw_dev_dbg(aw_dev->dev, "enter");
 
 	for (i = 0; i < prof_hdr->a_ddt_num; i++) {
 		if ((cfg_dde[i].type == AW_DEV_DEFAULT_TYPE_ID) &&
@@ -1203,7 +1203,7 @@ static int aw_dev_parse_skt_type_v_1_0_0_0(struct aw_device *aw_dev,
 	struct aw_cfg_dde_v_1_0_0_0 *cfg_dde =
 		(struct aw_cfg_dde_v_1_0_0_0 *)((char *)prof_hdr + prof_hdr->a_hdr_offset);
 
-	aw_dev_info(aw_dev->dev, "enter");
+	aw_dev_dbg(aw_dev->dev, "enter");
 
 	for (i = 0; i < prof_hdr->a_ddt_num; i++) {
 		if ((cfg_dde[i].type == AW_SKT_TYPE_ID) &&
@@ -1293,7 +1293,7 @@ int aw882xx_dev_parse_acf(struct aw_device *aw_dev, struct aw_container *aw_cfg)
 	struct aw_cfg_hdr *cfg_hdr = NULL;
 	int ret;
 
-	aw_dev_info(aw_dev->dev, "enter");
+	aw_dev_dbg(aw_dev->dev, "enter");
 
 	cfg_hdr = (struct aw_cfg_hdr *)aw_cfg->data;
 	switch (cfg_hdr->a_hdr_version) {
