@@ -350,7 +350,7 @@ static void aw882xx_start_pa(struct aw882xx *aw882xx)
 	int ret;
 	int i;
 
-	aw_dev_info(aw882xx->dev, "enter");
+	aw_dev_dbg(aw882xx->dev, "enter");
 
 	if (aw882xx->fw_status == AW_DEV_FW_OK) {
 		if (aw882xx->allow_pw == false) {
@@ -816,7 +816,7 @@ static void aw882xx_startup_work(struct work_struct *work)
 {
 	struct aw882xx *aw882xx = container_of(work, struct aw882xx, start_work.work);
 
-	aw_dev_info(aw882xx->dev, "enter");
+	aw_dev_dbg(aw882xx->dev, "enter");
 
 	mutex_lock(&aw882xx->lock);
 	aw882xx_start_pa(aw882xx);
@@ -892,7 +892,7 @@ static void aw882xx_interrupt_work(struct work_struct *work)
 	int16_t reg_value;
 	int ret;
 
-	aw_dev_info(aw882xx->dev, "enter");
+	aw_dev_dbg(aw882xx->dev, "enter");
 
 	/*read reg value*/
 	ret = aw882xx_dev_get_int_status(aw882xx->aw_pa, &reg_value);
@@ -1291,7 +1291,7 @@ static struct snd_kcontrol_new aw882xx_spin_control[] = {
 
 static void aw882xx_add_codec_controls(struct aw882xx *aw882xx)
 {
-	aw_dev_info(aw882xx->dev, "enter");
+	aw_dev_dbg(aw882xx->dev, "enter");
 
 	aw_componet_codec_ops.add_codec_controls(aw882xx->codec,
 				&aw882xx_controls[0], ARRAY_SIZE(aw882xx_controls));
@@ -1431,7 +1431,7 @@ static int aw882xx_codec_probe(aw_snd_soc_codec_t *aw_codec)
 {
 	struct aw882xx *aw882xx =
 		aw_componet_codec_ops.codec_get_drvdata(aw_codec);
-	aw_dev_info(aw882xx->dev, "enter");
+	aw_dev_dbg(aw882xx->dev, "enter");
 
 	aw882xx->work_queue = create_singlethread_workqueue("aw882xx");
 	if (!aw882xx->work_queue) {
@@ -1470,7 +1470,7 @@ static void aw882xx_codec_remove(aw_snd_soc_codec_t *aw_codec)
 {
 	struct aw882xx *aw882xx =
 		aw_componet_codec_ops.codec_get_drvdata(aw_codec);
-	aw_dev_info(aw882xx->dev, "enter");
+	aw_dev_dbg(aw882xx->dev, "enter");
 	aw882xx_dev_deinit(aw882xx->aw_pa);
 	destroy_workqueue(aw882xx->work_queue);
 	aw882xx->work_queue = NULL;
@@ -1481,7 +1481,7 @@ static int aw882xx_codec_remove(aw_snd_soc_codec_t *aw_codec)
 	struct aw882xx *aw882xx =
 		aw_componet_codec_ops.codec_get_drvdata(aw_codec);
 
-	aw_dev_info(aw882xx->dev, "enter");
+	aw_dev_dbg(aw882xx->dev, "enter");
 	aw882xx_dev_deinit(aw882xx->aw_pa);
 	destroy_workqueue(aw882xx->work_queue);
 	aw882xx->work_queue = NULL;
@@ -1730,7 +1730,7 @@ static int aw882xx_parse_dt(struct device *dev, struct aw882xx *aw882xx,
 
 int aw882xx_hw_reset(struct aw882xx *aw882xx)
 {
-	aw_dev_info(aw882xx->dev, "enter");
+	aw_dev_dbg(aw882xx->dev, "enter");
 
 	if (gpio_is_valid(aw882xx->reset_gpio)) {
 		gpio_set_value_cansleep(aw882xx->reset_gpio, 0);
@@ -1806,7 +1806,7 @@ static irqreturn_t aw882xx_irq(int irq, void *data)
 		aw_pr_err("pointer is NULL");
 		return -EINVAL;
 	}
-	aw_dev_info(aw882xx->dev, "enter");
+	aw_dev_dbg(aw882xx->dev, "enter");
 
 	/* mask all irq */
 	aw882xx_dev_set_intmask(aw882xx->aw_pa, false);
@@ -2518,7 +2518,7 @@ static int aw882xx_i2c_remove(struct i2c_client *i2c)
 {
 	struct aw882xx *aw882xx = i2c_get_clientdata(i2c);
 
-	aw_dev_info(aw882xx->dev, "enter");
+	aw_dev_dbg(aw882xx->dev, "enter");
 
 	/*rm irq*/
 	if (gpio_to_irq(aw882xx->irq_gpio))
@@ -2565,7 +2565,7 @@ static void aw882xx_i2c_shutdown(struct i2c_client *i2c)
 {
 	struct aw882xx *aw882xx = i2c_get_clientdata(i2c);
 
-	aw_dev_info(aw882xx->dev, "enter");
+	aw_dev_dbg(aw882xx->dev, "enter");
 	mutex_lock(&aw882xx->lock);
 	aw882xx_device_stop(aw882xx->aw_pa);
 	mutex_unlock(&aw882xx->lock);
