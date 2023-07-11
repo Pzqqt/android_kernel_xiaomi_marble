@@ -83,7 +83,7 @@ struct mgmt_offload_event_params {
 
 struct smu_event_params {
 	uint32_t vdev_id;
-	int32_t rx_avg_rssi;
+	uint8_t rx_vht_sgi;
 };
 
 /**

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -222,7 +222,7 @@ tgt_pkt_capture_smu_event(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	vdev_priv->rx_avg_rssi = param->rx_avg_rssi;
+	vdev_priv->rx_vht_sgi = param->rx_vht_sgi;
 
 	pkt_capture_vdev_put_ref(vdev);
 
