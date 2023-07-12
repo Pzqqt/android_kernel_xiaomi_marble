@@ -18123,6 +18123,12 @@ typedef enum {
      */
     WMI_VDEV_PARAM_WIFI_STANDARD_VERSION,                 /* 0xBE */
 
+    /*
+     * Allow to disable TWT on 2G channel
+     * if corresponding INI is set
+     */
+    WMI_VDEV_PARAM_DISABLE_2G_TWT,                        /* 0xBF */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
