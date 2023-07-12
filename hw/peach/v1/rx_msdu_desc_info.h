@@ -38,9 +38,9 @@ struct rx_msdu_desc_info {
                       intra_bss                                               :  1,
                       dest_chip_id                                            :  2,
                       decap_format                                            :  2,
-                      __reserved_g_0015                                       :  1;
+                      reserved_0a                                             :  1;
 #else
-             uint32_t __reserved_g_0015                                       :  1,
+             uint32_t reserved_0a                                             :  1,
                       decap_format                                            :  2,
                       dest_chip_id                                            :  2,
                       intra_bss                                               :  1,

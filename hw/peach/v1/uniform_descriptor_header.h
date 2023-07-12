@@ -14,7 +14,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
 #ifndef _UNIFORM_DESCRIPTOR_HEADER_H_
 #define _UNIFORM_DESCRIPTOR_HEADER_H_
 
@@ -49,8 +48,12 @@ struct uniform_descriptor_header {
 #define UNIFORM_DESCRIPTOR_HEADER_TX_MPDU_QUEUE_NUMBER_MSB                          27
 #define UNIFORM_DESCRIPTOR_HEADER_TX_MPDU_QUEUE_NUMBER_MASK                         0x0fffff00
 
+/* RESERVED is overlapping with TX_MPDU_QUEUE_NUMBER
+ * TX_MPDU_QUEUE_NUMBER valid on in Buffer_type is any of Transmit_MPDU_*_descriptor
+ * Where as RESERVED is only used for debugging in REO_QUEUE_Descr reo_queue_desc
+ */
 #define UNIFORM_DESCRIPTOR_HEADER_RESERVED_0A_OFFSET                                0x00000000
-#define UNIFORM_DESCRIPTOR_HEADER_RESERVED_0A_LSB                                   28
+#define UNIFORM_DESCRIPTOR_HEADER_RESERVED_0A_LSB                                   8
 #define UNIFORM_DESCRIPTOR_HEADER_RESERVED_0A_MSB                                   31
 #define UNIFORM_DESCRIPTOR_HEADER_RESERVED_0A_MASK                                  0xf0000000
 
