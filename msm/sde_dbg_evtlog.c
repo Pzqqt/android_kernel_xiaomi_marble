@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -89,7 +89,7 @@ void sde_evtlog_log(struct sde_dbg_evtlog *evtlog, const char *name, int line,
 	}
 	va_end(args);
 	log->data_cnt = i;
-	evtlog->last++;
+	atomic_inc_return(&evtlog->last);
 
 	trace_sde_evtlog(name, line, log->data_cnt, log->data);
 }
@@ -126,7 +126,7 @@ static bool _sde_evtlog_dump_calc_range(struct sde_dbg_evtlog *evtlog,
 	evtlog->first = evtlog->next;
 
 	if (update_last_entry)
-		evtlog->last_dump = evtlog->last;
+		evtlog->last_dump = (u32)atomic_read(&evtlog->last);
 
 	if (evtlog->last_dump == evtlog->first)
 		return false;
