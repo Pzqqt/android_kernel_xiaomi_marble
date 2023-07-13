@@ -173,6 +173,12 @@
 #define SSPP_GET_REGDMA_BASE(blk_base, top_off) ((blk_base) >= (top_off) ?\
 		(blk_base) - (top_off) : (blk_base))
 
+#ifdef CONFIG_LLCC_DISP_LR
+#define CONFIG_LLCC_DISP_LR 1
+#else
+#define CONFIG_LLCC_DISP_LR 0
+#endif
+
 /*************************************************************
  *  DTSI PROPERTY INDEX
  *************************************************************/
@@ -5384,7 +5390,8 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_ubwc_stats = true;
 		sde_cfg->has_vbif_clk_split = true;
 		sde_cfg->syscache_supported = true;
-		set_bit(SDE_MDP_LLCC_DISP_LR, &sde_cfg->mdp[0].features);
+		if (CONFIG_LLCC_DISP_LR)
+			set_bit(SDE_MDP_LLCC_DISP_LR, &sde_cfg->mdp[0].features);
 	} else {
 		SDE_ERROR("unsupported chipset id:%X\n", hw_rev);
 		sde_cfg->perf.min_prefill_lines = 0xffff;
