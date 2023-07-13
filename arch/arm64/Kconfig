@@ -2144,7 +2144,7 @@ config MACH_XIAOMI_MARBLE
         bool "marble board"
         select MACH_XIAOMI
         help
-          Support for Redmi Note 12 Turbo / Poco F5, condenamed marble / marblein.
+          Support for Redmi Note 12 Turbo / Poco F5, codenamed marble / marblein.
 
 endmenu
 
