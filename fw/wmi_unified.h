@@ -198,14 +198,6 @@ static INLINE void wmi_packed_arr_set_bits(A_UINT32 *arr, A_UINT32 entry_index,
         ((val & (((A_UINT32) 1 << bits_per_entry) - 1)) << start_bit_in_uint);
 }
 
-/** 2 word representation of MAC addr */
-typedef struct _wmi_mac_addr {
-    /** upper 4 bytes of  MAC address */
-    A_UINT32 mac_addr31to0;
-    /** lower 2 bytes of  MAC address */
-    A_UINT32 mac_addr47to32;
-} wmi_mac_addr;
-
 /** macro to convert MAC address from WMI word format to char array */
 #define WMI_MAC_ADDR_TO_CHAR_ARRAY(pwmi_mac_addr,c_macaddr) do {        \
      (c_macaddr)[0] = (((pwmi_mac_addr)->mac_addr31to0)  >>  0) & 0xff; \
@@ -1982,6 +1974,8 @@ typedef enum {
     WMI_ROAM_FRAME_EVENTID,
     /** Send firmware ini value corresponding to param_id */
     WMI_ROAM_GET_VENDOR_CONTROL_PARAM_EVENTID,
+    /** roam synch key event */
+    WMI_ROAM_SYNCH_KEY_EVENTID,
 
     /** P2P disc found */
     WMI_P2P_DISC_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_P2P),
@@ -3344,6 +3338,11 @@ typedef struct {
 #define WMI_TARGET_CAP_CONCURRENCE_SUPPORT_SET(target_cap_flags, value) \
     WMI_SET_BITS(target_cap_flags, 11, 2, value)
 
+#define WMI_TARGET_CAP_MULTIPASS_SAP_SUPPORT_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 13, 1)
+#define WMI_TARGET_CAP_MULTIPASS_SAP_SUPPORT_SET(target_cap_flags, value) \
+    WMI_SET_BITS(target_cap_flags, 13, 1, value)
+
 /*
  * wmi_htt_msdu_idx_to_htt_msdu_qtype GET/SET APIs
  */
@@ -3486,7 +3485,8 @@ typedef struct {
      * Bits 12:11  concurrence support capability
      *      Bit11 - [ML-STA + SL-STA]  0: not supported; 1:supported
      *      Bit12 - [ML-STA + SL-SAP]  0: not supported; 1:supported
-     * Bits 31:13 - Reserved
+     * Bit 13 - Support for multipass SAP
+     * Bits 31:14 - Reserved
      */
     A_UINT32 target_cap_flags;
 
@@ -6225,6 +6225,7 @@ typedef struct {
      */
     A_UINT32 flags;
     wmi_mac_addr link_addr; /* link address */
+    wmi_mac_addr self_link_addr; /* self-link address */
 } wmi_roam_ml_setup_links_param;
 
 /*
@@ -17915,7 +17916,9 @@ typedef enum {
      * bit 0: URNM_MFPR in RSNXE
      * bit 1: MFPC in RSN CAP
      * bit 2: MFPR in RSN CAP
-     * bit 31:3 Reserved
+     * bit 3: URNM_MFPR_X20 in RSNXE
+     * bit 4: RSTA_EXTCAP_I2R_LMR_FB
+     * bit 31:5 Reserved
      */
     WMI_VDEV_PARAM_11AZ_SECURITY_CONFIG,    /* 0xAB */
 
@@ -17980,6 +17983,24 @@ typedef enum {
      * The the updated bandwith is specified with a wmi_channel_width value.
      */
     WMI_VDEV_PARAM_CHWIDTH_WITH_NOTIFY,                   /* 0xBA */
+
+    /*
+     * Min time between measurment for 11AZ NTB ranging
+     * in units of 100 microseconds
+     */
+    WMI_VDEV_PARAM_RTT_11AZ_NTB_MIN_TIME_BW_MEAS,         /* 0xBB */
+
+    /*
+     * Max time between measurment for 11AZ NTB ranging
+     * in units of 10 milliseconds
+     */
+    WMI_VDEV_PARAM_RTT_11AZ_NTB_MAX_TIME_BW_MEAS,         /* 0xBC */
+
+    /*
+     * Max session expiry for 11AZ TB ranging.
+     * Session expiry value is computed as 2^(Max Session Exp + 8) ms.
+     */
+    WMI_VDEV_PARAM_RTT_11AZ_TB_MAX_SESSION_EXPIRY,        /* 0xBD */
 
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
@@ -24495,6 +24516,13 @@ typedef struct {
     A_UINT32 key_cipher;
     A_UINT8  pn[WMI_MAX_PN_LEN];
     A_UINT8  key_buff[WMI_MAX_KEY_LEN];
+    /*
+     * When link_id is 0xf, this field will be MLD address.
+     * Otherwise, it will be bssid which specified with link_id.
+     */
+    wmi_mac_addr mac_addr;
+    A_UINT32 key_len; /* number of valid bytes within key_buff */
+    A_UINT32 key_flags;
 } wmi_roam_ml_key_material_param;
 
 typedef struct {
@@ -36697,6 +36725,11 @@ typedef struct {
                                   bits 15:1  - reserved
                                   bits 31:16 - maximum PSD EIRP (dB/MHz)
                                 */
+/*
+ * NOTE: no further fields can be added into this struct, due to
+ * message buffer size limitations in certain targets for the
+ * WMI_REG_CHAN_LIST_CC_EXT_EVENT message.
+ */
 } wmi_regulatory_rule_ext_struct;
 
 #define WMI_REG_CHAN_PRIORITY_FREQ_GET(freq_info)        WMI_GET_BITS(freq_info, 0, 16)
@@ -36711,6 +36744,11 @@ typedef struct {
      *             the frequencies below this value will be de-prioritized.
      * bits 31:16 = reserved for future
      */
+/*
+ * NOTE: no further fields can be added into this struct, due to
+ * message buffer size limitations in certain targets for the
+ * WMI_REG_CHAN_LIST_CC_EXT_EVENT message.
+ */
 } wmi_regulatory_chan_priority_struct;
 
 #define WMI_REG_FCC_RULE_CHAN_FREQ_GET(freq_info)           WMI_GET_BITS(freq_info, 0, 16)
@@ -36726,6 +36764,11 @@ typedef struct {
      * bits 23:16 = u8 FCC_Tx_power (dBm units)
      * bits 31:24 = u8 reserved for future
      */
+/*
+ * NOTE: no further fields can be added into this struct, due to
+ * message buffer size limitations in certain targets for the
+ * WMI_REG_CHAN_LIST_CC_EXT_EVENT message.
+ */
 } wmi_regulatory_fcc_rule_struct;
 
 typedef enum {
@@ -36832,6 +36875,11 @@ typedef struct {
     A_UINT32 num_6g_reg_rules_client_sp[WMI_REG_CLIENT_MAX];
     A_UINT32 num_6g_reg_rules_client_lpi[WMI_REG_CLIENT_MAX];
     A_UINT32 num_6g_reg_rules_client_vlp[WMI_REG_CLIENT_MAX];
+/*
+ * NOTE: no further fields can be added into this struct, due to
+ * message buffer size limitations in certain targets for the
+ * WMI_REG_CHAN_LIST_CC_EXT_EVENT message.
+ */
 /*
  * This fixed_param TLV is followed by the following TLVs:
  *   - wmi_regulatory_rule_ext reg_rule_array[] struct TLV array.
@@ -39623,6 +39671,7 @@ typedef struct {
      * Bit 2: 6G band support if 1
      */
     A_UINT32 support_link_band; /* Configure the band bitmap of mlo connection supports. */
+    A_UINT32 max_active_links; /* Max active links supported for STA */
 } wmi_roam_mlo_config_cmd_fixed_param;
 
 typedef struct {
@@ -43503,6 +43552,13 @@ typedef struct wmi_pdev_vendor_event
      * because their offsets within wmi_pdev_vendor_event_fixed_param
      * would change, causing backwards incompatibilities.
      */
+/*
+ * This fixed_param TLV may be followed by the below TLVs:
+ *   - A_UINT32 opaque_vendor_var_len_data[]:
+ *     Variable-length array of opaque data.
+ *     The _fixed_param.sub_type value clarifies how to interpret the
+ *     contents of this opaque data.
+ */
 } wmi_pdev_vendor_event_fixed_param;
 typedef wmi_pdev_vendor_event_fixed_param wmi_vendor_pdev_event_fixed_param;
 
@@ -43523,6 +43579,13 @@ typedef struct wmi_vdev_vendor_event
      * because their offsets within wmi_vdev_vendor_event_fixed_param
      * would change, causing backwards incompatibilities.
      */
+/*
+ * This fixed_param TLV may be followed by the below TLVs:
+ *   - A_UINT32 opaque_vendor_var_len_data[]:
+ *     Variable-length array of opaque data.
+ *     The _fixed_param.sub_type value clarifies how to interpret the
+ *     contents of this opaque data.
+ */
 } wmi_vdev_vendor_event_fixed_param;
 typedef wmi_vdev_vendor_event_fixed_param wmi_vendor_vdev_event_fixed_param;
 
@@ -43545,6 +43608,13 @@ typedef struct wmi_peer_vendor_event
      * because their offsets within wmi_peer_vendor_event_fixed_param
      * would change, causing backwards incompatibilities.
      */
+/*
+ * This fixed_param TLV may be followed by the below TLVs:
+ *   - A_UINT32 opaque_vendor_var_len_data[]:
+ *     Variable-length array of opaque data.
+ *     The _fixed_param.sub_type value clarifies how to interpret the
+ *     contents of this opaque data.
+ */
 } wmi_peer_vendor_event_fixed_param;
 typedef wmi_peer_vendor_event_fixed_param wmi_vendor_peer_event_fixed_param;
 
@@ -43563,6 +43633,13 @@ typedef struct wmi_pdev_vendor_cmd
      * because their offsets within wmi_pdev_vendor_cmd_fixed_param
      * would change, causing backwards incompatibilities.
      */
+/*
+ * This fixed_param TLV may be followed by the below TLVs:
+ *   - A_UINT32 opaque_vendor_var_len_data[]:
+ *     Variable-length array of opaque data.
+ *     The _fixed_param.sub_type value clarifies how to interpret the
+ *     contents of this opaque data.
+ */
 } wmi_pdev_vendor_cmd_fixed_param;
 typedef wmi_pdev_vendor_cmd_fixed_param wmi_vendor_pdev_cmd_fixed_param;
 
@@ -43583,6 +43660,13 @@ typedef struct wmi_vdev_vendor_cmd
      * because their offsets within wmi_vdev_vendor_cmd_fixed_param
      * would change, causing backwards incompatibilities.
      */
+/*
+ * This fixed_param TLV may be followed by the below TLVs:
+ *   - A_UINT32 opaque_vendor_var_len_data[]:
+ *     Variable-length array of opaque data.
+ *     The _fixed_param.sub_type value clarifies how to interpret the
+ *     contents of this opaque data.
+ */
 } wmi_vdev_vendor_cmd_fixed_param;
 typedef wmi_vdev_vendor_cmd_fixed_param wmi_vendor_vdev_cmd_fixed_param;
 
@@ -43605,6 +43689,13 @@ typedef struct wmi_peer_vendor_cmd
      * because their offsets within wmi_peer_vendor_cmd_fixed_param
      * would change, causing backwards incompatibilities.
      */
+/*
+ * This fixed_param TLV may be followed by the below TLVs:
+ *   - A_UINT32 opaque_vendor_var_len_data[]:
+ *     Variable-length array of opaque data.
+ *     The _fixed_param.sub_type value clarifies how to interpret the
+ *     contents of this opaque data.
+ */
 } wmi_peer_vendor_cmd_fixed_param;
 typedef wmi_peer_vendor_cmd_fixed_param wmi_vendor_peer_cmd_fixed_param;
 
@@ -43758,6 +43849,13 @@ typedef struct {
     A_UINT32 pdev_id;
     /** Return status. 0 for success, non-zero otherwise */
     A_UINT32 status;
+    /** max_ml_peer_ids:
+     * Max number of ml_peerids across the SOC, Derived as
+     *     max_mlo_peer * num chips.
+     * (Max_mlo_peer and num_chips are provided by Host Platform
+     * in QMI exchange).
+     */
+    A_UINT32 max_ml_peer_ids;
 } wmi_mlo_setup_complete_event_fixed_param;
 
 typedef struct {
@@ -44378,6 +44476,13 @@ typedef struct {
     A_UINT32 vdev_id;
     /** Average RSSI value of Data Frames */
     A_INT32 avg_rssi_data_dbm;
+    /** rx_vht_sgi:
+     * Short guard interval state of Data frames obtaining from rx PPDU TLV
+     * of VHTSIGA buf.
+     *     0: Default (No sgi set)
+     *     1: sgi set
+     */
+    A_UINT32 rx_vht_sgi;
 } wmi_vdev_smart_monitor_event_fixed_param;
 
 typedef struct {
