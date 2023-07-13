@@ -1392,6 +1392,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_aux_dev_capabilities,
     WMITLV_TAG_STRUC_wmi_nan_oem_data_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_nan_oem_data_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_enhanced_aoa_phasedelta_evt_fixed_param,
+    WMITLV_TAG_STRUC_wmi_enhanced_aoa_gain_phase_data_hdr,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -2241,6 +2243,7 @@ typedef enum {
     OP(WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_EVENTID) \
     OP(WMI_MLO_LINK_SWITCH_REQUEST_EVENTID) \
     OP(WMI_NAN_OEM_DATA_EVENTID) \
+    OP(WMI_PDEV_ENHANCED_AOA_PHASEDELTA_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -7431,6 +7434,16 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_primary_link_peer_migration_compl_fixed_param, wmi_mlo_primary_link_peer_migration_compl_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mlo_primary_link_peer_migration_status, primary_link_peer_migration_status, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_EVENTID);
+
+/*
+ * Update AOA Phase delta values for all gain tables event
+ * Below definition shows TLV packing of AOA Phase delta values for all gain tables event
+ */
+#define WMITLV_TABLE_WMI_PDEV_ENHANCED_AOA_PHASEDELTA_EVENTID(id, op, buf, len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_enhanced_aoa_phasedelta_evt_fixed_param, wmi_pdev_enhanced_aoa_phasedelta_evt_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_enhanced_aoa_gain_phase_data_hdr, aoa_data_hdr, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, aoa_data_buf, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_ENHANCED_AOA_PHASEDELTA_EVENTID);
 
 
 #ifdef __cplusplus
