@@ -3555,6 +3555,7 @@ int __weak module_frob_arch_sections(Elf_Ehdr *hdr,
 /* module_blacklist is a comma-separated list of module names */
 static char *module_blacklist;
 static char *custom_module_blacklist[] = {
+#ifdef CONFIG_MACH_XIAOMI_MARBLE
     /* Not required */
     "qca6750", "cs35l41_dlkm",
     /* Already built into the kernel image */
@@ -3563,6 +3564,7 @@ static char *custom_module_blacklist[] = {
     "coresight", "coresight_csr", "coresight_cti", "coresight_dummy", "coresight_funnel",
     "coresight_hwevent", "coresight_remote_etm", "coresight_replicator", "coresight_stm",
     "coresight_tgu", "coresight_tmc", "coresight_tpda", "coresight_tpdm"
+#endif
 };
 static bool blacklisted(const char *module_name)
 {
