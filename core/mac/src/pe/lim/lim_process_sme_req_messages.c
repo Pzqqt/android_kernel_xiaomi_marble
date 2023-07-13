@@ -2036,6 +2036,8 @@ lim_handle_11n_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 		break;
 	case MLME_DOT11_MODE_11AC:
 		/* fallthrough */
+	case MLME_DOT11_MODE_11BE:
+		/* fallthrough */
 	case MLME_DOT11_MODE_11AX:
 		if (ie_struct->HTCaps.present) {
 			*intersected_mode = MLME_DOT11_MODE_11N;
@@ -2850,7 +2852,7 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 	uint16_t ie_len;
 	int8_t local_power_constraint;
 	struct vdev_mlme_obj *mlme_obj;
-	bool is_pwr_constraint;
+	bool is_pwr_constraint = false;
 	tSirMacCapabilityInfo *ap_cap_info;
 	uint8_t wmm_mode, value;
 	struct wlan_mlme_lfr_cfg *lfr = &mac_ctx->mlme_cfg->lfr;
@@ -3112,6 +3114,8 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 		&session->limCurrentBssQosCaps,
 		&session->gLimCurrentBssUapsd,
 		&local_power_constraint, session, &is_pwr_constraint);
+
+	mlme_obj->reg_tpc_obj.is_power_constraint_abs = !is_pwr_constraint;
 
 	if (wlan_reg_is_6ghz_chan_freq(bss_desc->chan_freq)) {
 		if (!ie_struct->Country.present)
@@ -3517,7 +3521,7 @@ lim_get_rsn_akm(uint32_t akm)
 		return ANI_AKM_TYPE_NONE;
 }
 
-static enum ani_akm_type
+enum ani_akm_type
 lim_get_connected_akm(struct pe_session *session, int32_t ucast_cipher,
 		      int32_t auth_mode, int32_t akm)
 {
@@ -3871,6 +3875,15 @@ lim_fill_session_params(struct mac_context *mac_ctx,
 				   req->assoc_ie.ptr, req->assoc_ie.len);
 	lim_fill_crypto_params(mac_ctx, session, req);
 
+	/* Reset the SPMK global cache for non-SAE connection */
+	if (session->connected_akm != ANI_AKM_TYPE_SAE) {
+		wlan_mlme_set_sae_single_pmk_bss_cap(mac_ctx->psoc,
+						     session->vdev_id,
+						     false);
+		wlan_mlme_clear_sae_single_pmk_info(session->vdev,
+						    NULL);
+	}
+
 	pe_debug("After stripping Assoc IE len: %d", req->assoc_ie.len);
 	if (req->assoc_ie.len)
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
@@ -3973,7 +3986,7 @@ lim_cm_handle_join_req(struct cm_vdev_join_req *req)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto fail;
 
-	pe_debug("Freq %d width %d freq0 %d freq1 %d, Smps %d: mode %d action %d, nss 1x1 %d vdev_nss %d nss %d cbMode %d dot11mode %d subfer %d subfee %d csn %d is_cisco %d WPS %d OSEN %d fils %d",
+	pe_debug("Freq %d width %d freq0 %d freq1 %d, Smps %d: mode %d action %d, nss 1x1 %d vdev_nss %d nss %d cbMode %d dot11mode %d subfer %d subfee %d csn %d is_cisco %d WPS %d OSEN %d fils %d akm %d",
 		 pe_session->curr_op_freq, pe_session->ch_width,
 		 pe_session->ch_center_freq_seg0,
 		 pe_session->ch_center_freq_seg1,
@@ -3988,7 +4001,8 @@ lim_cm_handle_join_req(struct cm_vdev_join_req *req)
 		 pe_session->isCiscoVendorAP,
 		 pe_session->wps_registration,
 		 pe_session->isOSENConnection,
-		 lim_is_fils_connection(pe_session));
+		 lim_is_fils_connection(pe_session),
+		 pe_session->connected_akm);
 
 	status = lim_send_connect_req_to_mlm(pe_session);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -5140,7 +5154,6 @@ uint8_t lim_get_max_tx_power(struct mac_context *mac,
 
 void lim_calculate_tpc(struct mac_context *mac,
 		       struct pe_session *session,
-		       bool is_pwr_constraint_absolute,
 		       uint8_t ap_pwr_type,
 		       bool ctry_code_match)
 {
@@ -5282,8 +5295,10 @@ void lim_calculate_tpc(struct mac_context *mac,
 		if (mlme_obj->reg_tpc_obj.ap_constraint_power) {
 			local_constraint =
 				mlme_obj->reg_tpc_obj.ap_constraint_power;
-			reg_max = mlme_obj->reg_tpc_obj.reg_max[i];
-			if (is_pwr_constraint_absolute)
+			pe_debug("local constraint: %d power constraint absolute: %d",
+				 local_constraint,
+				 mlme_obj->reg_tpc_obj.is_power_constraint_abs);
+			if (mlme_obj->reg_tpc_obj.is_power_constraint_abs)
 				max_tx_power = QDF_MIN(reg_max,
 						       local_constraint);
 			else
@@ -7135,7 +7150,7 @@ static void __lim_process_sme_set_ht2040_mode(struct mac_context *mac,
 				eHT_CHANNEL_WIDTH_20MHZ : eHT_CHANNEL_WIDTH_40MHZ;
 			qdf_mem_copy(pHtOpMode->peer_mac, &sta->staAddr,
 				     sizeof(tSirMacAddr));
-			pHtOpMode->smesessionId = sessionId;
+			pHtOpMode->smesessionId = pe_session->smeSessionId;
 
 			msg.type = WMA_UPDATE_OP_MODE;
 			msg.reserved = 0;

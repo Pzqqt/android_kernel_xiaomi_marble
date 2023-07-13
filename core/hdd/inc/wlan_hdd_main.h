@@ -1262,6 +1262,8 @@ enum qdisc_filter_status {
  * @gpio_tsf_sync_work: work to sync send TSF CAP WMI command
  * @cache_sta_count: number of currently cached stations
  * @acs_complete_event: acs complete event
+ * @mc_addr_list: multicast address list
+ * @mc_list_lock: spin lock for multicast list
  * @latency_level: 0 - normal, 1 - xr, 2 - low, 3 - ultralow
  * @multi_client_ll_support: to check multi client ll support in driver
  * @client_info: To store multi client id information
@@ -1453,6 +1455,7 @@ struct hdd_adapter {
 #endif
 
 	struct hdd_multicast_addr_list mc_addr_list;
+	qdf_spinlock_t mc_list_lock;
 	uint8_t addr_filter_pattern;
 
 	struct hdd_scan_info scan_info;
@@ -5346,4 +5349,12 @@ static inline int hdd_set_suspend_mode(struct hdd_context *hdd_ctx)
 	return 0;
 }
 #endif
+/**
+ * hdd_update_multicast_list() - update the multicast list
+ * @vdev: pointer to VDEV object
+ *
+ * Return: none
+ */
+void hdd_update_multicast_list(struct wlan_objmgr_vdev *vdev);
+
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

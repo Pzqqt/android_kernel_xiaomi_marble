@@ -3903,6 +3903,7 @@ static void hdd_nan_register_callbacks(struct hdd_context *hdd_ctx)
 	cb_obj.peer_departed_ind = hdd_ndp_peer_departed_handler;
 
 	cb_obj.nan_concurrency_update = hdd_nan_concurrency_update;
+	cb_obj.set_mc_list = hdd_update_multicast_list;
 
 	os_if_nan_register_hdd_callbacks(hdd_ctx->psoc, &cb_obj);
 }
@@ -4726,7 +4727,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 			goto deregister_cb;
 
 		/*
-		 * NAN compoenet requires certian operations like, open adapter,
+		 * NAN component requires certain operations like, open adapter,
 		 * close adapter, etc. to be initiated by HDD, for those
 		 * register HDD callbacks with UMAC's NAN componenet.
 		 */
@@ -5743,8 +5744,7 @@ hdd_set_derived_multicast_list(struct wlan_objmgr_psoc *psoc,
 
 /**
  * __hdd_set_multicast_list() - set the multicast address list
- * @dev:	Pointer to the WLAN device.
- * @skb:	Pointer to OS packet (sk_buff).
+ * @dev: Pointer to the WLAN device.
  *
  * This funciton sets the multicast address list.
  *
@@ -5786,6 +5786,7 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 	if (!mc_list_request)
 		return;
 
+	qdf_spin_lock_bh(&adapter->mc_list_lock);
 	/* Delete already configured multicast address list */
 	if (adapter->mc_addr_list.mc_cnt > 0)
 		hdd_disable_and_flush_mc_addr_list(adapter,
@@ -5838,6 +5839,7 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 	hdd_enable_mc_addr_filtering(adapter, pmo_mc_list_change_notify);
 
 free_req:
+	qdf_spin_unlock_bh(&adapter->mc_list_lock);
 	qdf_mem_free(mc_list_request);
 }
 
@@ -5857,6 +5859,33 @@ static void hdd_set_multicast_list(struct net_device *net_dev)
 	__hdd_set_multicast_list(net_dev);
 
 	osif_vdev_sync_op_stop(vdev_sync);
+}
+
+void hdd_update_multicast_list(struct wlan_objmgr_vdev *vdev)
+{
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_adapter *adapter;
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+	struct net_device *net_dev;
+
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is null");
+		return;
+	}
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (!adapter) {
+		hdd_err("adapter is null for vdev_id %d", vdev_id);
+		return;
+	}
+
+	net_dev = adapter->dev;
+	if (!net_dev) {
+		hdd_err("netdev is null");
+		return;
+	}
+
+	__hdd_set_multicast_list(net_dev);
 }
 
 #ifdef WLAN_FEATURE_TSF_PTP
@@ -7140,6 +7169,7 @@ static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx,
 	hdd_periodic_sta_stats_mutex_destroy(adapter);
 	hdd_apf_context_destroy(adapter);
 	qdf_spinlock_destroy(&adapter->vdev_lock);
+	qdf_spinlock_destroy(&adapter->mc_list_lock);
 	hdd_sta_info_deinit(&adapter->sta_info_list);
 	hdd_sta_info_deinit(&adapter->cache_sta_info_list);
 
@@ -7911,6 +7941,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx,
 	qdf_list_create(&adapter->blocked_scan_request_q, WLAN_MAX_SCAN_COUNT);
 	qdf_mutex_create(&adapter->blocked_scan_request_q_lock);
 	qdf_event_create(&adapter->acs_complete_event);
+	qdf_spinlock_create(&adapter->mc_list_lock);
 	qdf_event_create(&adapter->peer_cleanup_done);
 	hdd_sta_info_init(&adapter->sta_info_list);
 	hdd_sta_info_init(&adapter->cache_sta_info_list);
