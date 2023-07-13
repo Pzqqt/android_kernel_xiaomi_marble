@@ -3464,6 +3464,7 @@ static void wmi_fill_roam_offload_11r_params(
 	if ((akm == WMI_AUTH_FT_RSNA_FILS_SHA256 ||
 	     akm == WMI_AUTH_FT_RSNA_FILS_SHA384) &&
 	    roam_req->fils_roam_config.fils_ft_len) {
+		wmi_debug("Update the FILS FT key to Firmware");
 		psk_msk = roam_req->fils_roam_config.fils_ft;
 		len = roam_req->fils_roam_config.fils_ft_len;
 	} else {
