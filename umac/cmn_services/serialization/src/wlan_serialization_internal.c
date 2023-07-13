@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -589,9 +590,15 @@ free:
 	qdf_mem_free(timeout_cmd);
 }
 
-static QDF_STATUS wlan_serialization_mc_flush_noop(struct scheduler_msg *msg)
+static QDF_STATUS wlan_serialization_mc_flush(struct scheduler_msg *msg)
 {
-	struct wlan_serialization_command *timeout_cmd = msg->bodyptr;
+	struct wlan_serialization_command *timeout_cmd =
+		scheduler_qdf_mc_timer_deinit_return_data_ptr(msg->bodyptr);
+
+	if (!timeout_cmd) {
+		ser_err("Error failed to release reference for vdev objmgr");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	wlan_objmgr_vdev_release_ref(timeout_cmd->vdev, WLAN_SERIALIZATION_ID);
 	qdf_mem_free(timeout_cmd);
@@ -604,6 +611,7 @@ wlan_serialization_timer_cb_mc_ctx(struct wlan_serialization_command *cmd)
 {
 	struct scheduler_msg msg = {0};
 	struct wlan_serialization_command *timeout_cmd;
+	struct sched_qdf_mc_timer_cb_wrapper *mc_timer_wrapper;
 	QDF_STATUS status;
 
 	msg.type = SYS_MSG_ID_MC_TIMER;
@@ -624,17 +632,19 @@ wlan_serialization_timer_cb_mc_ctx(struct wlan_serialization_command *cmd)
 
 	qdf_mem_copy(timeout_cmd, cmd, sizeof(*timeout_cmd));
 
-	/* msg.callback will explicitly cast back to qdf_mc_timer_callback_t
-	 * in scheduler_timer_q_mq_handler.
-	 * but in future we do not want to introduce more this kind of
-	 * typecast by properly using QDF MC timer for MCC from get go in
-	 * common code.
-	 */
-	msg.callback =
-		(scheduler_msg_process_fn_t)wlan_serialization_generic_timer_cb;
-	msg.bodyptr = timeout_cmd;
+	mc_timer_wrapper =
+		scheduler_qdf_mc_timer_init(wlan_serialization_generic_timer_cb,
+					    timeout_cmd);
+
+	if (!mc_timer_wrapper) {
+		ser_err("failed to allocate sched_qdf_mc_timer_cb_wrapper");
+		goto failed_mc_allocation;
+	}
+
+	msg.callback = scheduler_qdf_mc_timer_callback_t_wrapper;
+	msg.bodyptr = mc_timer_wrapper;
 	msg.bodyval = 0;
-	msg.flush_callback = wlan_serialization_mc_flush_noop;
+	msg.flush_callback = wlan_serialization_mc_flush;
 
 	if (scheduler_post_message(QDF_MODULE_ID_SERIALIZATION,
 				   QDF_MODULE_ID_SERIALIZATION,
@@ -643,6 +653,8 @@ wlan_serialization_timer_cb_mc_ctx(struct wlan_serialization_command *cmd)
 		return;
 
 	ser_err("Could not enqueue timer to timer queue");
+	qdf_mem_free(mc_timer_wrapper);
+failed_mc_allocation:
 	/* free mem and release ref on error */
 	wlan_objmgr_vdev_release_ref(timeout_cmd->vdev, WLAN_SERIALIZATION_ID);
 	qdf_mem_free(timeout_cmd);
