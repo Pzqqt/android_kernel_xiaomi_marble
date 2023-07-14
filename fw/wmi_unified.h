@@ -44320,6 +44320,10 @@ typedef struct wmi_mlo_link_set_active_resp_event
  * If use_ieee_link_id_bitmap equals 1, ieee_link_id_bitmap[] are valid.
  *     A_UINT32 force_active_ieee_link_id_bitmap[];
  *     A_UINT32 force_inactive_ieee_link_id_bitmap[];
+ *---
+ *  current active ieee link id bitmap & inactive ieee link id bitmap
+ *     A_UINT32 current_active_ieee_link_id_bitmap[];
+ *     A_UINT32 current_inactive_ieee_link_id_bitmap[];
  */
 } wmi_mlo_link_set_active_resp_event_fixed_param;
 
