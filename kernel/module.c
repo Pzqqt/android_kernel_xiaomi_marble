@@ -3561,7 +3561,7 @@ static char *custom_module_blacklist[] = {
     /* Already built into the kernel image */
     "aw882xx_dlkm",
     /* Useless logs */
-    "cameralog", "f_fs_ipc_log", "mi_log",
+    "cameralog", "f_fs_ipc_log",
     /* Debug */
     "qcom_cpufreq_hw_debug", "qcom_iommu_debug", "qti_battery_debug", "rdbg", "spmi_glink_debug", "spmi_pmic_arb_debug",
     /* Coresight */
