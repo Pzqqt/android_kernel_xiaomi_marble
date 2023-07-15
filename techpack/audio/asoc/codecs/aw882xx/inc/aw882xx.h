@@ -188,7 +188,6 @@ struct aw882xx {
 
 	struct mutex lock;
 	int dsm_state;
-	int widget_pos;
 };
 
 void aw882xx_kcontorl_set(struct aw882xx *aw882xx);
