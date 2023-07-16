@@ -16203,6 +16203,12 @@ typedef enum {
  *  If SW encryption is enabled, key plumbing will not happen in FW.
  */
 #define WMI_UNIFIED_VDEV_START_HW_ENCRYPTION_DISABLED  (1<<4)
+/** Indicates VAP is used for MLO repurpose.
+ *  This Indicates that vap can be brought up as 11ax or 11be and can be
+ *  repurposed based on the above stack on the fly to change from MLO to
+ *  non MLO, currently we support only 11ax and 11be transition.
+ */
+#define WMI_UNIFIED_VDEV_START_MLO_REPURPOSE_VAP (1<<5)
 
 /* BSS color 0-6 */
 #define WMI_HEOPS_COLOR_GET_D2(he_ops) WMI_GET_BITS(he_ops, 0, 6)
