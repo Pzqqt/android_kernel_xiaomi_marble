@@ -12,7 +12,7 @@
 #include <linux/kmsg_dump.h>
 #include <linux/module.h>
 
-#define LOG_FILE_PATH "/data/cache/last_panic.txt"
+#define LOG_FILE_PATH "/metadata/last_panic.txt"
 
 #if IS_ENABLED(CONFIG_SECURITY_SELINUX_DEVELOP)
 void sel_set_enforce(int);
