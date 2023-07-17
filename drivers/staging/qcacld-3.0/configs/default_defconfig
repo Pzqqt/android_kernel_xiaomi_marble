@@ -742,7 +742,6 @@ endif
 CONFIG_WLAN_LOG_FATAL := y
 CONFIG_WLAN_LOG_ERROR := y
 CONFIG_WLAN_LOG_WARN := y
-CONFIG_WLAN_LOG_INFO := y
 
 #Enable OL debug and wmi unified functions
 CONFIG_ATH_PERF_PWR_OFFLOAD := y
