@@ -463,7 +463,7 @@ static int adc7_do_conversion(struct adc5_chip *adc,
 	time_pending_ms = jiffies_to_msecs(rc);
 	if (time_pending_ms < ADC7_CONV_TIMEOUT_MS &&
 	    (ADC7_CONV_TIMEOUT_MS - time_pending_ms) > 15)
-		dev_warn(adc->dev, "ADC channel %s EOC took %u ms\n",
+		dev_dbg(adc->dev, "ADC channel %s EOC took %u ms\n",
 			prop->datasheet_name,
 			ADC7_CONV_TIMEOUT_MS - time_pending_ms);
 
