@@ -767,7 +767,7 @@ static void aw_dev_soft_reset(struct aw_device *aw_dev)
 	struct aw_soft_rst *reset = &aw_dev->soft_rst;
 
 	aw_dev->ops.aw_i2c_write(aw_dev, reset->reg, reset->reg_value);
-	aw_dev_info(aw_dev->dev, "soft reset done");
+	aw_dev_dbg(aw_dev->dev, "soft reset done");
 }
 
 int aw882xx_device_irq_reinit(struct aw_device *aw_dev)

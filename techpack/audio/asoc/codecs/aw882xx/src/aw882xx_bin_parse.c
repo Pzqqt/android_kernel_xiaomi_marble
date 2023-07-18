@@ -39,7 +39,7 @@
 
 #define AWINIC_CODE_VERSION "V0.0.7-V1.0.4"	/* "code version"-"excel version" */
 
-#define DEBUG_LOG_LEVEL
+// #define DEBUG_LOG_LEVEL
 #ifdef DEBUG_LOG_LEVEL
 #define DBG(fmt, arg...)   do {\
 printk("AWINIC_BIN %s,line= %d,"fmt, __func__, __LINE__, ##arg);\

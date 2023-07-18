@@ -263,11 +263,11 @@ static int aw882xx_startup(struct snd_pcm_substream *substream,
 		aw_componet_codec_ops.codec_get_drvdata(codec);
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		aw_dev_info(aw882xx->dev, "playback enter");
+		aw_dev_dbg(aw882xx->dev, "playback enter");
 		/*load cali re*/
 		aw882xx_dev_init_cali_re(aw882xx->aw_pa);
 	} else {
-		aw_dev_info(aw882xx->dev, "capture enter");
+		aw_dev_dbg(aw882xx->dev, "capture enter");
 	}
 	return 0;
 }
@@ -325,9 +325,9 @@ static void aw882xx_shutdown(struct snd_pcm_substream *substream,
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		aw882xx->rate = 0;
-		aw_dev_info(aw882xx->dev, "stream playback");
+		aw_dev_dbg(aw882xx->dev, "stream playback");
 	} else {
-		aw_dev_info(aw882xx->dev, "stream capture");
+		aw_dev_dbg(aw882xx->dev, "stream capture");
 	}
 }
 
@@ -366,7 +366,7 @@ static void aw882xx_start_pa(struct aw882xx *aw882xx)
 					queue_delayed_work(aw882xx->work_queue,
 						&aw882xx->dc_work,
 						msecs_to_jiffies(AW882XX_DC_DELAY_TIME));
-				aw_dev_info(aw882xx->dev, "start success");
+				aw_dev_dbg(aw882xx->dev, "start success");
 				break;
 			}
 		}
@@ -383,10 +383,10 @@ static int aw882xx_mute(struct snd_soc_dai *dai, int mute, int stream)
 	struct aw882xx *aw882xx =
 		aw_componet_codec_ops.codec_get_drvdata(codec);
 
-	aw_dev_info(aw882xx->dev, "mute state=%d", mute);
+	aw_dev_dbg(aw882xx->dev, "mute state=%d", mute);
 
 	if (stream != SNDRV_PCM_STREAM_PLAYBACK) {
-		aw_dev_info(aw882xx->dev, "capture");
+		aw_dev_dbg(aw882xx->dev, "capture");
 		return 0;
 	}
 
