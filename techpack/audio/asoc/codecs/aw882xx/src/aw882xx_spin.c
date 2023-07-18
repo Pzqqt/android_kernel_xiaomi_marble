@@ -112,11 +112,11 @@ int aw882xx_spin_set_record_val(struct aw_device *aw_dev)
 			return ret;
 		}
 	} else {
-		aw_dev_info(aw_dev->dev, "do nothing");
+		aw_dev_dbg(aw_dev->dev, "do nothing");
 	}
 	mutex_unlock(&g_spin_lock);
 
-	aw_dev_info(aw_dev->dev, "set record spin val done");
+	aw_dev_dbg(aw_dev->dev, "set record spin val done");
 	return 0;
 }
 
