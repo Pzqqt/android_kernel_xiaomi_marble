@@ -1850,11 +1850,18 @@ static void pe_update_crypto_params(struct mac_context *mac_ctx,
 		pe_err("crypto params is null");
 		return;
 	}
-	pe_nofl_debug("vdev %d roam auth 0x%x akm 0x%0x rsn_caps 0x%x",
+
+	ft_session->connected_akm =
+		lim_get_connected_akm(ft_session, crypto_params->ucastcipherset,
+				      crypto_params->authmodeset,
+				      crypto_params->key_mgmt);
+	pe_nofl_debug("vdev %d roam auth 0x%x akm 0x%0x rsn_caps 0x%x ucastcipher 0x%x akm %d",
 		      ft_session->vdev_id,
 		      crypto_params->authmodeset,
 		      crypto_params->key_mgmt,
-		      crypto_params->rsn_caps);
+		      crypto_params->rsn_caps,
+		      crypto_params->ucastcipherset,
+		      ft_session->connected_akm);
 }
 
 /**
@@ -2700,6 +2707,10 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	qdf_mem_copy(roam_sync_ind_ptr->ssid.ssid, ft_session_ptr->ssId.ssId,
 		     roam_sync_ind_ptr->ssid.length);
 	pe_update_crypto_params(mac_ctx, ft_session_ptr, roam_sync_ind_ptr);
+
+	/* Reset the SPMK global cache */
+	wlan_mlme_set_sae_single_pmk_bss_cap(mac_ctx->psoc, vdev_id, false);
+
 	/* Next routine may update nss based on dot11Mode */
 
 	lim_ft_prepare_add_bss_req(mac_ctx, ft_session_ptr, bss_desc);

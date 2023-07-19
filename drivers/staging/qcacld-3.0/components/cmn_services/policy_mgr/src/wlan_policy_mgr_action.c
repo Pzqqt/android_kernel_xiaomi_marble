@@ -1561,7 +1561,8 @@ bool policy_mgr_is_safe_channel(struct wlan_objmgr_psoc *psoc,
 		(unsigned long)policy_mgr_get_freq_restriction_mask(pm_ctx);
 	for (j = 0; j < pm_ctx->unsafe_channel_count; j++) {
 		if ((ch_freq == pm_ctx->unsafe_channel_list[j]) &&
-		    (qdf_test_bit(QDF_SAP_MODE, &restriction_mask))) {
+		    (qdf_test_bit(QDF_SAP_MODE, &restriction_mask) ||
+		     !wlan_mlme_get_coex_unsafe_chan_nb_user_prefer(psoc))) {
 			is_safe = false;
 			policy_mgr_warn("Freq %d is not safe, restriction mask %lu", ch_freq, restriction_mask);
 			break;

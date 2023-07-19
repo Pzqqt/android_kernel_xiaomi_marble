@@ -684,5 +684,9 @@ lim_mlo_roam_delete_link_peer(struct pe_session *pe_session,
 {
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD && WLAN_FEATURE_11BE_MLO */
+
+enum ani_akm_type
+lim_get_connected_akm(struct pe_session *session, int32_t ucast_cipher,
+		      int32_t auth_mode, int32_t akm);
 /************************************************************/
 #endif /* __LIM_API_H */

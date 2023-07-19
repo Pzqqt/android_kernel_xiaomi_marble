@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -796,6 +796,7 @@ struct nan_datapath_host_event {
  * @delete_peers_by_addr: LIM callback for deleting peer by MAC address
  * @update_ndi_conn: WMA callback to update NDI's connection info
  * @nan_concurrency_update: Callback to handle nan concurrency
+ * @set_mc_list: HDD callback to set multicast peer list
  */
 struct nan_callbacks {
 	/* callback to os_if layer from umac */
@@ -822,6 +823,7 @@ struct nan_callbacks {
 				      struct nan_datapath_channel_info
 								    *chan_info);
 	void (*nan_concurrency_update)(void);
+	void (*set_mc_list)(struct wlan_objmgr_vdev *vdev);
 };
 
 /**

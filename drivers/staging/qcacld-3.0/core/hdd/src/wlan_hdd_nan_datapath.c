@@ -1179,10 +1179,11 @@ void hdd_ndp_peer_departed_handler(uint8_t vdev_id, uint16_t sta_id,
 
 	hdd_delete_peer(sta_ctx, peer_mac_addr);
 
+	ucfg_nan_clear_peer_mc_list(hdd_ctx->psoc, adapter->vdev,
+				    peer_mac_addr);
+
 	if (last_peer) {
 		hdd_debug("No more ndp peers.");
-		ucfg_nan_clear_peer_mc_list(hdd_ctx->psoc, adapter->vdev,
-					    peer_mac_addr);
 		hdd_cleanup_ndi(hdd_ctx, adapter);
 		qdf_event_set(&adapter->peer_cleanup_done);
 		/*
