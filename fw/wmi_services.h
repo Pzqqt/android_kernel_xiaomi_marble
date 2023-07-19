@@ -636,6 +636,7 @@ typedef  enum  {
     WMI_SERVICE_FISA_DYNAMIC_MSDU_AGGR_SIZE_SUPPORT = 383, /* Indicates FW support for FISA aggregation size up to 64 instead of only 16 */
     WMI_SERVICE_BRIDGE_VDEV_SUPPORT = 384, /* Indicated FW supports Bridge VDEV */
     WMI_SERVICE_MLO_MODE1_RECOVERY_SUPPORTED = 385, /* Indicate fw support for mlo mode1 recovery */
+    WMI_SERVICE_TX_PWR_PER_PPDU_STATS_SUPPORT = 386, /* FW support to check tx power stats per PPDU */
 
     WMI_MAX_EXT2_SERVICE
 
