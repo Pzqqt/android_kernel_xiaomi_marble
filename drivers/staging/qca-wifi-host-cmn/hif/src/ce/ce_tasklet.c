@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -703,6 +703,7 @@ static inline bool hif_tasklet_schedule(struct hif_opaque_softc *hif_ctx,
 	return true;
 }
 
+#ifdef WLAN_FEATURE_WMI_DIAG_OVER_CE7
 /**
  * ce_poll_reap_by_id() - reap the available frames from CE by polling per ce_id
  * @scn: hif context
@@ -760,6 +761,7 @@ int hif_drain_fw_diag_ce(struct hif_softc *scn)
 
 	return ce_poll_reap_by_id(scn, ce_id);
 }
+#endif
 
 /**
  * ce_dispatch_interrupt() - dispatch an interrupt to a processing context
