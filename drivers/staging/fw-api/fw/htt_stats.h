@@ -546,6 +546,15 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_PDEV_TDMA_STATS = 57,
 
+    /** HTT_DBG_CODEL_STATS
+     * PARAMS:
+     *    - No Params
+     * RESP MSG:
+     *    - htt_codel_svc_class_stats_tlv
+     *    - htt_codel_msduq_stats_tlv
+     */
+    HTT_DBG_CODEL_STATS = 58,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -9550,5 +9559,92 @@ typedef struct {
     htt_umac_ssr_stats_t stats;
 } htt_umac_ssr_stats_tlv;
 
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 svc_class_id;
+    /* codel_drops:
+     * How many times have MSDU queues belonging to this service class
+     * dropped their head MSDU due to the queue's latency being above
+     * the CoDel latency limit specified for the service class throughout
+     * the full CoDel latency statistics collection window.
+     */
+    A_UINT32 codel_drops;
+    /* codel_no_drops:
+     * How many times have MSDU queues belonging to this service class
+     * completed a CoDel latency statistics collection window and
+     * concluded that no head MSDU drop is needed, due to the MSDU queue's
+     * latency being under the limit specified for the service class at
+     * some point during the window.
+     */
+    A_UINT32 codel_no_drops;
+} htt_codel_svc_class_stats_tlv;
+
+#define HTT_CODEL_MSDUQ_STATS_TX_FLOW_NUM_M 0x0000FFFF
+#define HTT_CODEL_MSDUQ_STATS_TX_FLOW_NUM_S 0
+
+#define HTT_CODEL_MSDUQ_STATS_TX_FLOW_NUM_GET(_var) \
+    (((_var) & HTT_CODEL_MSDUQ_STATS_TX_FLOW_NUM_M) >> \
+     HTT_CODEL_MSDUQ_STATS_TX_FLOW_NUM_S)
+#define HTT_CODEL_MSDUQ_STATS_TX_FLOW_NUM_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_CODEL_MSDUQ_STATS_TX_FLOW_NUM, _val); \
+        ((_var) |= ((_val) << HTT_CODEL_MSDUQ_STATS_TX_FLOW_NUM_S)); \
+    } while (0)
+
+#define HTT_CODEL_MSDUQ_STATS_SVC_CLASS_ID_M 0x00FF0000
+#define HTT_CODEL_MSDUQ_STATS_SVC_CLASS_ID_S 16
+
+#define HTT_CODEL_MSDUQ_STATS_SVC_CLASS_ID_GET(_var) \
+    (((_var) & HTT_CODEL_MSDUQ_STATS_SVC_CLASS_ID_M) >> \
+     HTT_CODEL_MSDUQ_STATS_SVC_CLASS_ID_S)
+#define HTT_CODEL_MSDUQ_STATS_SVC_CLASS_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_CODEL_MSDUQ_STATS_SVC_CLASS_ID, _val); \
+        ((_var) |= ((_val) << HTT_CODEL_MSDUQ_STATS_SVC_CLASS_ID_S)); \
+    } while (0)
+
+#define HTT_CODEL_MSDUQ_STATS_DROPS_M 0x0000FFFF
+#define HTT_CODEL_MSDUQ_STATS_DROPS_S 0
+
+#define HTT_CODEL_MSDUQ_STATS_DROPS_GET(_var) \
+    (((_var) & HTT_CODEL_MSDUQ_STATS_DROPS_M) >> \
+     HTT_CODEL_MSDUQ_STATS_DROPS_S)
+#define HTT_CODEL_MSDUQ_STATS_DROPS_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_CODEL_MSDUQ_STATS_DROPS, _val); \
+        ((_var) |= ((_val) << HTT_CODEL_MSDUQ_STATS_DROPS_S)); \
+    } while (0)
+
+#define HTT_CODEL_MSDUQ_STATS_NO_DROPS_M 0xFFFF0000
+#define HTT_CODEL_MSDUQ_STATS_NO_DROPS_S 16
+
+#define HTT_CODEL_MSDUQ_STATS_NO_DROPS_GET(_var) \
+    (((_var) & HTT_CODEL_MSDUQ_STATS_NO_DROPS_M) >> \
+     HTT_CODEL_MSDUQ_STATS_NO_DROPS_S)
+#define HTT_CODEL_MSDUQ_STATS_NO_DROPS_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_CODEL_MSDUQ_STATS_NO_DROPS, _val); \
+        ((_var) |= ((_val) << HTT_CODEL_MSDUQ_STATS_NO_DROPS_S)); \
+    } while (0)
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    union {
+        A_UINT32 id__word;
+        struct {
+            A_UINT32 tx_flow_num: 16, /* FW's MSDU queue ID */
+                     svc_class_id: 8,
+                     reserved: 8;
+        };
+    };
+    union {
+        A_UINT32 stats__word;
+        struct {
+            A_UINT32
+                codel_drops: 16,
+                codel_no_drops: 16;
+        };
+    };
+} htt_codel_msduq_stats_tlv;
 
 #endif /* __HTT_STATS_H__ */
