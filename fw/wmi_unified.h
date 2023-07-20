@@ -4480,8 +4480,17 @@ typedef struct {
      *      0 - Primary
      *      1 - Secondary
      *      Refer to WMI_RSRC_CFG_FLAGS2_RF_PATH_MODE_GET/SET macros.
+     * Bit 18 - disable_wds_peer_map_unmap_event
+     *      Flag to indicate whether the WDS peer map/unmap event should be
+     *      processed or ignored.
+     *      0 - leave the WDS peer map/unmap event enabled
+     *      1 - disable the WDS peer map/unmap event
+     *      This flag shall only be set if the target has set the
+     *      WMI_SERVICE_DISABLE_WDS_PEER_MAP_UNMAP_EVENT_SUPPORT flag.
+     *      Refer to WMI_RSRC_CFG_FLAGS2_DISABLE_WDS_PEER_MAP_UNMAP_EVENT_GET
+     *      and _SET macros.
      *
-     *  Bits 31:18 - Reserved
+     *  Bits 31:19 - Reserved
      */
     A_UINT32 flags2;
     /** @brief host_service_flags - can be used by Host to indicate
@@ -4946,6 +4955,11 @@ typedef struct {
     WMI_GET_BITS(flags2, 17, 1)
 #define WMI_RSRC_CFG_FLAGS2_RF_PATH_MODE_SET(flags2, value) \
     WMI_SET_BITS(flags2, 17, 1, value)
+
+#define WMI_RSRC_CFG_FLAGS2_DISABLE_WDS_PEER_MAP_UNMAP_EVENT_GET(flags2) \
+    WMI_GET_BITS(flags2, 18, 1)
+#define WMI_RSRC_CFG_FLAGS2_DISABLE_WDS_PEER_MAP_UNMAP_EVENT_SET(flags2, value) \
+    WMI_SET_BITS(flags2, 18, 1, value)
 
 
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_IFACE_SUPPORT_GET(host_service_flags) \
