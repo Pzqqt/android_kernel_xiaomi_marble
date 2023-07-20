@@ -3459,10 +3459,10 @@ static int goodix_ts_probe(struct platform_device *pdev)
 	/* debug node init */
 	goodix_tools_init();
 	core_data->tp_pm_suspend = false;
-#ifdef CONFIG_FACTORY_BUILD
+#ifndef CONFIG_MACH_XIAOMI_MARBLE
 	core_data->fod_status = 1;
 #else
-	core_data->fod_status = -1;
+	core_data->fod_status = 0;
 #endif
 	init_completion(&core_data->pm_resume_completion);
 	device_init_wakeup(&pdev->dev, 1);
