@@ -1413,7 +1413,6 @@ finger_pos:
 
 	if (touch_num && !pre_finger_num) {	/*first touch down */
 		input_report_key(dev, BTN_TOUCH, 1);
-		ts_info("BTN_TOUCH DOWN, touch num: %d", touch_num);
 		input_report_key(dev, BTN_TOOL_FINGER, 1);
 		if (global_spi_parent_device != NULL) {
 			pm_runtime_set_autosuspend_delay(global_spi_parent_device, 250);
@@ -1422,7 +1421,6 @@ finger_pos:
 		}
 	} else if (!touch_num && pre_finger_num) {	/*last touch up */
 		input_report_key(dev, BTN_TOUCH, 0);
-		ts_info("BTN_TOUCH UP, touch num: %d", touch_num);
 		input_report_key(dev, BTN_TOOL_FINGER, 0);
 		if (global_spi_parent_device != NULL) {
 			pm_runtime_set_autosuspend_delay(global_spi_parent_device, 50);
