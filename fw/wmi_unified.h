@@ -24935,6 +24935,13 @@ typedef enum
      */
     WMI_VENDOR_OUI_ACTION_ENABLE_CTS2SELF_WITH_QOS_NULL = 11,
 
+    /*
+     * Send SMPS frame following OMN frame on VHT conncection if specific
+     * vendor OUI received in beacon.
+     */
+    WMI_VENDOR_OUI_ACTION_SEND_SMPS_FRAME_WITH_OMN = 12,
+
+
     /* Add any action before this line */
     WMI_VENDOR_OUI_ACTION_MAX_ACTION_ID
 } wmi_vendor_oui_action_id;
