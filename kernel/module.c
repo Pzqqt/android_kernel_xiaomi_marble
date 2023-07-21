@@ -3559,7 +3559,7 @@ static char *custom_module_blacklist[] = {
     /* Not required */
     "qca6750", "cs35l41_dlkm", "atmel_mxt_ts", "focaltech_fts", "nt36xxx_i2c", "nt36xxx_spi", "synaptics_dsx",
     /* Already built into the kernel image */
-    "aw882xx_dlkm",
+    "aw882xx_dlkm", "lzo", "lzo_rle", "zram", "zsmalloc",
     /* Useless logs */
     "cameralog", "f_fs_ipc_log",
     /* Debug */
