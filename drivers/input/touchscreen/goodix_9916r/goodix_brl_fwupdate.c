@@ -390,6 +390,7 @@ static int goodix_parse_firmware(struct firmware_data *fw_data)
 		fw_offset += fw_summary->subsys[i].size;
 	}
 
+#ifdef CONFIG_TOUCHSCREEN_GOODIX_BRL_DEBUG
 	ts_info("Firmware package protocol: V%u", fw_summary->protocol_ver);
 	ts_info("Firmware PID:GT%s", fw_summary->fw_pid);
 	ts_info("Firmware VID:%*ph", 4, fw_summary->fw_vid);
@@ -408,6 +409,7 @@ static int goodix_parse_firmware(struct firmware_data *fw_data)
 				fw_summary->subsys[i].flash_addr);
 		ts_debug("Subsystem Ptr:%p", fw_summary->subsys[i].data);
 	}
+#endif
 
 	if (fw_summary->chip_type == CHIP_TYPE_BRA &&
 		ic_type != IC_TYPE_BERLIN_A) {

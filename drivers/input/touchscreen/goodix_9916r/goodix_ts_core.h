@@ -745,12 +745,20 @@ int goodix_do_fw_update(struct goodix_ic_config *ic_config, int mode);
 int goodix_get_ic_type(struct device_node *node);
 int gesture_module_init(void);
 void gesture_module_exit(void);
+#ifdef CONFIG_TOUCHSCREEN_GOODIX_BRL_DEBUG
 int inspect_module_init(void);
 void inspect_module_exit(void);
 int goodix_tools_init(void);
 void goodix_tools_exit(void);
-int goodix_ts_esd_init(struct goodix_ts_core *cd);
 int goodix_get_rawdata(struct device *dev, struct ts_rawdata_info *info);
+#else
+static inline int inspect_module_init(void) { return 0; }
+static inline void inspect_module_exit(void) { }
+static inline int goodix_tools_init(void) { return 0; }
+static inline void goodix_tools_exit(void) { }
+static inline int goodix_get_rawdata(struct device *dev, struct ts_rawdata_info *info) { return 0; }
+#endif
+int goodix_ts_esd_init(struct goodix_ts_core *cd);
 int goodix_ts_get_lockdown_info(struct goodix_ts_core *cd);
 
 

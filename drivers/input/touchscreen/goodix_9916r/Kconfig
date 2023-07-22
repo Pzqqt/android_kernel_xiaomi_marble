@@ -18,4 +18,7 @@ config TOUCHSCREEN_GOODIX_BRL_9916_SPI
 	help
 		Say Y here if the touchscreen is connected via SPI bus.
 
+config TOUCHSCREEN_GOODIX_BRL_9916_DEBUG
+	bool "Debug"
+
 endif
