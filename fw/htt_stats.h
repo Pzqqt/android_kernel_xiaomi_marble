@@ -6507,11 +6507,14 @@ typedef enum {
 } htt_txbf_sound_steer_modes;
 
 typedef enum {
-    HTT_TX_AC_SOUNDING_MODE = 0,
-    HTT_TX_AX_SOUNDING_MODE = 1,
-    HTT_TX_BE_SOUNDING_MODE = 2,
+    HTT_TX_AC_SOUNDING_MODE  = 0,
+    HTT_TX_AX_SOUNDING_MODE  = 1,
+    HTT_TX_BE_SOUNDING_MODE  = 2,
     HTT_TX_CMN_SOUNDING_MODE = 3,
+    HTT_TX_CV_CORR_MODE      = 4,
 } htt_stats_sounding_tx_mode;
+
+#define HTT_TX_CV_CORR_MAX_NUM_COLUMNS 8
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -6625,6 +6628,65 @@ typedef struct {
     A_UINT32 adaptive_snd_kicked_in;
     /** Total number of times we switched back to normal sounding interval */
     A_UINT32 adaptive_snd_back_to_default;
+
+    /**
+     * Below are CV correlation feature related stats.
+     * This feature is used for DL MU MIMO, but is not available
+     * from certain legacy targets.
+     */
+
+    /** number of CV Correlation triggers for online mode */
+    A_UINT32 cv_corr_trigger_online_mode;
+    /** number of CV Correlation triggers for offline mode */
+    A_UINT32 cv_corr_trigger_offline_mode;
+    /** number of CV Correlation triggers for hybrid mode */
+    A_UINT32 cv_corr_trigger_hybrid_mode;
+    /** number of CV Correlation triggers with computation level 0 */
+    A_UINT32 cv_corr_trigger_computation_level_0;
+    /** number of CV Correlation triggers with computation level 1 */
+    A_UINT32 cv_corr_trigger_computation_level_1;
+    /** number of CV Correlation triggers with computation level 2 */
+    A_UINT32 cv_corr_trigger_computation_level_2;
+    /** number of users for which CV Correlation was triggered */
+    A_UINT32 cv_corr_trigger_num_users[HTT_TX_CV_CORR_MAX_NUM_COLUMNS];
+    /** number of streams for which CV Correlation was triggered */
+    A_UINT32 cv_corr_trigger_num_streams[HTT_TX_CV_CORR_MAX_NUM_COLUMNS];
+    /** number of CV Correlation buffers received through IPC tickle */
+    A_UINT32 cv_corr_upload_total_buf_received;
+    /** number of CV Correlation buffers fed back to the IPC ring */
+    A_UINT32 cv_corr_upload_total_buf_fed_back;
+    /** number of CV Correlation buffers for which processing failed */
+    A_UINT32 cv_corr_upload_total_processing_failed;
+    /**
+     * number of CV Correlation buffers for which processing failed,
+     * due to no users being present in parsed buffer
+     */
+    A_UINT32 cv_corr_upload_failed_total_users_zero;
+    /**
+     * number of CV Correlation buffers for which processing failed,
+     * due to number of users present in parsed buffer exceeded
+     * CV_CORR_MAX_NUM_COLUMNS
+     */
+    A_UINT32 cv_corr_upload_failed_total_users_exceeded;
+    /**
+     * number of CV Correlation buffers for which processing failed,
+     * due to peer pointer for parsed peer not available
+     */
+    A_UINT32 cv_corr_upload_failed_peer_not_found;
+    /**
+     * number of CV Correlation buffers for which processing encountered,
+     * Nss of peer exceeding SCHED_ALGO_MAX_SUPPORTED_MUMIMO_NSS
+     */
+    A_UINT32 cv_corr_upload_user_nss_exceeded;
+    /**
+     * number of CV Correlation buffers for which processing encountered,
+     * invalid reverse look up index for fetching CV correlation results
+     */
+    A_UINT32 cv_corr_upload_invalid_lookup_index;
+    /** number of users present in uploaded CV Correlation results buffer */
+    A_UINT32 cv_corr_upload_total_num_users[HTT_TX_CV_CORR_MAX_NUM_COLUMNS];
+    /** number of streams present in uploaded CV Correlation results buffer */
+    A_UINT32 cv_corr_upload_total_num_streams[HTT_TX_CV_CORR_MAX_NUM_COLUMNS];
 } htt_tx_sounding_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_SOUNDING_INFO
