@@ -1993,7 +1993,20 @@ static void goodix_data_statistics(s16 *data, size_t data_size,
 }
 
 #ifdef SAVE_IN_CSV
-static ssize_t fs_write(const void *buf, size_t size, struct file *fp)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
+static ssize_t fs_write(const void* buf, size_t size, struct file* fp)
+{
+	loff_t pos;
+	ssize_t len;
+
+	pos = fp->f_pos;
+	len = kernel_write(fp, buf, size, &pos);
+	fp->f_pos = pos;
+
+	return len;
+}
+#else
+static ssize_t fs_write(const void* buf, size_t size, struct file* fp)
 {
 	mm_segment_t old_fs;
 	loff_t pos;
@@ -2008,7 +2021,7 @@ static ssize_t fs_write(const void *buf, size_t size, struct file *fp)
 
 	return len;
 }
-/* #endif */
+#endif
 
 static int goodix_save_test_config(struct goodix_ts_test *ts_test,
 		struct file *fp)
