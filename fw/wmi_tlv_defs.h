@@ -5728,7 +5728,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_STA_KICKOUT_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, bpcc_bufp, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_is_my_mgmt_frame, my_frame, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mlo_link_removal_tbtt_count, link_removal_tbtt_count, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mlo_bcast_t2lm_info, mlo_bcast_t2lm_info, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mlo_bcast_t2lm_info, mlo_bcast_t2lm_info, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, ie_data, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_RX_EVENTID);
 
 /* Management Rx FW Consumed Event */
