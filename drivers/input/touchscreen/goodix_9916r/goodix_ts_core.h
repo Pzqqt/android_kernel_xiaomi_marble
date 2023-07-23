@@ -62,8 +62,8 @@
 #define GOODIX_RETRY_5					5
 #define GOODIX_RETRY_10					10
 
-#define TS_DEFAULT_FIRMWARE				"goodix_firmware_l16.bin"
-#define TS_DEFAULT_CFG_BIN				"goodix_cfg_group_l16.bin"
+#define TS_DEFAULT_FIRMWARE				"goodix_firmware.bin"
+#define TS_DEFAULT_CFG_BIN				"goodix_cfg_group.bin"
 #define GOODIX_LOCKDOWN_SIZE		8
 #define TS_LOCKDOWN_REG				0x10030
 
