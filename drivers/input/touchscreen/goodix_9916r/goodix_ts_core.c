@@ -25,7 +25,7 @@
 
 #include <linux/soc/qcom/panel_event_notifier.h>
 #include <linux/backlight.h>
-//#include <drm/drm_panel.h>
+#include <drm/drm_panel.h>
 #include <linux/power_supply.h>
 
 #include <linux/input/mt.h>
