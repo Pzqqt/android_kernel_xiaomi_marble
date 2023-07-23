@@ -580,15 +580,9 @@ static int goodix_init_testlimits(struct goodix_ts_test *ts_test)
 	char limit_file[100] = {0};
 	u32 tx = test_params->drv_num;
 	u32 rx = test_params->sen_num;
-	
-	if (ts_core->lockdown_info[1] == 0x36)
-		sprintf(limit_file, "%s_test_limits_%d_TM.csv", GOODIX_TEST_FILE_NAME,
-			ts_core->fw_version.sensor_id);
-	else
-		sprintf(limit_file, "%s_test_limits_%d_GVO.csv", GOODIX_TEST_FILE_NAME,
-			ts_core->fw_version.sensor_id);
 
-
+	sprintf(limit_file, "%s_test_limits_%d_TM.csv", GOODIX_TEST_FILE_NAME,
+			ts_core->fw_version.sensor_id);
 	ts_info("limit_file_name:%s", limit_file);
 
 	ret = request_firmware(&firmware, limit_file, dev);
