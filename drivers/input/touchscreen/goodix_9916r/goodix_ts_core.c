@@ -3341,12 +3341,12 @@ static int goodix_check_dt(struct device_node *np)
 	struct device_node *node;
 	struct drm_panel *panel;
 
-	count = of_count_phandle_with_args(np, "qcom,display-panels", NULL);
+	count = of_count_phandle_with_args(np, "panel", NULL);
 	if (count <= 0)
 		return 0;
 
 	for (i = 0; i < count; i++) {
-		node = of_parse_phandle(np, "qcom,display-panels", i);
+		node = of_parse_phandle(np, "panel", i);
 		panel = of_drm_find_panel(node);
 		of_node_put(node);
 		if (!IS_ERR(panel)) {
