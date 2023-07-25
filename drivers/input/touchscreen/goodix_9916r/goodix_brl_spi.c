@@ -261,7 +261,7 @@ static int goodix_spi_probe(struct spi_device *spi)
 	goodix_pdev->num_resources = 0;
 	/*
 	 * you can find this platform dev in
-	 * /sys/devices/platfrom/goodix_ts.0
+	 * /sys/devices/platform/goodix_ts.0
 	 * goodix_pdev->dev.parent = &client->dev;
 	 */
 	goodix_pdev->dev.platform_data = &goodix_spi_bus;
