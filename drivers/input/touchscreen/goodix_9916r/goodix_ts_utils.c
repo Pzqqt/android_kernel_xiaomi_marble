@@ -108,7 +108,7 @@ int is_risk_data(const u8 *data, int size)
 			ff_count++;
 	}
 	if (zero_count == size || ff_count == size) {
-		ts_info("warning data is all %s\n",
+		ts_info("warning data is all %s",
 			zero_count == size ? "zero" : "0xff");
 		return 1;
 	}
