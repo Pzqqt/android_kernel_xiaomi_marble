@@ -1204,6 +1204,11 @@ static int brl_event_handler(struct goodix_ts_core *cd,
 		return ret;
 	}
 
+	if (pre_buf[0] == 0x00) {
+		ts_debug("invalid touch head");
+		return -EINVAL;
+	}
+
 	if (checksum_cmp(pre_buf, IRQ_EVENT_HEAD_LEN, CHECKSUM_MODE_U8_LE)) {
 		ts_err("touch head checksum err");
 		ts_err("touch_head %*ph", IRQ_EVENT_HEAD_LEN, pre_buf);
