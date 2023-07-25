@@ -1017,7 +1017,7 @@ static int brl_esd_check(struct goodix_ts_core *cd)
 #define GOODIX_GESTURE_EVENT		0x20
 #define POINT_TYPE_STYLUS_HOVER		0x01
 #define POINT_TYPE_STYLUS			0x03
-#define GOODIX_LRAGETOUCH_EVENT		0x10
+#define GOODIX_LARGETOUCH_EVENT		0x10
 static u8 eve_type;
 
 static void goodix_parse_finger(struct goodix_touch_data *touch_data,
@@ -1238,7 +1238,7 @@ static int brl_event_handler(struct goodix_ts_core *cd,
 	}
 
 	if (cd->palm_status) {
-		if (large_touch_status & GOODIX_LRAGETOUCH_EVENT) {
+		if (large_touch_status & GOODIX_LARGETOUCH_EVENT) {
 			update_palm_sensor_value(1);
 			return ret;
 		}
