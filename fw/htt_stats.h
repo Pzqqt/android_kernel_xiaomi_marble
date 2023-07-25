@@ -2428,6 +2428,8 @@ typedef enum {
 #define HTT_TX_NUM_MUMIMO_GRP_INVALID_WORDS \
     (HTT_STATS_MAX_MUMIMO_GRP_SZ * HTT_STATS_MAX_INVALID_REASON_CODE)
 
+#define HTT_MAX_NUM_SBT_INTR 4
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
 
@@ -2480,6 +2482,19 @@ typedef struct {
     /** 11AX HE MU Standalone Freq. BSRP Trigger completed with error(s) */
     A_UINT32 standalone_ax_bsr_trigger_err[HTT_NUM_AC_WMM];
 /* END DEPRECATED FIELDS */
+    /** smart_basic_trig_sch_histogram:
+     * Count how many times the interval between predictive basic triggers
+     * sent to a given STA based on analysis of that STA's traffic patterns
+     * is within a given range:
+     *
+     * smart_basic_trig_sch_histogram[0]: SBT interval <= 10 ms
+     * smart_basic_trig_sch_histogram[1]: 10 ms < SBT interval <= 20 ms
+     * smart_basic_trig_sch_histogram[2]: 20 ms < SBT interval <= 30 ms
+     * smart_basic_trig_sch_histogram[3]: 30 ms < SBT interval <= 40 ms
+     *
+     * (Smart basic triggers are only used with intervals <= 40 ms.)
+     */
+    A_UINT32 smart_basic_trig_sch_histogram[HTT_MAX_NUM_SBT_INTR];
 } htt_tx_selfgen_cmn_stats_tlv;
 
 typedef struct {
