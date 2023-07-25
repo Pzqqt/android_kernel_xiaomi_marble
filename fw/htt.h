@@ -251,9 +251,10 @@
  * 3.123 Add HTT_OPTION_TLV_TCL_METADATA_V21 def.
  * 3.124 Add HTT_T2H_MSG_TYPE_PEER_EXTENDED_EVENT def.
  * 3.125 Expand fisa_aggr_limit bits in fisa_control_bits_v2.
+ * 3.126 Add HTT_RXDATA_ERR_INVALID_PEER def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 125
+#define HTT_CURRENT_VERSION_MINOR 126
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -21382,6 +21383,12 @@ typedef enum htt_t2h_rx_data_msdu_err {
      * Host maintains error stats, recycles buffer.
      */
     HTT_RXDATA_ERR_ZERO_LEN_MSDU    = 7,
+
+    /* ERR_INVALID_PEER:
+     * FW sets this error flag when MSDU is recived from invalid PEER
+     * HOST decides to send DEAUTH or not, recyles buffer.
+     */
+    HTT_RXDATA_ERR_INVALID_PEER     = 8,
 
     /* add new error codes here */
 
