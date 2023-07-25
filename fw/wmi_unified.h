@@ -10572,20 +10572,6 @@ typedef enum {
     WMI_CHAN_WIDTH_MAX,
 } wmi_channel_width;
 
-/* channel width switch type */
-typedef enum {
-    WMI_CHAN_WIDTH_SWITCH_TYPE_TXRX   = 0,
-    WMI_CHAN_WIDTH_SWITCH_TYPE_TXONLY = 1,
-
-    WMI_CHAN_WIDTH_SWITCH_TYPE_MAX,
-} wmi_chan_width_switch_type;
-
-#define WMI_VDEV_CHAN_WIDTH_NOTIFY_GET_CHAN_WIDTH(chwidth_notify)              WMI_GET_BITS(chwidth_notify, 0, 8)
-#define WMI_VDEV_CHAN_WIDTH_NOTIFY_SET_CHAN_WIDTH(chwidth_notify, value)       WMI_SET_BITS(chwidth_notify, 0, 8, value)
-
-#define WMI_VDEV_CHAN_WIDTH_NOTIFY_GET_SWITCH_TYPE(chwidth_notify)             WMI_GET_BITS(chwidth_notify, 8, 2)
-#define WMI_VDEV_CHAN_WIDTH_NOTIFY_SET_SWITCH_TYPE(chwidth_notify, value)      WMI_SET_BITS(chwidth_notify, 8, 2, value)
-
 /* Clear stats */
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_clear_link_stats_cmd_fixed_param */
@@ -18113,11 +18099,7 @@ typedef enum {
      * Please note incase of STA VDEV only BSS peer gets updated,
      * associated TDLS peer bandwidth won't be impacted.
      *
-     * bit 7:0   the updated bandwidth is specified with
-     *           a wmi_channel_width value
-     * bit 9:8   the updated bandwidth switch type is specified with
-     *           a wmi_chan_width_switch_type value
-     * bit 31:10 reserved
+     * The updated bandwidth is specified with a wmi_channel_width value.
      */
     WMI_VDEV_PARAM_CHWIDTH_WITH_NOTIFY,                   /* 0xBA */
 
