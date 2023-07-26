@@ -40,7 +40,6 @@
 static struct platform_device *goodix_pdev;
 struct goodix_bus_interface goodix_spi_bus;
 struct device *global_spi_parent_device;
-bool display_name_status;
 /*
  * goodix_spi_read_bra- read device register through spi bus
  * @dev: pointer to device data
@@ -195,33 +194,10 @@ static void goodix_pdev_release(struct device *dev)
 	ts_info("goodix pdev released");
 	kfree(goodix_pdev);
 }
-static struct drm_panel *active_panel;
-static int ts_check_panel(struct device_node *np)
-{
-	int i;
-	int count;
-	struct device_node *node;
-	struct drm_panel *panel;
-
-	count = of_count_phandle_with_args(np, "panel", NULL);
-	if (count <= 0)
-		return -ENODEV;
-	for (i = 0; i < count; i++) {
-		node = of_parse_phandle(np, "panel", i);
-		panel = of_drm_find_panel(node);
-		of_node_put(node);
-		if (!IS_ERR(panel)) {
-			active_panel = panel;
-			return 0;
-		}
-	}
-	return PTR_ERR(panel);
-}
 
 static int goodix_spi_probe(struct spi_device *spi)
 {
 	int ret = 0;
-	struct device_node *dp = spi->dev.of_node;
 
 	ts_info("goodix spi probe in");
 
@@ -234,9 +210,7 @@ static int goodix_spi_probe(struct spi_device *spi)
 		ts_err("failed set spi mode, %d", ret);
 		return ret;
 	}
-	ret = ts_check_panel(dp);
-	if (ret < 0 && !display_name_status)
-		ts_info("please add the panel name at dts config");
+
 	/* get ic type */
 	ret = goodix_get_ic_type(spi->dev.of_node);
 	if (ret < 0)
