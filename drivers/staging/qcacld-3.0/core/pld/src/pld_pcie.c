@@ -1039,7 +1039,6 @@ void pld_pcie_device_self_recovery(struct device *dev,
 int pld_pcie_set_wfc_mode(struct device *dev,
 			  enum pld_wfc_mode wfc_mode)
 {
-#if 0
 	struct cnss_wfc_cfg cfg;
 	int ret;
 
@@ -1058,9 +1057,6 @@ int pld_pcie_set_wfc_mode(struct device *dev,
 	ret = cnss_set_wfc_mode(dev, cfg);
 out:
 	return ret;
-#else
-	return 0;
-#endif
 }
 #endif
 #endif
