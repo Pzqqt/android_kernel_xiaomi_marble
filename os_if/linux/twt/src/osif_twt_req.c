@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -62,6 +62,10 @@ int osif_twt_requestor_enable(struct wlan_objmgr_psoc *psoc,
 		goto cleanup;
 	}
 
+	twt_en_priv = osif_request_priv(request);
+	if (twt_en_priv->status != HOST_TWT_ENABLE_STATUS_OK &&
+	    twt_en_priv->status != HOST_TWT_ENABLE_STATUS_ALREADY_ENABLED)
+		ret = -EBUSY;
 cleanup:
 	osif_request_put(request);
 	return ret;
@@ -140,6 +144,9 @@ int osif_twt_requestor_disable(struct wlan_objmgr_psoc *psoc,
 		goto cleanup;
 	}
 
+	twt_en_priv = osif_request_priv(request);
+	if (twt_en_priv->status != HOST_TWT_DISABLE_STATUS_OK)
+		ret = -EBUSY;
 cleanup:
 	osif_request_put(request);
 	return ret;
