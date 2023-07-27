@@ -73,7 +73,6 @@
 #define GTP_RESULT_INVALID				0
 #define GTP_RESULT_FAIL					1
 #define GTP_RESULT_PASS					2
-#define CONFIG_TOUCHSCREEN_GOODIX_BRL_SPI
 
 #define PANEL_ORIENTATION_DEGREE_0	0	/* normal portrait orientation */
 #define PANEL_ORIENTATION_DEGREE_90	1	/* anticlockwise 90 degrees */
