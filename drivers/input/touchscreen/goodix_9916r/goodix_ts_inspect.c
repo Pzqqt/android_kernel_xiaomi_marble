@@ -30,7 +30,7 @@
 /* test config */
 #define TOTAL_FRAME_NUM					16 /* rawdata test frames */
 #define NOISEDATA_TEST_TIMES				10  /* noise test frames */
-#define SAVE_IN_CSV
+// #define SAVE_IN_CSV
 
 #define GOODIX_RESULT_SAVE_PATH				"/data/misc/tp_selftest_data/Test_Data.csv"
 #define GOODIX_TEST_FILE_NAME				"goodix"
