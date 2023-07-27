@@ -38459,6 +38459,8 @@ typedef enum _WMI_ADD_TWT_STATUS_T {
     WMI_ADD_TWT_STATUS_DIALOG_ID_BUSY,      /* FW is in the process of handling this dialog */
     WMI_ADD_TWT_STATUS_BTWT_NOT_ENBABLED,   /* Broadcast TWT is not enabled */
     WMI_ADD_TWT_STATUS_RTWT_NOT_ENBABLED,   /* Restricted TWT is not enabled */
+    WMI_ADD_TWT_STATUS_LINK_SWITCH_IN_PROGRESS, /* Link switch is ongoing */
+    WMI_ADD_TWT_STATUS_UNSUPPORTED_MODE_MLMR,   /* Unsupported in MLMR mode */
 } WMI_ADD_TWT_STATUS_T;
 
 typedef struct {
