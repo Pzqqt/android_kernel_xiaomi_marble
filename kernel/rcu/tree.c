@@ -3021,7 +3021,30 @@ __call_rcu_common(struct rcu_head *head, rcu_callback_t func, bool lazy_in)
 	}
 }
 
+static bool android_enable_rcu_lazy;
 #ifdef CONFIG_RCU_LAZY
+/* Enable lazy rcu at boot time */
+static int param_set_rcu_lazy(const char *val, const struct kernel_param *kp)
+{
+	int ret;
+
+	/*
+	 * Make sure a grace period has passed before and after flipping the
+	 * switch.
+	 */
+	rcu_barrier();
+	ret = param_set_bool(val, kp);
+	rcu_barrier();
+
+	return ret;
+}
+static const struct kernel_param_ops rcu_lazy_ops = {
+	.flags = KERNEL_PARAM_OPS_FL_NOARG,
+	.set = param_set_rcu_lazy,
+	.get = param_get_bool,
+};
+module_param_cb(android_enable_rcu_lazy, &rcu_lazy_ops, &android_enable_rcu_lazy, 0644);
+
 /**
  * call_rcu_flush() - Queue RCU callback for invocation after grace period, and
  * flush all lazy callbacks (including the new one) to the main ->cblist while
@@ -3095,7 +3118,8 @@ EXPORT_SYMBOL_GPL(call_rcu_flush);
  */
 void call_rcu(struct rcu_head *head, rcu_callback_t func)
 {
-	return __call_rcu_common(head, func, IS_ENABLED(CONFIG_RCU_LAZY));
+	return __call_rcu_common(head, func, IS_ENABLED(CONFIG_RCU_LAZY) &&
+				 READ_ONCE(android_enable_rcu_lazy));
 }
 EXPORT_SYMBOL_GPL(call_rcu);
 
