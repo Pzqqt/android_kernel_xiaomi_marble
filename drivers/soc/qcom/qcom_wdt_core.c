@@ -106,7 +106,7 @@ out:
 	return pivot;
 }
 
-static void print_irq_stat(struct msm_watchdog_data *wdog_dd)
+static void __maybe_unused print_irq_stat(struct msm_watchdog_data *wdog_dd)
 {
 	int index;
 	int cpu, ipi_nr;
@@ -247,7 +247,7 @@ static void compute_irq_stat(struct work_struct *work)
 		}
 	}
 
-	print_irq_stat(wdog_dd);
+	// print_irq_stat(wdog_dd);
 	atomic_xchg(&wdog_dd->irq_counts_running, 0);
 }
 
