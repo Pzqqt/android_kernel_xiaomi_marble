@@ -710,6 +710,10 @@ static ssize_t devkmsg_write(struct kiocb *iocb, struct iov_iter *from)
 	if (!user || len > LOG_LINE_MAX)
 		return -EINVAL;
 
+	/* Ignore healthd kmsg */
+	if (!strcmp(current->comm, "health@2.1-serv"))
+		return ret;
+
 	/* Ignore when user logging is disabled. */
 	if (devkmsg_log & DEVKMSG_LOG_MASK_OFF)
 		return len;
