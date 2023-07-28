@@ -555,6 +555,34 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_CODEL_STATS = 58,
 
+    /** HTT_DBG_ODD_PDEV_BE_TX_MU_OFDMA_STATS
+     * PARAMS:
+     *   - No Params
+     * RESP MSG:
+     *   - htt_tx_pdev_mpdu_stats_tlv
+     */
+    HTT_DBG_ODD_PDEV_BE_TX_MU_OFDMA_STATS = 59,
+
+    /** HTT_DBG_EXT_STATS_PDEV_UL_TRIGGER
+     * PARAMS:
+     *   - No Params
+     * RESP MSG:
+     *   - htt_rx_pdev_be_ul_ofdma_user_stats_tlv
+     */
+    HTT_DBG_ODD_UL_BE_OFDMA_STATS = 60,
+
+    /** HTT_DBG_ODD_BE_TXBF_OFDMA_STATS
+     */
+    HTT_DBG_ODD_BE_TXBF_OFDMA_STATS = 61,
+
+    /** HTT_DBG_ODD_STATS_PDEV_BE_UL_MUMIMO_TRIG_STATS
+     * PARAMS:
+     *   - No Params
+     * RESP MSG:
+     *   - htt_rx_pdev_be_ul_ofdma_user_stats_tlv
+     */
+    HTT_DBG_ODD_STATS_PDEV_BE_UL_MUMIMO_TRIG_STATS = 62,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
