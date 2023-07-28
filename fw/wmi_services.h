@@ -638,6 +638,7 @@ typedef  enum  {
     WMI_SERVICE_MLO_MODE1_RECOVERY_SUPPORTED = 385, /* Indicate fw support for mlo mode1 recovery */
     WMI_SERVICE_TX_PWR_PER_PPDU_STATS_SUPPORT = 386, /* FW support to check tx power stats per PPDU */
     WMI_SERVICE_DISABLE_WDS_PEER_MAP_UNMAP_EVENT_SUPPORT = 387, /* Indicate FW support to disable wds peer map/unmap events */
+    WMI_SERVICE_PDEV_WSI_STATS_INFO_SUPPORT = 388, /* Support for WSI Stats Info. */
 
     WMI_MAX_EXT2_SERVICE
 

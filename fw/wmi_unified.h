@@ -512,6 +512,8 @@ typedef enum {
     WMI_PDEV_SET_TGTR2P_TABLE_CMDID,
     /* WMI cmd to set RF path for PHY */
     WMI_PDEV_SET_RF_PATH_CMDID,
+    /** WSI stats info WMI command */
+    WMI_PDEV_WSI_STATS_INFO_CMDID,
 
 
     /* VDEV (virtual device) specific commands */
@@ -36822,6 +36824,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_CMDID);
         WMI_RETURN_STRING(WMI_MLO_LINK_RECOMMENDATION_CMDID);
         WMI_RETURN_STRING(WMI_NAN_OEM_DATA_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_WSI_STATS_INFO_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -46400,6 +46403,16 @@ typedef struct {
      */
     A_UINT32 emlsr_pdev_id_map;
 } wmi_aux_dev_capabilities;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+      * WMITLV_TAG_STRUC_wmi_pdev_wsi_stats_info_cmd_fixed_param
+      */
+    A_UINT32 tlv_header;
+    A_UINT32 pdev_id; /* for identifying the MAC */
+    A_UINT32 wsi_ingress_load_info;
+    A_UINT32 wsi_egress_load_info;
+} wmi_pdev_wsi_stats_info_cmd_fixed_param;
 
 
 

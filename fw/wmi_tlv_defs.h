@@ -1394,6 +1394,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_nan_oem_data_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_enhanced_aoa_phasedelta_evt_fixed_param,
     WMITLV_TAG_STRUC_wmi_enhanced_aoa_gain_phase_data_hdr,
+    WMITLV_TAG_STRUC_wmi_ctrl_path_sta_rrm_stats_struct,
+    WMITLV_TAG_STRUC_wmi_pdev_wsi_stats_info_cmd_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -1928,6 +1930,7 @@ typedef enum {
     OP(WMI_MLO_LINK_SET_BSS_PARAMS_CMDID) \
     OP(WMI_MLO_LINK_SWITCH_CONF_CMDID) \
     OP(WMI_NAN_OEM_DATA_CMDID) \
+    OP(WMI_PDEV_WSI_STATS_INFO_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -5454,6 +5457,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_SET_BSS_PARAMS_CMDID);
 #define WMITLV_TABLE_WMI_MLO_LINK_SWITCH_CONF_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_link_switch_cnf_fixed_param, wmi_mlo_link_switch_cnf_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_SWITCH_CONF_CMDID);
+
+/* WMI CMD used to send WSI stats info. */
+#define WMITLV_TABLE_WMI_PDEV_WSI_STATS_INFO_CMDID(id,op,buf,len) \
+        WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_wsi_stats_info_cmd_fixed_param, wmi_pdev_wsi_stats_info_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_WSI_STATS_INFO_CMDID);
 
 
 
