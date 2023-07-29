@@ -12,6 +12,7 @@
 #include "main.h"
 #include "qmi.h"
 #include "genl.h"
+#include "hwid.h"
 
 #define WLFW_SERVICE_INS_ID_V01		1
 #define WLFW_CLIENT_ID			0x4b4e454c
@@ -638,12 +639,44 @@ static int cnss_get_bdf_file_name(struct cnss_plat_data *plat_priv,
 {
 	char filename_tmp[MAX_FIRMWARE_NAME_LEN];
 	int ret = 0;
+	uint32_t hw_country_ver = 0;
+	uint32_t hw_platform_ver = 0;
+	hw_country_ver = get_hw_country_version();
+	hw_platform_ver = get_hw_version_platform();
 
 	switch (bdf_type) {
 	case CNSS_BDF_ELF:
 		/* Board ID will be equal or less than 0xFF in GF mask case */
 		if (plat_priv->board_info.board_id == 0xFF) {
-			snprintf(filename_tmp, filename_len, ELF_BDF_FILE_NAME);
+			if (plat_priv->chip_info.chip_id & CHIP_ID_GF_MASK) {
+				if (hw_platform_ver == 15) {  // 15 represents marble
+					if (hw_country_ver == (uint32_t)CountryIndia)
+						snprintf(filename_tmp, filename_len,
+							"bd_m16tgfin.elf");
+					else if (hw_country_ver == (uint32_t)CountryGlobal)
+						snprintf(filename_tmp, filename_len,
+							"bd_m16tgfgl.elf");
+					else
+						snprintf(filename_tmp, filename_len,
+							"bd_m16tgf.elf");
+				} else
+					snprintf(filename_tmp, filename_len,
+						 ELF_BDF_FILE_NAME_GF);
+			} else {
+				if (hw_platform_ver == 15) {  // 15 represents marble
+					if (hw_country_ver == (uint32_t)CountryIndia)
+						snprintf(filename_tmp, filename_len,
+							"bd_m16tin.elf");
+					else if (hw_country_ver == (uint32_t)CountryGlobal)
+						snprintf(filename_tmp, filename_len,
+							"bd_m16tgl.elf");
+					else
+						snprintf(filename_tmp, filename_len,
+							"bd_m16t.elf");
+				} else
+					snprintf(filename_tmp, filename_len,
+						 ELF_BDF_FILE_NAME);
+			}
 		} else if (plat_priv->board_info.board_id < 0xFF) {
 			if (plat_priv->chip_info.chip_id & CHIP_ID_GF_MASK)
 				snprintf(filename_tmp, filename_len,
@@ -685,7 +718,7 @@ static int cnss_get_bdf_file_name(struct cnss_plat_data *plat_priv,
 		}
 		break;
 	case CNSS_BDF_REGDB:
-		snprintf(filename_tmp, filename_len, REGDB_FILE_NAME);
+		snprintf(filename_tmp, filename_len, "regdb_xiaomi.bin");
 		break;
 	case CNSS_BDF_HDS:
 		snprintf(filename_tmp, filename_len, HDS_FILE_NAME);
