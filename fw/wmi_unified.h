@@ -5594,6 +5594,9 @@ typedef struct {
 /* NOTE: This constant cannot be changed without breaking WMI compatibility */
 #define WMI_IE_BITMAP_SIZE             8
 
+#define WMI_SCAN_MLD_PARAM_MLD_ID_GET(mld_param) WMI_GET_BITS(mld_param, 0, 8)
+#define WMI_SCAN_MLD_PARAM_MLD_ID_SET(mld_param, val) WMI_SET_BITS(mld_param, 0, 8, val)
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_start_scan_cmd_fixed_param */
     /** Scan ID (lower 16 bits) MSB 4 bits is used to identify scan client based on enum WMI_SCAN_CLIENT_ID */
@@ -5685,6 +5688,11 @@ typedef struct {
      * dwell time in msec for 6 GHz channel of spectral scan channel list
      */
     A_UINT32 dwell_time_spectral_ch;
+    /**
+     * B0-B7: mld id to be inserted in ML probe request
+     * B8-B31: reserved
+     */
+    A_UINT32 mld_parameter;
 
 /**
  * TLV (tag length value) parameters follow the scan_cmd
