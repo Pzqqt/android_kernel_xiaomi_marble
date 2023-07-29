@@ -2690,13 +2690,13 @@ static int haptics_erase(struct input_dev *dev, int effect_id)
 	struct haptics_play_info *play = &chip->play;
 	int rc;
 
-	dev_info(chip->dev, "haptics_erase\n");
+	dev_dbg(chip->dev, "haptics_erase\n");
 	if(chip->hboost_quick_off){
 		rc = haptics_boost_vreg_enable(chip, false);
 		if(rc < 0)
 			dev_err(chip->dev, "hboost quick off failed, rc=%d\n", rc);
 		else
-			dev_info(chip->dev, "hboost quick off\n");
+			dev_dbg(chip->dev, "hboost quick off\n");
 		chip->hboost_quick_off = false;
 		return 0;
 	}
