@@ -40597,6 +40597,104 @@ typedef struct {
     };
 } wmi_enhanced_aoa_gain_phase_data_hdr;
 
+typedef enum _WMI_AGC_GAIN_TABLE_IDX {
+    WMI_AGC_DG_TABLE_IDX = 0,
+    WMI_AGC_LG_TABLE_IDX,
+    WMI_AGC_VLG_TABLE_IDX,
+    WMI_AGC_MAX_GAIN_TABLE_IDX = 8,
+} WMI_AGC_GAIN_TABLE_IDX;
+
+#define WMI_AOA_BDF_NUM_GAIN_TBL_ELEMS_PER_WORD 4
+#define WMI_AOA_NUM_GAIN_TBL_ELEMS_PER_WORD 2
+#define WMI_AOA_NUM_BYTES_FOR_BDF_GAIN_TBL_ELEM 1
+#define WMI_AOA_NUM_BYTES_FOR_GAIN_TBL_ELEM 2
+
+/* Number of words required to store max number of gain table elements = ((max number of gain table elements)/(number of gain table elements per word)) */
+/* 2 bytes (at most)used to store each gain table elements */
+#define WMI_AOA_NUM_WORD_ENTRIES_FOR_MAX_NUM_AGC_TBL_ELEMS (WMI_AGC_MAX_GAIN_TABLE_IDX / WMI_AOA_NUM_GAIN_TBL_ELEMS_PER_WORD)
+
+/* 1 byte (at most) used to store each gain table elements obtained from BDF  */
+#define WMI_AOA_BDF_NUM_WORD_ENTRIES_FOR_MAX_NUM_AGC_TBL_ELEMS (WMI_AGC_MAX_GAIN_TABLE_IDX / WMI_AOA_BDF_NUM_GAIN_TBL_ELEMS_PER_WORD)
+
+typedef enum {
+    WMI_AOA_2G = 0,
+    WMI_AOA_5G,
+    WMI_AOA_6G,
+    WMI_AOA_MAX_BAND,
+} WMI_AOA_SUPPORTED_BANDS;
+
+#define WMI_AOA_MAX_AGC_GAIN_GET(pcap_var, tbl_idx, output) \
+    do { \
+        A_UINT8 word_idx = 0; \
+        A_UINT8 bit_index = 0; \
+        A_UINT8 nth_byte = 0; \
+        word_idx = tbl_idx >> 1; \
+        nth_byte = (tbl_idx % WMI_AOA_NUM_GAIN_TBL_ELEMS_PER_WORD); \
+        bit_index = nth_byte * 8 * WMI_AOA_NUM_BYTES_FOR_GAIN_TBL_ELEM; \
+        output = WMI_GET_BITS(*(pcap_var + word_idx), bit_index, 16); \
+    } while (0)
+
+#define WMI_AOA_MAX_AGC_GAIN_SET(pcap_var, tbl_idx, value) \
+    do { \
+        A_UINT8 word_idx = 0; \
+        A_UINT8 bit_index = 0; \
+        A_UINT8 nth_byte = 0; \
+        word_idx = tbl_idx >> 1; \
+        nth_byte = (tbl_idx % WMI_AOA_NUM_GAIN_TBL_ELEMS_PER_WORD); \
+        bit_index = nth_byte * 8 * WMI_AOA_NUM_BYTES_FOR_GAIN_TBL_ELEM; \
+        WMI_SET_BITS(*(pcap_var+word_idx), bit_index, 16, value); \
+    } while (0)
+
+#define WMI_AOA_MAX_BDF_ENTRIES_GET(pcap_var, tbl_idx, output) \
+    do { \
+        A_UINT8 word_idx = 0; \
+        A_UINT8 bit_index = 0; \
+        A_UINT8 nth_byte = 0; \
+        word_idx = tbl_idx >> 2; \
+        nth_byte = (tbl_idx % WMI_AOA_BDF_NUM_GAIN_TBL_ELEMS_PER_WORD); \
+        bit_index = nth_byte * 8 * WMI_AOA_NUM_BYTES_FOR_BDF_GAIN_TBL_ELEM; \
+        output = WMI_GET_BITS(*(pcap_var+word_idx), bit_index, 8); \
+    } while (0)
+
+#define WMI_AOA_MAX_BDF_ENTRIES_SET(pcap_var, tbl_idx, value) \
+    do { \
+        A_UINT8 word_idx = 0; \
+        A_UINT8 nth_byte = 0; \
+        A_UINT8 bit_index = 0; \
+        word_idx = tbl_idx >> 2; \
+        nth_byte = (tbl_idx % WMI_AOA_BDF_NUM_GAIN_TBL_ELEMS_PER_WORD); \
+        bit_index = nth_byte * 8 * WMI_AOA_NUM_BYTES_FOR_BDF_GAIN_TBL_ELEM; \
+        WMI_SET_BITS(*(pcap_var+word_idx), bit_index, 8, value); \
+    } while (0)
+
+typedef struct {
+    /** TLV tag and len; tag equals
+      * WMITLV_TAG_STRUC_wmi_enhanced_aoa_caps_param */
+    A_UINT32 tlv_header;
+
+    /* Maximum number of Rx AGC gain tables supported */
+    A_UINT32 max_agc_gain_tbls;
+
+    /* 1 byte is used to store bdf max number of elements in each gain tables */
+    A_UINT32 max_bdf_gain_entries[WMI_AOA_BDF_NUM_WORD_ENTRIES_FOR_MAX_NUM_AGC_TBL_ELEMS];
+
+    /** This TLV is followed by TLV array - wmi_enhanced_aoa_per_band_caps_param
+     * containing band specifc agc gain table information.
+     */
+} wmi_enhanced_aoa_caps_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_enhanced_aoa_per_band_caps_param */
+    A_UINT32 tlv_header;
+
+    /* Band information - WMI_AOA_SUPPORTED_BANDS */
+    A_UINT32 band_info;
+
+    /* 2 bytes are used to store agc max number of elements in each gain tables */
+    A_UINT32 max_agc_gain[WMI_AOA_NUM_WORD_ENTRIES_FOR_MAX_NUM_AGC_TBL_ELEMS];
+} wmi_enhanced_aoa_per_band_caps_param;
+
 /* WMI_HALPHY_CAL_LIST:
  *
  * Below is the list of HALPHY online CAL currently enabled in

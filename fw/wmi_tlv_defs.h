@@ -1396,6 +1396,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_enhanced_aoa_gain_phase_data_hdr,
     WMITLV_TAG_STRUC_wmi_ctrl_path_sta_rrm_stats_struct,
     WMITLV_TAG_STRUC_wmi_pdev_wsi_stats_info_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_enhanced_aoa_caps_param,
+    WMITLV_TAG_STRUC_wmi_enhanced_aoa_per_band_caps_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -5519,7 +5521,9 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_READY_EXT_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_sw_cal_ver_cap, sw_cal_ver_cap, WMITLV_SIZE_VAR) \
     WMITLV_FXAR(id,op,buf,len, WMITLV_TAG_ARRAY_INT32, A_INT32, hw_tx_power_signed, WMITLV_SIZE_FIX, WMI_HW_TX_POWER_CAPS_MAX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, WMI_COEX_FIX_CHANNEL_CAPABILITIES, coex_fix_channel_caps, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_aux_dev_capabilities, aux_dev_caps, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_aux_dev_capabilities, aux_dev_caps, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_enhanced_aoa_caps_param, aoa_caps_param, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_enhanced_aoa_per_band_caps_param, aoa_per_band_caps_param, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_READY_EXT2_EVENTID);
 
 #define WMITLV_TABLE_WMI_SPECTRAL_CAPABILITIES_EVENTID(id,op,buf,len) \
