@@ -20542,6 +20542,9 @@ typedef struct {
     A_UINT32 max_num_simultaneous_links;
     /** NSTR indication bitmap received in assoc req */
     A_UINT32 nstr_indication_bitmap;
+
+    /** max num of active links recommended by AP or applications */
+    A_UINT32 recommended_max_num_simultaneous_links;
 } wmi_peer_assoc_mlo_params;
 
 typedef struct {
@@ -46291,6 +46294,9 @@ typedef struct {
 typedef struct {
     A_UINT32 tlv_header;
     wmi_mac_addr ap_mld_macaddr;
+
+    /* max num of active links recommended by AP or applications */
+    A_UINT32 recommended_max_num_simultaneous_links;
 
     /*
      * The TLVs listed below follow this fixed_param TLV:
