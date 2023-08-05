@@ -1810,7 +1810,6 @@ static int battery_psy_get_prop(struct power_supply *psy,
 {
 	struct battery_chg_dev *bcdev = power_supply_get_drvdata(psy);
 	struct psy_state *pst = &bcdev->psy_list[PSY_TYPE_BATTERY];
-	struct psy_state *pst_xm = &bcdev->psy_list[PSY_TYPE_XM];
 	int prop_id, rc;
 
 	pval->intval = -ENODATA;
@@ -1831,15 +1830,11 @@ static int battery_psy_get_prop(struct power_supply *psy,
 		pval->strval = pst->model;
 		break;
 	case POWER_SUPPLY_PROP_CAPACITY:
-		if (!read_property_id(bcdev, pst_xm, XM_PROP_FG1_RSOC)) {
-			pval->intval = pst_xm->prop[XM_PROP_FG1_RSOC];
-		} else {
 #if defined(CONFIG_BQ_FUEL_GAUGE)
-			pval->intval = pst->prop[prop_id] / 100;
+		pval->intval = pst->prop[prop_id] / 100;
 #else
-			pval->intval = DIV_ROUND_CLOSEST(pst->prop[prop_id], 100);
+		pval->intval = DIV_ROUND_CLOSEST(pst->prop[prop_id], 100);
 #endif
-		}
 		if (bcdev->fake_soc >= 0 && bcdev->fake_soc <= 100)
 			pval->intval = bcdev->fake_soc;
 		break;
