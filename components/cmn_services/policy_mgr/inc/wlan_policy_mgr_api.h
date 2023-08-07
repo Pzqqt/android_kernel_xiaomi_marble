@@ -4265,6 +4265,7 @@ bool policy_mgr_is_hwmode_offload_enabled(struct wlan_objmgr_psoc *psoc);
  * list for third connection
  * @psoc: PSOC object information
  * @mode: Device mode
+ * @ch_freq: 3rd channel frequency
  *
  * This function checks whether to allow third connection on same band or not
  * based on pcl table
@@ -4272,7 +4273,8 @@ bool policy_mgr_is_hwmode_offload_enabled(struct wlan_objmgr_psoc *psoc);
  * Return: TRUE/FALSE
  */
 bool policy_mgr_is_3rd_conn_on_same_band_allowed(struct wlan_objmgr_psoc *psoc,
-						 enum policy_mgr_con_mode mode);
+						 enum policy_mgr_con_mode mode,
+						 qdf_freq_t ch_freq);
 
 #ifdef MPC_UT_FRAMEWORK
 /**
