@@ -2113,7 +2113,11 @@ asmlinkage __visible int printk(const char *fmt, ...)
 
 	if (in_task())
 		// /vendor/bin/hw/vendor.qti.hardware.display.composer-service
-		if (!likely(strcmp(current->group_leader->comm, "composer-servic")))
+		// /vendor/bin/hw/vendor.xiaomi.hardware.displayfeature@1.0-service
+		// https://github.com/xiaomi-sm8450-kernel/android_vendor_qcom_opensource_display-drivers/blob/5f879d978969f748e7e61f9402bf6d85285015eb/msm/msm_drv.c#L612
+		if (unlikely(!strcmp(current->group_leader->comm, "composer-servic")) ||
+		    unlikely(!strcmp(current->group_leader->comm, "displayfeature@")) ||
+		    unlikely(!strcmp(current->comm, "crtc_commit:144")))
 			return 0;
 
 	va_start(args, fmt);
