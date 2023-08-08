@@ -2111,6 +2111,11 @@ asmlinkage __visible int printk(const char *fmt, ...)
 	va_list args;
 	int r;
 
+	if (in_task())
+		// /vendor/bin/hw/vendor.qti.hardware.display.composer-service
+		if (!likely(strcmp(current->group_leader->comm, "composer-servic")))
+			return 0;
+
 	va_start(args, fmt);
 	r = vprintk_func(fmt, args);
 	va_end(args);
