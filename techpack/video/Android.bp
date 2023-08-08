@@ -1,0 +1,35 @@
+headers_src = [
+    "include/uapi/*/**/*.h",
+]
+
+video_headers_out = [
+    "vidc/media/v4l2_vidc_extensions.h",
+]
+
+video_kernel_headers_verbose = "--verbose "
+genrule {
+    name: "qti_generate_video_kernel_headers",
+    tools: ["headers_install.sh",
+            "unifdef"
+    ],
+    tool_files: [
+        "video_kernel_headers.py",
+    ],
+    srcs: headers_src,
+    cmd: "python3 -u $(location video_kernel_headers.py) " +
+          video_kernel_headers_verbose +
+         "--header_arch arm64 " +
+         "--gen_dir $(genDir) " +
+         "--video_include_uapi $(locations include/uapi/*/**/*.h) " +
+         "--unifdef $(location unifdef) " +
+         "--headers_install $(location headers_install.sh)",
+    out: video_headers_out,
+}
+
+cc_library_headers {
+    name: "qti_video_kernel_uapi",
+    generated_headers: ["qti_generate_video_kernel_headers"],
+    export_generated_headers: ["qti_generate_video_kernel_headers"],
+    vendor: true,
+    recovery_available: true
+}
