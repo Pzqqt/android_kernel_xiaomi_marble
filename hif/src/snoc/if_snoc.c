@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -479,3 +480,50 @@ bool hif_snoc_needs_bmi(struct hif_softc *scn)
 {
 	return false;
 }
+
+#ifdef FEATURE_ENABLE_CE_DP_IRQ_AFFINE
+static void hif_snoc_ce_dp_irq_set_affinity_hint(struct hif_softc *scn)
+{
+	struct CE_state *ce_state;
+	qdf_cpu_mask ce_cpu_mask;
+	unsigned int cpus;
+	int ce_id;
+	int ret, irq;
+
+	qdf_cpumask_clear(&ce_cpu_mask);
+
+	qdf_for_each_online_cpu(cpus) {
+		if (qdf_topology_physical_package_id(cpus) ==
+			CPU_CLUSTER_TYPE_PERF) {
+			qdf_cpumask_set_cpu(cpus,
+					    &ce_cpu_mask);
+		}
+	}
+
+	if (qdf_cpumask_empty(&ce_cpu_mask)) {
+		hif_err_rl("Empty cpu_mask, unable to set CE DP IRQ affinity");
+		return;
+	}
+
+	for (ce_id = 0; ce_id < scn->ce_count; ce_id++) {
+		ce_state = scn->ce_id_to_state[ce_id];
+		if (!ce_state || !ce_state->htt_rx_data)
+			continue;
+
+		irq = pld_get_irq(scn->qdf_dev->dev, ce_id);
+		ret = hif_irq_set_affinity_hint(irq, &ce_cpu_mask);
+		if (ret)
+			hif_err_rl("Set affinity %*pbl fails for CE DP IRQ %d",
+				   qdf_cpumask_pr_args(&ce_cpu_mask), irq);
+		else
+			hif_debug_rl("Set affinity %*pbl for CE DP IRQ: %d",
+				     qdf_cpumask_pr_args(&ce_cpu_mask), irq);
+	}
+}
+
+void hif_snoc_configure_irq_affinity(struct hif_softc *scn)
+{
+	if (scn->hif_config.enable_ce_dp_irq_affine)
+		hif_snoc_ce_dp_irq_set_affinity_hint(scn);
+}
+#endif
