@@ -4591,7 +4591,15 @@ typedef struct {
      *      Refer to the below definitions of the
      *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_BANG_RADAR_320M_SUPPORT_GET
      *      and _SET macros.
-     *  Bits 31:14 - Reserved
+     *  Bit 14
+     *      This bit will be set when host wants to enable/disable
+     *      full BW NOL feature.
+     *      When set to 1: Enable full BW NOL feature.
+     *      When set to 0: Disable the full BW NOL feature.
+     *      Refer to the below definitions of the
+     *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_RADAR_FLAGS_FULL_BW_NOL_GET
+     *      and _SET macros.
+     *  Bits 31:15 - Reserved
      */
     A_UINT32 host_service_flags;
 
@@ -5033,6 +5041,11 @@ typedef struct {
     WMI_GET_BITS(host_service_flags, 13, 1)
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_BANG_RADAR_320M_SUPPORT_SET(host_service_flags, val) \
     WMI_SET_BITS(host_service_flags, 13, 1, val)
+
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_RADAR_FLAGS_FULL_BW_NOL_GET(host_service_flags) \
+    WMI_GET_BITS(host_service_flags, 14, 1)
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_RADAR_FLAGS_FULL_BW_NOL_SET(host_service_flags, val) \
+    WMI_SET_BITS(host_service_flags, 14, 1, val)
 
 
 #define WMI_RSRC_CFG_CARRIER_CFG_CHARTER_ENABLE_GET(carrier_config) \
@@ -25557,6 +25570,30 @@ typedef struct {
     A_INT32  freq_offset; /* in MHz */
     A_INT32  sidx; /* segment index (where was the radar within the channel) */
 } wmi_pdev_dfs_radar_detection_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_RADAR_FLAGS */
+    /*
+     * Bit 0:
+     *     0 - need check sub channel marking
+     *     1 - full bandwidth need put to NOL
+     *     Refer to WMI_RADAR_FLAGS_FULL_BW_NOL_GET and _SET macros
+     * [1:31] reserved
+     */
+    A_UINT32 flags;
+}  WMI_RADAR_FLAGS;
+
+#define WMI_RADAR_FLAGS_FULL_BW_NOL_BITPOS    0
+#define WMI_RADAR_FLAGS_FULL_BW_NOL_NUM_BITS  1
+
+#define WMI_RADAR_FLAGS_FULL_BW_NOL_GET(flag) \
+    WMI_GET_BITS(flag, \
+        WMI_RADAR_FLAGS_FULL_BW_NOL_BITPOS, \
+        WMI_RADAR_FLAGS_FULL_BW_NOL_NUM_BITS)
+#define WMI_RADAR_FLAGS_FULL_BW_NOL_SET(flag, val) \
+    WMI_GET_BITS(flag, \
+        WMI_RADAR_FLAGS_FULL_BW_NOL_BITPOS, \
+        WMI_RADAR_FLAGS_FULL_BW_NOL_NUM_BITS, val)
 
 typedef enum {
     OCAC_COMPLETE = 0,
