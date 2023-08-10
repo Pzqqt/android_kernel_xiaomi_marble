@@ -43,8 +43,8 @@ ccflags-y += -DKSU_MANAGER_PACKAGE=\"$(KSU_MANAGER_PACKAGE)\"
 $(info -- KernelSU Manager package name: $(KSU_MANAGER_PACKAGE))
 endif
 
-$(info -- KernelSU Manager signature size: $(KSU_EXPECTED_SIZE))
-$(info -- KernelSU Manager signature hash: $(KSU_EXPECTED_HASH))
+# $(info -- KernelSU Manager signature size: $(KSU_EXPECTED_SIZE))
+# $(info -- KernelSU Manager signature hash: $(KSU_EXPECTED_HASH))
 
 ccflags-y += -DEXPECTED_SIZE=$(KSU_EXPECTED_SIZE)
 ccflags-y += -DEXPECTED_HASH=\"$(KSU_EXPECTED_HASH)\"
