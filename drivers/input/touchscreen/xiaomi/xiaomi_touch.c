@@ -197,7 +197,6 @@ static struct xiaomi_touch xiaomi_touch_dev = {
 	.prox_mutex = __MUTEX_INITIALIZER(xiaomi_touch_dev.prox_mutex),
 	.wait_queue = __WAIT_QUEUE_HEAD_INITIALIZER(xiaomi_touch_dev.wait_queue),
 	.fod_press_status_mutex = __MUTEX_INITIALIZER(xiaomi_touch_dev.fod_press_status_mutex),
-	.gesture_single_tap_mutex = __MUTEX_INITIALIZER(xiaomi_touch_dev.gesture_single_tap_mutex),
 };
 
 struct xiaomi_touch *xiaomi_touch_dev_get(int minor)
@@ -1002,22 +1001,6 @@ int update_fod_press_status(int value)
 }
 EXPORT_SYMBOL_GPL(update_fod_press_status);
 
-int notify_gesture_single_tap(void)
-{
-	mutex_lock(&xiaomi_touch_dev.gesture_single_tap_mutex);
-	sysfs_notify(&xiaomi_touch_dev.dev->kobj, NULL,
-		     "gesture_single_tap_state");
-	mutex_unlock(&xiaomi_touch_dev.gesture_single_tap_mutex);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(notify_gesture_single_tap);
-
-static ssize_t gesture_single_tap_value_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%d\n", 1);
-}
-
 static ssize_t fod_press_status_show(struct device *dev,
 				     struct device_attribute *attr, char *buf)
 {
@@ -1102,8 +1085,6 @@ static DEVICE_ATTR(update_rawdata, (S_IRUGO | S_IWUSR | S_IWGRP), update_rawdata
 			update_rawdata_store);
 static DEVICE_ATTR(fod_press_status, (0664), fod_press_status_show, NULL);
 
-static DEVICE_ATTR(gesture_single_tap_state, (0664), gesture_single_tap_value_show, NULL);
-
 static DEVICE_ATTR(resolution_factor, 0644, resolution_factor_show, NULL);
 
 static struct attribute *touch_attr_group[] = {
@@ -1131,7 +1112,6 @@ static struct attribute *touch_attr_group[] = {
 	&dev_attr_update_rawdata.attr,
 	&dev_attr_suspend_state.attr,
 	&dev_attr_fod_press_status.attr,
-	&dev_attr_gesture_single_tap_state.attr,
 	&dev_attr_resolution_factor.attr,
 	NULL,
 };
