@@ -1419,9 +1419,15 @@ finger_pos:
 					touch_data->overlay);
 	input_report_abs(dev, ABS_MT_WIDTH_MINOR,
 					touch_data->overlay);
+#ifdef GOODIX_XIAOMI_TOUCHFEATURE
+			last_touch_events_collect(i, 1);
+#endif
 		} else {
 			input_mt_slot(dev, i);
 			input_mt_report_slot_state(dev, MT_TOOL_FINGER, false);
+#ifdef GOODIX_XIAOMI_TOUCHFEATURE
+			last_touch_events_collect(i, 0);
+#endif
 		}
 	}
 
@@ -2056,6 +2062,9 @@ static void goodix_ts_release_connects(struct goodix_ts_core *core_data)
 		input_mt_report_slot_state(input_dev,
 				MT_TOOL_FINGER,
 				false);
+#ifdef GOODIX_XIAOMI_TOUCHFEATURE
+			last_touch_events_collect(i, 0);
+#endif
 	}
 	input_report_key(input_dev, BTN_TOUCH, 0);
 	input_mt_sync_frame(input_dev);
