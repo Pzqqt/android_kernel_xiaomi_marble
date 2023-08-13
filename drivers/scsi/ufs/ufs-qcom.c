@@ -528,6 +528,14 @@ static int ufs_qcom_host_reset(struct ufs_hba *hba)
 	 */
 	ufs_qcom_ice_disable(host);
 
+	/*
+	* The ice registers are also reset to default values after a ufs
+	* host controller reset. Reset the ice internal software flags here
+	* so that the ice hardware will be re-initialized properly in the
+	* later part of the UFS host controller reset.
+	*/
+	ufs_qcom_ice_disable(host);
+
 	if (reenable_intr) {
 		enable_irq(hba->irq);
 		hba->is_irq_enabled = true;
