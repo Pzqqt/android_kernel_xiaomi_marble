@@ -29,6 +29,7 @@
 #define SE_NUM_FOR_TEST_BUS	5  //for SE4
 
 #define SE_GENI_CFG_REG68		(0x210)
+#define SE_I2C_NOISE_CANCEL_CTL		(0x234)
 #define SE_I2C_TX_TRANS_LEN		(0x26C)
 #define SE_I2C_RX_TRANS_LEN		(0x270)
 #define SE_I2C_SCL_COUNTERS		(0x278)
@@ -83,7 +84,7 @@
 
 #define I2C_TIMEOUT_SAFETY_COEFFICIENT	10
 
-#define I2C_TIMEOUT_MIN_USEC	500000
+#define I2C_TIMEOUT_MIN_USEC	2000000
 
 #define MAX_SE	20
 
@@ -639,6 +640,11 @@ static int geni_i2c_prepare(struct geni_i2c_dev *gi2c)
 			gi2c->is_i2c_rtl_based  = true;
 			dev_info(gi2c->dev, "%s: RTL based SE\n", __func__);
 		}
+
+		/* Noise rejection changes, here adding extra sampling levels on SDA and SCL,
+		 * to reject short low pulses.
+		 */
+		writel_relaxed(0x1E, gi2c->base + SE_I2C_NOISE_CANCEL_CTL);
 	}
 	return 0;
 }
@@ -1516,7 +1522,7 @@ static int geni_i2c_xfer(struct i2c_adapter *adap,
 	geni_ios = geni_read_reg_nolog(gi2c->base, SE_GENI_IOS);
 	if ((geni_ios & 0x3) != 0x3) { //SCL:b'1, SDA:b'0
 		I2C_LOG_ERR(gi2c->ipcl, true, gi2c->dev,
-			    "IO lines in bad state, Power the slave\n");
+			    "IO lines in bad state, Power the slave, geni_ios=0x%x\n", geni_ios");
 		/* for levm skip auto suspend timer */
 		if (!gi2c->is_le_vm) {
 			pm_runtime_mark_last_busy(gi2c->dev);
@@ -1662,8 +1668,8 @@ static int geni_i2c_xfer(struct i2c_adapter *adap,
 			geni_ios = geni_read_reg_nolog(gi2c->base, SE_GENI_IOS);
 			if ((geni_ios & 0x3) != 0x3) { //SCL:b'1, SDA:b'0
 				I2C_LOG_DBG(gi2c->ipcl, false, gi2c->dev,
-					"%s: IO lines not in good state\n",
-					__func__);
+					"%s: IO lines not in good state, geni_ios=0x%x\n",
+					__func__, geni_ios);
 				/* doing pending cancel only rtl based SE's */
 				if (gi2c->is_i2c_rtl_based) {
 					gi2c->prev_cancel_pending = true;
