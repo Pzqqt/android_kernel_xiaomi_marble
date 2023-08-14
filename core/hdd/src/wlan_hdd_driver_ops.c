@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2065,6 +2065,7 @@ static void
 wlan_hdd_pld_uevent(struct device *dev, struct pld_uevent_data *event_data)
 {
 	struct qdf_notifer_data hang_evt_data;
+	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	enum qdf_hang_reason reason = QDF_REASON_UNSPECIFIED;
 	uint8_t bus_type;
 
@@ -2107,6 +2108,12 @@ wlan_hdd_pld_uevent(struct device *dev, struct pld_uevent_data *event_data)
 	case PLD_FW_HANG_EVENT:
 		hdd_info("Received firmware hang event");
 		cds_get_recovery_reason(&reason);
+
+		if ((reason == QDF_REASON_UNSPECIFIED) && hif_ctx) {
+			hif_display_ctrl_traffic_pipes_state(hif_ctx);
+			hif_display_latest_desc_hist(hif_ctx);
+		}
+
 		qdf_mem_zero(&g_fw_host_hang_event, QDF_HANG_EVENT_DATA_SIZE);
 		hang_evt_data.hang_data = g_fw_host_hang_event;
 		hang_evt_data.offset = 0;
