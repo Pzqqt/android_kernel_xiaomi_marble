@@ -142,6 +142,60 @@ config GENERIC_IRQ_DEBUGFS
 
 	  If you don't know what to do here, say N.
 
+config IRQ_SBALANCE
+	bool "SBalance IRQ balancer"
+	depends on SMP
+	default n
+	help
+	  This is a simple IRQ balancer that polls every X number of
+	  milliseconds and moves IRQs from the most interrupt-heavy CPU to the
+	  least interrupt-heavy CPUs until the heaviest CPU is no longer the
+	  heaviest. IRQs are only moved from one source CPU to any number of
+	  destination CPUs per balance run. Balancing is skipped if the gap
+	  between the most interrupt-heavy CPU and the least interrupt-heavy CPU
+	  is below the configured threshold of interrupts.
+
+	  The heaviest IRQs are targeted for migration in order to reduce the
+	  number of IRQs to migrate. If moving an IRQ would reduce overall
+	  balance, then it won't be migrated.
+
+	  The most interrupt-heavy CPU is calculated by scaling the number of
+	  new interrupts on that CPU to the CPU's current capacity. This way,
+	  interrupt heaviness takes into account factors such as thermal
+	  pressure and time spent processing interrupts rather than just the
+	  sheer number of them. This also makes SBalance aware of CPU asymmetry,
+	  where different CPUs can have different performance capacities and be
+	  proportionally balanced.
+
+if IRQ_SBALANCE
+config IRQ_SBALANCE_POLL_MSEC
+	int "Polling interval in milliseconds"
+	default 3000
+	help
+	  Perform IRQ balancing every X milliseconds.
+
+config IRQ_SBALANCE_THRESH
+	int "Balance threshold in number of interrupts"
+	default 1024
+	help
+	  There needs to be a difference of at least this many new interrupts
+	  between the heaviest and least-heavy CPUs during the last polling
+	  window in order for balancing to occur. This is to avoid balancing
+	  when the system is quiet.
+
+	  This threshold is compared to the _scaled_ interrupt counts per CPU;
+	  i.e., the number of interrupts scaled to the CPU's capacity.
+
+config SBALANCE_EXCLUDE_CPUS
+	string "CPUs to exclude from balancing"
+	help
+	  Comma-separated list of CPUs to exclude from IRQ balancing.
+
+	  For example, to ignore CPU0, CPU1, and CPU2, it is valid to provide
+	  "0,1-2" or "0-2" or "0,1,2".
+
+endif
+
 endmenu
 
 config GENERIC_IRQ_MULTI_HANDLER
