@@ -775,6 +775,10 @@ pkt_capture_register_callbacks(struct wlan_objmgr_vdev *vdev,
 		goto send_mode_fail;
 	}
 
+	qdf_wake_lock_acquire(&vdev_priv->wake_lock,
+			      WIFI_POWER_EVENT_WAKELOCK_MONITOR_MODE);
+	qdf_runtime_pm_prevent_suspend(&vdev_priv->runtime_lock);
+
 	return QDF_STATUS_SUCCESS;
 
 send_mode_fail:
@@ -844,6 +848,10 @@ QDF_STATUS pkt_capture_deregister_callbacks(struct wlan_objmgr_vdev *vdev)
 
 	vdev_priv->cb_ctx->mon_cb = NULL;
 	vdev_priv->cb_ctx->mon_ctx = NULL;
+
+	qdf_wake_lock_release(&vdev_priv->wake_lock,
+			      WIFI_POWER_EVENT_WAKELOCK_MONITOR_MODE);
+	qdf_runtime_pm_allow_suspend(&vdev_priv->runtime_lock);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1097,6 +1105,8 @@ pkt_capture_vdev_create_notification(struct wlan_objmgr_vdev *vdev, void *arg)
 	}
 	qdf_spinlock_create(&vdev_priv->lock_q);
 	qdf_list_create(&vdev_priv->ppdu_stats_q, PPDU_STATS_Q_MAX_SIZE);
+	qdf_wake_lock_create(&vdev_priv->wake_lock, "pkt_capture_mode");
+	qdf_runtime_lock_init(&vdev_priv->runtime_lock);
 
 	return status;
 
@@ -1132,6 +1142,9 @@ pkt_capture_vdev_destroy_notification(struct wlan_objmgr_vdev *vdev, void *arg)
 		pkt_capture_err("vdev priv is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	qdf_runtime_lock_deinit(&vdev_priv->runtime_lock);
+	qdf_wake_lock_destroy(&vdev_priv->wake_lock);
 
 	while (qdf_list_remove_front(&vdev_priv->ppdu_stats_q, &node)
 	       == QDF_STATUS_SUCCESS) {
