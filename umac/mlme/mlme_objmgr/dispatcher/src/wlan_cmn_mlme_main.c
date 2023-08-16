@@ -810,3 +810,10 @@ mlme_twt_vdev_destroy_notification(struct wlan_objmgr_vdev *vdev)
 
 #endif
 
+#ifdef WLAN_BOOST_CPU_FREQ_IN_ROAM
+void mlme_cm_osif_perfd_reset_cpufreq(void)
+{
+	if (glbl_cm_ops && glbl_cm_ops->mlme_cm_perfd_reset_cpufreq_ctrl_cb)
+		glbl_cm_ops->mlme_cm_perfd_reset_cpufreq_ctrl_cb();
+}
+#endif
