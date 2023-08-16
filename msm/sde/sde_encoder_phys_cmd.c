@@ -210,7 +210,7 @@ static void sde_encoder_phys_cmd_pp_tx_done_irq(void *arg, int irq_idx)
 	u32 scheduler_status = INVALID_CTL_STATUS, event = 0;
 	struct sde_hw_pp_vsync_info info[MAX_CHANNELS_PER_ENC] = {{0}};
 
-	if (!phys_enc || !phys_enc->hw_pp)
+	if (!phys_enc || !phys_enc->hw_pp || !phys_enc->hw_ctl)
 		return;
 
 	cmd_enc = to_sde_encoder_phys_cmd(phys_enc);
@@ -231,7 +231,7 @@ static void sde_encoder_phys_cmd_pp_tx_done_irq(void *arg, int irq_idx)
 		spin_unlock(phys_enc->enc_spinlock);
 	}
 
-	if (ctl && ctl->ops.get_scheduler_status)
+	if (ctl->ops.get_scheduler_status)
 		scheduler_status = ctl->ops.get_scheduler_status(ctl);
 
 	sde_encoder_helper_get_pp_line_count(phys_enc->parent, info);
