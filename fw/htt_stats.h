@@ -1636,6 +1636,13 @@ typedef struct {
 #define HTT_PEER_DETAILS_ML_PEER_ID_S         1
 #define HTT_PEER_DETAILS_LINK_IDX_M           0x001fe000
 #define HTT_PEER_DETAILS_LINK_IDX_S           13
+#define HTT_PEER_DETAILS_USE_PPE_M            0x00200000
+#define HTT_PEER_DETAILS_USE_PPE_S            21
+
+
+#define HTT_PEER_DETAILS_SRC_INFO_M           0x00000fff
+#define HTT_PEER_DETAILS_SRC_INFO_S           0
+
 
 #define HTT_PEER_DETAILS_SET(word, httsym, val)  \
     do {                                         \
@@ -1664,7 +1671,11 @@ typedef struct {
     A_UINT32     ml_peer_id_valid  : 1,   /* [0:0] */
                  ml_peer_id        : 12,  /* [12:1] */
                  link_idx          : 8,   /* [20:13] */
-                 rsvd              : 11;  /* [31:21] */
+                 use_ppe           : 1,   /* [21:21] */
+                 rsvd0             : 10;  /* [31:22] */
+    /* Dword 9 */
+    A_UINT32     src_info          : 12,  /* [11:0] */
+                 rsvd1             : 20;  /* [31:12] */
 } htt_peer_details_tlv;
 
 typedef struct {
