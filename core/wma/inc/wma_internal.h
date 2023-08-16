@@ -49,12 +49,6 @@
 
 #define WMA_WMM_EXPO_TO_VAL(val)        ((1 << (val)) - 1)
 
-#define MAX_HT_MCS_IDX 8
-#define MAX_VHT_MCS_IDX 10
-#ifdef WLAN_FEATURE_11AX
-#define MAX_HE_MCS_IDX 12
-#define MAX_HE_MCS12_13_IDX 14
-#endif
 #define INVALID_MCS_IDX 255
 
 #define IS_MCS_HAS_DCM_RATE(val)  \

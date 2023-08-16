@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -59,12 +59,12 @@ struct pkt_capture_cb_context {
  * @cb_ctx: pointer to packet capture mon callback context
  * @frame_filter: config filter set by vendor command
  * @cfg_params: packet capture config params
- * @rx_avg_rssi: avg rssi of rx data packets
  * @ppdu_stats_q: list used for storing smu related ppdu stats
  * @lock_q: spinlock for ppdu_stats q
  * @tx_nss: nss of tx data packets received from ppdu stats
  * @last_freq: Last connected freq
  * @curr_freq: current connected freq
+ * @rx_vht_sgi: guard interval of vht rx packet
  */
 struct pkt_capture_vdev_priv {
 	struct wlan_objmgr_vdev *vdev;
@@ -72,12 +72,12 @@ struct pkt_capture_vdev_priv {
 	struct pkt_capture_cb_context *cb_ctx;
 	struct pkt_capture_frame_filter frame_filter;
 	struct pkt_capture_cfg cfg_params;
-	int32_t rx_avg_rssi;
 	qdf_list_t ppdu_stats_q;
 	qdf_spinlock_t lock_q;
 	uint8_t tx_nss;
 	qdf_freq_t last_freq;
 	qdf_freq_t curr_freq;
+	uint8_t rx_vht_sgi;
 };
 
 /**

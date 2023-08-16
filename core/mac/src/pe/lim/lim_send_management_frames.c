@@ -4661,6 +4661,7 @@ lim_send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 	uint8_t                  vdev_id = 0;
 	uint8_t                  ch_spacing;
 	tLimWiderBWChannelSwitchInfo *wide_bw_ie;
+	uint8_t reg_cc[REG_ALPHA2_LEN + 1];
 
 	if (!session_entry) {
 		pe_err("Session entry is NULL!!!");
@@ -4679,9 +4680,9 @@ lim_send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 	frm.ext_chan_switch_ann_action.new_channel = new_channel;
 	frm.ext_chan_switch_ann_action.switch_count = count;
 
+	wlan_reg_read_current_country(mac_ctx->psoc, reg_cc);
 	ch_spacing = wlan_reg_dmn_get_chanwidth_from_opclass(
-			mac_ctx->scan.countryCodeCurrent, new_channel,
-			new_op_class);
+			reg_cc, new_channel, new_op_class);
 
 	if ((ch_spacing == 80) || (ch_spacing == 160)) {
 		wide_bw_ie = &session_entry->gLimWiderBWChannelSwitch;

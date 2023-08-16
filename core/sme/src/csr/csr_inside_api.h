@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -175,8 +176,7 @@ uint32_t csr_translate_to_wni_cfg_dot11_mode(struct mac_context *mac,
 				    enum csr_cfgdot11mode csrDot11Mode);
 void csr_save_channel_power_for_band(struct mac_context *mac, bool fPopulate5GBand);
 void csr_apply_channel_power_info_to_fw(struct mac_context *mac,
-					struct csr_channel *pChannelList,
-					uint8_t *countryCode);
+					struct csr_channel *pChannelList);
 void csr_apply_power2_current(struct mac_context *mac);
 void csr_apply_channel_power_info_wrapper(struct mac_context *mac);
 QDF_STATUS csr_save_to_channel_power2_g_5_g(struct mac_context *mac,

@@ -838,13 +838,6 @@ cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 
 	cm_process_roam_keys(vdev, rsp, cm_id);
 
-	if (!wlan_vdev_mlme_is_mlo_link_vdev(vdev)) {
-		mlo_roam_copy_partner_info(connect_rsp, roam_synch_data);
-		mlo_roam_update_connected_links(vdev, connect_rsp);
-	}
-
-	mlme_cm_osif_connect_complete(vdev, connect_rsp);
-
 	/**
 	 * Don't send roam_sync complete for MLO link vdevs.
 	 * Send only for legacy STA/MLO STA vdev.
@@ -867,6 +860,8 @@ cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		}
 		wlan_cm_tgt_send_roam_sync_complete_cmd(psoc, vdev_id);
 
+		mlo_roam_copy_partner_info(connect_rsp, roam_synch_data);
+		mlo_roam_update_connected_links(vdev, connect_rsp);
 	}
 	cm_connect_info(vdev, true, &connect_rsp->bssid, &connect_rsp->ssid,
 			connect_rsp->freq);
@@ -879,7 +874,7 @@ cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			 CM_PREFIX_REF(vdev_id, cm_id));
 		goto error;
 	}
-
+	mlme_cm_osif_connect_complete(vdev, connect_rsp);
 	mlme_cm_osif_roam_complete(vdev);
 	mlme_debug(CM_PREFIX_FMT, CM_PREFIX_REF(vdev_id, cm_id));
 	if (!wlan_vdev_mlme_is_mlo_link_vdev(vdev))
@@ -1185,6 +1180,10 @@ static QDF_STATUS cm_handle_ho_fail(struct scheduler_msg *msg)
 		mlme_debug("Roam req found, get cm id to remove it, before disconnect");
 		cm_id = roam_req->cm_id;
 	}
+	/* CPU freq is boosted during roam sync to improve roam latency,
+	 * upon HO failure reset that request to restore cpu freq back to normal
+	 */
+	mlme_cm_osif_perfd_reset_cpufreq();
 
 	cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_ROAM_HO_FAIL,
 			    sizeof(wlan_cm_id), &cm_id);
