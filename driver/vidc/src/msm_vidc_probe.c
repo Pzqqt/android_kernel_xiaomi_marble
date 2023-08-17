@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2020-2022, The Linux Foundation. All rights reserved.
  */
 
@@ -9,6 +10,7 @@
 #include <linux/of.h>
 #include <linux/of_platform.h>
 #include <linux/interrupt.h>
+#include <linux/suspend.h>
 
 #include "msm_vidc_internal.h"
 #include "msm_vidc_debug.h"
@@ -545,7 +547,16 @@ static int msm_vidc_pm_suspend(struct device *dev)
 	}
 
 	d_vpr_h("%s\n", __func__);
+#ifdef CONFIG_DEEPSLEEP
+	if (pm_suspend_via_firmware()) {
+		d_vpr_l("%s : deepsleep is triggered\n", __func__);
+		msm_vidc_schedule_core_deinit(core, true);
+	} else {
+		rc = msm_vidc_suspend(core);
+	}
+#else
 	rc = msm_vidc_suspend(core);
+#endif
 	if (rc == -ENOTSUPP)
 		rc = 0;
 	else if (rc)

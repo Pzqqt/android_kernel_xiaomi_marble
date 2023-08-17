@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -417,7 +417,7 @@ bool inst_lock_check(struct msm_vidc_inst *inst, const char *function);
 int msm_vidc_update_bitstream_buffer_size(struct msm_vidc_inst *inst);
 int msm_vidc_update_meta_port_settings(struct msm_vidc_inst *inst);
 int msm_vidc_update_buffer_count(struct msm_vidc_inst *inst, u32 port);
-void msm_vidc_schedule_core_deinit(struct msm_vidc_core *core);
+void msm_vidc_schedule_core_deinit(struct msm_vidc_core *core, bool force_deinit);
 bool msm_vidc_is_super_buffer(struct msm_vidc_inst *inst);
 int msm_vidc_init_core_caps(struct msm_vidc_core* core);
 int msm_vidc_init_instance_caps(struct msm_vidc_core* core);
