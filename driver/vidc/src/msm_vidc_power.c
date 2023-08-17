@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include "msm_vidc_power.h"
@@ -483,7 +483,10 @@ int msm_vidc_scale_clocks(struct msm_vidc_inst *inst)
 	initial_window = power->nom_threshold ? power->nom_threshold : DCVS_WINDOW;
 
 	if (inst->power.buffer_counter < min(initial_window, DCVS_WINDOW) ||
-		is_image_session(inst)) {
+		is_image_session(inst)
+		|| inst->state == MSM_VIDC_DRAIN
+		|| inst->state == MSM_VIDC_DRC
+		|| inst->state == MSM_VIDC_DRC_DRAIN) {
 		inst->power.min_freq = msm_vidc_max_freq(inst);
 		inst->power.dcvs_flags = 0;
 	} else if (msm_vidc_clock_voting) {
