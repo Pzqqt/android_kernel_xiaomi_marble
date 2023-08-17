@@ -39528,6 +39528,16 @@ typedef struct {
 #define WMI_GET_BTCONNECT_STATUS(flags)      WMI_GET_BITS(flags, 0, 1)
 #define WMI_SET_BTCONNECT_STATUS(flags, val) WMI_SET_BITS(flags, 0, 1, val)
 
+#define WMI_GET_MLO_BAND(flags)      WMI_GET_BITS(flags, 1, 3)
+#define WMI_SET_MLO_BAND(flags, val) WMI_SET_BITS(flags, 1, 3, val)
+
+typedef enum wmi_mlo_band_info {
+    WMI_MLO_BAND_NO_MLO = 0,
+    WMI_MLO_BAND_2GHZ_MLO,
+    WMI_MLO_BAND_5GHZ_MLO,
+    WMI_MLO_BAND_6GHZ_MLO,
+} wmi_mlo_band_info_t;
+
 typedef struct {
     A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_scan_info_tlv_param */
     /* roam_scan_type:
@@ -39551,7 +39561,10 @@ typedef struct {
     /*
      * Flags capturing factors involved during roam scan:
      * Bit 0    : Bluetooth connect status, 0(not connected) or 1(connected).
-     * Bit 1-31 : reserved for future use.
+     * Bit 1-3  : Indicates which link triggered roaming in MLD cases.
+     *            The value is one of the wmi_mlo_band_info_t enum constants.
+     *            Refer to WMI_[GET,SET]_MLO_BAND macros.
+     * Bit 4-31 : reserved for future use.
      */
     A_UINT32 flags;
 } wmi_roam_scan_info;
@@ -39565,6 +39578,9 @@ typedef struct {
                              * 2 -> passive
                              */
 } wmi_roam_scan_channel_info;
+
+#define WMI_GET_AP_INFO_MLO_STATUS(flags)      WMI_GET_BITS(flags, 0, 1)
+#define WMI_SET_AP_INFO_MLO_STATUS(flags, val) WMI_SET_BITS(flags, 0, 1, val)
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_ap_info_tlv_param */
@@ -39601,6 +39617,12 @@ typedef struct {
     A_UINT32 bl_timestamp;
     /* Original timeout value in milli seconds when AP added to BL */
     A_UINT32 bl_original_timeout;
+    /* flags:
+     * bit 0:    MLD AP FLAG -> 1: MLD AP, 0: non-MLD AP
+     *           Refer to WMI_[GET,SET]_AP_INFO_MLO_STATUS macros.
+     * bit 1-31: reserved.
+     */
+    A_UINT32 flags;
 } wmi_roam_ap_info;
 
 typedef enum {
@@ -39678,6 +39700,8 @@ typedef struct {
 #define WMI_ROAM_NEIGHBOR_REPORT_INFO_RESPONSE_TOKEN_SET(detail,val)    WMI_SET_BITS(detail, 8, 8, val)
 #define WMI_ROAM_NEIGHBOR_REPORT_INFO_NUM_OF_NRIE_GET(detail)           WMI_GET_BITS(detail, 16, 8)
 #define WMI_ROAM_NEIGHBOR_REPORT_INFO_NUM_OF_NRIE_SET(detail,val)       WMI_SET_BITS(detail, 16, 8, val)
+#define WMI_ROAM_NEIGHBOR_REPORT_INFO_MLO_BAND_INFO_GET(detail)         WMI_GET_BITS(detail, 24, 3)
+#define WMI_ROAM_NEIGHBOR_REPORT_INFO_MLO_BAND_INFO_SET(detail,val)     WMI_SET_BITS(detail, 24, 3, val)
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_neighbor_report_info_tlv_param */
@@ -39708,12 +39732,19 @@ typedef struct {
      * [7:0]     : neighbor report request token
      * [15:8]    : neighbor report response token
      * [23:16]   : the number of neighbor report elements in response frame
-     * [31:24]   : reserved
+     * [26:24]   : band on which frame is sent; the value will be one of the
+     *             wmi_mlo_band_info enum constants
+     *             Refer to WMI_ROAM_NEIGHBOR_REPORT_INFO_MLO_BAND_INFO_GET,SET
+     *             macros.
+     * [31:27]   : reserved
      * Refer to the above WMI_ROAM_NEIGHBOR_REPORT_INFO_*_GET,_SET macros for
      * reading and writing these bitfields.
      */
     A_UINT32 neighbor_report_detail;
 } wmi_roam_neighbor_report_info;
+
+#define WMI_ROAM_BTM_RESP_MLO_BAND_INFO_GET(detail)         WMI_GET_BITS(detail, 0, 3)
+#define WMI_ROAM_BTM_RESP_MLO_BAND_INFO_SET(detail,val)     WMI_SET_BITS(detail, 0, 3, val)
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_btm_response_info_tlv_param */
@@ -39748,6 +39779,13 @@ typedef struct {
      * that the responding STA requests the BSS to delay termination.
      */
     A_UINT32 btm_resp_bss_termination_delay;
+    /* info:
+     * Bit[0:2]   - band on which frame is sent, band value will be one of the
+     *              wmi_mlo_band_info_t enum constants
+     *              Refer to WMI_ROAM_BTM_RESP_MLO_BAND_INFO_GET,SET macros.
+     * Bit[3:31]  - reserved.
+     */
+    A_UINT32 info;
 } wmi_roam_btm_response_info;
 
 typedef struct {
@@ -39763,6 +39801,15 @@ typedef struct {
 
 #define WMI_GET_ASSOC_ID(frame_info_ext)      WMI_GET_BITS(frame_info_ext, 0, 16)
 #define WMI_SET_ASSOC_ID(frame_info_ext, val) WMI_SET_BITS(frame_info_ext, 0, 16, val)
+
+#define WMI_GET_MLO_BITMAP_BAND_INFO(frame_info_ext)      WMI_GET_BITS(frame_info_ext, 16, 5)
+#define WMI_SET_MLO_BITMAP_BAND_INFO(frame_info_ext, val) WMI_SET_BITS(frame_info_ext, 16, 5, val)
+
+#define WMI_GET_RX_INDICATE(frame_info_ext)      WMI_GET_BITS(frame_info_ext, 21, 1)
+#define WMI_SET_RX_INDICATE(frame_info_ext, val) WMI_SET_BITS(frame_info_ext, 21, 1, val)
+
+#define WMI_GET_TX_FAILED_REASON(frame_info_ext)         WMI_GET_BITS(frame_info_ext, 22, 4)
+#define WMI_SET_TX_FAILED_REASON(frame_info_ext, val)    WMI_SET_BITS(frame_info_ext, 22, 4, val)
 
 typedef struct {
     A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_frame_info_tlv_param */
@@ -39811,7 +39858,14 @@ typedef struct {
      * frame_info_ext captures below fields:
      * Bit 0-15  : (re)assoc id of (re)association response frame,
      *             section 9.4.1.8 AID field.
-     * Bit 16~31 : reserved for future use.
+     * Bit 16-20 : MLO bitmap band info,
+     *             bit0: 2GHz, bit1: 5GHz, bit2: 6GHz, bits 3-4: reserved
+     *             Refer to WMI_[GET,SET]_MLO_BITMAP_BAND_INFO macros.
+     * Bit 21    : indicate whether this frame is rx :0-not rx; 1-rx
+     *             Refer to WMI_[GET,SET]_RX_INDICATE macros.
+     * Bit 22-25 : opaque tx failure reason
+     *             Refer to WMI_[GET,SET]_TX_FAILED_REASON macros.
+     * Bit 26-31 : reserved for future use.
      */
     A_UINT32 frame_info_ext;
 } wmi_roam_frame_info;
