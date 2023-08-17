@@ -249,9 +249,11 @@
  * 3.121 Add HTT_T2H_MSG_TYPE_PEER_AST_OVERRIDE_INDEX_IND def.
  * 3.122 Add is_umac_hang flag in H2T UMAC_HANG_RECOVERY_SOC_START_PRE_RESET msg
  * 3.123 Add HTT_OPTION_TLV_TCL_METADATA_V21 def.
+ * 3.124 Add HTT_T2H_MSG_TYPE_PEER_EXTENDED_EVENT def.
+ * 3.125 Expand fisa_aggr_limit bits in fisa_control_bits_v2.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 123
+#define HTT_CURRENT_VERSION_MINOR 125
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -8620,8 +8622,8 @@ PREPACK struct htt_h2t_msg_type_fisa_config_t {
          } fisa_control_bits;
          struct {
              A_UINT32 fisa_enable:                1,
-                      fisa_aggr_limit:            4,
-                      reserved:                   27;
+                      fisa_aggr_limit:            6,
+                      reserved:                   25;
          } fisa_control_bits_v2;
 
          A_UINT32 fisa_control_value;
@@ -8841,7 +8843,7 @@ PREPACK struct htt_h2t_msg_type_fisa_config_t {
         } while (0)
 
 /* Dword 1: fisa_control_value fisa_aggr_limit */
-#define HTT_RX_FISA_CONFIG_FISA_V2_AGGR_LIMIT_M        0x0000001e
+#define HTT_RX_FISA_CONFIG_FISA_V2_AGGR_LIMIT_M        0x0000007e
 #define HTT_RX_FISA_CONFIG_FISA_V2_AGGR_LIMIT_S        1
 #define HTT_RX_FISA_CONFIG_FISA_V2_AGGR_LIMIT_GET(_var) \
         (((_var) & HTT_RX_FISA_CONFIG_FISA_V2_AGGR_LIMIT_M) >> \
@@ -10781,6 +10783,7 @@ enum htt_t2h_msg_type {
     HTT_T2H_MSG_TYPE_SOFT_UMAC_TX_COMPL_IND        = 0x36,
     HTT_T2H_MSG_TYPE_PRIMARY_LINK_PEER_MIGRATE_IND = 0x37,
     HTT_T2H_MSG_TYPE_PEER_AST_OVERRIDE_INDEX_IND   = 0x38,
+    HTT_T2H_MSG_TYPE_PEER_EXTENDED_EVENT           = 0x39,
 
 
     HTT_T2H_MSG_TYPE_TEST,
@@ -14043,6 +14046,132 @@ typedef enum {
 
 #define HTT_RX_MLO_PEER_UNMAP_MLO_PEER_ID_SET    HTT_RX_MLO_PEER_MAP_MLO_PEER_ID_SET
 #define HTT_RX_MLO_PEER_UNMAP_MLO_PEER_ID_GET    HTT_RX_MLO_PEER_MAP_MLO_PEER_ID_GET
+
+/**
+ * @brief target -> host peer extended event for additional information
+ *
+ * MSG_TYPE => HTT_T2H_MSG_TYPE_PEER_EXTENDED_EVENT
+ *
+ * @details
+ * The following diagram shows the format of the peer extended message sent
+ * from the target to the host. This layout assumes the target operates
+ * as little-endian.
+ *
+ * This message always contains a SW peer ID.  The main purpose of the
+ * SW peer ID is to tell the host what peer ID logical link id will be tagged
+ * with, so that the host can use that peer ID to determine which link
+ * transmitted the rx/tx frame.
+ *
+ * This message also contains MLO logical link id assigned to peer
+ * with sw_peer_id if it is valid ML link peer.
+ *
+ *
+ * |31    28|27    24|23   20|19|18     16|15               8|7               0|
+ * |---------------------------------------------------------------------------|
+ * |     VDEV_ID     |              SW peer ID               |     msg type    |
+ * |---------------------------------------------------------------------------|
+ * |    MAC addr 3   |    MAC addr 2      |    MAC addr 1    |    MAC addr 0   |
+ * |---------------------------------------------------------------------------|
+ * |          Reserved       |V | LINK ID |    MAC addr 5    |    MAC addr 4   |
+ * |---------------------------------------------------------------------------|
+ * |                                  Reserved                                 |
+ * |---------------------------------------------------------------------------|
+ * |                                  Reserved                                 |
+ * |---------------------------------------------------------------------------|
+ *
+ * Where:
+ *      LINK_ID (LOGICAL)     - 3 Bits Bit16,17,18 of 3rd byte
+ *      V (valid)             - 1 Bit  Bit19 of 3rd byte
+ *
+ * The following field definitions describe the format of the rx peer extended
+ * event messages sent from the target to the host.
+ *     MSG_TYPE
+ *     Bits 7:0
+ *     Purpose: identifies this as an rx MLO peer extended information message
+ *     Value: 0x39 (HTT_T2H_MSG_TYPE_PEER_EXTENDED_EVENT)
+ *   - PEER_ID (a.k.a. SW_PEER_ID)
+ *     Bits 8:23
+ *     Purpose: The peer ID (index) that WAL has allocated
+ *     Value: (rx) peer ID
+ *   - VDEV_ID
+ *     Bits 24:31
+ *     Purpose: Gives the vdev id of peer with peer_id as above.
+ *     Value: VDEV ID of wal_peer
+ *
+ *   - MAC_ADDR_L32
+ *     Bits 31:0
+ *     Purpose: Identifies which peer node the peer ID is for.
+ *     Value: lower 4 bytes of peer node's MAC address
+ *
+ *   - MAC_ADDR_U16
+ *     Bits 15:0
+ *     Purpose: Identifies which peer node the peer ID is for.
+ *     Value: upper 2 bytes of peer node's MAC address
+ *     Rest all bits are reserved for future expansion
+ *   - LOGICAL_LINK_ID
+ *     Bits 18:16
+ *     Purpose: Gives the logical link id of peer with peer_id as above. This
+ *         field should be taken alongwith LOGICAL_LINK_ID_VALID
+ *     Value: Logical link id used by wal_peer
+ *   - LOGICAL_LINK_ID_VALID
+ *     Bit 19
+ *     Purpose: Clarifies whether the logical link id of peer with peer_id as
+ *         is valid or not
+ *     Value: 0/1 indicating LOGICAL_LINK_ID is valid or not
+ */
+#define HTT_RX_PEER_EXTENDED_PEER_ID_M                0x00ffff00
+#define HTT_RX_PEER_EXTENDED_PEER_ID_S                8
+#define HTT_RX_PEER_EXTENDED_VDEV_ID_M                0xff000000
+#define HTT_RX_PEER_EXTENDED_VDEV_ID_S                24
+
+#define HTT_RX_PEER_EXTENDED_MAC_ADDR_L32_M           0xffffffff
+#define HTT_RX_PEER_EXTENDED_MAC_ADDR_L32_S           0
+
+#define HTT_RX_PEER_EXTENDED_MAC_ADDR_U16_M           0x0000ffff
+#define HTT_RX_PEER_EXTENDED_MAC_ADDR_U16_S           0
+#define HTT_RX_PEER_EXTENDED_LOGICAL_LINK_ID_M        0x00070000
+#define HTT_RX_PEER_EXTENDED_LOGICAL_LINK_ID_S        16
+#define HTT_RX_PEER_EXTENDED_LOGICAL_LINK_ID_VALID_M  0x00080000
+#define HTT_RX_PEER_EXTENDED_LOGICAL_LINK_ID_VALID_S  19
+
+
+#define HTT_RX_PEER_EXTENDED_PEER_ID_SET(word, value)                        \
+    do {                                                                \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_MAP_PEER_ID, value);              \
+        (word) |= (value)  << HTT_RX_PEER_EXTENDED_PEER_ID_S;                \
+    } while (0)
+#define HTT_RX_PEER_EXTENDED_PEER_ID_GET(word) \
+    (((word) & HTT_RX_PEER_EXTENDED_PEER_ID_M) >> HTT_RX_PEER_EXTENDED_PEER_ID_S)
+
+#define HTT_RX_PEER_EXTENDED_VDEV_ID_SET(word, value)                         \
+    do {                                                                \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_EXTENDED_VDEV_ID, value);               \
+        (word) |= (value)  << HTT_RX_PEER_EXTENDED_VDEV_ID_S;                 \
+    } while (0)
+#define HTT_RX_PEER_EXTENDED_VDEV_ID_GET(word) \
+    (((word) & HTT_RX_PEER_EXTENDED_VDEV_ID_M) >> HTT_RX_PEER_EXTENDED_VDEV_ID_S)
+
+#define HTT_RX_PEER_EXTENDED_LOGICAL_LINK_ID_SET(word, value)                         \
+    do {                                                                \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_EXTENDED_LOGICAL_LINK_ID, value);               \
+        (word) |= (value)  << HTT_RX_PEER_EXTENDED_LOGICAL_LINK_ID_S;                 \
+    } while (0)
+#define HTT_RX_PEER_EXTENDED_LOGICAL_LINK_ID_GET(word) \
+    (((word) & HTT_RX_PEER_EXTENDED_LOGICAL_LINK_ID_M) >> HTT_RX_PEER_EXTENDED_LOGICAL_LINK_ID_S)
+
+#define HTT_RX_PEER_EXTENDED_LOGICAL_LINK_ID_VALID_SET(word, value)                         \
+    do {                                                                \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_EXTENDED_LOGICAL_LINK_ID_VALID, value);               \
+        (word) |= (value)  << HTT_RX_PEER_EXTENDED_LOGICAL_LINK_ID_VALID_S;                 \
+    } while (0)
+#define HTT_RX_PEER_EXTENDED_LOGICAL_LINK_ID_VALID_GET(word) \
+    (((word) & HTT_RX_PEER_EXTENDED_LOGICAL_LINK_ID_VALID_M) >> HTT_RX_PEER_EXTENDED_LOGICAL_LINK_ID_VALID_S)
+
+#define HTT_RX_PEER_EXTENDED_MAC_ADDR_OFFSET                4 /* bytes */
+#define HTT_RX_PEER_EXTENDED_LOGICAL_LINK_ID_OFFSET         8  /* bytes */
+#define HTT_RX_PEER_EXTENDED_LOGICAL_LINK_ID_VALID_OFFSET   8  /* bytes */
+
+#define HTT_RX_PEER_EXTENDED_EVENT_BYTES 20 /* bytes */
 
 /**
  * @brief target -> host message specifying security parameters
