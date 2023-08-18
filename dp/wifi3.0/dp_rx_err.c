@@ -637,16 +637,16 @@ _dp_rx_bar_frame_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	if (!peer)
 		return;
 
-	dp_info("BAR frame: peer = " QDF_MAC_ADDR_FMT
-		" peer_id = %d"
-		" tid = %u"
-		" SSN = %d"
-		" error status = %d",
-		QDF_MAC_ADDR_REF(peer->mac_addr.raw),
-		peer->peer_id,
-		tid,
-		mpdu_desc_info->mpdu_seq,
-		err_status);
+	dp_info_rl("BAR frame: peer = " QDF_MAC_ADDR_FMT
+		   " peer_id = %d"
+		   " tid = %u"
+		   " SSN = %d"
+		   " error status = %d",
+		   QDF_MAC_ADDR_REF(peer->mac_addr.raw),
+		   peer->peer_id,
+		   tid,
+		   mpdu_desc_info->mpdu_seq,
+		   err_status);
 
 	if (err_status == HAL_REO_ERROR_DETECTED) {
 		switch (error_code) {

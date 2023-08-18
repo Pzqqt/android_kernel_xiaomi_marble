@@ -477,7 +477,7 @@ osif_cm_cckm_preauth_cmpl_cb(struct wlan_objmgr_vdev *vdev,
 /**
  * osif_cm_perfd_reset_cpufreq_ctrl_cb() - Callback to reset CPU freq
  *
- * This callback indicates os_if to reset the CPU freq
+ * This callback indicates os_if to reset the request to boost CPU freq
  *
  * Return: None
  */
