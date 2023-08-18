@@ -689,6 +689,7 @@ static void pkt_capture_rx_get_phy_info(void *context, void *psoc,
 	struct dp_soc *soc = psoc;
 	hal_soc_handle_t hal_soc;
 	struct wlan_objmgr_vdev *vdev = context;
+	struct pkt_capture_vdev_priv *vdev_priv;
 
 	hal_soc = soc->hal_soc;
 	preamble_type = hal_rx_tlv_get_pkt_type(hal_soc, rx_tlv_hdr);
@@ -696,6 +697,7 @@ static void pkt_capture_rx_get_phy_info(void *context, void *psoc,
 	bw = hal_rx_tlv_bw_get(hal_soc, rx_tlv_hdr);
 	mcs = hal_rx_tlv_rate_mcs_get(hal_soc, rx_tlv_hdr);
 	sgi = hal_rx_tlv_sgi_get(hal_soc, rx_tlv_hdr);
+	vdev_priv = pkt_capture_vdev_get_priv(vdev);
 
 	switch (preamble_type) {
 	case HAL_RX_PKT_TYPE_11A:
@@ -714,6 +716,7 @@ static void pkt_capture_rx_get_phy_info(void *context, void *psoc,
 		rx_status->ht_mcs = mcs;
 		break;
 	case HAL_RX_PKT_TYPE_11AC:
+		sgi = vdev_priv->rx_vht_sgi;
 		rx_status->vht_flags = 1;
 		rx_status->vht_flag_values3[0] = mcs << 0x4 | nss;
 		bw = vdev->vdev_mlme.des_chan->ch_width;

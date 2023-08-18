@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -205,6 +205,7 @@ static void populate_dot11f_tdls_offchannel_params(
 	uint8_t nss_2g;
 	uint8_t nss_5g;
 	qdf_freq_t ch_freq;
+	uint8_t reg_cc[REG_ALPHA2_LEN + 1];
 
 	numChans = mac->mlme_cfg->reg.valid_channel_list_num;
 
@@ -271,12 +272,12 @@ static void populate_dot11f_tdls_offchannel_params(
 	}
 
 	op_class = wlan_reg_dmn_get_opclass_from_channel(
-		mac->scan.countryCodeCurrent,
+		reg_cc,
 		wlan_reg_freq_to_chan(mac->pdev, pe_session->curr_op_freq),
 		chanOffset);
 
 	pe_debug("countryCodeCurrent: %s, curr_op_freq: %d, htSecondaryChannelOffset: %d, chanOffset: %d op class: %d",
-		 mac->scan.countryCodeCurrent,
+		 reg_cc,
 		 pe_session->curr_op_freq,
 		 pe_session->htSecondaryChannelOffset,
 		 chanOffset, op_class);
