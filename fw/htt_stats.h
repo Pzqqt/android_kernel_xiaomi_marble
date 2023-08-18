@@ -6275,6 +6275,7 @@ typedef struct {
     A_UINT32 med_rx_idle_usec;
     A_UINT32 med_tx_idle_global_usec;
     A_UINT32 cca_obss_usec;
+    A_UINT32 pre_rx_frame_usec;
 } htt_pdev_stats_cca_counters_tlv;
 
 /* NOTE: THIS htt_pdev_cca_stats_hist_tlv STRUCTURE IS DEPRECATED,
