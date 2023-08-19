@@ -583,6 +583,14 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_ODD_STATS_PDEV_BE_UL_MUMIMO_TRIG_STATS = 62,
 
+    /** HTT_DBG_MLO_SCHED_STATS
+     * PARAMS:
+     *    - No Params
+     * RESP MSG:
+     *    - htt_dbg_mlo_sched_stats_tlv
+     */
+    HTT_DBG_MLO_SCHED_STATS = 63,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -9763,5 +9771,29 @@ typedef struct {
         };
     };
 } htt_codel_msduq_stats_tlv;
+
+/*===================== start SCHED ALGO + MLO stats ====================*/
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 pref_link_num_sec_link_sched;
+    A_UINT32 pref_link_num_pref_link_timeout;
+    A_UINT32 pref_link_num_pref_link_sch_delay_ipc;
+    A_UINT32 pref_link_num_pref_link_timeout_ipc;
+} htt_mlo_sched_stats_tlv;
+
+/* STATS_TYPE : HTT_DBG_MLO_SCHED_STATS
+ * TLV_TAGS:
+ *   - HTT_STATS_MLO_SCHED_STATS_TAG
+ */
+/* NOTE:
+ * This structure is for documentation, and cannot be safely used directly.
+ * Instead, use the constituent TLV structures to fill/parse.
+ */
+typedef struct _htt_mlo_sched_stats {
+    htt_mlo_sched_stats_tlv  preferred_link_stats;
+} htt_mlo_sched_stats_t;
+
+/*===================== end SCHED ALGO + MLO stats ======================*/
 
 #endif /* __HTT_STATS_H__ */
