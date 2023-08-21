@@ -10,7 +10,7 @@ CCFLAGS += -m32
 endif
 
 M ?= $(shell pwd)
-#obj-m := rmnet_core.o rmnet_ctl.o
+obj-m := rmnet_core.o rmnet_ctl.o
 
 rmnet_core-y += 	rmnet_config.o \
 			rmnet_descriptor.o \
