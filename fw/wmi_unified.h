@@ -98,6 +98,8 @@ extern "C" {
 
 #define WMI_MAX_PN_LEN 8
 
+#define MAX_NUM_CQI_USERS_IN_STANDALONE_SND 3
+
 /*
  * These don't necessarily belong here; but as the MS/SM macros require
  * ar6000_internal.h to be included, it may not be defined as yet.
@@ -38900,6 +38902,8 @@ typedef struct {
      * wmi_dma_buf_release_entry entries[num_buf_release_entry];
      * wmi_dma_buf_release_spectral_meta_data meta_datat[num_meta_data_entry];
      * wmi_dma_buf_release_cv_upload_meta_data cv_meta_data[num_meta_data_entry]
+     * wmi_dma_buf_release_cqi_upload_meta_data
+     *     cqi_meta_data[num_meta_data_entry]
      */
 } wmi_dma_buf_release_fixed_param;
 
@@ -46097,6 +46101,9 @@ typedef struct {
 } wmi_vdev_set_manual_su_trig_cmd_fixed_param;
 
 
+#define CQI_UPLOAD_META_DATA_NC_IDX(idx) \
+    (MAX_NUM_CQI_USERS_IN_STANDALONE_SND + (idx * 2))
+
 #define WMI_DMA_BUF_RELEASE_CV_UPLOAD_SET_ASNR_LENGTH(asnr_params, value) \
         WMI_SET_BITS(asnr_params, 0, 16, value)
 #define WMI_DMA_BUF_RELEASE_CV_UPLOAD_GET_ASNR_LENGTH(asnr_params) \
@@ -46127,26 +46134,46 @@ typedef struct {
 #define WMI_DMA_BUF_RELEASE_CV_UPLOAD_GET_FB_PARAMS_NSS_NUM(fb_params) \
         WMI_GET_BITS(fb_params, 2, 2)
 
+#define WMI_DMA_BUF_RELEASE_CV_UPLOAD_SET_DDR_BUF_IDX(ddr_buffer_idx, value) \
+        WMI_SET_BITS(ddr_buffer_idx, 4, 2, value)
+#define WMI_DMA_BUF_RELEASE_CV_UPLOAD_GET_DDR_BUF_IDX(ddr_buffer_idx) \
+        WMI_GET_BITS(ddr_buffer_idx, 4, 2)
+
 
 #define WMI_SET_STANDALONE_SOUND_PARAMS_FB_TYPE(snd_params, value) \
-        WMI_SET_BITS(snd_params, 0, 1, value)
+        WMI_SET_BITS(snd_params, 0, 2, value)
 #define WMI_GET_STANDALONE_SOUND_PARAMS_FB_TYPE(snd_params) \
-        WMI_GET_BITS(snd_params, 0, 1)
+        WMI_GET_BITS(snd_params, 0, 2)
 
 #define WMI_SET_STANDALONE_SOUND_PARAMS_NG(snd_params, value) \
-        WMI_SET_BITS(snd_params, 1, 2, value)
+        WMI_SET_BITS(snd_params, 2, 2, value)
 #define WMI_GET_STANDALONE_SOUND_PARAMS_NG(snd_params) \
-        WMI_GET_BITS(snd_params, 1, 2)
+        WMI_GET_BITS(snd_params, 2, 2)
 
 #define WMI_SET_STANDALONE_SOUND_PARAMS_CB(snd_params, value) \
-        WMI_SET_BITS(snd_params, 3, 1, value)
+        WMI_SET_BITS(snd_params, 4, 1, value)
 #define WMI_GET_STANDALONE_SOUND_PARAMS_CB(snd_params) \
-        WMI_GET_BITS(snd_params, 3, 1)
+        WMI_GET_BITS(snd_params, 4, 1)
 
 #define WMI_SET_STANDALONE_SOUND_PARAMS_BW(snd_params, value) \
-        WMI_SET_BITS(snd_params, 4, 3, value)
+        WMI_SET_BITS(snd_params, 5, 3, value)
 #define WMI_GET_STANDALONE_SOUND_PARAMS_BW(snd_params) \
-        WMI_GET_BITS(snd_params, 4, 3)
+        WMI_GET_BITS(snd_params, 5, 3)
+
+#define WMI_SET_STANDALONE_SOUND_PARAMS_CQI_TYPE(snd_params, value) \
+        WMI_SET_BITS(snd_params, 8, 1, value)
+#define WMI_GET_STANDALONE_SOUND_PARAMS_CQI_TYPE(snd_params) \
+        WMI_GET_BITS(snd_params, 8, 1)
+
+#define WMI_DMA_BUF_RELEASE_CQI_UPLOAD_SET_FB_PARAMS_IS_VALID(fb_params_cqi, value, idx) \
+        WMI_SET_BITS(fb_params_cqi, idx, 1, value)
+#define WMI_DMA_BUF_RELEASE_CQI_UPLOAD_GET_FB_PARAMS_IS_VALID(fb_params_cqi, idx) \
+        WMI_GET_BITS(fb_params_cqi, idx, 1)
+
+#define WMI_DMA_BUF_RELEASE_CQI_UPLOAD_SET_FB_PARAMS_NC(fb_params_cqi, value, idx) \
+        WMI_SET_BITS(fb_params_cqi, CQI_UPLOAD_META_DATA_NC_IDX(idx), 2, value)
+#define WMI_DMA_BUF_RELEASE_CQI_UPLOAD_GET_FB_PARAMS_NC(fb_params_cqi, idx) \
+        WMI_GET_BITS(fb_params_cqi, CQI_UPLOAD_META_DATA_NC_IDX(idx), 2)
 
 
 typedef enum _WMI_STANDALONE_SOUND_STATUS_T {
@@ -46183,34 +46210,63 @@ typedef struct {
     /**
     * [1:0] Nc
     * [3:2] nss_num
+    * [4:5] ddr_buffer_idx
     */
-    A_UINT32 fb_params;
+    A_UINT32 fb_params:       4,
+             ddr_buffer_idx:  2,
+             reserved:       26;
 } wmi_dma_buf_release_cv_upload_meta_data;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_dma_buf_release_cqi_upload_meta_data */
+    A_UINT32 tlv_header;
+
+    /**
+     * [15:0] ASNR length
+     * [31:16] ASNR offset
+     */
+    A_UINT32 asnr_params;
+
+    /** Peer mac address */
+    wmi_mac_addr peer_mac_address[MAX_NUM_CQI_USERS_IN_STANDALONE_SND];
+
+    /**
+     * [0] is_user0_valid
+     * [1] is_user1_valid
+     * [2] is_user2_valid
+     * [4:3] User0_Nc
+     * [6:5] User1_Nc
+     * [8:7] User2_Nc
+     */
+    A_UINT32 fb_params_cqi         : 9,
+             reserved              : 23;
+} wmi_dma_buf_release_cqi_upload_meta_data;
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_standalone_sounding_cmd_fixed_param */
     /** vdev identifier */
     A_UINT32 vdev_id;
     /** sounding_params:
-    * [0] Feedback type
-    * [2:1] Ng
-    * [3] Codebook
-    * [6:4] BW
-    *     0 = 20 MHz
-    *     1 = 40 MHz
-    *     2 = 80 MHz
-    *     3 = 160 MHz
-    *     4 = 320 MHz
-    * [31:7] Reserved
-    */
+     * [1:0] Feedback type
+     * [3:2] Ng
+     * [4] Codebook
+     * [7:5] BW
+     *     0 = 20 MHz
+     *     1 = 40 MHz
+     *     2 = 80 MHz
+     *     3 = 160 MHz
+     *     4 = 320 MHz
+     * [8] Triggered/Non-Triggered CQI
+     * [31:9] Reserved
+     */
     A_UINT32 sounding_params;
     /** The number of sounding repeats */
     A_UINT32 num_sounding_repeats;
     /**
-    * TLV (tag length value) parameters follow the
-    * structure. The TLV's are:
-    * wmi_mac_addr peer_list[num_peers];
-    */
+     * TLV (tag length value) parameters follow the
+     * structure. The TLV's are:
+     * wmi_mac_addr peer_list[num_peers];
+     */
 } wmi_standalone_sounding_cmd_fixed_param;
 
 typedef struct {
