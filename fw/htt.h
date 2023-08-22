@@ -252,9 +252,10 @@
  * 3.124 Add HTT_T2H_MSG_TYPE_PEER_EXTENDED_EVENT def.
  * 3.125 Expand fisa_aggr_limit bits in fisa_control_bits_v2.
  * 3.126 Add HTT_RXDATA_ERR_INVALID_PEER def.
+ * 3.127 Add transmit_count fields in htt_tx_wbm_completion_vX structs.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 126
+#define HTT_CURRENT_VERSION_MINOR 127
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -2878,7 +2879,8 @@ PREPACK struct htt_tx_wbm_completion_v2 {
         tx_status:              4, /* Takes enum values of htt_tx_fw2wbm_tx_status_t */
         reinject_reason:        4, /* Takes enum values of htt_tx_fw2wbm_reinject_reason_t */
         exception_frame:        1,
-        rsvd0:                 12, /* For future use */
+        transmit_count:         7, /* Refer to struct wbm_release_ring */
+        rsvd0:                  5, /* For future use */
         used_by_hw4:            1, /* wbm_internal_error bit being used by HW */
         rsvd1:                  1; /* For future use */
     A_UINT32
@@ -2904,6 +2906,8 @@ PREPACK struct htt_tx_wbm_completion_v2 {
 #define HTT_TX_WBM_COMPLETION_V2_REINJECT_REASON_S           13
 #define HTT_TX_WBM_COMPLETION_V2_EXP_FRAME_M                 0x00020000
 #define HTT_TX_WBM_COMPLETION_V2_EXP_FRAME_S                 17
+#define HTT_TX_WBM_COMPLETION_V2_TRANSMIT_COUNT_M            0x01FC0000
+#define HTT_TX_WBM_COMPLETION_V2_TRANSMIT_COUNT_S            18
 
 /* DWORD 3 */
 #define HTT_TX_WBM_COMPLETION_V2_TX_STATUS_GET(_var) \
@@ -2936,6 +2940,16 @@ PREPACK struct htt_tx_wbm_completion_v2 {
          ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_EXP_FRAME_S)); \
      } while (0)
 
+#define HTT_TX_WBM_COMPLETION_V2_TRANSMIT_COUNT_GET(_var) \
+     (((_var) & HTT_TX_WBM_COMPLETION_V2_TRANSMIT_COUNT_M) >> \
+    HTT_TX_WBM_COMPLETION_V2_TRANSMIT_COUNT_S)
+
+#define HTT_TX_WBM_COMPLETION_V2_TRANSMIT_COUNT_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_TRANSMIT_COUNT, _val); \
+         ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_TRANSMIT_COUNT_S)); \
+     } while (0)
+
 /**
  * @brief HTT TX WBM Completion from firmware to host (V3)
  * @details
@@ -2961,7 +2975,8 @@ PREPACK struct htt_tx_wbm_completion_v3 {
     A_UINT32
         reinject_reason:       4,  /* Takes enum values of htt_tx_fw2wbm_reinject_reason_t */
         exception_frame:       1,
-        rsvd0:                 27; /* For future use */
+        transmit_count:        7, /* Refer to struct wbm_release_ring */
+        rsvd0:                 20; /* For future use */
     A_UINT32
         data0:                 32; /* data0,1 and 2 changes based on tx_status type
                                     * if HTT_TX_FW2WBM_TX_STATUS_OK or HTT_TX_FW2WBM_TX_STATUS_DROP
@@ -2978,13 +2993,17 @@ PREPACK struct htt_tx_wbm_completion_v3 {
         used_by_hw4:           12; /* Refer to struct wbm_release_ring */
 } POSTPACK;
 
-
+/* DWORD 3 */
 #define HTT_TX_WBM_COMPLETION_V3_TX_STATUS_M                 0x0001E000
 #define HTT_TX_WBM_COMPLETION_V3_TX_STATUS_S                 13
+
+/* DWORD 4 */
 #define HTT_TX_WBM_COMPLETION_V3_REINJECT_REASON_M           0x0000000F
 #define HTT_TX_WBM_COMPLETION_V3_REINJECT_REASON_S           0
 #define HTT_TX_WBM_COMPLETION_V3_EXP_FRAME_M                 0x00000010
 #define HTT_TX_WBM_COMPLETION_V3_EXP_FRAME_S                 4
+#define HTT_TX_WBM_COMPLETION_V3_TRANSMIT_COUNT_M            0x00000FE0
+#define HTT_TX_WBM_COMPLETION_V3_TRANSMIT_COUNT_S            5
 
 
 #define HTT_TX_WBM_COMPLETION_V3_TX_STATUS_GET(_var) \
@@ -3015,6 +3034,16 @@ PREPACK struct htt_tx_wbm_completion_v3 {
      do { \
          HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V3_EXP_FRAME, _val); \
          ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V3_EXP_FRAME_S)); \
+     } while (0)
+
+#define HTT_TX_WBM_COMPLETION_V3_TRANSMIT_COUNT_GET(_var) \
+    (((_var) & HTT_TX_WBM_COMPLETION_V3_TRANSMIT_COUNT_M) >> \
+    HTT_TX_WBM_COMPLETION_V3_TRANSMIT_COUNT_S)
+
+#define HTT_TX_WBM_COMPLETION_V3_TRANSMIT_COUNT_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V3_TRANSMIT_COUNT, _val); \
+         ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V3_TRANSMIT_COUNT_S)); \
      } while (0)
 
 
@@ -3057,7 +3086,11 @@ PREPACK struct htt_tx_wbm_transmit_status {
                               * contains valid data.
                               */
        frame_type:       4,  /* holds htt_tx_wbm_status_frame_type value */
-       reserved:         4;
+       transmit_count_valid: 1, /* If this "transmit_count_valid" is set, the
+                                 * transmit_count field in struct
+                                 * htt_tx_wbm_completion_vx has valid data.
+                                 */
+       reserved:         3;
    A_UINT32
        ppdu_start_tsf:  32;  /* PPDU Start timestamp added for multicast
                               * packets in the wbm completion path
@@ -3081,6 +3114,10 @@ PREPACK struct htt_tx_wbm_transmit_status {
 #define HTT_TX_WBM_COMPLETION_V2_MCAST_S               22
 #define HTT_TX_WBM_COMPLETION_V2_MCAST_VALID_M         0x00800000
 #define HTT_TX_WBM_COMPLETION_V2_MCAST_VALID_S         23
+#define HTT_TX_WBM_COMPLETION_V2_FRAME_TYPE_M          0x0F000000
+#define HTT_TX_WBM_COMPLETION_V2_FRAME_TYPE_S          24
+#define HTT_TX_WBM_COMPLETION_V2_TRANSMIT_CNT_VALID_M  0x10000000
+#define HTT_TX_WBM_COMPLETION_V2_TRANSMIT_CNT_VALID_S  28
 
 /* DWORD 4 */
 #define HTT_TX_WBM_COMPLETION_V2_SCH_CMD_ID_GET(_var) \
@@ -3153,6 +3190,26 @@ PREPACK struct htt_tx_wbm_transmit_status {
          HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_MCAST_VALID, _val); \
          ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_MCAST_VALID_S)); \
      } while (0)
+
+#define HTT_TX_WBM_COMPLETION_V2_FRAME_TYPE_GET(_var) \
+    (((_var) & HTT_TX_WBM_COMPLETION_V2_FRAME_TYPE_M) >> \
+    HTT_TX_WBM_COMPLETION_V2_FRAME_TYPE_S)
+
+#define HTT_TX_WBM_COMPLETION_V2_FRAME_TYPE_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_FRAME_TYPE, _val); \
+         ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_FRAME_TYPE_S)); \
+
+#define HTT_TX_WBM_COMPLETION_V2_TRANSMIT_CNT_VALID_GET(_var) \
+    (((_var) & HTT_TX_WBM_COMPLETION_V2_TRANSMIT_CNT_VALID_M) >> \
+    HTT_TX_WBM_COMPLETION_V2_TRANSMIT_CNT_VALID_S)
+
+#define HTT_TX_WBM_COMPLETION_V2_TRANSMIT_CNT_VALID_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_MCAST_VALID, _val); \
+         ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_TRANSMIT_CNT_VALID_S)); \
+     } while (0)
+
 
 /**
  * @brief HTT TX WBM reinject status from firmware to host
