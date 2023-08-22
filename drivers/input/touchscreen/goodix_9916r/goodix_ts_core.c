@@ -903,6 +903,7 @@ static ssize_t goodix_ts_report_rate_store(struct device *dev,
 	return count;
 }
 
+#ifdef CONFIG_TOUCH_BOOST
 /* touch boost show */
 static ssize_t goodix_ts_touch_boost_show(struct device *dev,
 				       struct device_attribute *attr,
@@ -931,6 +932,7 @@ static ssize_t goodix_ts_touch_boost_store(struct device *dev,
 		touch_boost_flag = false;
 	return count;
 }
+#endif
 
 static DEVICE_ATTR_RO(goodix_ts_driver_info);
 static DEVICE_ATTR_RO(goodix_ts_chip_info);
@@ -945,7 +947,9 @@ static DEVICE_ATTR_RW(goodix_ts_double_tap);
 static DEVICE_ATTR_RW(goodix_ts_aod);
 static DEVICE_ATTR_RW(goodix_ts_report_rate);
 static DEVICE_ATTR_RW(goodix_ts_fod);
+#ifdef CONFIG_TOUCH_BOOST
 static DEVICE_ATTR_RW(goodix_ts_touch_boost);
+#endif
 static struct attribute *sysfs_attrs[] = {
 	&dev_attr_goodix_ts_driver_info.attr,
 	&dev_attr_goodix_ts_chip_info.attr,
@@ -960,7 +964,9 @@ static struct attribute *sysfs_attrs[] = {
 	&dev_attr_goodix_ts_aod.attr,
 	&dev_attr_goodix_ts_report_rate.attr,
 	&dev_attr_goodix_ts_fod.attr,
+#ifdef CONFIG_TOUCH_BOOST
 	&dev_attr_goodix_ts_touch_boost.attr,
+#endif
 	NULL,
 };
 
