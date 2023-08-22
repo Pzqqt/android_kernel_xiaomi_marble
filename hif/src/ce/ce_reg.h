@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -336,6 +337,12 @@ unsigned int hif_get_dst_ring_read_index(struct hif_softc *scn,
 
 #define CE_SRC_RING_SZ_SET(scn, CE_ctrl_addr, n) \
 	A_TARGET_WRITE(scn, (CE_ctrl_addr) + SR_SIZE_ADDRESS, (n))
+
+#define CE_IDX_UPD_EN_DMAX_LEN_SET(scn, CE_ctrl_addr, n) \
+	A_TARGET_WRITE(scn, (CE_ctrl_addr) + CE_CTRL1_ADDRESS, \
+	   ((A_TARGET_READ(scn, (CE_ctrl_addr) + \
+	   CE_CTRL1_ADDRESS) & ~CE_CTRL1_DMAX_LENGTH_MASK) | \
+	   CE_CTRL1_DMAX_LENGTH_SET(n) | CE_CTRL1_IDX_UPD_EN))
 
 #define CE_SRC_RING_DMAX_SET(scn, CE_ctrl_addr, n) \
 	A_TARGET_WRITE(scn, (CE_ctrl_addr) + CE_CTRL1_ADDRESS, \
