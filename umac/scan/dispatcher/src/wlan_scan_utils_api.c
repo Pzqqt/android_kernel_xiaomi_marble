@@ -2972,7 +2972,12 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 						subie_len, new_ie,
 						mbssid_info.profile_num);
 
-			if (!new_ie_len)
+			if (!new_ie_len) {
+				if (mbssid_info.split_prof_continue) {
+					qdf_mem_free(split_prof_start);
+					split_prof_start = NULL;
+					split_prof_end = NULL;
+				}
 				continue;
 
 			new_frame_len = frame_len - ielen + new_ie_len;
@@ -3030,6 +3035,8 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 			if (QDF_IS_STATUS_ERROR(status)) {
 				if (mbssid_info.split_prof_continue) {
 					qdf_mem_free(split_prof_start);
+					split_prof_start = NULL;
+					split_prof_end = NULL;
 					qdf_mem_zero(&mbssid_info,
 						     sizeof(mbssid_info));
 				}
@@ -3042,6 +3049,9 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 			/* scan entry makes its own copy so free the frame*/
 			if (mbssid_info.split_prof_continue)
 				qdf_mem_free(split_prof_start);
+				split_prof_start = NULL;
+				split_prof_end = NULL;
+			}
 			qdf_mem_free(new_frame);
 		}
 
