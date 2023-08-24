@@ -709,6 +709,7 @@ static int brl_read_version(struct goodix_ts_core *cd,
 	}
 	memcpy(version, buf, sizeof(*version));
 	memcpy(temp_pid, version->rom_pid, sizeof(version->rom_pid));
+#ifdef CONFIG_TOUCHSCREEN_GOODIX_BRL_DEBUG
 	ts_info("rom_pid:%s", temp_pid);
 	ts_info("rom_vid:%*ph", (int)sizeof(version->rom_vid),
 		version->rom_vid);
@@ -716,6 +717,7 @@ static int brl_read_version(struct goodix_ts_core *cd,
 	ts_info("vid:%*ph", (int)sizeof(version->patch_vid),
 		version->patch_vid);
 	ts_info("sensor_id:%d", version->sensor_id);
+#endif
 
 	return 0;
 }
@@ -858,6 +860,7 @@ static int convert_ic_info(struct goodix_ic_info *info, const u8 *data)
 	return 0;
 }
 
+#ifdef CONFIG_TOUCHSCREEN_GOODIX_BRL_DEBUG
 static void print_ic_info(struct goodix_ic_info *ic_info)
 {
 	struct goodix_ic_info_version *version = &ic_info->version;
@@ -935,6 +938,9 @@ static void print_ic_info(struct goodix_ic_info *ic_info)
 	ts_info("esd_addr:                      0x%04X",
 		misc->esd_addr);
 }
+#else
+static inline void print_ic_info(struct goodix_ic_info *ic_info) { }
+#endif
 
 static int brl_get_ic_info(struct goodix_ts_core *cd,
 	struct goodix_ic_info *ic_info)

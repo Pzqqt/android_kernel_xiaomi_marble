@@ -44,10 +44,7 @@
 
 #ifdef CONFIG_TOUCH_BOOST
 extern void touch_irq_boost(void);
-#endif
-#ifdef CONFIG_TOUCH_BOOST
-#define EVENT_INPUT 0x1
-extern void lpm_disable_for_dev(bool on, char event_dev);
+bool __read_mostly touch_boost_flag = true;
 #endif
 extern struct device *global_spi_parent_device;
 struct goodix_module goodix_modules;
@@ -906,6 +903,37 @@ static ssize_t goodix_ts_report_rate_store(struct device *dev,
 	return count;
 }
 
+#ifdef CONFIG_TOUCH_BOOST
+/* touch boost show */
+static ssize_t goodix_ts_touch_boost_show(struct device *dev,
+				       struct device_attribute *attr,
+				       char *buf)
+{
+	int r = 0;
+
+	r = snprintf(buf, PAGE_SIZE, "state:%s\n",
+		    touch_boost_flag ?
+		    "enabled" : "disabled");
+
+	return r;
+}
+
+/* touch boost store */
+static ssize_t goodix_ts_touch_boost_store(struct device *dev,
+					struct device_attribute *attr,
+					const char *buf, size_t count)
+{
+	if (!buf || count <= 0)
+		return -EINVAL;
+
+	if (buf[0] != '0')
+		touch_boost_flag = true;
+	else
+		touch_boost_flag = false;
+	return count;
+}
+#endif
+
 static DEVICE_ATTR_RO(goodix_ts_driver_info);
 static DEVICE_ATTR_RO(goodix_ts_chip_info);
 static DEVICE_ATTR_WO(goodix_ts_reset);
@@ -919,6 +947,9 @@ static DEVICE_ATTR_RW(goodix_ts_double_tap);
 static DEVICE_ATTR_RW(goodix_ts_aod);
 static DEVICE_ATTR_RW(goodix_ts_report_rate);
 static DEVICE_ATTR_RW(goodix_ts_fod);
+#ifdef CONFIG_TOUCH_BOOST
+static DEVICE_ATTR_RW(goodix_ts_touch_boost);
+#endif
 static struct attribute *sysfs_attrs[] = {
 	&dev_attr_goodix_ts_driver_info.attr,
 	&dev_attr_goodix_ts_chip_info.attr,
@@ -933,6 +964,9 @@ static struct attribute *sysfs_attrs[] = {
 	&dev_attr_goodix_ts_aod.attr,
 	&dev_attr_goodix_ts_report_rate.attr,
 	&dev_attr_goodix_ts_fod.attr,
+#ifdef CONFIG_TOUCH_BOOST
+	&dev_attr_goodix_ts_touch_boost.attr,
+#endif
 	NULL,
 };
 
@@ -1417,9 +1451,15 @@ finger_pos:
 					touch_data->overlay);
 	input_report_abs(dev, ABS_MT_WIDTH_MINOR,
 					touch_data->overlay);
+#ifdef GOODIX_XIAOMI_TOUCHFEATURE
+			last_touch_events_collect(i, 1);
+#endif
 		} else {
 			input_mt_slot(dev, i);
 			input_mt_report_slot_state(dev, MT_TOOL_FINGER, false);
+#ifdef GOODIX_XIAOMI_TOUCHFEATURE
+			last_touch_events_collect(i, 0);
+#endif
 		}
 	}
 
@@ -1491,7 +1531,8 @@ static irqreturn_t goodix_ts_threadirq_func(int irq, void *data)
 	ts_esd->irq_status = true;
 	core_data->irq_trig_cnt++;
 #ifdef CONFIG_TOUCH_BOOST
-	touch_irq_boost();
+	if (touch_boost_flag)
+		touch_irq_boost();
 #endif
 	pm_stay_awake(core_data->bus->dev);
 #ifdef CONFIG_PM
@@ -1505,9 +1546,6 @@ static irqreturn_t goodix_ts_threadirq_func(int irq, void *data)
 		}
 	}
 #endif
-#ifdef CONFIG_TOUCH_BOOST
-	lpm_disable_for_dev(true, EVENT_INPUT);
-#endif
 	/* inform external module */
 	mutex_lock(&goodix_modules.mutex);
 	list_for_each_entry_safe(ext_module, next,
@@ -1517,9 +1555,6 @@ static irqreturn_t goodix_ts_threadirq_func(int irq, void *data)
 		ret = ext_module->funcs->irq_event(core_data, ext_module);
 		if (ret == EVT_CANCEL_IRQEVT) {
 			mutex_unlock(&goodix_modules.mutex);
-#ifdef CONFIG_TOUCH_BOOST
-			lpm_disable_for_dev(false, EVENT_INPUT);
-#endif
 			pm_relax(core_data->bus->dev);
 			return IRQ_HANDLED;
 		}
@@ -1546,9 +1581,6 @@ static irqreturn_t goodix_ts_threadirq_func(int irq, void *data)
 	if (!core_data->tools_ctrl_sync && !ts_event->retry)
 		hw_ops->after_event_handler(core_data);
 	ts_event->retry = 0;
-#ifdef CONFIG_TOUCH_BOOST
-	lpm_disable_for_dev(false, EVENT_INPUT);
-#endif
 	pm_relax(core_data->bus->dev);
 
 	return IRQ_HANDLED;
@@ -2054,6 +2086,9 @@ static void goodix_ts_release_connects(struct goodix_ts_core *core_data)
 		input_mt_report_slot_state(input_dev,
 				MT_TOOL_FINGER,
 				false);
+#ifdef GOODIX_XIAOMI_TOUCHFEATURE
+			last_touch_events_collect(i, 0);
+#endif
 	}
 	input_report_key(input_dev, BTN_TOUCH, 0);
 	input_mt_sync_frame(input_dev);
@@ -2138,9 +2173,6 @@ static int goodix_ts_suspend(struct goodix_ts_core *core_data)
 	mutex_unlock(&goodix_modules.mutex);
 
 out:
-#ifdef CONFIG_TOUCH_BOOST
-	lpm_disable_for_dev(false, EVENT_INPUT);
-#endif
 	goodix_ts_release_connects(core_data);
 	ts_info("Suspend end");
 	return 0;
