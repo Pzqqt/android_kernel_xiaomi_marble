@@ -1,0 +1,48 @@
+LINUXINCLUDE    += -I$(EVA_ROOT)/include \
+                   -I$(EVA_ROOT)/include/uapi \
+				   -I$(EVA_ROOT)/include/uapi/eva
+
+ccflags-y += -I$(srctree)/drivers/media/platform/msm/synx/
+
+# add flag to compile mmrm actual implementatio instead of stub version.
+# to follow up with mmrm team if techpack users need to define this for long term?
+KBUILD_CPPFLAGS += -DCONFIG_MSM_MMRM
+
+# ported from Android.mk
+$(info within KBUILD file KBUILD_EXTRA_SYMBOLS = $(KBUILD_EXTRA_SYMBOLS))
+
+ifeq ($(CONFIG_ARCH_WAIPIO), y)
+$(info within KBUILD file CONFIG_ARCH_WAIPIO = $(CONFIG_ARCH_WAIPIO))
+# include $(EVA_ROOT)/config/waipio.mk
+KBUILD_CPPFLAGS += -DCONFIG_EVA_WAIPIO=1
+ccflags-y += -DCONFIG_EVA_WAIPIO=1
+endif
+
+ifeq ($(CONFIG_ARCH_KALAMA), y)
+$(info within KBUILD file CONFIG_ARCH_KALAMA = $(CONFIG_ARCH_KALAMA))
+# include $(EVA_ROOT)/config/waipio.mk
+KBUILD_CPPFLAGS += -DCONFIG_EVA_KALAMA=1
+ccflags-y += -DCONFIG_EVA_KALAMA=1
+endif
+
+msm-eva-objs := eva/cvp.o \
+        eva/msm_cvp_ioctl.o \
+        eva/msm_cvp_platform.o \
+        eva/msm_cvp_common.o \
+        eva/msm_cvp_core.o \
+        eva/msm_cvp.o \
+        eva/msm_smem.o \
+        eva/msm_cvp_debug.o \
+        eva/msm_cvp_res_parse.o \
+        eva/cvp_dump.o \
+        eva/cvp_hfi.o \
+        eva/hfi_response_handler.o \
+        eva/hfi_packetization.o \
+        eva/cvp_core_hfi.o \
+        eva/msm_cvp_clocks.o\
+        eva/msm_cvp_dsp.o \
+        eva/msm_cvp_buf.o \
+        eva/msm_cvp_synx.o \
+		eva/cvp_fw_load.o
+obj-m += msm-eva.o
+
