@@ -1819,6 +1819,19 @@ typedef enum HTT_PPDU_STATS_RESP_PPDU_TYPE HTT_PPDU_STATS_RESP_PPDU_TYPE;
         ((_var) |= ((_val) << HTT_PPDU_STATS_USER_RATE_TLV_EXTRA_EHT_LTF_S)); \
     } while (0)
 
+#define HTT_PPDU_STATS_USER_RATE_TLV_IS_MIN_RATE_M  0x00020000
+#define HTT_PPDU_STATS_USER_RATE_TLV_IS_MIN_RATE_S          17
+
+#define HTT_PPDU_STATS_USER_RATE_TLV_IS_MIN_RATE_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USER_RATE_TLV_IS_MIN_RATE_M) >> \
+    HTT_PPDU_STATS_USER_RATE_TLV_IS_MIN_RATE_S)
+
+#define HTT_PPDU_STATS_USER_RATE_TLV_IS_MIN_RATE_SET (_var , _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_RATE_TLV_IS_MIN_RATE, _val); \
+        ((_var) |= ((_val) << HTT_PPDU_STATS_USER_RATE_TLV_IS_MIN_RATE_S)); \
+    } while (0)
+
 typedef enum HTT_PPDU_STATS_RU_SIZE {
     HTT_PPDU_STATS_RU_26,
     HTT_PPDU_STATS_RU_52,
@@ -2009,7 +2022,8 @@ typedef struct {
      */
     A_UINT32 punc_pattern_bitmap: 16,
              extra_eht_ltf:       1,
-             reserved4:           15;
+             is_min_rate:         1,
+             reserved4:           14;
 } htt_ppdu_stats_user_rate_tlv;
 
 #define HTT_PPDU_STATS_USR_RATE_VALID_M     0x80000000
@@ -2479,6 +2493,11 @@ typedef struct {
      * for BW supported by Smart Antenna - 320 MHZ
      */
     A_UINT32 max_rates_ext;
+
+    /* hw_prot_dur_us:
+     * hw protection frame's FES duration in micro seconds.
+     */
+    A_UINT32 hw_prot_dur_us;
 } htt_ppdu_stats_user_cmpltn_common_tlv;
 
 #define HTT_PPDU_STATS_USER_CMPLTN_BA_BITMAP_TLV_TID_NUM_M     0x000000ff
