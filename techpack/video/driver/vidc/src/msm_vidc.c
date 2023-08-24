@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/types.h>
@@ -978,7 +978,7 @@ int msm_vidc_close(void *instance)
 	cancel_stats_work_sync(inst);
 	msm_vidc_show_stats(inst);
 	put_inst(inst);
-	msm_vidc_schedule_core_deinit(core);
+	msm_vidc_schedule_core_deinit(core, false);
 
 	return rc;
 }
