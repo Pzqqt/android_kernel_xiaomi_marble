@@ -1400,6 +1400,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_enhanced_aoa_per_band_caps_param,
     WMITLV_TAG_STRUC_WMI_RADAR_FLAGS,
     WMITLV_TAG_STRUC_wmi_dma_buf_release_cqi_upload_meta_data,
+    WMITLV_TAG_STRUC_wmi_csa_event_status_ind_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -1935,6 +1936,7 @@ typedef enum {
     OP(WMI_MLO_LINK_SWITCH_CONF_CMDID) \
     OP(WMI_NAN_OEM_DATA_CMDID) \
     OP(WMI_PDEV_WSI_STATS_INFO_CMDID) \
+    OP(WMI_CSA_EVENT_STATUS_INDICATION_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -5466,6 +5468,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_SWITCH_CONF_CMDID);
 #define WMITLV_TABLE_WMI_PDEV_WSI_STATS_INFO_CMDID(id,op,buf,len) \
         WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_wsi_stats_info_cmd_fixed_param, wmi_pdev_wsi_stats_info_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_WSI_STATS_INFO_CMDID);
+
+/* CSA status indication  command to inform FW about host accepting or rejecting csa event*/
+#define WMITLV_TABLE_WMI_CSA_EVENT_STATUS_INDICATION_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_csa_event_status_ind_fixed_param ,  wmi_csa_event_status_ind_fixed_param,fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_CSA_EVENT_STATUS_INDICATION_CMDID);
 
 
 

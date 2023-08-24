@@ -627,6 +627,10 @@ typedef enum {
     /** pause vdev's Tx, Rx, or both for a specific duration */
     WMI_VDEV_PAUSE_CMDID,
 
+    /** WMI Command to set status of CSA event from HOST */
+    WMI_CSA_EVENT_STATUS_INDICATION_CMDID,
+
+
     /* peer specific commands */
 
     /** create a peer */
@@ -36887,6 +36891,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_MLO_LINK_RECOMMENDATION_CMDID);
         WMI_RETURN_STRING(WMI_NAN_OEM_DATA_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_WSI_STATS_INFO_CMDID);
+        WMI_RETURN_STRING(WMI_CSA_EVENT_STATUS_INDICATION_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -46684,6 +46689,15 @@ typedef struct {
     A_UINT32 wsi_ingress_load_info;
     A_UINT32 wsi_egress_load_info;
 } wmi_pdev_wsi_stats_info_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_csa_event_status_ind_fixed_param
+     */
+    A_UINT32 tlv_header;
+    A_UINT32 vdev_id;
+    A_UINT32 status; /* accept: 1 reject : 0 */
+} wmi_csa_event_status_ind_fixed_param;
 
 
 
