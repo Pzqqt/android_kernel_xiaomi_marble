@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -46,6 +47,7 @@
  * @single_noa_duration: single shot noa duration
  * @ps_selection: power save selection
  * @session_id: session id
+ * @start: start time
  */
 struct p2p_ps_params {
 	uint8_t opp_ps;
@@ -56,6 +58,7 @@ struct p2p_ps_params {
 	uint32_t single_noa_duration;
 	uint8_t ps_selection;
 	uint8_t session_id;
+	uint32_t start;
 };
 
 /**
@@ -190,6 +193,7 @@ struct p2p_set_mac_filter_evt {
  * @interval:              Interval
  * @single_noa_duration:   Single shot noa duration
  * @ps_selection:          power save selection
+ * @start:                 Start time
  */
 struct p2p_ps_config {
 	uint32_t vdev_id;
@@ -200,6 +204,7 @@ struct p2p_ps_config {
 	uint32_t interval;
 	uint32_t single_noa_duration;
 	uint32_t ps_selection;
+	uint32_t start;
 };
 
 /**
