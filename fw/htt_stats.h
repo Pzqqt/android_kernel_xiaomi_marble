@@ -587,9 +587,17 @@ enum htt_dbg_ext_stats_type {
      * PARAMS:
      *    - No Params
      * RESP MSG:
-     *    - htt_dbg_mlo_sched_stats_tlv
+     *    - htt_pdev_mlo_sched_stats_tlv
      */
     HTT_DBG_MLO_SCHED_STATS = 63,
+
+    /** HTT_DBG_PDEV_MLO_IPC_STATS
+     * PARAMS:
+     *    - No Params
+     * RESP MSG:
+     *    - htt_pdev_mlo_ipc_stats_tlv
+     */
+    HTT_DBG_PDEV_MLO_IPC_STATS = 64,
 
 
     /* keep this last */
@@ -5683,6 +5691,12 @@ typedef struct {
      * response to basic trigger. Typically a data response is expected.
      */
     A_UINT32 be_ul_ofdma_basic_trigger_rx_qos_null_only;
+
+    /* UL MLO Queue Depth Sharing Stats */
+    A_UINT32 ul_mlo_send_qdepth_params_count;
+    A_UINT32 ul_mlo_proc_qdepth_params_count;
+    A_UINT32 ul_mlo_proc_accepted_qdepth_params_count;
+    A_UINT32 ul_mlo_proc_discarded_qdepth_params_count;
 } htt_rx_pdev_be_ul_trigger_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_UL_TRIG_STATS
@@ -9785,7 +9799,7 @@ typedef struct {
     };
 } htt_codel_msduq_stats_tlv;
 
-/*===================== start SCHED ALGO + MLO stats ====================*/
+/*===================== start MLO stats ====================*/
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -9807,6 +9821,26 @@ typedef struct _htt_mlo_sched_stats {
     htt_mlo_sched_stats_tlv  preferred_link_stats;
 } htt_mlo_sched_stats_t;
 
-/*===================== end SCHED ALGO + MLO stats ======================*/
+#define HTT_STATS_HWMLO_MAX_LINKS 6
+#define HTT_STATS_MLO_MAX_IPC_RINGS 7
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 mlo_ipc_ring_full_cnt[HTT_STATS_HWMLO_MAX_LINKS][HTT_STATS_MLO_MAX_IPC_RINGS];
+} htt_pdev_mlo_ipc_stats_tlv;
+
+/* STATS_TYPE : HTT_DBG_MLO_IPC_STATS
+ * TLV_TAGS:
+ *   - HTT_STATS_PDEV_MLO_IPC_STATS_TAG
+ */
+/* NOTE:
+ * This structure is for documentation, and cannot be safely used directly.
+ * Instead, use the constituent TLV structures to fill/parse.
+ */
+typedef struct _htt_mlo_ipc_stats {
+    htt_pdev_mlo_ipc_stats_tlv  mlo_ipc_stats;
+} htt_pdev_mlo_ipc_stats_t;
+
+/*===================== end MLO stats ======================*/
 
 #endif /* __HTT_STATS_H__ */
