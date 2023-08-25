@@ -8839,6 +8839,18 @@ typedef struct _htt_odd_mandatory_muofdma_pdev_stats_tlv {
         ((_var) |= ((_val) << HTT_PDEV_SCHED_ALGO_OFDMA_STATS_MAC_ID_S)); \
     } while (0)
 
+typedef enum {
+    HTT_STATS_SCHED_OFDMA_TXBF = 0,                                    /* 0 */
+    HTT_STATS_SCHED_OFDMA_TXBF_IS_SANITY_FAILED,                       /* 1 */
+    HTT_STATS_SCHED_OFDMA_TXBF_IS_EBF_ALLOWED_FAILIED,                 /* 2 */
+    HTT_STATS_SCHED_OFDMA_TXBF_RU_ALLOC_BW_DROP_COUNT,                 /* 3 */
+    HTT_STATS_SCHED_OFDMA_TXBF_INVALID_CV_QUERY_COUNT,                 /* 4 */
+    HTT_STATS_SCHED_OFDMA_TXBF_AVG_TXTIME_LESS_THAN_TXBF_SND_THERHOLD, /* 5 */
+    HTT_STATS_SCHED_OFDMA_TXBF_IS_CANDIDATE_KICKED_OUT,                /* 6 */
+    HTT_STATS_SCHED_OFDMA_TXBF_CV_IMAGE_BUF_INVALID,                   /* 7 */
+    HTT_STATS_SCHED_OFDMA_TXBF_INELIGIBILITY_MAX,
+} htt_stats_sched_ofdma_txbf_ineligibility_t;
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /**
@@ -8881,6 +8893,7 @@ typedef struct {
     A_UINT32 dlofdma_disabled_consec_no_mpdus_tried[HTT_NUM_AC_WMM];
     /** Num of instances where dl ofdma is disabled because there are consecutive mpdu failure */
     A_UINT32 dlofdma_disabled_consec_no_mpdus_success[HTT_NUM_AC_WMM];
+    A_UINT32 txbf_ofdma_ineligibility_stat[HTT_STATS_SCHED_OFDMA_TXBF_INELIGIBILITY_MAX];
 } htt_pdev_sched_algo_ofdma_stats_tlv;
 
 typedef struct {
