@@ -3304,8 +3304,9 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx,
 				return 0;
 			}
 		}
-	} else if (wlan_reg_is_disable_for_freq(mac->pdev,
-						sap_ctx->chan_freq) &&
+	} else if (wlan_reg_is_disable_in_secondary_list_for_freq(
+							mac->pdev,
+							sap_ctx->chan_freq) &&
 		   !utils_dfs_is_freq_in_nol(mac->pdev, sap_ctx->chan_freq)) {
 		sap_debug("channel is disabled");
 		*csa_reason = CSA_REASON_CHAN_DISABLED;
