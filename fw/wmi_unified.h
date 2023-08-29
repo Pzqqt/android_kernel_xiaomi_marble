@@ -44603,8 +44603,14 @@ typedef struct {
 } wmi_mlo_ready_cmd_fixed_param;
 
 typedef enum wmi_mlo_tear_down_reason_code_type {
-    WMI_MLO_TEARDOWN_SSR_REASON,
-    WMI_MLO_TEARDOWN_HOST_INITIATED_REASON,
+    WMI_MLO_TEARDOWN_REASON_SSR,
+        /* keep old name as alias for new name */
+        WMI_MLO_TEARDOWN_SSR_REASON = WMI_MLO_TEARDOWN_REASON_SSR,
+    WMI_MLO_TEARDOWN_REASON_HOST_INITIATED,
+        /* keep old name as alias for new name */
+        WMI_MLO_TEARDOWN_HOST_INITIATED_REASON =
+            WMI_MLO_TEARDOWN_REASON_HOST_INITIATED,
+    WMI_MLO_TEARDOWN_REASON_STANDBY_DOWN,
 } WMI_MLO_TEARDOWN_REASON_TYPE;
 
 typedef struct {
