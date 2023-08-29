@@ -19361,6 +19361,27 @@ static void hdd_populate_runtime_cfg(struct hdd_context *hdd_ctx,
 }
 #endif
 
+#ifdef FEATURE_ENABLE_CE_DP_IRQ_AFFINE
+/**
+ * hdd_populate_ce_dp_irq_affine_cfg() - populate ce irq affine configuration
+ * @hdd_ctx: hdd context
+ * @cfg: pointer to the configuration memory being populated
+ *
+ * Return: void
+ */
+static void hdd_populate_ce_dp_irq_affine_cfg(struct hdd_context *hdd_ctx,
+					      struct hif_config_info *cfg)
+{
+	cfg->enable_ce_dp_irq_affine = cfg_get(hdd_ctx->psoc,
+					       CFG_ENABLE_CE_DP_IRQ_AFFINE);
+}
+#else
+static void hdd_populate_ce_dp_irq_affine_cfg(struct hdd_context *hdd_ctx,
+					      struct hif_config_info *cfg)
+{
+}
+#endif
+
 /**
  * hdd_update_hif_config - API to update HIF configuration parameters
  * @hdd_ctx: HDD Context
@@ -19392,6 +19413,7 @@ static void hdd_update_hif_config(struct hdd_context *hdd_ctx)
 	cfg.rx_softirq_max_yield_duration_ns =
 				cfg_get(hdd_ctx->psoc,
 					CFG_DP_RX_SOFTIRQ_MAX_YIELD_TIME_NS);
+	hdd_populate_ce_dp_irq_affine_cfg(hdd_ctx, &cfg);
 
 	hif_init_ini_config(scn, &cfg);
 
