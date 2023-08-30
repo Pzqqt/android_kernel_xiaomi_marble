@@ -1,4 +1,5 @@
-# core layer
+# Host MHI stack
+obj-y += host/
+
 obj-y += controllers/
-obj-y += core/
 obj-y += devices/
