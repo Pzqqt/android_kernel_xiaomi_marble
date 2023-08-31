@@ -1852,34 +1852,6 @@ enum host_log_level {
 #define CFG_DYNAMIC_MAC_ADDR_UPDATE_SUPPORTED_ALL
 #endif
 
-#ifdef FEATURE_ENABLE_CE_DP_IRQ_AFFINE
-/*
- * <ini>
- * Enable_ce_dp_irq_affine - Enable/disable affinity on datapath CE IRQs
- *
- * @Min: 0
- * @Max: 1
- * Default: 0
- *
- * This ini param is used to enable/disable the affinity on datapath
- * Copy Engine IRQs.
- *
- * Supported Feature: STA/SAP
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ENABLE_CE_DP_IRQ_AFFINE CFG_INI_BOOL(\
-		"Enable_ce_dp_irq_affine", \
-		0, \
-		"Enable/disable irq affinity on datapath CEs")
-#define CFG_ENABLE_CE_DP_IRQ_AFFINE_ALL \
-	CFG(CFG_ENABLE_CE_DP_IRQ_AFFINE)
-#else
-#define CFG_ENABLE_CE_DP_IRQ_AFFINE_ALL
-#endif
-
 #define CFG_HDD_ALL \
 	CFG_DYNAMIC_MAC_ADDR_UPDATE_SUPPORTED_ALL \
 	CFG_ENABLE_PACKET_LOG_ALL \
@@ -1929,6 +1901,5 @@ enum host_log_level {
 	CFG(CFG_SAR_CONVERSION) \
 	CFG(CFG_ENABLE_HOST_MODULE_LOG_LEVEL) \
 	SAR_SAFETY_FEATURE_ALL \
-	CFG_CPU_CXPC_THRESHOLD_ALL \
-	CFG_ENABLE_CE_DP_IRQ_AFFINE_ALL
+	CFG_CPU_CXPC_THRESHOLD_ALL
 #endif
