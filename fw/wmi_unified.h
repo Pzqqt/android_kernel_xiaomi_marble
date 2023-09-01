@@ -46230,14 +46230,15 @@ typedef struct {
     A_UINT32 dsnr_params;
     /** Peer mac address */
     wmi_mac_addr peer_mac_address;
-    /**
+    /** fb_params:
     * [1:0] Nc
+    *       Refer to WMI_DMA_BUF_RELEASE_CV_UPLOAD_[SET,GET]_FB_PARAMS_NC
     * [3:2] nss_num
-    * [4:5] ddr_buffer_idx
+    *       Refer to WMI_DMA_BUF_RELEASE_CV_UPLOAD_[SET,GET]_FB_PARAMS_NSS_NUM
+    * [5:4] ddr_buffer_idx
+    *       Refer to WMI_DMA_BUF_RELEASE_CV_UPLOAD_[SET,GET]_DDR_BUF_IDX
     */
-    A_UINT32 fb_params:       4,
-             ddr_buffer_idx:  2,
-             reserved:       26;
+    A_UINT32 fb_params;
 } wmi_dma_buf_release_cv_upload_meta_data;
 
 typedef struct {
