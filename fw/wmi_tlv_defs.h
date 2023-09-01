@@ -1401,6 +1401,8 @@ typedef enum {
     WMITLV_TAG_STRUC_WMI_RADAR_FLAGS,
     WMITLV_TAG_STRUC_wmi_dma_buf_release_cqi_upload_meta_data,
     WMITLV_TAG_STRUC_wmi_csa_event_status_ind_fixed_param,
+    WMITLV_TAG_STRUC_wmi_mlo_link_state_switch_req_evt_fixed_param,
+    WMITLV_TAG_STRUC_wmi_mlo_link_state_switch_trigger_reason_tlv_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -2253,6 +2255,7 @@ typedef enum {
     OP(WMI_MLO_LINK_SWITCH_REQUEST_EVENTID) \
     OP(WMI_NAN_OEM_DATA_EVENTID) \
     OP(WMI_PDEV_ENHANCED_AOA_PHASEDELTA_EVENTID) \
+    OP(WMI_MLO_LINK_STATE_SWITCH_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -7470,6 +7473,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_enhanced_aoa_gain_phase_data_hdr, aoa_data_hdr, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, aoa_data_buf, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_ENHANCED_AOA_PHASEDELTA_EVENTID);
+
+/* MLO Link State Switch Event */
+#define WMITLV_TABLE_WMI_MLO_LINK_STATE_SWITCH_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_link_state_switch_req_evt_fixed_param, wmi_mlo_link_state_switch_req_evt_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mlo_link_state_switch_trigger_reason, switch_trigger_reason, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_STATE_SWITCH_EVENTID);
 
 
 #ifdef __cplusplus
