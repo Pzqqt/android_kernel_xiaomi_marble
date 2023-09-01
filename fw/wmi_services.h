@@ -641,6 +641,7 @@ typedef  enum  {
     WMI_SERVICE_PDEV_WSI_STATS_INFO_SUPPORT = 388, /* Support for WSI Stats Info. */
     WMI_SERVICE_MULTIPLE_RF_PATH_SOC_SUPPORT = 389, /* Indicates FW supports Multiple RF Path on SOC Level */
     WMI_SERVICE_RADAR_FLAGS_SUPPORT = 390, /* Indicates FW supports radar flags, such as full bandwidth need put to NOL */
+    WMI_SERVICE_XPAN_SUPPORT = 391, /* Indicate FW support XPAN configuration */
 
     WMI_MAX_EXT2_SERVICE
 
