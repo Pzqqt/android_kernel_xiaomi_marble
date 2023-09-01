@@ -1072,6 +1072,7 @@ enum wlan_status_code {
 #define WLAN_ASE_SHA256_PSK              0x100
 #define WLAN_ASE_WPS                     0x200
 
+#define RSN_CAP_MFP_DISABLED 0x00
 #define RSN_CAP_MFP_CAPABLE 0x80
 #define RSN_CAP_MFP_REQUIRED 0x40
 
