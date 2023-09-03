@@ -9309,6 +9309,9 @@ typedef enum {
      *   3.  Units are in milli-seconds
      */
     WMI_PDEV_PARAM_ATF_VI_DEDICATED_TIME,
+
+    /** Parameter used for enabling/disabling RFA toggle for SAP mode */
+    WMI_PDEV_PARAM_SET_SAP_RFA_TOGGLE,
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
