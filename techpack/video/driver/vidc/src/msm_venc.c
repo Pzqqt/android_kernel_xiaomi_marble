@@ -1382,6 +1382,9 @@ int msm_venc_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		rc = msm_venc_s_fmt_input(inst, f);
 		if (rc)
 			goto exit;
+		rc = msm_vidc_check_session_supported(inst);
+		if (rc)
+			goto exit;
 	} else if (f->type == INPUT_META_PLANE) {
 		rc = msm_venc_s_fmt_input_meta(inst, f);
 		if (rc)
