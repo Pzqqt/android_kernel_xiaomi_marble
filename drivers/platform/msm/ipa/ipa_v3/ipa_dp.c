@@ -1953,13 +1953,6 @@ int ipa3_teardown_sys_pipe(u32 clnt_hdl)
 		usleep_range(95, 105);
 	} while (atomic_read(&ep->sys->curr_polling_state));
 
-	/* moving the channel to poll mode here to get rid of IEOB IRQ if we get,
-	 after stopping the channel, and which could lead to list corruption. */
-	gsi_config_channel_mode(ep->gsi_chan_hdl,
-					GSI_CHAN_MODE_POLL);
-	atomic_set(&ep->sys->curr_polling_state, 1);
-	__ipa3_update_curr_poll_state(ep->client, 1);
-
 	if (IPA_CLIENT_IS_CONS(ep->client))
 		cancel_delayed_work_sync(&ep->sys->replenish_rx_work);
 	flush_workqueue(ep->sys->wq);
