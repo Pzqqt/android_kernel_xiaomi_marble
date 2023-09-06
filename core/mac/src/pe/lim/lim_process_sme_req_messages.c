@@ -5167,7 +5167,7 @@ void lim_calculate_tpc(struct mac_context *mac,
 	qdf_freq_t oper_freq, start_freq = 0;
 	struct ch_params ch_params;
 	struct vdev_mlme_obj *mlme_obj;
-	uint8_t tpe_power;
+	int8_t tpe_power;
 	bool skip_tpe = false;
 	bool rf_test_mode = false;
 	bool safe_mode_enable = false;
@@ -5310,7 +5310,14 @@ void lim_calculate_tpc(struct mac_context *mac,
 				tpe_power =  mlme_obj->reg_tpc_obj.eirp_power;
 			else
 				tpe_power = mlme_obj->reg_tpc_obj.tpe[i];
-			max_tx_power = QDF_MIN(max_tx_power, (int8_t)tpe_power);
+			/**
+			 * AP advertises TPE IE tx power as 8-bit unsigned int.
+			 * STA needs to convert it into an 8-bit 2s complement
+			 * signed integer in the range –64 dBm to 63 dBm with a
+			 * 0.5 dB step
+			 */
+			tpe_power /= 2;
+			max_tx_power = QDF_MIN(max_tx_power, tpe_power);
 			pe_debug("TPE: %d", tpe_power);
 		}
 
