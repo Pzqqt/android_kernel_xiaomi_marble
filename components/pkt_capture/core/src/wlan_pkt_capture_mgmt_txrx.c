@@ -592,10 +592,6 @@ pkt_capture_is_beacon_forward_enable(struct wlan_objmgr_vdev *vdev,
 		return false;
 	}
 
-	if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
-	    PKT_CAPTURE_MGMT_CONNECT_NO_BEACON)
-		return false;
-
 	mac_hdr = (tpSirMacMgmtHdr)(qdf_nbuf_data(wbuf));
 	wlan_vdev_get_bss_peer_mac(vdev, &connected_bssid);
 

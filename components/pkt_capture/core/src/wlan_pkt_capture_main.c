@@ -1256,7 +1256,7 @@ QDF_STATUS pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
 	ol_txrx_soc_handle soc;
 	QDF_STATUS status;
 	enum pkt_capture_config config = 0;
-	bool check_enable_beacon = 0, send_bcn = 0;
+	bool send_bcn = 0;
 	struct vdev_mlme_obj *vdev_mlme;
 	uint32_t bcn_interval, nth_beacon_value;
 
@@ -1341,16 +1341,13 @@ QDF_STATUS pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
 		    PKT_CAPTURE_MGMT_CONNECT_NO_BEACON) {
 			mode |= PACKET_CAPTURE_MODE_MGMT_ONLY;
 			config |= PACKET_CAPTURE_CONFIG_NO_BEACON_ENABLE;
-		} else {
-			check_enable_beacon = 1;
 		}
-	}
 
-	if (check_enable_beacon) {
 		if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
-		    PKT_CAPTURE_MGMT_CONNECT_BEACON)
+		    PKT_CAPTURE_MGMT_CONNECT_BEACON) {
 			if (!send_bcn)
 				config |= PACKET_CAPTURE_CONFIG_BEACON_ENABLE;
+		}
 
 		if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
 		    PKT_CAPTURE_MGMT_CONNECT_SCAN_BEACON)
