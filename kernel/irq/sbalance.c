@@ -97,8 +97,8 @@ void sbalance_desc_del(struct irq_desc *desc)
 	spin_unlock(&bal_irq_lock);
 }
 
-static int bal_irq_move_node_cmp(void *priv, const struct list_head *lhs_p,
-				 const struct list_head *rhs_p)
+static int bal_irq_move_node_cmp(void *priv, struct list_head *lhs_p,
+				 struct list_head *rhs_p)
 {
 	const struct bal_irq *lhs = list_entry(lhs_p, typeof(*lhs), move_node);
 	const struct bal_irq *rhs = list_entry(rhs_p, typeof(*rhs), move_node);
