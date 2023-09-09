@@ -23,7 +23,7 @@
 #include <wlan_twt_public_structs.h>
 #include <wlan_objmgr_peer_obj.h>
 #include <wlan_twt_tgt_if_tx_api.h>
-#include "twt/core/src/wlan_twt_cfg.h"
+#include "wlan_twt_cfg.h"
 
 QDF_STATUS
 wlan_twt_tgt_caps_get_requestor(struct wlan_objmgr_psoc *psoc, bool *val)
