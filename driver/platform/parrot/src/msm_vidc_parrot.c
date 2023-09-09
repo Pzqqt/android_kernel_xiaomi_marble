@@ -104,12 +104,12 @@ static struct msm_platform_core_capability core_data_parrot_v1[] = {
 	{ENC_CODECS, H264|HEVC|HEIC},
 	{DEC_CODECS, H264|HEVC|VP9|HEIC},
 	{MAX_SESSION_COUNT, 16},
-	{MAX_NUM_720P_SESSIONS, 4},
-	{MAX_NUM_1080P_SESSIONS, 2},
-	{MAX_NUM_4K_SESSIONS, 1},
+	{MAX_NUM_720P_SESSIONS, 8},
+	{MAX_NUM_1080P_SESSIONS, 4},
+	{MAX_NUM_4K_SESSIONS, 2},
 	{MAX_SECURE_SESSION_COUNT, 3},
 	{MAX_RT_MBPF, 40800}, /* ((3840x2176)/256) + (1920x1088)/256 */
-	{MAX_MBPF, 42976}, /* ((4096x2176)/256) + (1920x1088)/256 */
+	{MAX_MBPF, 69632}, /* ((4096x2176)/256) x 2  */
 	/* max_load 4096x2176@30fps */
 	{MAX_MBPS, 1224000}, /* Concurrency: UHD@30 decode + 1080p@30 encode */
 	{MAX_IMAGE_MBPF, 1048576},  /* (16384x16384)/256 */
@@ -156,12 +156,12 @@ static struct msm_platform_core_capability core_data_parrot_v2[] = {
 	{ENC_CODECS, H264|HEVC|HEIC},
 	{DEC_CODECS, H264|HEVC|VP9|HEIC},
 	{MAX_SESSION_COUNT, 16},
-	{MAX_NUM_720P_SESSIONS, 4},
-	{MAX_NUM_1080P_SESSIONS, 2},
-	{MAX_NUM_4K_SESSIONS, 1},
+	{MAX_NUM_720P_SESSIONS, 8},
+	{MAX_NUM_1080P_SESSIONS, 4},
+	{MAX_NUM_4K_SESSIONS, 2},
 	{MAX_SECURE_SESSION_COUNT, 3},
 	{MAX_RT_MBPF, 40800}, /* ((3840x2176)/256) + (1920x1088)/256 */
-	{MAX_MBPF, 42976}, /* ((4096x2176)/256) + (1920x1088)/256 */
+	{MAX_MBPF, 69632}, /* ((4096x2176)/256) x 2 */
 	/* max_load 4096x2176@30fps */
 	{MAX_MBPS, 1224000}, /* Concurrency: UHD@30 decode + 1080p@30 encode */
 	{MAX_IMAGE_MBPF, 1048576},  /* (16384x16384)/256 */
@@ -1712,8 +1712,8 @@ static struct msm_platform_inst_capability instance_data_parrot_v0[] = {
 		NULL, msm_vidc_set_u32},
 	{PIX_FMTS, ENC, HEIC,
 		MSM_VIDC_FMT_NV12,
-		MSM_VIDC_FMT_NV12,
-		MSM_VIDC_FMT_NV12,
+		MSM_VIDC_FMT_NV21,
+		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_NV21,
 		MSM_VIDC_FMT_NV12,
 		0, 0,
 		CAP_FLAG_ROOT,
@@ -3260,8 +3260,8 @@ static struct msm_platform_inst_capability instance_data_parrot_v1[] = {
 		NULL, msm_vidc_set_u32},
 	{PIX_FMTS, ENC, HEIC,
 		MSM_VIDC_FMT_NV12,
-		MSM_VIDC_FMT_NV12,
-		MSM_VIDC_FMT_NV12,
+		MSM_VIDC_FMT_NV21,
+		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_NV21,
 		MSM_VIDC_FMT_NV12,
 		0, 0,
 		CAP_FLAG_ROOT,

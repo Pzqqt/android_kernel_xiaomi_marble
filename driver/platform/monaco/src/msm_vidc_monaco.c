@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/of.h>
@@ -1538,8 +1538,8 @@ static struct msm_platform_inst_capability instance_data_monaco[] = {
 		NULL, msm_vidc_set_u32},
 	{PIX_FMTS, ENC, HEIC,
 		MSM_VIDC_FMT_NV12,
-		MSM_VIDC_FMT_NV12,
-		MSM_VIDC_FMT_NV12,
+		MSM_VIDC_FMT_NV21,
+		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_NV21,
 		MSM_VIDC_FMT_NV12,
 		0, 0,
 		0,
