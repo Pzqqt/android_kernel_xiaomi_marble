@@ -34543,6 +34543,13 @@ typedef enum wmi_coex_config_type {
      * config BT RX PER threshold
      */
     WMI_COEX_CONFIG_BT_RX_PER_THRESHOLD = 49,
+    /* WMI_COEX_SET_TRAFFIC_SHAPING_MODE
+     * arg1: 0 (WMI_COEX_TRAFFIC_SHAPING_MODE_DISABLED)
+     *         Disable coex policies and set fixed arbitration config.
+     *       1 (WMI_COEX_TRAFFIC_SHAPING_MODE_ENABLED)
+     *         Enable all coex policies.
+     */
+    WMI_COEX_SET_TRAFFIC_SHAPING_MODE = 50,
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
@@ -34562,6 +34569,11 @@ typedef enum wmi_coex_dbam_mode_type {
     WMI_COEX_DBAM_ENABLE = 1,
     WMI_COEX_DBAM_FORCED = 2,
 } WMI_COEX_DBAM_MODE_TYPE;
+
+typedef enum {
+    WMI_COEX_TRAFFIC_SHAPING_MODE_DISABLED = 0,
+    WMI_COEX_TRAFFIC_SHAPING_MODE_ENABLED = 1,
+} WMI_COEX_TRAFFIC_SHAPING_MODE;
 
 typedef struct {
     A_UINT32 tlv_header;
