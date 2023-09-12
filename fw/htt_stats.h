@@ -9843,4 +9843,85 @@ typedef struct _htt_mlo_ipc_stats {
 
 /*===================== end MLO stats ======================*/
 
+typedef enum {
+    HTT_CTRL_PATH_STATS_CAL_TYPE_ADC                     = 0x0,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_DAC                     = 0x1,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_PROCESS                 = 0x2,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_NOISE_FLOOR             = 0x3,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_RXDCO                   = 0x4,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_COMB_TXLO_TXIQ_RXIQ     = 0x5,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_TXLO                    = 0x6,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_TXIQ                    = 0x7,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_RXIQ                    = 0x8,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_IM2                     = 0x9,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_LNA                     = 0xa,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_DPD_LP_RXDCO            = 0xb,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_DPD_LP_RXIQ             = 0xc,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_DPD_MEMORYLESS          = 0xd,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_DPD_MEMORY              = 0xe,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_IBF                     = 0xf,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_PDET_AND_PAL            = 0x10,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_RXDCO_IQ                = 0x11,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_RXDCO_DTIM              = 0x12,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_TPC_CAL                 = 0x13,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_DPD_TIMEREQ             = 0x14,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_BWFILTER                = 0x15,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_PEF                     = 0x16,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_PADROOP                 = 0x17,
+    HTT_CTRL_PATH_STATS_CAL_TYPE_SELFCALTPC              = 0x18,
+
+    /* add new cal types above this line */
+    HTT_CTRL_PATH_STATS_CAL_TYPE_INVALID                 = 0xFF
+} htt_ctrl_path_stats_cal_type_ids;
+
+#define HTT_RETURN_STRING(str) case ((str)): return (A_UINT8 *)(# str);
+
+#define HTT_GET_BITS(_val, _index, _num_bits) \
+    (((_val) >> (_index)) & ((1 << (_num_bits)) - 1))
+
+#define HTT_CTRL_PATH_CALIBRATION_STATS_CAL_TYPE_GET(cal_info) \
+    HTT_GET_BITS(cal_info, 0, 8)
+
+/*
+ * Used by some hosts to print names of cal type, based on
+ * htt_ctrl_path_cal_type_ids values specified in
+ * htt_ctrl_path_calibration_stats_struct in ctrl_path_stats event msg.
+ */
+#ifdef HTT_CTRL_PATH_STATS_CAL_TYPE_STRINGS
+static INLINE A_UINT8 *htt_ctrl_path_cal_type_id_to_name(A_UINT32 cal_type_id)
+{
+    switch (cal_type_id)
+    {
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_ADC);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_DAC);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_PROCESS);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_NOISE_FLOOR);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_RXDCO);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_COMB_TXLO_TXIQ_RXIQ);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_TXLO);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_TXIQ);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_RXIQ);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_IM2);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_LNA);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_DPD_LP_RXDCO);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_DPD_LP_RXIQ);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_DPD_MEMORYLESS);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_DPD_MEMORY);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_IBF);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_PDET_AND_PAL);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_RXDCO_IQ);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_RXDCO_DTIM);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_TPC_CAL);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_DPD_TIMEREQ);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_BWFILTER);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_PEF);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_PADROOP);
+        HTT_RETURN_STRING(HTT_CTRL_PATH_STATS_CAL_TYPE_SELFCALTPC);
+    }
+
+    return (A_UINT8 *) "HTT_CTRL_PATH_STATS_CAL_TYPE_UNKNOWN";
+}
+#endif /* HTT_CTRL_PATH_STATS_CAL_TYPE_STRINGS */
+
+
 #endif /* __HTT_STATS_H__ */
