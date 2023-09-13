@@ -7384,6 +7384,19 @@ static int hdd_send_coex_config_params(struct hdd_context *hdd_ctx,
 		goto err;
 	}
 
+#ifdef FEATURE_COEX_TPUT_SHAPING_CONFIG
+	coex_cfg_params.config_type =
+				WMI_COEX_CONFIG_ENABLE_TPUT_SHAPING;
+	coex_cfg_params.config_arg1 = config.coex_tput_shaping_enable;
+
+	status = sme_send_coex_config_cmd(&coex_cfg_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to send coex traffic shaping value %d",
+			coex_cfg_params.config_arg1);
+		goto err;
+	}
+#endif
+
 	return 0;
 err:
 	return -EINVAL;
