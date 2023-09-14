@@ -75,7 +75,9 @@
 #define IPD_MAX_STEP                6
 #define MIN_READ_VALUE              32768
 #define MAX_READ_VALUE              65536
-
+#define SKU1_SKU2_DEV_ID            1
+#define SKU3_DEV_ID                 2
+#define INVALID_DEV_ID              0
 
 
 
@@ -606,6 +608,35 @@ static int ipd_compute_step(struct ipd_data *ipd)
 	return step_mode;
 }
 
+static void ipd_update_y_z_axis(struct ipd_data *ipd, int step)
+{
+	u16 readValue = 0;
+	int status;
+
+	/*Read Y axis */
+	status = ipd_read_axis_u(ipd, IPD_REG_WORD_ST_Y, &readValue);
+	if (ipd->enable_print)
+		pr_info("[ipd] Y raw readValue=%d\n",
+			readValue >= MIN_READ_VALUE ? readValue - MAX_READ_VALUE : readValue);
+
+	ipd->BOPYbits = readValue + 400;
+	ipd->BRPYbits = readValue + 250;
+	status = ipd_i2c_write16(ipd->client, IPD_REG_THY,
+			SECOND_VAL_ENABLED, ipd->BOPYbits, ipd->BRPYbits);
+
+	readValue = 0;
+	/*Read Z axis */
+	status = ipd_read_axis_u(ipd, IPD_REG_WORD_ST_Z, &readValue);
+	if (ipd->enable_print)
+		pr_info("[ipd] Z raw readValue=%d\n",
+			readValue >= MIN_READ_VALUE ? readValue - MAX_READ_VALUE : readValue);
+	ipd->BOPZbits = readValue + 760;
+	ipd->BRPZbits = readValue + 610;
+	status = ipd_i2c_write16(ipd->client, IPD_REG_THZ,
+			SECOND_VAL_ENABLED, ipd->BOPZbits, ipd->BRPZbits);
+
+
+}
 static void ipd_update_x_z_axis(struct ipd_data *ipd, int step)
 {
 	u16 readValue;
@@ -652,8 +683,7 @@ static int ipd_write_mode(struct ipd_data *ipd, int modeBit)
 
 	mode = (ipd->SMRbit << 6) + (ipd->SDRbit << 5) + modeBit;
 
-	if (ipd->enable_print)
-		pr_info("[ipd] %s (%d, %d)\n", __func__, IPD_REG_CNTL2, mode);
+	pr_info("[ipd] REG_CNTL2(%x), value(%d))\n", IPD_REG_CNTL2, mode);
 
 	ret = i2c_smbus_write_byte_data(ipd->client, (u8)IPD_REG_CNTL2, (u8)mode);
 	if (ret < 0)
@@ -716,36 +746,48 @@ static int ipd_setup(struct i2c_client *client)
 {
 	struct ipd_data *ipd = i2c_get_clientdata(client);
 	u8   mod_value = 0;
+	u16  ctrl1_reg = 0;
 	int status;
 	int step = 0;
 
-	pr_info("[ipd] %s(%d)\n", __func__, __LINE__);
+	pr_info("[ipd] %s Device_type (%d)\n", __func__, ipd->device_type);
 
 	if (ipd->mode < ARRAY_SIZE(modeBitTable))
 		mod_value = modeBitTable[ipd->mode];
 
 	status = ipd_write_mode(ipd, mod_value);
-
 	ipd_compute_distance(ipd);
 
-	/*Based in device type,
-	 * We need update or skip updating BOPX/BRPX/BOPZ/BRPZ
-	 */
+	/*Update CTRL1 Register */
+	ctrl1_reg  = (u16)(ipd->POLXbit + (ipd->POLYbit << 1)
+					+ (ipd->POLZbit << 2) + (ipd->POLVbit << 3));
+	ctrl1_reg  <<= 8;
+	ctrl1_reg  += ((u16)(ipd->DRDYENbit + (ipd->SWXENbit << 1)
+					+ (ipd->SWYENbit << 2) + (ipd->SWZENbit << 3)
+					+ (ipd->SWVENbit << 4) + (ipd->ERRENbit << 5)));
 
-	if (ipd->device_type) {
-		ipd->client = client;
-		step = ipd_compute_step(ipd);
-		status = ipd_i2c_write16(ipd->client, IPD_REG_CNTL1, 1, CTRL1[step], 0);
+	status = ipd_i2c_write16(ipd->client, IPD_REG_CNTL1, 1, ctrl1_reg, 0);
+	pr_info("[ipd] IPD_REG_CNTL1 (%x) Value (%d)\n", IPD_REG_CNTL1, ctrl1_reg);
 
+	ipd->client = client;
+	step = ipd_compute_step(ipd);
+
+	/*On device type,We need update or skip updating BOPX/BRPX/BOPZ/BRPZ*/
+
+	if (ipd->device_type == SKU1_SKU2_DEV_ID) {
 		/*Update X and Z axis*/
 		ipd_update_x_z_axis(ipd, step);
 
 		/*Update Y and V axis*/
 		ipd_update_y_v_axis(ipd, step);
-	}
 
+		status = ipd_i2c_write16(ipd->client, IPD_REG_CNTL1, 1, CTRL1[step], 0);
+	} else if (ipd->device_type == SKU3_DEV_ID) {
+		/*Update Y and Z axis*/
+		ipd_update_y_z_axis(ipd, step);
+	}
 	pr_info("***********************IPD-SETUP**************************************************\n");
-	if (ipd->device_type) {
+	if (ipd->device_type != INVALID_DEV_ID) {
 		pr_info("[ipd] BOPX : (%d)  BRPX : (%d)\n", ipd->BOPXbits, ipd->BRPXbits);
 		pr_info("[ipd] BOPY : (%d)  BRPY : (%d)\n", ipd->BOPYbits, ipd->BRPYbits);
 		pr_info("[ipd] BOPZ : (%d)  BRPZ : (%d)\n", ipd->BOPZbits, ipd->BRPZbits);
@@ -928,26 +970,32 @@ static void ipd_update_registers(struct work_struct *w)
 		if (ipd->enable_print)
 			ipd_read_control_status_register(ipd);
 
+		step = ipd_compute_step(ipd);
+
 		/*Based in device type
 		 * We need update or skip updating BOPX/BRPX/BOPZ/BRPZ
 		 */
-		if (ipd->device_type) {
-			step = ipd_compute_step(ipd);
-
+		if (ipd->device_type == SKU1_SKU2_DEV_ID) {
 			/*CNTL1 Registers*/
 			ret = ipd_i2c_write16(ipd->client, IPD_REG_CNTL1, 1, CTRL1[step], 0);
 			/*Update X and Z axis*/
 			ipd_update_x_z_axis(ipd, step);
+		} else if (ipd->device_type == SKU3_DEV_ID) {
+			/*Update Y and Z axis*/
+			ipd_update_y_z_axis(ipd, step);
 		}
+
 		if (retry)
 			msleep(ipd->sleep_time);
 
 		if (ipd->enable_print) {
 			if (ipd->device_type) {
-				pr_info("[ipd] BOPX : (%d)  BRPX : (%d)\n",
-						ipd->BOPXbits, ipd->BRPXbits);
-				pr_info("[ipd] BOPZ : (%d)  BRPZ : (%d)\n",
-						ipd->BOPZbits, ipd->BRPZbits);
+				pr_info("[ipd] BOPX : (%d)  BRPX : (%d)\n",	ipd->BOPXbits,
+						ipd->BRPXbits);
+				pr_info("[ipd] BOPY : (%d)  BRPY : (%d)\n", ipd->BOPYbits,
+						ipd->BRPYbits);
+				pr_info("[ipd] BOPZ : (%d)  BRPZ : (%d)\n",	ipd->BOPZbits,
+						ipd->BRPZbits);
 			}
 			pr_info("[ipd] MODE : (%d)  STEP : (%d)  IPD_REG_CNTL1: (%d)\n",
 					modeBitTable[ipd->mode], step, CTRL1[step]);
