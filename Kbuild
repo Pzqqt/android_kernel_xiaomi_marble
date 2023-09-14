@@ -2341,6 +2341,7 @@ CP_MC_STATS_COMPONENT_TGT_SRC   := $(CLD_TARGET_IF_DIR)/cp_stats/src
 
 CP_STATS_OS_IF_INC              := -I$(WLAN_COMMON_INC)/os_if/linux/cp_stats/inc
 CP_STATS_TGT_INC                := -I$(WLAN_COMMON_INC)/target_if/cp_stats/inc
+CP_STATS_UMAC_INC               := -I$(WLAN_COMMON_INC)/umac/cp_stats/core/src
 CP_STATS_DISPATCHER_INC         := -I$(WLAN_COMMON_INC)/umac/cp_stats/dispatcher/inc
 CP_MC_STATS_COMPONENT_INC       := -I$(WLAN_ROOT)/components/cp_stats/dispatcher/inc
 CP_STATS_CFG80211_OS_IF_INC     := -I$(WLAN_ROOT)/os_if/cp_stats/inc
@@ -2932,6 +2933,7 @@ INCS +=		$(WIFI_POS_OS_IF_INC)
 ################ CP STATS ################
 INCS +=		$(CP_STATS_OS_IF_INC)
 INCS +=		$(CP_STATS_TGT_INC)
+INCS +=		$(CP_STATS_UMAC_INC)
 INCS +=		$(CP_STATS_DISPATCHER_INC)
 INCS +=		$(CP_MC_STATS_COMPONENT_INC)
 INCS +=		$(CP_STATS_CFG80211_OS_IF_INC)
