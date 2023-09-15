@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <media/v4l2_vidc_extensions.h>
@@ -1214,6 +1214,8 @@ static int msm_vdec_session_resume(struct msm_vidc_inst *inst,
 {
 	int rc = 0;
 
+	msm_vidc_scale_power(inst, true);
+
 	i_vpr_h(inst, "%s()\n", __func__);
 	rc = venus_hfi_session_command(inst,
 			HFI_CMD_RESUME,
@@ -2251,6 +2253,8 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 			return 0;
 		else if (allow != MSM_VIDC_ALLOW)
 			return -EINVAL;
+
+		msm_vidc_scale_power(inst, true);
 		rc = venus_hfi_session_command(inst,
 				HFI_CMD_DRAIN,
 				INPUT_PORT,

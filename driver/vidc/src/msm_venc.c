@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <media/v4l2_vidc_extensions.h>
@@ -920,6 +920,8 @@ int msm_venc_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 			return 0;
 		else if (allow != MSM_VIDC_ALLOW)
 			return -EINVAL;
+
+		msm_vidc_scale_power(inst, true);
 		rc = venus_hfi_session_command(inst,
 				HFI_CMD_DRAIN,
 				INPUT_PORT,
@@ -948,7 +950,7 @@ int msm_venc_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 
 		/* print final buffer counts & size details */
 		msm_vidc_print_buffer_info(inst);
-
+		msm_vidc_scale_power(inst, true);
 		rc = venus_hfi_session_command(inst,
 				HFI_CMD_RESUME,
 				INPUT_PORT,
@@ -1380,6 +1382,9 @@ int msm_venc_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 
 	if (f->type == INPUT_MPLANE) {
 		rc = msm_venc_s_fmt_input(inst, f);
+		if (rc)
+			goto exit;
+		rc = msm_vidc_check_session_supported(inst);
 		if (rc)
 			goto exit;
 	} else if (f->type == INPUT_META_PLANE) {

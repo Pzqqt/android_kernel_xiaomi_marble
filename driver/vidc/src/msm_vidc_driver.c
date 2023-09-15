@@ -5571,13 +5571,19 @@ int msm_vidc_update_buffer_count(struct msm_vidc_inst *inst, u32 port)
 	return 0;
 }
 
-void msm_vidc_schedule_core_deinit(struct msm_vidc_core *core, bool force_deinit)
+int msm_vidc_schedule_core_deinit(struct msm_vidc_core *core, bool force_deinit)
 {
 	if (!core)
-		return;
+		return -EINVAL;
 
 	if (!(core->capabilities[FW_UNLOAD].value || force_deinit))
-		return;
+		return -EINVAL;
+
+	/* in normal case, deinit core only if no session present */
+	if (!list_empty(&core->instances)) {
+		d_vpr_e("%s(): skip core deinit\n", __func__);
+		return -ECANCELED;
+	}
 
 	cancel_delayed_work(&core->fw_unload_work);
 
@@ -5587,7 +5593,7 @@ void msm_vidc_schedule_core_deinit(struct msm_vidc_core *core, bool force_deinit
 	d_vpr_h("firmware unload delayed by %u ms\n",
 		core->capabilities[FW_UNLOAD_DELAY].value);
 
-	return;
+	return 0;
 }
 
 static const char *get_codec_str(enum msm_vidc_codec_type type)
