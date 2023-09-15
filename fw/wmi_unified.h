@@ -44639,6 +44639,8 @@ typedef struct {
     A_UINT32 reason_code;
     /* trigger_umac_reset : of type A_BOOL to indicate the umac reset for the partner chip. */
     A_UINT32 trigger_umac_reset;
+    /* erp_standby_mode : of type A_BOOL to indicate the chip is going to be active in ERP */
+    A_UINT32 erp_standby_mode;
 } wmi_mlo_teardown_fixed_param;
 
 typedef struct {
