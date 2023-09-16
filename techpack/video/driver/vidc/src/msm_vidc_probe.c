@@ -550,7 +550,7 @@ static int msm_vidc_pm_suspend(struct device *dev)
 #ifdef CONFIG_DEEPSLEEP
 	if (pm_suspend_via_firmware()) {
 		d_vpr_l("%s : deepsleep is triggered\n", __func__);
-		msm_vidc_schedule_core_deinit(core, true);
+		rc = msm_vidc_schedule_core_deinit(core, true);
 	} else {
 		rc = msm_vidc_suspend(core);
 	}
