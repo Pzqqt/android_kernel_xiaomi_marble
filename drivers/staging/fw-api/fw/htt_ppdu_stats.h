@@ -1057,6 +1057,20 @@ typedef struct {
          ((_var) |= ((_val) << HTT_PPDU_STATS_USER_COMMON_TLV_CHAIN_ENABLE_BITS_S)); \
      } while (0)
 
+#define HTT_PPDU_STATS_USER_COMMON_TLV_IS_SMART_ULOFDMA_BASIC_TRIG_M  0x00010000
+#define HTT_PPDU_STATS_USER_COMMON_TLV_IS_SMART_ULOFDMA_BASIC_TRIG_S          16
+
+#define HTT_PPDU_STATS_USER_COMMON_TLV_IS_SMART_ULOFDMA_BASIC_TRIG_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USER_COMMON_TLV_IS_SMART_ULOFDMA_BASIC_TRIG_M) >> \
+    HTT_PPDU_STATS_USER_COMMON_TLV_IS_SMART_ULOFDMA_BASIC_TRIG_S)
+
+#define HTT_PPDU_STATS_USER_COMMON_TLV_IS_SMART_ULOFDMA_BASIC_TRIG_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_COMMON_TLV_IS_SMART_ULOFDMA_BASIC_TRIG, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_USER_COMMON_TLV_IS_SMART_ULOFDMA_BASIC_TRIG_S)); \
+     } while (0)
+
+
 #define HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_CHAINS_PER_U32 4
 #define HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_MASK 0x000000ff
 
@@ -1194,10 +1208,15 @@ typedef struct {
      * Default value: 1
      * tx_pwr[0] value is used for all chains if chain_enable_bits field
      * is set to 1.
+     *
+     * is_smart_ulofdma_basic_trig:
+     * To check if user grouped in UL OFDMA Basic Trigger Frame is
+     * due to Smart Basic Trigger.
      */
-    A_UINT32 tx_pwr_multiplier  : 8,
-             chain_enable_bits  : 8,
-             reserved2          : 16;
+    A_UINT32 tx_pwr_multiplier          :  8,
+             chain_enable_bits          :  8,
+             is_smart_ulofdma_basic_trig:  1,
+             reserved2                  : 15;
 
     /*
      * Transmit powers (signed values packed into unsigned bitfields)

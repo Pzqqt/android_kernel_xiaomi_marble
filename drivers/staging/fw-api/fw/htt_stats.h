@@ -555,6 +555,42 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_CODEL_STATS = 58,
 
+    /** HTT_DBG_ODD_PDEV_BE_TX_MU_OFDMA_STATS
+     * PARAMS:
+     *   - No Params
+     * RESP MSG:
+     *   - htt_tx_pdev_mpdu_stats_tlv
+     */
+    HTT_DBG_ODD_PDEV_BE_TX_MU_OFDMA_STATS = 59,
+
+    /** HTT_DBG_EXT_STATS_PDEV_UL_TRIGGER
+     * PARAMS:
+     *   - No Params
+     * RESP MSG:
+     *   - htt_rx_pdev_be_ul_ofdma_user_stats_tlv
+     */
+    HTT_DBG_ODD_UL_BE_OFDMA_STATS = 60,
+
+    /** HTT_DBG_ODD_BE_TXBF_OFDMA_STATS
+     */
+    HTT_DBG_ODD_BE_TXBF_OFDMA_STATS = 61,
+
+    /** HTT_DBG_ODD_STATS_PDEV_BE_UL_MUMIMO_TRIG_STATS
+     * PARAMS:
+     *   - No Params
+     * RESP MSG:
+     *   - htt_rx_pdev_be_ul_ofdma_user_stats_tlv
+     */
+    HTT_DBG_ODD_STATS_PDEV_BE_UL_MUMIMO_TRIG_STATS = 62,
+
+    /** HTT_DBG_MLO_SCHED_STATS
+     * PARAMS:
+     *    - No Params
+     * RESP MSG:
+     *    - htt_dbg_mlo_sched_stats_tlv
+     */
+    HTT_DBG_MLO_SCHED_STATS = 63,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -2428,6 +2464,8 @@ typedef enum {
 #define HTT_TX_NUM_MUMIMO_GRP_INVALID_WORDS \
     (HTT_STATS_MAX_MUMIMO_GRP_SZ * HTT_STATS_MAX_INVALID_REASON_CODE)
 
+#define HTT_MAX_NUM_SBT_INTR 4
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
 
@@ -2480,6 +2518,19 @@ typedef struct {
     /** 11AX HE MU Standalone Freq. BSRP Trigger completed with error(s) */
     A_UINT32 standalone_ax_bsr_trigger_err[HTT_NUM_AC_WMM];
 /* END DEPRECATED FIELDS */
+    /** smart_basic_trig_sch_histogram:
+     * Count how many times the interval between predictive basic triggers
+     * sent to a given STA based on analysis of that STA's traffic patterns
+     * is within a given range:
+     *
+     * smart_basic_trig_sch_histogram[0]: SBT interval <= 10 ms
+     * smart_basic_trig_sch_histogram[1]: 10 ms < SBT interval <= 20 ms
+     * smart_basic_trig_sch_histogram[2]: 20 ms < SBT interval <= 30 ms
+     * smart_basic_trig_sch_histogram[3]: 30 ms < SBT interval <= 40 ms
+     *
+     * (Smart basic triggers are only used with intervals <= 40 ms.)
+     */
+    A_UINT32 smart_basic_trig_sch_histogram[HTT_MAX_NUM_SBT_INTR];
 } htt_tx_selfgen_cmn_stats_tlv;
 
 typedef struct {
@@ -6232,6 +6283,7 @@ typedef struct {
     A_UINT32 med_rx_idle_usec;
     A_UINT32 med_tx_idle_global_usec;
     A_UINT32 cca_obss_usec;
+    A_UINT32 pre_rx_frame_usec;
 } htt_pdev_stats_cca_counters_tlv;
 
 /* NOTE: THIS htt_pdev_cca_stats_hist_tlv STRUCTURE IS DEPRECATED,
@@ -6507,11 +6559,14 @@ typedef enum {
 } htt_txbf_sound_steer_modes;
 
 typedef enum {
-    HTT_TX_AC_SOUNDING_MODE = 0,
-    HTT_TX_AX_SOUNDING_MODE = 1,
-    HTT_TX_BE_SOUNDING_MODE = 2,
+    HTT_TX_AC_SOUNDING_MODE  = 0,
+    HTT_TX_AX_SOUNDING_MODE  = 1,
+    HTT_TX_BE_SOUNDING_MODE  = 2,
     HTT_TX_CMN_SOUNDING_MODE = 3,
+    HTT_TX_CV_CORR_MODE      = 4,
 } htt_stats_sounding_tx_mode;
+
+#define HTT_TX_CV_CORR_MAX_NUM_COLUMNS 8
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -6625,6 +6680,65 @@ typedef struct {
     A_UINT32 adaptive_snd_kicked_in;
     /** Total number of times we switched back to normal sounding interval */
     A_UINT32 adaptive_snd_back_to_default;
+
+    /**
+     * Below are CV correlation feature related stats.
+     * This feature is used for DL MU MIMO, but is not available
+     * from certain legacy targets.
+     */
+
+    /** number of CV Correlation triggers for online mode */
+    A_UINT32 cv_corr_trigger_online_mode;
+    /** number of CV Correlation triggers for offline mode */
+    A_UINT32 cv_corr_trigger_offline_mode;
+    /** number of CV Correlation triggers for hybrid mode */
+    A_UINT32 cv_corr_trigger_hybrid_mode;
+    /** number of CV Correlation triggers with computation level 0 */
+    A_UINT32 cv_corr_trigger_computation_level_0;
+    /** number of CV Correlation triggers with computation level 1 */
+    A_UINT32 cv_corr_trigger_computation_level_1;
+    /** number of CV Correlation triggers with computation level 2 */
+    A_UINT32 cv_corr_trigger_computation_level_2;
+    /** number of users for which CV Correlation was triggered */
+    A_UINT32 cv_corr_trigger_num_users[HTT_TX_CV_CORR_MAX_NUM_COLUMNS];
+    /** number of streams for which CV Correlation was triggered */
+    A_UINT32 cv_corr_trigger_num_streams[HTT_TX_CV_CORR_MAX_NUM_COLUMNS];
+    /** number of CV Correlation buffers received through IPC tickle */
+    A_UINT32 cv_corr_upload_total_buf_received;
+    /** number of CV Correlation buffers fed back to the IPC ring */
+    A_UINT32 cv_corr_upload_total_buf_fed_back;
+    /** number of CV Correlation buffers for which processing failed */
+    A_UINT32 cv_corr_upload_total_processing_failed;
+    /**
+     * number of CV Correlation buffers for which processing failed,
+     * due to no users being present in parsed buffer
+     */
+    A_UINT32 cv_corr_upload_failed_total_users_zero;
+    /**
+     * number of CV Correlation buffers for which processing failed,
+     * due to number of users present in parsed buffer exceeded
+     * CV_CORR_MAX_NUM_COLUMNS
+     */
+    A_UINT32 cv_corr_upload_failed_total_users_exceeded;
+    /**
+     * number of CV Correlation buffers for which processing failed,
+     * due to peer pointer for parsed peer not available
+     */
+    A_UINT32 cv_corr_upload_failed_peer_not_found;
+    /**
+     * number of CV Correlation buffers for which processing encountered,
+     * Nss of peer exceeding SCHED_ALGO_MAX_SUPPORTED_MUMIMO_NSS
+     */
+    A_UINT32 cv_corr_upload_user_nss_exceeded;
+    /**
+     * number of CV Correlation buffers for which processing encountered,
+     * invalid reverse look up index for fetching CV correlation results
+     */
+    A_UINT32 cv_corr_upload_invalid_lookup_index;
+    /** number of users present in uploaded CV Correlation results buffer */
+    A_UINT32 cv_corr_upload_total_num_users[HTT_TX_CV_CORR_MAX_NUM_COLUMNS];
+    /** number of streams present in uploaded CV Correlation results buffer */
+    A_UINT32 cv_corr_upload_total_num_streams[HTT_TX_CV_CORR_MAX_NUM_COLUMNS];
 } htt_tx_sounding_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_SOUNDING_INFO
@@ -9657,5 +9771,29 @@ typedef struct {
         };
     };
 } htt_codel_msduq_stats_tlv;
+
+/*===================== start SCHED ALGO + MLO stats ====================*/
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 pref_link_num_sec_link_sched;
+    A_UINT32 pref_link_num_pref_link_timeout;
+    A_UINT32 pref_link_num_pref_link_sch_delay_ipc;
+    A_UINT32 pref_link_num_pref_link_timeout_ipc;
+} htt_mlo_sched_stats_tlv;
+
+/* STATS_TYPE : HTT_DBG_MLO_SCHED_STATS
+ * TLV_TAGS:
+ *   - HTT_STATS_MLO_SCHED_STATS_TAG
+ */
+/* NOTE:
+ * This structure is for documentation, and cannot be safely used directly.
+ * Instead, use the constituent TLV structures to fill/parse.
+ */
+typedef struct _htt_mlo_sched_stats {
+    htt_mlo_sched_stats_tlv  preferred_link_stats;
+} htt_mlo_sched_stats_t;
+
+/*===================== end SCHED ALGO + MLO stats ======================*/
 
 #endif /* __HTT_STATS_H__ */
