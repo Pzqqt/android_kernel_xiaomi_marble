@@ -7953,6 +7953,58 @@ typedef struct {
 /* Considering 320 MHz maximum 16 power levels */
 #define HTT_MAX_CH_PWR_INFO_SIZE    16
 
+#define HTT_PHY_TPC_STATS_CTL_REGION_GRP_M    0x000000ff
+#define HTT_PHY_TPC_STATS_CTL_REGION_GRP_S    0
+
+#define HTT_PHY_TPC_STATS_CTL_REGION_GRP_GET(_var) \
+    (((_var) & HTT_PHY_TPC_STATS_CTL_REGION_GRP_M) >> \
+     HTT_PHY_TPC_STATS_CTL_REGION_GRP_S)
+#define HTT_PHY_TPC_STATS_CTL_REGION_GRP_SET(_var, _val) \
+  do { \
+        HTT_CHECK_SET_VAL(HTT_PHY_TPC_STATS_CTL_REGION_GRP, _val); \
+        ((_var) &= ~(HTT_PHY_TPC_STATS_CTL_REGION_GRP_M)); \
+        ((_var) |= ((_val) << HTT_PHY_TPC_STATS_CTL_REGION_GRP_S)); \
+     } while (0)
+
+#define HTT_PHY_TPC_STATS_SUB_BAND_INDEX_M    0x0000ff00
+#define HTT_PHY_TPC_STATS_SUB_BAND_INDEX_S    8
+
+#define HTT_PHY_TPC_STATS_SUB_BAND_INDEX_GET(_var) \
+    (((_var) & HTT_PHY_TPC_STATS_SUB_BAND_INDEX_M) >> \
+     HTT_PHY_TPC_STATS_SUB_BAND_INDEX_S)
+#define HTT_PHY_TPC_STATS_SUB_BAND_INDEX_SET(_var, _val) \
+  do { \
+        HTT_CHECK_SET_VAL(HTT_PHY_TPC_STATS_SUB_BAND_INDEX, _val); \
+        ((_var) &= ~(HTT_PHY_TPC_STATS_SUB_BAND_INDEX_M)); \
+        ((_var) |= ((_val) << HTT_PHY_TPC_STATS_SUB_BAND_INDEX_S)); \
+     } while (0)
+
+#define HTT_PHY_TPC_STATS_AG_CAP_EXT2_ENABLED_M    0x00ff0000
+#define HTT_PHY_TPC_STATS_AG_CAP_EXT2_ENABLED_S    16
+
+#define HTT_PHY_TPC_STATS_AG_CAP_EXT2_ENABLED_GET(_var) \
+    (((_var) & HTT_PHY_TPC_STATS_AG_CAP_EXT2_ENABLED_M) >> \
+     HTT_PHY_TPC_STATS_AG_CAP_EXT2_ENABLED_S)
+#define HTT_PHY_TPC_STATS_AG_CAP_EXT2_ENABLED_SET(_var, _val) \
+ do { \
+        HTT_CHECK_SET_VAL(HTT_PHY_TPC_STATS_AG_CAP_EXT2_ENABLED, _val); \
+        ((_var) &= ~(HTT_PHY_TPC_STATS_AG_CAP_EXT2_ENABLED_M)); \
+        ((_var) |= ((_val) << HTT_PHY_TPC_STATS_AG_CAP_EXT2_ENABLED_S)); \
+    } while (0)
+
+#define HTT_PHY_TPC_STATS_CTL_FLAG_M    0xff000000
+#define HTT_PHY_TPC_STATS_CTL_FLAG_S    24
+
+#define HTT_PHY_TPC_STATS_CTL_FLAG_GET(_var) \
+    (((_var) & HTT_PHY_TPC_STATS_CTL_FLAG_M) >> \
+     HTT_PHY_TPC_STATS_CTL_FLAG_S)
+#define HTT_PHY_TPC_STATS_CTL_FLAG_SET(_var, _val) \
+ do { \
+        HTT_CHECK_SET_VAL(HTT_PHY_TPC_STATS_CTL_FLAG, _val); \
+        ((_var) &= ~(HTT_PHY_TPC_STATS_CTL_FLAG_M)); \
+        ((_var) |= ((_val) << HTT_PHY_TPC_STATS_CTL_FLAG_S)); \
+    } while (0)
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
 
@@ -7991,6 +8043,33 @@ typedef struct {
     /** sub-band channels and corresponding Tx-power */
     A_UINT32 sub_band_cfreq[HTT_MAX_CH_PWR_INFO_SIZE];
     A_UINT32 sub_band_txpower[HTT_MAX_CH_PWR_INFO_SIZE];
+
+    /** array_gain_cap:
+     * CTL Array Gain cap, units are dB
+     * The lower-triangular portion of this square matrix is stored, i.e.
+     *     array element 0 stores matrix element (0,0)
+     *     array element 1 stores matrix element (1,0)
+     *     array element 2 stores matrix element (1,1)
+     *     array element 3 stores matrix element (2,0)
+     *     ...
+     *     array element 35 stores matrix element (7,7)
+     */
+    A_INT32 array_gain_cap[HTT_STATS_MAX_CHAINS * ((HTT_STATS_MAX_CHAINS/2)+1)];
+    union {
+        struct {
+            A_UINT32
+                ctl_region_grp:8, /** Group to which the ctl region belongs */
+                sub_band_index:8, /** Frequency subband index */
+                /** Array Gain Cap Ext2 feature enablement status */
+                array_gain_cap_ext2_enabled:8,
+                /** ctl_flag:
+                 * 1st bit ULOFDMA supported
+                 * 2nd bit DLOFDMA shared Exception supported
+                 */
+                ctl_flag:8;
+        };
+        A_UINT32 ctl_args;
+    };
 } htt_phy_tpc_stats_tlv;
 
 /* NOTE:
