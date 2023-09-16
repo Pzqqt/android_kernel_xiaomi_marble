@@ -766,6 +766,9 @@ sock_llcp_nullify:
 sock_llcp_put_local:
 	nfc_llcp_local_put(local);
 
+sock_llcp_put_local:
+	nfc_llcp_local_put(local);
+
 put_dev:
 	nfc_put_device(dev);
 
