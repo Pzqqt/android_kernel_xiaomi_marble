@@ -30,8 +30,12 @@
 #include <linux/freezer.h>
 #include <linux/irq.h>
 #include <linux/list_sort.h>
+#include <linux/module.h>
 #include "../sched/sched.h"
 #include "internals.h"
+
+uint __read_mostly sbalance_debug = 0;
+module_param(sbalance_debug, uint, 0644);
 
 /* Perform IRQ balancing every POLL_MS milliseconds */
 #define POLL_MS CONFIG_IRQ_SBALANCE_POLL_MSEC
@@ -158,8 +162,15 @@ static int move_irq_to_cpu(struct bal_irq *bi, int cpu)
 	if (!ret) {
 		/* Update the old interrupt count using the new CPU */
 		bi->old_nr = *per_cpu_ptr(desc->kstat_irqs, cpu);
-		pr_debug("Moved IRQ%d (CPU%d -> CPU%d)\n",
-			 irq_desc_get_irq(desc), prev_cpu, cpu);
+		if (sbalance_debug) {
+			if (desc->action && desc->action->name)
+				pr_info("Moved IRQ%d (%s) (CPU%d -> CPU%d)\n",
+					irq_desc_get_irq(desc),
+					desc->action->name, prev_cpu, cpu);
+			else
+				pr_info("Moved IRQ%d (CPU%d -> CPU%d)\n",
+					irq_desc_get_irq(desc), prev_cpu, cpu);
+		}
 	}
 	return ret;
 }
