@@ -19,63 +19,63 @@
 
 enum msm_vidc_debugfs_event;
 
-static inline is_decode_session(struct msm_vidc_inst *inst)
+static inline bool is_decode_session(struct msm_vidc_inst *inst)
 {
 	return inst->domain == MSM_VIDC_DECODER;
 }
 
-static inline is_encode_session(struct msm_vidc_inst *inst)
+static inline bool is_encode_session(struct msm_vidc_inst *inst)
 {
 	return inst->domain == MSM_VIDC_ENCODER;
 }
 
-static inline is_image_encode_session(struct msm_vidc_inst *inst)
+static inline bool is_image_encode_session(struct msm_vidc_inst *inst)
 {
 	return inst->codec == MSM_VIDC_HEIC && inst->domain == MSM_VIDC_ENCODER;
 }
 
-static inline is_image_decode_session(struct msm_vidc_inst *inst)
+static inline bool is_image_decode_session(struct msm_vidc_inst *inst)
 {
 	return inst->codec == MSM_VIDC_HEIC && inst->domain == MSM_VIDC_DECODER;
 }
 
-static inline is_image_session(struct msm_vidc_inst *inst)
+static inline bool is_image_session(struct msm_vidc_inst *inst)
 {
 	return inst->codec == MSM_VIDC_HEIC;
 }
 
-static inline is_secure_session(struct msm_vidc_inst *inst)
+static inline bool is_secure_session(struct msm_vidc_inst *inst)
 {
 	return !!(inst->capabilities->cap[SECURE_MODE].value);
 }
 
-static inline is_input_buffer(enum msm_vidc_buffer_type buffer_type)
+static inline bool is_input_buffer(enum msm_vidc_buffer_type buffer_type)
 {
 	return buffer_type == MSM_VIDC_BUF_INPUT;
 }
 
-static inline is_output_buffer(enum msm_vidc_buffer_type buffer_type)
+static inline bool is_output_buffer(enum msm_vidc_buffer_type buffer_type)
 {
 	return buffer_type == MSM_VIDC_BUF_OUTPUT;
 }
 
-static inline is_input_meta_buffer(enum msm_vidc_buffer_type buffer_type)
+static inline bool is_input_meta_buffer(enum msm_vidc_buffer_type buffer_type)
 {
 	return buffer_type == MSM_VIDC_BUF_INPUT_META;
 }
 
-static inline is_output_meta_buffer(enum msm_vidc_buffer_type buffer_type)
+static inline bool is_output_meta_buffer(enum msm_vidc_buffer_type buffer_type)
 {
 	return buffer_type == MSM_VIDC_BUF_OUTPUT_META;
 }
 
-static inline is_ts_reorder_allowed(struct msm_vidc_inst *inst)
+static inline bool is_ts_reorder_allowed(struct msm_vidc_inst *inst)
 {
 	return !!(inst->capabilities->cap[TS_REORDER].value &&
 		is_decode_session(inst) && !is_image_session(inst));
 }
 
-static inline is_scaling_enabled(struct msm_vidc_inst *inst)
+static inline bool is_scaling_enabled(struct msm_vidc_inst *inst)
 {
 	return inst->crop.left != inst->compose.left ||
 		inst->crop.top != inst->compose.top ||
@@ -83,13 +83,13 @@ static inline is_scaling_enabled(struct msm_vidc_inst *inst)
 		inst->crop.height != inst->compose.height;
 }
 
-static inline is_rotation_90_or_270(struct msm_vidc_inst *inst)
+static inline bool is_rotation_90_or_270(struct msm_vidc_inst *inst)
 {
 	return inst->capabilities->cap[ROTATION].value == 90 ||
 		inst->capabilities->cap[ROTATION].value == 270;
 }
 
-static inline is_internal_buffer(enum msm_vidc_buffer_type buffer_type)
+static inline bool is_internal_buffer(enum msm_vidc_buffer_type buffer_type)
 {
 	return buffer_type == MSM_VIDC_BUF_BIN ||
 		buffer_type == MSM_VIDC_BUF_ARP ||

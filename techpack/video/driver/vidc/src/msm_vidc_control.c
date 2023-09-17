@@ -3412,7 +3412,7 @@ int msm_vidc_set_blur_resolution(void *instance,
 	return rc;
 }
 
-static msm_venc_set_csc_coeff(struct msm_vidc_inst *inst,
+static int msm_venc_set_csc_coeff(struct msm_vidc_inst *inst,
 	const char *prop_name, u32 hfi_id, void *payload,
 	u32 payload_size, u32 row_count, u32 column_count)
 {

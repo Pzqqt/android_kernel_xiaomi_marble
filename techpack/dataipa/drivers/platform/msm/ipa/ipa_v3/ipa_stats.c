@@ -126,7 +126,7 @@ static int ipa_stats_ioctl_open(struct inode *inode, struct file *filp)
 	return 0;
 }
 
-static bool ipa_stats_struct_mismatch()
+static bool ipa_stats_struct_mismatch(void)
 {
 	if (IPA_LNX_EACH_INST_ALLOC_INFO_STRUCT_LEN_INT != IPA_LNX_EACH_INST_ALLOC_INFO_STRUCT_LEN ||
 		IPA_LNX_STATS_ALL_INFO_STRUCT_LEN_INT != IPA_LNX_STATS_ALL_INFO_STRUCT_LEN ||
@@ -1963,7 +1963,7 @@ dev_alloc_err:
 	return -ENODEV;
 }
 
-int ipa_spearhead_stats_init()
+int ipa_spearhead_stats_init(void)
 {
 	int ret;
 

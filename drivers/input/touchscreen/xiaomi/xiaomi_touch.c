@@ -207,13 +207,13 @@ struct xiaomi_touch *xiaomi_touch_dev_get(int minor)
 		return NULL;
 }
 
-struct class *get_xiaomi_touch_class()
+struct class *get_xiaomi_touch_class(void)
 {
 	return xiaomi_touch_dev.class;
 }
 EXPORT_SYMBOL_GPL(get_xiaomi_touch_class);
 
-struct device *get_xiaomi_touch_dev()
+struct device *get_xiaomi_touch_dev(void)
 {
 	return xiaomi_touch_dev.dev;
 }
@@ -495,7 +495,7 @@ int copy_touch_rawdata(char *raw_base,  int len)
 }
 EXPORT_SYMBOL_GPL(copy_touch_rawdata);
 
-int update_touch_rawdata()
+int update_touch_rawdata(void)
 {
 	sysfs_notify(&xiaomi_touch_dev.dev->kobj, NULL,  "update_rawdata");
 

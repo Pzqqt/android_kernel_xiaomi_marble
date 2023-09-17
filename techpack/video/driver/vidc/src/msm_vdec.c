@@ -2285,7 +2285,7 @@ int msm_vdec_qbuf(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 	return rc;
 }
 
-static msm_vdec_alloc_and_queue_additional_dpb_buffers(struct msm_vidc_inst *inst)
+static int msm_vdec_alloc_and_queue_additional_dpb_buffers(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_buffers *buffers;
 	struct msm_vidc_buffer *buffer = NULL;

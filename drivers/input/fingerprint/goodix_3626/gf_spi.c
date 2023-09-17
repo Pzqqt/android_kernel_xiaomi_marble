@@ -959,7 +959,7 @@ static void goodix_register_panel_notifier_work(struct work_struct *work)
 {
 	struct gf_dev *gf_dev = container_of(work, struct gf_dev,screen_state_dw.work);
 	int error = 0;
-	static retry_count = 0;
+	static int retry_count = 0;
 	struct device_node *node;
 	node = of_find_node_by_name(NULL, "fingerprint-screen");
 	if (!node) {
