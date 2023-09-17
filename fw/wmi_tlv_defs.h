@@ -5464,7 +5464,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_SET_BSS_PARAMS_CMDID);
 
 /* MLO link switch confirmation command to inform FW about host side status and reason code */
 #define WMITLV_TABLE_WMI_MLO_LINK_SWITCH_CONF_CMDID(id,op,buf,len) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_link_switch_cnf_fixed_param, wmi_mlo_link_switch_cnf_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_link_switch_cnf_fixed_param, wmi_mlo_link_switch_cnf_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mlo_link_set_active_cmd_fixed_param, set_link_params, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mlo_set_active_link_number_param, link_number_param,  WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, ieee_link_id_bitmap, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, ieee_link_id_bitmap2, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_SWITCH_CONF_CMDID);
 
 /* WMI CMD used to send WSI stats info. */

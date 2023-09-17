@@ -44448,6 +44448,7 @@ typedef enum {
     WMI_MLO_LINK_FORCE_REASON_NEW_DISCONNECT   = 2, /* Set force specific links because of new dis-connection */
     WMI_MLO_LINK_FORCE_REASON_LINK_REMOVAL     = 3, /* Set force specific links because of AP-side link removal */
     WMI_MLO_LINK_FORCE_REASON_TDLS             = 4, /* Set force specific links because of 11BE MLO TDLS setup/teardown */
+    WMI_MLO_LINK_FORCE_REASON_REVERT_FAILURE   = 5, /* Set force specific links for revert previous failed due to host reject */
 } WMI_MLO_LINK_FORCE_REASON;
 
 #define WMI_MLO_CONTROL_FLAGS_GET_OVERWRITE_FORCE_ACTIVE(mlo_flags) \
@@ -44553,6 +44554,11 @@ typedef struct wmi_mlo_set_active_link_number_param
     A_UINT32 home_freq;
 
 } wmi_mlo_set_active_link_number_param;
+
+typedef enum {
+    WMI_MLO_LINK_SET_ACTIVE_STATUS_SUCCESS     = 0,
+    WMI_MLO_LINK_SET_ACTIVE_STATUS_HOST_REJECT = 1,
+} WMI_MLO_LINK_SET_ACTIVE_STATUS;
 
 typedef struct wmi_mlo_link_set_active_resp_event
 {
@@ -46519,6 +46525,7 @@ typedef enum _WMI_LINK_SWITCH_CNF_REASON{
     WMI_MLO_LINK_SWITCH_CNF_REASON_BSS_PARAMS_CHANGED = 1,
     WMI_MLO_LINK_SWITCH_CNF_REASON_CONCURRECNY_CONFLICT = 2,
     WMI_MLO_LINK_SWITCH_CNF_REASON_HOST_INTERNAL_ERROR = 3,
+    WMI_MLO_LINK_SWITCH_CNF_REASON_HOST_RESTORE_FORCE = 4,
     WMI_MLO_LINK_SWITCH_CNF_REASON_MAX,
 } WMI_LINK_SWITCH_CNF_REASON;
 
@@ -46533,6 +46540,35 @@ typedef struct {
     A_UINT32 vdev_id;
     A_UINT32 status;  /* see definition of WMI_LINK_SWITCH_CNF_STATUS */
     A_UINT32 reason;  /* see definition of WMI_LINK_SWITCH_CNF_REASON */
+
+/*
+ * The following optional TLVs may follow this fixed_praam TLV,
+ * depending on the value of the reason field.
+ *
+ * wmi_mlo_link_set_active_cmd_fixed_param set_link_params[];
+ *     The set_link_params array has one element when reason is
+ *     WMI_MLO_LINK_SWITCH_CNF_REASON_HOST_RESTORE_FORCE and
+ *     use_ieee_link_id_bitmap should always be filled with 1.
+ *     In other cases the length of the set_link_params array shall be 0.
+ *
+ * wmi_mlo_set_active_link_number_param link_number_param[];
+ *     Link number parameters, optional TLV.
+ *     Present when force type is WMI_MLO_LINK_FORCE_ACTIVE_LINK_NUM or
+ *     WMI_MLO_LINK_FORCE_INACTIVE_LINK_NUM.
+ *     In other cases the length of array shall be 0.
+ *
+ * A_UINT32 ieee_link_id_bitmap[];
+ *     present for  WMI_MLO_LINK_FORCE_ACTIVE
+ *     or WMI_MLO_LINK_FORCE_INACTIVE or WMI_MLO_LINK_NO_FORCE
+ *     or WMI_MLO_LINK_FORCE_ACTIVE_LINK_NUM or
+ *     WMI_MLO_LINK_FORCE_INACTIVE_LINK_NUM
+ *     In other cases the length of array shall be 0.
+ *
+ * A_UINT32 ieee_link_id_bitmap2[];
+ *     For force mode WMI_MLO_LINK_FORCE_ACTIVE_INACTIVE ieee_link_id_bitmap2[]
+ *     carries the inactive linkid bitmap.
+ *     In other cases the length of the array shall be 0.
+ */
 } wmi_mlo_link_switch_cnf_fixed_param;
 
 typedef struct {
