@@ -150,7 +150,7 @@ void cvp_va_md_register(char* name, void* notf_blk_ptr)
 	}
 }
 
-void cvp_register_va_md_region()
+void cvp_register_va_md_region(void)
 {
 	if (qcom_va_md_enabled()) {
 		cvp_va_md_register("eva_queues", &eva_hfiq_list_notif_blk);

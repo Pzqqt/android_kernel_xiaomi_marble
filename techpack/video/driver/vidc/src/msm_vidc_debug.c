@@ -339,7 +339,7 @@ static const struct file_operations stability_fops = {
 	.write = trigger_stability_write,
 };
 
-struct dentry* msm_vidc_debugfs_init_drv()
+struct dentry* msm_vidc_debugfs_init_drv(void)
 {
 	struct dentry *dir = NULL;
 
