@@ -2300,7 +2300,8 @@ TWT_CONV_INCS := -I$(WLAN_COMMON_INC)/umac \
 		 -I$(WLAN_ROOT)/os_if/twt/inc \
 		 -I$(WLAN_ROOT)/components/umac/twt/dispatcher/inc \
 		 -I$(WLAN_ROOT)/components/target_if/twt/inc \
-		 -I$(WLAN_COMMON_INC)/umac/twt/core/src
+		 -I$(WLAN_COMMON_INC)/umac/twt/core/src \
+		 -I$(WLAN_ROOT)/components/umac/twt/core/src
 
 
 ifeq ($(CONFIG_WLAN_TWT_CONVERGED), y)
