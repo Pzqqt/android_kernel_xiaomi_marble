@@ -40351,6 +40351,22 @@ typedef enum {
      */
     WMI_ROAM_PARAM_ROAM_RSSI_BOOST_FOR_6GHZ_CAND_AP = 8,
 
+    /*
+     * Roam param to indicate unsupported Power Type for 6 GHz Candidate AP
+     * found during Roam Scan. If AP operates on the power type disabled by
+     * the host, then that candidate should not be selected.
+     * This unsupported Power Type will be configured based
+     * on disabled 6GHz Power Types in Regdomain
+     *
+     * If below bits in the obtianed Bitmap is set then any AP
+     * broadcasting these Power Types should not be selected
+     * BIT 0   - Indoor Access Point
+     * BIT 1   - Standard Power (SP) Access Point
+     * BIT 2   - Very Low Power (VLP) Access Point
+     * BIT 3-7 - Reserved
+     */
+    WMI_ROAM_PARAM_ROAM_UNSUPPORTED_6GHZ_POWERTYPE = 9,
+
     /*=== END ROAM_PARAM_PROTOTYPE SECTION ===*/
 } WMI_ROAM_PARAM;
 
