@@ -1762,6 +1762,7 @@ TDLS_OS_IF_SRC := os_if/tdls/src
 TDLS_TARGET_IF_INC := components/target_if/tdls/inc
 TDLS_TARGET_IF_SRC := components/target_if/tdls/src
 TDLS_INC := -I$(WLAN_ROOT)/$(TDLS_DIR)/dispatcher/inc \
+	    -I$(WLAN_ROOT)/$(TDLS_DIR)/core/src \
 	    -I$(WLAN_ROOT)/$(TDLS_OS_IF_INC) \
 	    -I$(WLAN_ROOT)/$(TDLS_TARGET_IF_INC)
 
