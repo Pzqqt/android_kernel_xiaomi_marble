@@ -2638,6 +2638,14 @@ typedef struct {
     A_UINT32 manual_ax_mu_ulofdma_basic_trigger[HTT_NUM_AC_WMM];
     /** 11AX HE Manual Multi-User UL OFDMA Trigger completed with error(s) */
     A_UINT32 manual_ax_mu_ulofdma_basic_trigger_err[HTT_NUM_AC_WMM];
+    /** 11AX HE UL OFDMA Basic Trigger frames per AC */
+    A_UINT32 ax_basic_trigger_per_ac[HTT_NUM_AC_WMM];
+    /** 11AX HE UL OFDMA Basic Trigger frames per AC completed with error(s) */
+    A_UINT32 ax_basic_trigger_errors_per_ac[HTT_NUM_AC_WMM];
+    /** 11AX HE MU-BAR Trigger frames per AC */
+    A_UINT32 ax_mu_bar_trigger_per_ac[HTT_NUM_AC_WMM];
+    /** 11AX HE MU-BAR Trigger frames per AC completed with error(s) */
+    A_UINT32 ax_mu_bar_trigger_errors_per_ac[HTT_NUM_AC_WMM];
 } htt_tx_selfgen_ax_stats_tlv;
 
 typedef struct {
@@ -2693,6 +2701,14 @@ typedef struct {
     A_UINT32 manual_be_mu_ulofdma_basic_trigger[HTT_NUM_AC_WMM];
     /** 11BE EHT Manual Multi-User UL OFDMA Trigger completed with error(s) */
     A_UINT32 manual_be_mu_ulofdma_basic_trigger_err[HTT_NUM_AC_WMM];
+    /** 11BE EHT UL OFDMA Basic Trigger frames per AC */
+    A_UINT32 be_basic_trigger_per_ac[HTT_NUM_AC_WMM];
+    /** 11BE EHT UL OFDMA Basic Trigger frames per AC completed with error(s) */
+    A_UINT32 be_basic_trigger_errors_per_ac[HTT_NUM_AC_WMM];
+    /** 11BE EHT MU-BAR Trigger frames per AC */
+    A_UINT32 be_mu_bar_trigger_per_ac[HTT_NUM_AC_WMM];
+    /** 11BE EHT MU-BAR Trigger frames per AC completed with error(s) */
+    A_UINT32 be_mu_bar_trigger_errors_per_ac[HTT_NUM_AC_WMM];
 } htt_tx_selfgen_be_stats_tlv;
 
 typedef struct { /* DEPRECATED */
