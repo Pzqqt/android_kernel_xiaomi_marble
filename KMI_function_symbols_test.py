@@ -19,7 +19,7 @@ def main(abi_gki_aarch64_xml_file: Optional[str] = None, module_symvers_file: Op
     if abi_gki_aarch64_xml_file is None:
         abi_gki_aarch64_xml_file = os.path.join(LOCAL_DIR, 'android', 'abi_gki_aarch64.xml')
     if module_symvers_file is None:
-        module_symvers_file = os.path.join(LOCAL_DIR, 'out', 'Module.symvers')
+        module_symvers_file = os.path.join(LOCAL_DIR, 'out', 'vmlinux.symvers')
 
     assert os.path.isfile(abi_gki_aarch64_xml_file)
     assert os.path.isfile(module_symvers_file)
@@ -58,7 +58,7 @@ def main(abi_gki_aarch64_xml_file: Optional[str] = None, module_symvers_file: Op
     rich_table = Table(show_header=True, header_style="bold magenta")
     rich_table.add_column("Function symbol", style="dim")
     rich_table.add_column("Crc from abi_gki_aarch64.xml")
-    rich_table.add_column("Crc from Module.symvers")
+    rich_table.add_column("Crc from vmlinux.symvers")
     for item in diff_crc_items:
         rich_table.add_row(*item)
 
@@ -72,5 +72,5 @@ if __name__ == "__main__":
         sys.exit(main())
     if len(sys.argv) == 3:
         sys.exit(main(sys.argv[1], sys.argv[2]))
-    print('Usage: %s <abi_gki_aarch64.xml file> <Module.symvers file>' % sys.argv[0])
+    print('Usage: %s <abi_gki_aarch64.xml file> <vmlinux.symvers>' % sys.argv[0])
     sys.exit(2)
