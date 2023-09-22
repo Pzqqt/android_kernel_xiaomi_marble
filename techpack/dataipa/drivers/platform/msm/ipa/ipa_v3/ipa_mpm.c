@@ -495,7 +495,7 @@ static int ipa_mpm_set_dma_mode(enum ipa_client_type src_pipe,
 	enum ipa_client_type dst_pipe, bool reset)
 {
 	struct ipahal_imm_cmd_pyld *cmd_pyld[IPA_MPM_NUM_OF_INIT_CMD_DESC];
-	struct ipahal_imm_cmd_register_write reg_write_coal_close;
+	struct ipahal_imm_cmd_register_write reg_write_coal_close = { 0 };
 	struct ipahal_reg_valmask valmask;
 	struct ipa3_desc desc[IPA_MPM_NUM_OF_INIT_CMD_DESC];
 	int i, num_cmd = 0, result = 0;
