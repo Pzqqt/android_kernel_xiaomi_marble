@@ -34550,6 +34550,15 @@ typedef enum wmi_coex_config_type {
      *         Enable all coex policies.
      */
     WMI_COEX_SET_TRAFFIC_SHAPING_MODE = 50,
+    /* WMI_COEX_CONFIG_ENABLE_CONT_INFO
+     * enable contention info log
+     * arg1:
+     *     0: disable both cont/sched log
+     *     1: enable cont log
+     *     2: enable sched log
+     *     3: enable both cont and sched log
+     */
+    WMI_COEX_CONFIG_ENABLE_CONT_INFO = 51,
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
