@@ -186,6 +186,7 @@ struct hif_latency_detect {
 #if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
 
 #define HIF_CE_MAX_LATEST_HIST 2
+#define HIF_CE_MAX_LATEST_EVTS 2
 
 struct latest_evt_history {
 	uint64_t irq_entry_ts;
@@ -207,7 +208,7 @@ struct ce_desc_hist {
 	uint32_t hist_index;
 	uint32_t hist_id;
 	void *hist_ev[CE_COUNT_MAX];
-	struct latest_evt_history latest_evt[HIF_CE_MAX_LATEST_HIST];
+	struct latest_evt_history latest_evts[HIF_CE_MAX_LATEST_HIST][HIF_CE_MAX_LATEST_EVTS];
 };
 
 void hif_record_latest_evt(struct ce_desc_hist *ce_hist,
@@ -315,7 +316,8 @@ struct hif_softc {
 #ifdef HIF_CE_LOG_INFO
 	qdf_notif_block hif_recovery_notifier;
 #endif
-#ifdef HIF_CPU_PERF_AFFINE_MASK
+#if defined(HIF_CPU_PERF_AFFINE_MASK) || \
+    defined(FEATURE_ENABLE_CE_DP_IRQ_AFFINE)
 	/* The CPU hotplug event registration handle */
 	struct qdf_cpuhp_handler *cpuhp_event_handle;
 #endif
