@@ -450,7 +450,7 @@ static void ipa_close_coal_frame(struct ipahal_imm_cmd_pyld **coal_cmd_pyld)
 {
 	int i;
 	struct ipahal_reg_valmask valmask;
-	struct ipahal_imm_cmd_register_write reg_write_coal_close;
+	struct ipahal_imm_cmd_register_write reg_write_coal_close = { 0 };
 	u32 offset = 0;
 
 	i = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);

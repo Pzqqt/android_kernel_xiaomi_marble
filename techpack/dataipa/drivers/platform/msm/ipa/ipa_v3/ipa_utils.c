@@ -10723,7 +10723,7 @@ int ipa3_tag_process(struct ipa3_desc desc[],
 	int ep_idx;
 	u32 retry_cnt = 0;
 	struct ipahal_reg_valmask valmask;
-	struct ipahal_imm_cmd_register_write reg_write_coal_close;
+	struct ipahal_imm_cmd_register_write reg_write_coal_close = { 0 };
 	struct ipahal_imm_cmd_register_read dummy_reg_read;
 	int req_num_tag_desc = REQUIRED_TAG_PROCESS_DESCRIPTORS;
 	struct ipahal_reg_read_imm_cmd_pyld *reg_read_cmd = NULL;
@@ -11024,7 +11024,7 @@ static int ipa3_tag_generate_force_close_desc(struct ipa3_desc desc[],
 	struct ipa_ep_cfg_aggr ep_aggr;
 	int desc_idx = 0;
 	int res;
-	struct ipahal_imm_cmd_register_write reg_write_agg_close;
+	struct ipahal_imm_cmd_register_write reg_write_agg_close = {0};
 	struct ipahal_imm_cmd_pyld *cmd_pyld;
 	struct ipahal_reg_valmask valmask;
 	u32 offset = 0;

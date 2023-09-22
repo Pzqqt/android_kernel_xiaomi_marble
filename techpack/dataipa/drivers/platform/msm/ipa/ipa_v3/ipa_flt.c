@@ -498,7 +498,7 @@ int __ipa_commit_flt_v3(enum ipa_ip_type ip)
 	struct ipa3_flt_tbl *tbl;
 	struct ipa3_flt_tbl_nhash_lcl *lcl_tbl;
 	u16 entries;
-	struct ipahal_imm_cmd_register_write reg_write_coal_close;
+	struct ipahal_imm_cmd_register_write reg_write_coal_close = { 0 };
 
 	tbl_hdr_width = ipahal_get_hw_tbl_hdr_width();
 	memset(&alloc_params, 0, sizeof(alloc_params));
