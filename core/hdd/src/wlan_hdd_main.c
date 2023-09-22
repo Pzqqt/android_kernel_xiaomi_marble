@@ -222,6 +222,7 @@
 #ifdef WLAN_FEATURE_DYNAMIC_RX_AGGREGATION
 #include <net/pkt_cls.h>
 #endif
+#include <linux/rtnetlink.h>
 
 #ifdef MULTI_CLIENT_LL_SUPPORT
 #define WLAM_WLM_HOST_DRIVER_PORT_ID 0xFFFFFF
@@ -11218,15 +11219,12 @@ __hdd_check_for_prio_filter_in_clsact_qdisc(struct tcf_block *block,
 	struct tcf_proto *tp_next;
 	enum qdisc_filter_status ret = QDISC_FILTER_PRIO_MISMATCH;
 
-	if (!rtnl_trylock())
-		return QDISC_FILTER_RTNL_LOCK_FAIL;
-
 	mutex_lock(&block->lock);
 	list_for_each_entry(chain, &block->chain_list, list) {
 		mutex_lock(&chain->filter_chain_lock);
 		tp = tcf_chain_dereference(chain->filter_chain, chain);
 		while (tp) {
-			tp_next = rcu_dereference_protected(tp->next, 1);
+			tp_next = rtnl_dereference(tp->next);
 			if (tp->prio == (prio << 16)) {
 				ret = QDISC_FILTER_PRIO_MATCH;
 				break;
@@ -11239,7 +11237,6 @@ __hdd_check_for_prio_filter_in_clsact_qdisc(struct tcf_block *block,
 			break;
 	}
 	mutex_unlock(&block->lock);
-	rtnl_unlock();
 
 	return ret;
 }
@@ -11252,9 +11249,6 @@ __hdd_check_for_prio_filter_in_clsact_qdisc(struct tcf_block *block,
 	struct tcf_proto *tp;
 	enum qdisc_filter_status ret = QDISC_FILTER_PRIO_MISMATCH;
 
-	if (!rtnl_trylock())
-		return QDISC_FILTER_RTNL_LOCK_FAIL;
-
 	list_for_each_entry(chain, &block->chain_list, list) {
 		for (tp = rtnl_dereference(chain->filter_chain); tp;
 		     tp = rtnl_dereference(tp->next)) {
@@ -11262,7 +11256,6 @@ __hdd_check_for_prio_filter_in_clsact_qdisc(struct tcf_block *block,
 				ret = QDISC_FILTER_PRIO_MATCH;
 		}
 	}
-	rtnl_unlock();
 
 	return ret;
 }
@@ -11315,13 +11308,14 @@ hdd_rx_check_qdisc_for_adapter(struct hdd_adapter *adapter)
 	if (!adapter->dev->ingress_queue)
 		goto reset_wl;
 
-	rcu_read_lock();
+	if (!rtnl_trylock())
+		return;
 
-	ingress_q = rcu_dereference(adapter->dev->ingress_queue);
+	ingress_q = rtnl_dereference(adapter->dev->ingress_queue);
 	if (qdf_unlikely(!ingress_q))
 		goto reset;
 
-	ingress_qdisc = rcu_dereference(ingress_q->qdisc);
+	ingress_qdisc = rtnl_dereference(ingress_q->qdisc);
 	if (qdf_unlikely(!ingress_qdisc))
 		goto reset;
 
@@ -11331,19 +11325,14 @@ hdd_rx_check_qdisc_for_adapter(struct hdd_adapter *adapter)
 		ret = hdd_check_for_prio_filter_in_clsact_qdisc(ingress_qdisc,
 					 hdd_ctx->dp_agg_param.tc_ingress_prio);
 
-		if (ret == QDISC_FILTER_RTNL_LOCK_FAIL) {
-			rcu_read_unlock();
-			return;
-		} else if (ret == QDISC_FILTER_PRIO_MISMATCH) {
+		if (ret == QDISC_FILTER_PRIO_MISMATCH)
 			goto reset;
-		}
 
 		disable_gro = true;
 	}
 
 	if (disable_gro) {
-		rcu_read_unlock();
-
+		rtnl_unlock();
 		if (qdf_likely(qdf_atomic_read(&adapter->gro_disallowed)))
 			return;
 
@@ -11354,8 +11343,7 @@ hdd_rx_check_qdisc_for_adapter(struct hdd_adapter *adapter)
 	}
 
 reset:
-	rcu_read_unlock();
-
+	rtnl_unlock();
 reset_wl:
 	if (qdf_unlikely(qdf_atomic_read(&adapter->gro_disallowed))) {
 		hdd_debug("ingress qdisc/filter removed enable GRO");
@@ -19361,6 +19349,27 @@ static void hdd_populate_runtime_cfg(struct hdd_context *hdd_ctx,
 }
 #endif
 
+#ifdef FEATURE_ENABLE_CE_DP_IRQ_AFFINE
+/**
+ * hdd_populate_ce_dp_irq_affine_cfg() - populate ce irq affine configuration
+ * @hdd_ctx: hdd context
+ * @cfg: pointer to the configuration memory being populated
+ *
+ * Return: void
+ */
+static void hdd_populate_ce_dp_irq_affine_cfg(struct hdd_context *hdd_ctx,
+					      struct hif_config_info *cfg)
+{
+	cfg->enable_ce_dp_irq_affine = cfg_get(hdd_ctx->psoc,
+					       CFG_ENABLE_CE_DP_IRQ_AFFINE);
+}
+#else
+static void hdd_populate_ce_dp_irq_affine_cfg(struct hdd_context *hdd_ctx,
+					      struct hif_config_info *cfg)
+{
+}
+#endif
+
 /**
  * hdd_update_hif_config - API to update HIF configuration parameters
  * @hdd_ctx: HDD Context
@@ -19392,6 +19401,7 @@ static void hdd_update_hif_config(struct hdd_context *hdd_ctx)
 	cfg.rx_softirq_max_yield_duration_ns =
 				cfg_get(hdd_ctx->psoc,
 					CFG_DP_RX_SOFTIRQ_MAX_YIELD_TIME_NS);
+	hdd_populate_ce_dp_irq_affine_cfg(hdd_ctx, &cfg);
 
 	hif_init_ini_config(scn, &cfg);
 
