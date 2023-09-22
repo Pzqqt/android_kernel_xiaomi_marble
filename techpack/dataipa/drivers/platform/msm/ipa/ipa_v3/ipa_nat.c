@@ -1208,7 +1208,7 @@ static int ipa3_nat_send_init_cmd(struct ipahal_imm_cmd_ip_v4_nat_init *cmd,
 	struct ipahal_imm_cmd_pyld *cmd_pyld[IPA_NAT_MAX_NUM_OF_INIT_CMD_DESC];
 	int i, num_cmd = 0, result;
 	struct ipahal_reg_valmask valmask;
-	struct ipahal_imm_cmd_register_write reg_write_coal_close;
+	struct ipahal_imm_cmd_register_write reg_write_coal_close = { 0 };
 
 	IPADBG("\n");
 
@@ -1319,7 +1319,7 @@ static int ipa3_ipv6ct_send_init_cmd(struct ipahal_imm_cmd_ip_v6_ct_init *cmd)
 		*cmd_pyld[IPA_IPV6CT_MAX_NUM_OF_INIT_CMD_DESC];
 	int i, num_cmd = 0, result;
 	struct ipahal_reg_valmask valmask;
-	struct ipahal_imm_cmd_register_write reg_write_coal_close;
+	struct ipahal_imm_cmd_register_write reg_write_coal_close = { 0 };
 
 	IPADBG("\n");
 
@@ -1952,7 +1952,7 @@ int ipa3_table_dma_cmd(
 	int result = 0;
 	int i;
 	struct ipahal_reg_valmask valmask;
-	struct ipahal_imm_cmd_register_write reg_write_coal_close;
+	struct ipahal_imm_cmd_register_write reg_write_coal_close = { 0 };
 	int max_dma_table_cmds = IPA_MAX_NUM_OF_TABLE_DMA_CMD_DESC;
 
 	IPADBG("In\n");

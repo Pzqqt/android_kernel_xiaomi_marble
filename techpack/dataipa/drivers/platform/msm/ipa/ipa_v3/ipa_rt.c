@@ -479,7 +479,7 @@ int __ipa_commit_rt_v3(enum ipa_ip_type ip)
 	struct ipa3_rt_tbl_set *set;
 	struct ipa3_rt_tbl *tbl;
 	u32 tbl_hdr_width;
-	struct ipahal_imm_cmd_register_write reg_write_coal_close;
+	struct ipahal_imm_cmd_register_write reg_write_coal_close = { 0 };
 
 	tbl_hdr_width = ipahal_get_hw_tbl_hdr_width();
 	memset(desc, 0, sizeof(desc));

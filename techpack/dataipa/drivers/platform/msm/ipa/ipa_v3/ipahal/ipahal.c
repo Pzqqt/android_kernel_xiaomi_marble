@@ -1112,7 +1112,7 @@ struct ipahal_imm_cmd_pyld *ipahal_construct_nop_imm_cmd(
 	enum ipahal_pipeline_clear_option pipline_clr_opt,
 	bool is_atomic_ctx)
 {
-	struct ipahal_imm_cmd_register_write cmd;
+	struct ipahal_imm_cmd_register_write cmd = { 0 };
 	struct ipahal_imm_cmd_pyld *cmd_pyld;
 
 	memset(&cmd, 0, sizeof(cmd));
