@@ -742,23 +742,10 @@ static void
 util_scan_update_rnr_mld(struct rnr_bss_info *rnr,
 			 struct neighbor_ap_info_field *ap_info, uint8_t *data)
 {
-	uint8_t tbtt_info_length;
 	bool mld_info_present = false;
 
-	tbtt_info_length = ap_info->tbtt_header.tbtt_info_length;
-	if (tbtt_info_length >=
-		TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD_MLD_PARAM)
-		tbtt_info_length =
-		   TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD_MLD_PARAM;
-
-	switch (tbtt_info_length) {
+	switch (ap_info->tbtt_header.tbtt_info_length) {
 	case TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD_MLD_PARAM:
-		rnr->channel_number = ap_info->channel_number;
-		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->bssid, &data[1], QDF_MAC_ADDR_SIZE);
-		qdf_mem_copy(&rnr->short_ssid, &data[7], SHORT_SSID_LEN);
-		rnr->bss_params = data[11];
-		rnr->psd_20mhz = data[12];
 		qdf_mem_copy(&rnr->mld_info, &data[13],
 			     sizeof(struct rnr_mld_info));
 		mld_info_present = true;
@@ -770,7 +757,6 @@ static void
 util_scan_update_rnr_mld(struct rnr_bss_info *rnr,
 			 struct neighbor_ap_info_field *ap_info, uint8_t *data)
 {
-	scm_debug("Wrong fieldtype");
 }
 #endif
 
@@ -792,40 +778,36 @@ util_scan_update_rnr(struct rnr_bss_info *rnr,
 		/* Dont store it skip*/
 		break;
 
+	case TBTT_NEIGHBOR_AP_S_SSID_BSS_PARAM:
+		rnr->bss_params = data[5];
+		fallthrough;
 	case TBTT_NEIGHBOR_AP_SHORTSSID:
 		rnr->channel_number = ap_info->channel_number;
 		rnr->operating_class = ap_info->operting_class;
 		qdf_mem_copy(&rnr->short_ssid, &data[1], SHORT_SSID_LEN);
 		break;
 
-	case TBTT_NEIGHBOR_AP_S_SSID_BSS_PARAM:
-		rnr->channel_number = ap_info->channel_number;
-		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->short_ssid, &data[1], SHORT_SSID_LEN);
-		rnr->bss_params = data[5];
-		break;
-
+	case TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM_20MHZ_PSD:
+		rnr->psd_20mhz = data[8];
+		fallthrough;
+	case TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM:
+		rnr->bss_params = data[7];
+		fallthrough;
 	case TBTT_NEIGHBOR_AP_BSSID:
 		rnr->channel_number = ap_info->channel_number;
 		rnr->operating_class = ap_info->operting_class;
 		qdf_mem_copy(&rnr->bssid, &data[1], QDF_MAC_ADDR_SIZE);
 		break;
 
-	case TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM:
-		rnr->channel_number = ap_info->channel_number;
-		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->bssid, &data[1], QDF_MAC_ADDR_SIZE);
-		rnr->bss_params = data[7];
-		break;
-
-	case TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM_20MHZ_PSD:
-		rnr->channel_number = ap_info->channel_number;
-		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->bssid, &data[1], QDF_MAC_ADDR_SIZE);
-		rnr->bss_params = data[7];
-		rnr->psd_20mhz = data[8];
-		break;
-
+	case TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD_MLD_PARAM:
+		util_scan_update_rnr_mld(rnr, ap_info, data);
+		fallthrough;
+	case TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD:
+		rnr->psd_20mhz = data[12];
+		fallthrough;
+	case TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM:
+		rnr->bss_params = data[11];
+		fallthrough;
 	case TBTT_NEIGHBOR_AP_BSSSID_S_SSID:
 		rnr->channel_number = ap_info->channel_number;
 		rnr->operating_class = ap_info->operting_class;
@@ -833,25 +815,8 @@ util_scan_update_rnr(struct rnr_bss_info *rnr,
 		qdf_mem_copy(&rnr->short_ssid, &data[7], SHORT_SSID_LEN);
 		break;
 
-	case TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM:
-		rnr->channel_number = ap_info->channel_number;
-		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->bssid, &data[1], QDF_MAC_ADDR_SIZE);
-		qdf_mem_copy(&rnr->short_ssid, &data[7], SHORT_SSID_LEN);
-		rnr->bss_params = data[11];
-		break;
-
-	case TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD:
-		rnr->channel_number = ap_info->channel_number;
-		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->bssid, &data[1], QDF_MAC_ADDR_SIZE);
-		qdf_mem_copy(&rnr->short_ssid, &data[7], SHORT_SSID_LEN);
-		rnr->bss_params = data[11];
-		rnr->psd_20mhz = data[12];
-		break;
-
 	default:
-		util_scan_update_rnr_mld(rnr, ap_info, data);
+		scm_debug("Wrong fieldtype");
 	}
 
 	return QDF_STATUS_SUCCESS;
