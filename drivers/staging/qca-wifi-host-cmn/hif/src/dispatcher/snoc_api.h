@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -39,4 +40,5 @@ void hif_snoc_display_stats(struct hif_softc *hif_ctx);
 void hif_snoc_clear_stats(struct hif_softc *hif_ctx);
 int hif_snoc_map_ce_to_irq(struct hif_softc *scn, int ce_id);
 bool hif_snoc_needs_bmi(struct hif_softc *scn);
+void hif_snoc_configure_irq_affinity(struct hif_softc *scn);
 #endif /* _SNOC_API_H_ */

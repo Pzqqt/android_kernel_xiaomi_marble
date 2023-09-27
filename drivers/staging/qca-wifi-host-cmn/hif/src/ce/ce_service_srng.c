@@ -446,16 +446,13 @@ ce_completed_recv_next_nolock_srng(struct CE_state *CE_state,
 	int nbytes;
 	struct ce_srng_dest_status_desc dest_status_info;
 
-	if (hal_srng_access_start(scn->hal_soc, status_ring->srng_ctx)) {
-		status = QDF_STATUS_E_FAILURE;
-		goto done;
-	}
+	if (hal_srng_access_start(scn->hal_soc, status_ring->srng_ctx))
+		return QDF_STATUS_E_FAILURE;
 
 	dest_status = hal_srng_dst_peek(scn->hal_soc, status_ring->srng_ctx);
 	if (!dest_status) {
-		status = QDF_STATUS_E_FAILURE;
 		hal_srng_access_end_reap(scn->hal_soc, status_ring->srng_ctx);
-		goto done;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/*

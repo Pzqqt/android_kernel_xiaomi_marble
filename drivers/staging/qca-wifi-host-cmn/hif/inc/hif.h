@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -301,6 +301,7 @@ struct qca_napi_data {
  * @enable_runtime_pm: Enable Runtime PM
  * @runtime_pm_delay: Runtime PM Delay
  * @rx_softirq_max_yield_duration_ns: Max Yield time duration for RX Softirq
+ * @enable_ce_dp_irq_affine: Enable affinity for CE DP IRQs
  *
  * Structure for holding HIF ini parameters.
  */
@@ -311,6 +312,9 @@ struct hif_config_info {
 	u_int32_t runtime_pm_delay;
 #endif
 	uint64_t rx_softirq_max_yield_duration_ns;
+#ifdef FEATURE_ENABLE_CE_DP_IRQ_AFFINE
+	bool enable_ce_dp_irq_affine;
+#endif
 };
 
 /**
@@ -1927,7 +1931,8 @@ void hif_log_ce_info(struct hif_softc *scn, uint8_t *data,
 }
 #endif
 
-#ifdef HIF_CPU_PERF_AFFINE_MASK
+#if defined(HIF_CPU_PERF_AFFINE_MASK) || \
+    defined(FEATURE_ENABLE_CE_DP_IRQ_AFFINE)
 /**
  * hif_config_irq_set_perf_affinity_hint() - API to set affinity
  * @hif_ctx: hif opaque handle
@@ -2162,4 +2167,17 @@ void hif_set_grp_intr_affinity(struct hif_opaque_softc *scn,
 {
 }
 #endif
+
+static inline QDF_STATUS
+hif_irq_set_affinity_hint(int irq_num, qdf_cpu_mask *cpu_mask)
+{
+	QDF_STATUS status;
+
+	qdf_dev_modify_irq_status(irq_num, IRQ_NO_BALANCING, 0);
+	status = qdf_dev_set_irq_affinity(irq_num,
+					  (struct qdf_cpu_mask *)cpu_mask);
+	qdf_dev_modify_irq_status(irq_num, 0, IRQ_NO_BALANCING);
+
+	return status;
+}
 #endif /* _HIF_H_ */

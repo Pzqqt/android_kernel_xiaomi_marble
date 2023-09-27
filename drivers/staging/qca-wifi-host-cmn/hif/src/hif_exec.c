@@ -812,18 +812,6 @@ int32_t hif_get_int_ctx_irq_num(struct hif_opaque_softc *softc,
 
 qdf_export_symbol(hif_get_int_ctx_irq_num);
 
-#ifdef HIF_CPU_PERF_AFFINE_MASK
-void hif_config_irq_set_perf_affinity_hint(
-	struct hif_opaque_softc *hif_ctx)
-{
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-
-	hif_config_irq_affinity(scn);
-}
-
-qdf_export_symbol(hif_config_irq_set_perf_affinity_hint);
-#endif
-
 QDF_STATUS hif_configure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
