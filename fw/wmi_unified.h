@@ -18169,6 +18169,11 @@ typedef enum {
      */
     WMI_VDEV_PARAM_DISABLE_2G_TWT,                        /* 0xBF */
 
+    /*
+     * Disable FW initiated Information frame for TWT
+     */
+    WMI_VDEV_PARAM_DISABLE_TWT_INFO_FRAME,                /* 0xC0 */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
