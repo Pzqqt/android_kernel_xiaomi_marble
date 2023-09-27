@@ -43,6 +43,12 @@ def main(abi_gki_aarch64_xml_file: Optional[str] = None, module_symvers_file: Op
             line.split()[1]: _crc_value_fix(line.split()[0]) for line in f.readlines()
         }
 
+    missing_symbols = elf_function_symbols.keys() - module_symvers.keys()
+    if missing_symbols:
+        print("Warning: The kernel image is missing the following symbols:")
+        for symbol in missing_symbols:
+            print('-', symbol)
+
     diff_crc_items = [
         (key, elf_function_symbols[key], module_symvers[key])
         for key in elf_function_symbols.keys() & module_symvers.keys()
