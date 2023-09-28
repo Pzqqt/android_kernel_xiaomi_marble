@@ -1,0 +1,61 @@
+headers_src = [
+    "include/uapi/audio/*/**/*.h",
+]
+
+audio_headers_out = [
+    "linux/avtimer.h",
+    "linux/msm_audio.h",
+    "linux/msm_audio_aac.h",
+    "linux/msm_audio_ac3.h",
+    "linux/msm_audio_alac.h",
+    "linux/msm_audio_amrnb.h",
+    "linux/msm_audio_amrwb.h",
+    "linux/msm_audio_amrwbplus.h",
+    "linux/msm_audio_ape.h",
+    "linux/msm_audio_calibration.h",
+    "linux/msm_audio_g711.h",
+    "linux/msm_audio_g711_dec.h",
+    "linux/msm_audio_mvs.h",
+    "linux/msm_audio_qcp.h",
+    "linux/msm_audio_sbc.h",
+    "linux/msm_audio_voicememo.h",
+    "linux/msm_audio_wma.h",
+    "linux/msm_audio_wmapro.h",
+    "linux/wcd-spi-ac-params.h",
+    "sound/audio_compressed_formats.h",
+    "sound/audio_effects.h",
+    "sound/audio_slimslave.h",
+    "sound/devdep_params.h",
+    "sound/lsm_params.h",
+    "sound/msmcal-hwdep.h",
+    "sound/voice_params.h",
+    "sound/wcd-dsp-glink.h",
+]
+
+audio_kernel_headers_verbose = "--verbose "
+genrule {
+    name: "qti_generate_audio_kernel_headers",
+    tools: ["headers_install.sh",
+            "unifdef"
+    ],
+    tool_files: [
+         "audio_kernel_headers.py",
+    ],
+    srcs: headers_src,
+    cmd: "python3 -u $(location audio_kernel_headers.py) " +
+        audio_kernel_headers_verbose +
+        "--header_arch arm64 " +
+        "--gen_dir $(genDir) " +
+        "--audio_include_uapi $(locations include/uapi/audio/*/**/*.h) " +
+        "--unifdef $(location unifdef) " +
+        "--headers_install $(location headers_install.sh)",
+    out: audio_headers_out,
+}
+
+cc_library_headers {
+    name: "qti_audio_kernel_uapi",
+    generated_headers: ["qti_generate_audio_kernel_headers"],
+    export_generated_headers: ["qti_generate_audio_kernel_headers"],
+    vendor: true,
+    recovery_available: true
+}
