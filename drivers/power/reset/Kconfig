@@ -94,7 +94,7 @@ config POWER_RESET_GPIO_RESTART
 	  create a binding in your devicetree.
 
 config POWER_RESET_HISI
-	bool "Hisilicon power-off driver"
+	tristate "Hisilicon power-off driver"
 	depends on ARCH_HISI
 	help
 	  Reboot support for Hisilicon boards.
@@ -111,10 +111,29 @@ config POWER_RESET_LINKSTATION
 	  Say Y here if you have a Buffalo LinkStation LS421D/E.
 
 config POWER_RESET_MSM
-	bool "Qualcomm MSM power-off driver"
+	tristate "Qualcomm MSM power-off driver"
 	depends on ARCH_QCOM
 	help
 	  Power off and restart support for Qualcomm boards.
+
+config POWER_RESET_QCOM_DOWNLOAD_MODE
+	tristate "MSM download mode driver"
+	depends on ARCH_QCOM
+	help
+	  MSM boards support booting to special download modes after a restart.
+	  These modes could be a normal restart, restarting into a
+	  ramdump collection mode (CrashDump), or restarting into "emergency
+	  download mode".
+
+config POWER_RESET_QCOM_DOWNLOAD_MODE_DEFAULT
+	bool "MSM download mode enabled by default"
+	help
+	  A device with "download mode" enabled will upon an unexpected
+	  warm-restart enter a special debug mode that allows the user to
+	  "download" memory content over USB for offline postmortem analysis.
+	  The feature can be enabled/disabled on the kernel command line.
+
+	  Say Y here to enable "download mode" by default.
 
 config POWER_RESET_QCOM_PON
 	tristate "Qualcomm power-on driver"
@@ -126,6 +145,15 @@ config POWER_RESET_QCOM_PON
 	  If you have a Qualcomm platform and need support for
 	  power-on and reboot reason, Say Y.
 	  If unsure, Say N.
+
+config POWER_RESET_QCOM_REBOOT_REASON
+	tristate "MSM reboot mode driver"
+	depends on ARCH_QCOM
+	help
+	  Support for setting reboot reason on MSM boards.
+	  This feature supports commands such as "reboot bootloader"
+	  to boot the MSM board to fastboot mode.
+	  If unsure, say Y.
 
 config POWER_RESET_OCELOT_RESET
 	bool "Microsemi Ocelot reset driver"

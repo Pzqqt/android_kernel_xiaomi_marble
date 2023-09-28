@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015, 2021 The Linux Foundation. All rights reserved.
  */
 #ifndef LINUX_MMC_CQHCI_H
 #define LINUX_MMC_CQHCI_H
@@ -93,6 +93,12 @@
 
 /* send status config 2 */
 #define CQHCI_SSC2			0x44
+
+/*
+ * Value n means CQE would send CMD13 during the transfer of data block
+ * BLOCK_CNT-n
+ */
+#define SEND_QSR_INTERVAL 0x70001
 
 /* response for dcmd */
 #define CQHCI_CRDCT			0x48
@@ -273,6 +279,13 @@ struct cqhci_host {
 	union cqhci_crypto_capabilities crypto_capabilities;
 	union cqhci_crypto_cap_entry *crypto_cap_array;
 	u32 crypto_cfg_register;
+	void __iomem *ice_mmio;
+#endif
+#if IS_ENABLED(CONFIG_MMC_CRYPTO_QTI)
+	struct platform_device *pdev;
+#endif
+#if IS_ENABLED(CONFIG_QTI_HW_KEY_MANAGER)
+	void __iomem *ice_hwkm_mmio;
 #endif
 };
 

@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef __SOC_QCOM_TCS_H__
@@ -66,9 +67,9 @@ struct tcs_request {
 #define BCM_TCS_CMD(commit, valid, vote_x, vote_y)		\
 	(((commit) << BCM_TCS_CMD_COMMIT_SHFT) |		\
 	((valid) << BCM_TCS_CMD_VALID_SHFT) |			\
-	((cpu_to_le32(vote_x) &					\
+	((vote_x &						\
 	BCM_TCS_CMD_VOTE_MASK) << BCM_TCS_CMD_VOTE_X_SHFT) |	\
-	((cpu_to_le32(vote_y) &					\
+	((vote_y &						\
 	BCM_TCS_CMD_VOTE_MASK) << BCM_TCS_CMD_VOTE_Y_SHFT))
 
 #endif /* __SOC_QCOM_TCS_H__ */

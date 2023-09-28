@@ -282,6 +282,8 @@ libs-y				:= arch/arm/lib/ $(libs-y)
 boot := arch/arm/boot
 ifeq ($(CONFIG_XIP_KERNEL),y)
 KBUILD_IMAGE := $(boot)/xipImage
+else ifeq ($(CONFIG_BUILD_ARM_APPENDED_DTB_IMAGE),y)
+KBUILD_IMAGE := $(boot)/zImage-dtb
 else
 KBUILD_IMAGE := $(boot)/zImage
 endif
@@ -302,6 +304,7 @@ endif
 
 all:	$(notdir $(KBUILD_IMAGE))
 
+DTSSUBDIR	:= qcom
 
 archheaders:
 	$(Q)$(MAKE) $(build)=arch/arm/tools uapi
@@ -327,11 +330,21 @@ $(BOOT_TARGETS): vmlinux
 $(INSTALL_TARGETS):
 	$(Q)$(MAKE) $(build)=$(boot) MACHINE=$(MACHINE) $@
 
+%.dtb: | scripts
+	$(Q)$(MAKE) $(build)=$(boot)/dts MACHINE=$(MACHINE) $(boot)/dts/$@
+
+dtbs: scripts
+	$(Q)$(MAKE) $(build)=$(boot)/dts MACHINE=$(MACHINE) dtbs
+	$(foreach DIR, $(DTSSUBDIR), $(Q)$(MAKE) $(build)=$(boot)/dts/$(DIR) MACHINE=$(MACHINE) dtbs)
+
 PHONY += vdso_install
 vdso_install:
 ifeq ($(CONFIG_VDSO),y)
 	$(Q)$(MAKE) $(build)=arch/arm/vdso $@
 endif
+
+zImage-dtb: vmlinux scripts dtbs
+	$(Q)$(MAKE) $(build)=$(boot) MACHINE=$(MACHINE) DTSSUBDIR=$(DTSSUBDIR) $(boot)/$@
 
 # We use MRPROPER_FILES and CLEAN_FILES now
 archclean:

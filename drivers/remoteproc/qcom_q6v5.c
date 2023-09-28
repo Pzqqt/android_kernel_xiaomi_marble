@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2016-2018 Linaro Ltd.
  * Copyright (C) 2014 Sony Mobile Communications AB
- * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2013, 2020-2021, The Linux Foundation. All rights reserved.
  */
 #include <linux/kernel.h>
 #include <linux/platform_device.h>
@@ -13,7 +13,10 @@
 #include <linux/soc/qcom/smem.h>
 #include <linux/soc/qcom/smem_state.h>
 #include <linux/remoteproc.h>
+#include <linux/delay.h>
+#include "qcom_common.h"
 #include "qcom_q6v5.h"
+#include <trace/events/rproc_qcom.h>
 
 #define Q6V5_PANIC_DELAY_MS	200
 
@@ -51,14 +54,55 @@ int qcom_q6v5_unprepare(struct qcom_q6v5 *q6v5)
 }
 EXPORT_SYMBOL_GPL(qcom_q6v5_unprepare);
 
+void qcom_q6v5_register_ssr_subdev(struct qcom_q6v5 *q6v5, struct rproc_subdev *ssr_subdev)
+{
+	q6v5->ssr_subdev = ssr_subdev;
+}
+EXPORT_SYMBOL(qcom_q6v5_register_ssr_subdev);
+
+static void qcom_q6v5_crash_handler_work(struct work_struct *work)
+{
+	struct qcom_q6v5 *q6v5 = container_of(work, struct qcom_q6v5, crash_handler);
+	struct rproc *rproc = q6v5->rproc;
+	struct rproc_subdev *subdev;
+	int votes;
+
+	mutex_lock(&rproc->lock);
+
+	rproc->state = RPROC_CRASHED;
+
+	votes = atomic_xchg(&rproc->power, 0);
+	/* if votes are zero, rproc has already been shutdown */
+	if (votes == 0) {
+		mutex_unlock(&rproc->lock);
+		return;
+	}
+
+	list_for_each_entry_reverse(subdev, &rproc->subdevs, node) {
+		if (subdev->stop)
+			subdev->stop(subdev, true);
+	}
+
+	mutex_unlock(&rproc->lock);
+
+	/*
+	 * Temporary workaround until ramdump userspace application calls
+	 * sync() and fclose() on attempting the dump.
+	 */
+	msleep(100);
+	panic("Panicking, remoteproc %s crashed\n", q6v5->rproc->name);
+}
+
 static irqreturn_t q6v5_wdog_interrupt(int irq, void *data)
 {
 	struct qcom_q6v5 *q6v5 = data;
+	struct qcom_rproc_ssr *ssr;
 	size_t len;
 	char *msg;
 
 	/* Sometimes the stop triggers a watchdog rather than a stop-ack */
 	if (!q6v5->running) {
+		dev_info(q6v5->dev, "received wdog irq while q6 is offline\n");
 		complete(&q6v5->stop_done);
 		return IRQ_HANDLED;
 	}
@@ -69,7 +113,19 @@ static irqreturn_t q6v5_wdog_interrupt(int irq, void *data)
 	else
 		dev_err(q6v5->dev, "watchdog without message\n");
 
-	rproc_report_crash(q6v5->rproc, RPROC_WATCHDOG);
+	q6v5->running = false;
+	trace_rproc_qcom_event(dev_name(q6v5->dev), "q6v5_wdog", msg);
+	if (q6v5->rproc->recovery_disabled) {
+		schedule_work(&q6v5->crash_handler);
+	} else {
+		if (q6v5->ssr_subdev) {
+			qcom_notify_early_ssr_clients(q6v5->ssr_subdev);
+			ssr = container_of(q6v5->ssr_subdev, struct qcom_rproc_ssr, subdev);
+			ssr->is_notified = true;
+		}
+
+		rproc_report_crash(q6v5->rproc, RPROC_WATCHDOG);
+	}
 
 	return IRQ_HANDLED;
 }
@@ -77,8 +133,14 @@ static irqreturn_t q6v5_wdog_interrupt(int irq, void *data)
 static irqreturn_t q6v5_fatal_interrupt(int irq, void *data)
 {
 	struct qcom_q6v5 *q6v5 = data;
+	struct qcom_rproc_ssr *ssr;
 	size_t len;
 	char *msg;
+
+	if (!q6v5->running) {
+		dev_info(q6v5->dev, "received fatal irq while q6 is offline\n");
+		return IRQ_HANDLED;
+	}
 
 	msg = qcom_smem_get(QCOM_SMEM_HOST_ANY, q6v5->crash_reason, &len);
 	if (!IS_ERR(msg) && len > 0 && msg[0])
@@ -87,7 +149,18 @@ static irqreturn_t q6v5_fatal_interrupt(int irq, void *data)
 		dev_err(q6v5->dev, "fatal error without message\n");
 
 	q6v5->running = false;
-	rproc_report_crash(q6v5->rproc, RPROC_FATAL_ERROR);
+	trace_rproc_qcom_event(dev_name(q6v5->dev), "q6v5_fatal", msg);
+	if (q6v5->rproc->recovery_disabled) {
+		schedule_work(&q6v5->crash_handler);
+	} else {
+		if (q6v5->ssr_subdev) {
+			qcom_notify_early_ssr_clients(q6v5->ssr_subdev);
+			ssr = container_of(q6v5->ssr_subdev, struct qcom_rproc_ssr, subdev);
+			ssr->is_notified = true;
+		}
+
+		rproc_report_crash(q6v5->rproc, RPROC_FATAL_ERROR);
+	}
 
 	return IRQ_HANDLED;
 }
@@ -146,14 +219,21 @@ static irqreturn_t q6v5_stop_interrupt(int irq, void *data)
 /**
  * qcom_q6v5_request_stop() - request the remote processor to stop
  * @q6v5:	reference to qcom_q6v5 context
+ * @sysmon:	reference to the remote's sysmon instance, or NULL
  *
  * Return: 0 on success, negative errno on failure
  */
-int qcom_q6v5_request_stop(struct qcom_q6v5 *q6v5)
+int qcom_q6v5_request_stop(struct qcom_q6v5 *q6v5, struct qcom_sysmon *sysmon)
 {
 	int ret;
 
 	q6v5->running = false;
+
+	/* Don't perform SMP2P dance if sysmon already shut
+	 * down the remote or if it isn't running
+	 */
+	if (q6v5->rproc->state != RPROC_RUNNING || qcom_sysmon_shutdown_acked(sysmon))
+		return 0;
 
 	qcom_smem_state_update_bits(q6v5->state,
 				    BIT(q6v5->stop_bit), BIT(q6v5->stop_bit));
@@ -204,6 +284,7 @@ int qcom_q6v5_init(struct qcom_q6v5 *q6v5, struct platform_device *pdev,
 	q6v5->dev = &pdev->dev;
 	q6v5->crash_reason = crash_reason;
 	q6v5->handover = handover;
+	q6v5->ssr_subdev = NULL;
 
 	init_completion(&q6v5->start_done);
 	init_completion(&q6v5->stop_done);
@@ -214,7 +295,7 @@ int qcom_q6v5_init(struct qcom_q6v5 *q6v5, struct platform_device *pdev,
 
 	ret = devm_request_threaded_irq(&pdev->dev, q6v5->wdog_irq,
 					NULL, q6v5_wdog_interrupt,
-					IRQF_TRIGGER_RISING | IRQF_ONESHOT,
+					IRQF_ONESHOT,
 					"q6v5 wdog", q6v5);
 	if (ret) {
 		dev_err(&pdev->dev, "failed to acquire wdog IRQ\n");
@@ -279,6 +360,8 @@ int qcom_q6v5_init(struct qcom_q6v5 *q6v5, struct platform_device *pdev,
 		dev_err(&pdev->dev, "failed to acquire stop state\n");
 		return PTR_ERR(q6v5->state);
 	}
+
+	INIT_WORK(&q6v5->crash_handler, qcom_q6v5_crash_handler_work);
 
 	return 0;
 }

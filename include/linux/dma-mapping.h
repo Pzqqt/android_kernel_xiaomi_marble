@@ -10,6 +10,7 @@
 #include <linux/scatterlist.h>
 #include <linux/bug.h>
 #include <linux/mem_encrypt.h>
+#include <linux/qcom-dma-mapping.h>
 
 /**
  * List of possible attributes associated with a DMA mapping. The semantics

@@ -174,4 +174,10 @@ source "drivers/usb/typec/Kconfig"
 
 source "drivers/usb/roles/Kconfig"
 
+source "drivers/usb/pd/Kconfig"
+
+source "drivers/usb/repeater/Kconfig"
+
+source "drivers/usb/redriver/Kconfig"
+
 endif # USB_SUPPORT

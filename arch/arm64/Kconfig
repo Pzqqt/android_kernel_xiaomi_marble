@@ -2045,6 +2045,40 @@ config DMI
 
 endmenu
 
+choice
+	prompt "Kernel compression method"
+	default BUILD_ARM64_KERNEL_COMPRESSION_GZIP
+	help
+	  Allows choice between gzip compressed or uncompressed
+	  kernel image. Decision is based on whether the bootloader
+	  can handle (un)compressed kernel images. Most BLs are capable
+	  of decomprssing kernel images and this is the default choice.
+
+config BUILD_ARM64_KERNEL_COMPRESSION_GZIP
+	bool "Build compressed kernel image"
+	help
+	  Build a kernel image using gzip
+	  compression. gzip is based on the DEFLATE
+	  algorithm. Check if your bootloader is
+	  capable of decompressing images.
+
+config BUILD_ARM64_UNCOMPRESSED_KERNEL
+	bool "Build uncompressed kernel image"
+	help
+	  Build a kernel image without
+	  compression. An uncompressed kernel
+	  image may improve performance in
+	  certain situations.
+endchoice
+
+config BUILD_ARM64_DT_OVERLAY
+	bool "enable DT overlay compilation support"
+	depends on OF
+	help
+	  This option enables support for DT overlay compilation.
+	  Enabling this option sets required flags to add DT
+	  overlay in the compilation.
+
 config SYSVIPC_COMPAT
 	def_bool y
 	depends on COMPAT && SYSVIPC
@@ -2087,6 +2121,8 @@ source "drivers/firmware/Kconfig"
 source "drivers/acpi/Kconfig"
 
 source "arch/arm64/kvm/Kconfig"
+
+source "arch/arm64/gunyah/Kconfig"
 
 if CRYPTO
 source "arch/arm64/crypto/Kconfig"

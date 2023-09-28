@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  */
 
@@ -8,6 +8,7 @@
 #define _MHI_INT_H
 
 #include <linux/mhi.h>
+#include "misc.h"
 
 extern struct bus_type mhi_bus_type;
 
@@ -153,8 +154,8 @@ extern struct bus_type mhi_bus_type;
 #define BHI_SERIALNU (0x40)
 #define BHI_SBLANTIROLLVER (0x44)
 #define BHI_NUMSEG (0x48)
-#define BHI_MSMHWID(n) (0x4C + (0x4 * n))
-#define BHI_OEMPKHASH(n) (0x64 + (0x4 * n))
+#define BHI_MSMHWID(n) (0x4C + (0x4 * (n)))
+#define BHI_OEMPKHASH(n) (0x64 + (0x4 * (n)))
 #define BHI_RSVD5 (0xC4)
 #define BHI_STATUS_MASK (0xC0000000)
 #define BHI_STATUS_SHIFT (30)
@@ -272,6 +273,7 @@ enum mhi_cmd_type {
 	MHI_CMD_RESET_CHAN = 16,
 	MHI_CMD_STOP_CHAN = 17,
 	MHI_CMD_START_CHAN = 18,
+	MHI_CMD_SFR_CFG = 73,
 };
 
 /* No operation command */
@@ -369,6 +371,18 @@ enum mhi_ch_state {
 	MHI_CH_STATE_ERROR = 0x5,
 };
 
+enum mhi_ch_state_type {
+	MHI_CH_STATE_TYPE_RESET,
+	MHI_CH_STATE_TYPE_STOP,
+	MHI_CH_STATE_TYPE_START,
+	MHI_CH_STATE_TYPE_MAX,
+};
+
+extern const char * const mhi_ch_state_type_str[MHI_CH_STATE_TYPE_MAX];
+#define TO_CH_STATE_TYPE_STR(state) (((state) >= MHI_CH_STATE_TYPE_MAX) ? \
+				     "INVALID_STATE" : \
+				     mhi_ch_state_type_str[(state)])
+
 #define MHI_INVALID_BRSTMODE(mode) (mode != MHI_DB_BRST_DISABLE && \
 				    mode != MHI_DB_BRST_ENABLE)
 
@@ -453,7 +467,6 @@ enum mhi_pm_state {
 #define CMD_EL_PER_RING			128
 #define PRIMARY_CMD_RING		0
 #define MHI_DEV_WAKE_DB			127
-#define MHI_MAX_MTU			0xffff
 #define MHI_RANDOM_U32_NONZERO(bmsk)	(prandom_u32_max(bmsk) + 1)
 
 enum mhi_er_type {
@@ -526,6 +539,7 @@ struct mhi_event {
 	struct mhi_ring ring;
 	struct db_cfg db_cfg;
 	struct tasklet_struct task;
+	struct work_struct work;
 	spinlock_t lock;
 	int (*process_event)(struct mhi_controller *mhi_cntrl,
 			     struct mhi_event *mhi_event,
@@ -563,7 +577,6 @@ struct mhi_chan {
 	bool configured;
 	bool offload_ch;
 	bool pre_alloc;
-	bool auto_start;
 	bool wake_capable;
 };
 
@@ -602,19 +615,17 @@ void mhi_create_devices(struct mhi_controller *mhi_cntrl);
 int mhi_alloc_bhie_table(struct mhi_controller *mhi_cntrl,
 			 struct image_info **image_info, size_t alloc_size);
 void mhi_free_bhie_table(struct mhi_controller *mhi_cntrl,
-			 struct image_info *image_info);
+			 struct image_info **image_info);
 
 /* Power management APIs */
 enum mhi_pm_state __must_check mhi_tryset_pm_state(
 					struct mhi_controller *mhi_cntrl,
 					enum mhi_pm_state state);
 const char *to_mhi_pm_state_str(enum mhi_pm_state state);
-enum mhi_ee_type mhi_get_exec_env(struct mhi_controller *mhi_cntrl);
 int mhi_queue_state_transition(struct mhi_controller *mhi_cntrl,
 			       enum dev_st_transition state);
 void mhi_pm_st_worker(struct work_struct *work);
 void mhi_pm_sys_err_handler(struct mhi_controller *mhi_cntrl);
-void mhi_fw_load_worker(struct work_struct *work);
 int mhi_ready_state_transition(struct mhi_controller *mhi_cntrl);
 int mhi_pm_m0_transition(struct mhi_controller *mhi_cntrl);
 void mhi_pm_m1_transition(struct mhi_controller *mhi_cntrl);
@@ -622,6 +633,8 @@ int mhi_pm_m3_transition(struct mhi_controller *mhi_cntrl);
 int __mhi_device_get_sync(struct mhi_controller *mhi_cntrl);
 int mhi_send_cmd(struct mhi_controller *mhi_cntrl, struct mhi_chan *mhi_chan,
 		 enum mhi_cmd_type cmd);
+int mhi_download_amss_image(struct mhi_controller *mhi_cntrl);
+int mhi_rddm_download_status(struct mhi_controller *mhi_cntrl);
 static inline bool mhi_is_active(struct mhi_controller *mhi_cntrl)
 {
 	return (mhi_cntrl->dev_state >= MHI_STATE_M0 &&
@@ -635,6 +648,12 @@ static inline void mhi_trigger_resume(struct mhi_controller *mhi_cntrl)
 	mhi_cntrl->runtime_put(mhi_cntrl);
 }
 
+static inline bool is_valid_ring_ptr(struct mhi_ring *ring, dma_addr_t addr)
+{
+	return ((addr >= ring->iommu_base &&
+		addr < ring->iommu_base + ring->len) && (addr % 16 == 0));
+}
+
 /* Register access methods */
 void mhi_db_brstmode(struct mhi_controller *mhi_cntrl, struct db_cfg *db_cfg,
 		     void __iomem *db_addr, dma_addr_t db_val);
@@ -646,6 +665,9 @@ int __must_check mhi_read_reg(struct mhi_controller *mhi_cntrl,
 int __must_check mhi_read_reg_field(struct mhi_controller *mhi_cntrl,
 				    void __iomem *base, u32 offset, u32 mask,
 				    u32 shift, u32 *out);
+int __must_check mhi_poll_reg_field(struct mhi_controller *mhi_cntrl,
+				    void __iomem *base, u32 offset, u32 mask,
+				    u32 shift, u32 val, u32 delayus);
 void mhi_write_reg(struct mhi_controller *mhi_cntrl, void __iomem *base,
 		   u32 offset, u32 val);
 void mhi_write_reg_field(struct mhi_controller *mhi_cntrl, void __iomem *base,
@@ -656,6 +678,8 @@ void mhi_write_db(struct mhi_controller *mhi_cntrl, void __iomem *db_addr,
 void mhi_ring_cmd_db(struct mhi_controller *mhi_cntrl, struct mhi_cmd *mhi_cmd);
 void mhi_ring_chan_db(struct mhi_controller *mhi_cntrl,
 		      struct mhi_chan *mhi_chan);
+void *mhi_to_virtual(struct mhi_ring *ring, dma_addr_t addr);
+dma_addr_t mhi_to_physical(struct mhi_ring *ring, void *addr);
 
 /* Initialization methods */
 int mhi_init_mmio(struct mhi_controller *mhi_cntrl);
@@ -675,29 +699,11 @@ void mhi_deinit_chan_ctxt(struct mhi_controller *mhi_cntrl,
 void mhi_reset_chan(struct mhi_controller *mhi_cntrl,
 		    struct mhi_chan *mhi_chan);
 
-/* Memory allocation methods */
-static inline void *mhi_alloc_coherent(struct mhi_controller *mhi_cntrl,
-				       size_t size,
-				       dma_addr_t *dma_handle,
-				       gfp_t gfp)
-{
-	void *buf = dma_alloc_coherent(mhi_cntrl->cntrl_dev, size, dma_handle,
-				       gfp);
-
-	return buf;
-}
-
-static inline void mhi_free_coherent(struct mhi_controller *mhi_cntrl,
-				     size_t size,
-				     void *vaddr,
-				     dma_addr_t dma_handle)
-{
-	dma_free_coherent(mhi_cntrl->cntrl_dev, size, vaddr, dma_handle);
-}
-
 /* Event processing methods */
 void mhi_ctrl_ev_task(unsigned long data);
 void mhi_ev_task(unsigned long data);
+void mhi_process_ev_work(struct work_struct *work);
+void mhi_process_sleeping_events(struct mhi_controller *mhi_cntrl);
 int mhi_process_data_event_ring(struct mhi_controller *mhi_cntrl,
 				struct mhi_event *mhi_event, u32 event_quota);
 int mhi_process_ctrl_ev_ring(struct mhi_controller *mhi_cntrl,

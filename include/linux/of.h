@@ -1308,6 +1308,8 @@ static inline int of_get_available_child_count(const struct device_node *np)
 	return num;
 }
 
+#include <soc/qcom/of_common.h>
+
 #if defined(CONFIG_OF) && !defined(MODULE)
 #define _OF_DECLARE(table, name, compat, fn, fn_type)			\
 	static const struct of_device_id __of_table_##name		\

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2012-2017 Qualcomm Atheros, Inc.
- * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -99,6 +99,22 @@ static void wil_print_ring(struct seq_file *s, struct wil6210_priv *wil,
 
 		v = (ring_id % 2 ? (v >> 16) : (v & 0xffff));
 		seq_printf(s, "  hwhead = %u\n", v);
+		if (!ring->is_rx) {
+			struct wil_ring_tx_data *txdata =
+				&wil->ring_tx_data[ring_id];
+
+			seq_printf(s, "  available = %d\n",
+				   wil_ring_avail_tx(ring) -
+				   txdata->tx_reserved_count);
+			seq_printf(s, "  used = %d\n",
+				   wil_ring_used_tx(ring));
+			seq_printf(s, "\n  tx_res_count = %d\n",
+				   txdata->tx_reserved_count);
+			seq_printf(s, "  tx_res_count_used = %d\n",
+				   txdata->tx_reserved_count_used);
+			seq_printf(s, "  tx_res_count_unavail = %d\n",
+				   txdata->tx_reserved_count_not_avail);
+		}
 	}
 	seq_printf(s, "  hwtail = [0x%08x] -> ", ring->hwtail);
 	x = wmi_addr(wil, ring->hwtail);
@@ -402,7 +418,7 @@ static int wil_debugfs_iomem_x32_get(void *data, u64 *val)
 	if (ret < 0)
 		return ret;
 
-	*val = readl((void __iomem *)d->offset);
+	*val = readl_relaxed((void __iomem *)d->offset);
 
 	wil_pm_runtime_put(wil);
 
@@ -767,6 +783,57 @@ static ssize_t wil_write_file_rbufcap(struct file *file,
 static const struct file_operations fops_rbufcap = {
 	.write = wil_write_file_rbufcap,
 	.open  = simple_open,
+};
+
+static int wil_tx_latency_threshold_low_show(struct seq_file *s, void *data)
+{
+	struct wil6210_priv *wil = s->private;
+
+	seq_printf(s, "%d\n", wil->tx_latency_threshold_low);
+	return 0;
+}
+
+static int wil_tx_latency_threshold_low_seq_open(struct inode *inode,
+						 struct file *file)
+{
+	return single_open(file, wil_tx_latency_threshold_low_show,
+			   inode->i_private);
+}
+
+static ssize_t wil_tx_latency_threshold_low_write(struct file *file,
+						  const char __user *buf,
+						  size_t len, loff_t *ppos)
+{
+	struct seq_file *s = file->private_data;
+	struct wil6210_priv *wil = s->private;
+	int rc;
+	u32 val;
+
+	rc = kstrtouint_from_user(buf, len, 0, &val);
+	if (rc) {
+		wil_err(wil, "Invalid argument\n");
+		return rc;
+	}
+
+	if (!wil->tx_latency_threshold_base) {
+		/* tx latency debug - failure can be safely ignored */
+		rc = wmi_ut_update_txlatency_base(wil);
+		wil_dbg_misc(wil, "ut_update_txlatency base returned %d\n", rc);
+	}
+
+	wil->tx_latency_threshold_low = val;
+
+	wil_info(wil, "Setting tx_latency_threshold_low to %d\n",
+		 wil->tx_latency_threshold_low);
+	return len;
+}
+
+static const struct file_operations fops_tx_latency_threshold_low = {
+	.open		= wil_tx_latency_threshold_low_seq_open,
+	.release	= single_release,
+	.read		= seq_read,
+	.write		= wil_tx_latency_threshold_low_write,
+	.llseek		= seq_lseek,
 };
 
 /* block ack control, write:
@@ -2096,6 +2163,29 @@ static const struct file_operations fops_led_cfg = {
 	.open  = simple_open,
 };
 
+int wil_led_blink_set(struct wil6210_priv *wil, const char *buf)
+{
+	int rc;
+
+	/* "<blink_on_slow> <blink_off_slow> <blink_on_med> <blink_off_med>
+	 * <blink_on_fast> <blink_off_fast>"
+	 */
+	rc = sscanf(buf, "%u %u %u %u %u %u",
+		    &led_blink_time[WIL_LED_TIME_SLOW].on_ms,
+		    &led_blink_time[WIL_LED_TIME_SLOW].off_ms,
+		    &led_blink_time[WIL_LED_TIME_MED].on_ms,
+		    &led_blink_time[WIL_LED_TIME_MED].off_ms,
+		    &led_blink_time[WIL_LED_TIME_FAST].on_ms,
+		    &led_blink_time[WIL_LED_TIME_FAST].off_ms);
+
+	if (rc < 0)
+		return rc;
+	if (rc < 6)
+		return -EINVAL;
+
+	return 0;
+}
+
 /* led_blink_time, write:
  * "<blink_on_slow> <blink_off_slow> <blink_on_med> <blink_off_med> <blink_on_fast> <blink_off_fast>
  */
@@ -2103,6 +2193,7 @@ static ssize_t wil_write_led_blink_time(struct file *file,
 					const char __user *buf,
 					size_t len, loff_t *ppos)
 {
+	struct wil6210_priv *wil = file->private_data;
 	int rc;
 	char *kbuf = kmalloc(len + 1, GFP_KERNEL);
 
@@ -2116,19 +2207,11 @@ static ssize_t wil_write_led_blink_time(struct file *file,
 	}
 
 	kbuf[len] = '\0';
-	rc = sscanf(kbuf, "%d %d %d %d %d %d",
-		    &led_blink_time[WIL_LED_TIME_SLOW].on_ms,
-		    &led_blink_time[WIL_LED_TIME_SLOW].off_ms,
-		    &led_blink_time[WIL_LED_TIME_MED].on_ms,
-		    &led_blink_time[WIL_LED_TIME_MED].off_ms,
-		    &led_blink_time[WIL_LED_TIME_FAST].on_ms,
-		    &led_blink_time[WIL_LED_TIME_FAST].off_ms);
+	rc = wil_led_blink_set(wil, kbuf);
 	kfree(kbuf);
 
 	if (rc < 0)
 		return rc;
-	if (rc < 6)
-		return -EINVAL;
 
 	return len;
 }
@@ -2386,6 +2469,7 @@ static const struct {
 	{"link_stats",	0644,		&fops_link_stats},
 	{"link_stats_global",	0644,	&fops_link_stats_global},
 	{"rbufcap",	0244,		&fops_rbufcap},
+	{"tx_latency_threshold_low", 0644, &fops_tx_latency_threshold_low},
 };
 
 static void wil6210_debugfs_init_files(struct wil6210_priv *wil,
@@ -2437,6 +2521,11 @@ static const struct dbg_off dbg_wil_off[] = {
 	WIL_FIELD(tx_status_ring_order, 0644,	doff_u32),
 	WIL_FIELD(rx_buff_id_count, 0644,	doff_u32),
 	WIL_FIELD(amsdu_en, 0644,	doff_u8),
+	WIL_FIELD(force_edmg_channel, 0644,	doff_u8),
+	WIL_FIELD(ap_ps, 0644, doff_u8),
+	WIL_FIELD(tx_reserved_entries, 0644, doff_u32),
+	WIL_FIELD(tx_latency_threshold_high,	0644,	doff_u32),
+	WIL_FIELD(tx_latency_threshold_info.threshold_detected, 0644, doff_u8),
 	{},
 };
 

@@ -61,8 +61,13 @@ obj-$(CONFIG_USB_CHIPIDEA)	+= chipidea/
 obj-$(CONFIG_USB_RENESAS_USBHS)	+= renesas_usbhs/
 obj-$(CONFIG_USB_GADGET)	+= gadget/
 
+obj-$(CONFIG_USB_PD)		+= pd/
 obj-$(CONFIG_USBIP_CORE)	+= usbip/
 
 obj-$(CONFIG_TYPEC)		+= typec/
 
 obj-$(CONFIG_USB_ROLE_SWITCH)	+= roles/
+
+obj-$(CONFIG_USB_REPEATER)	+= repeater/
+
+obj-$(CONFIG_USB_REDRIVER)	+= redriver/

@@ -225,6 +225,7 @@ int pm_genpd_remove(struct generic_pm_domain *genpd);
 int dev_pm_genpd_set_performance_state(struct device *dev, unsigned int state);
 int dev_pm_genpd_add_notifier(struct device *dev, struct notifier_block *nb);
 int dev_pm_genpd_remove_notifier(struct device *dev);
+void genpd_enable_next_wakeup(struct generic_pm_domain *genpd, bool enable);
 void dev_pm_genpd_set_next_wakeup(struct device *dev, ktime_t next);
 
 extern struct dev_power_governor simple_qos_governor;
@@ -283,6 +284,10 @@ static inline int dev_pm_genpd_remove_notifier(struct device *dev)
 {
 	return -ENOTSUPP;
 }
+
+static inline void genpd_enable_next_wakeup(struct generic_pm_domain *genpd,
+				     bool enable)
+{ }
 
 static inline void dev_pm_genpd_set_next_wakeup(struct device *dev, ktime_t next)
 { }

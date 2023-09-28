@@ -554,6 +554,19 @@ config MMC_SDHCI_MSM
 
 	  If unsure, say N.
 
+config MMC_SDHCI_MSM_SCALING
+	tristate "Qualcomm Technologies, Inc. SDHCI Controller Support"
+	depends on ARCH_QCOM || COMPILE_TEST
+	depends on MMC_SDHCI_PLTFM
+	help
+	  This selects the Secure Digital Host Controller Interface (SDHCI)
+	  support present in Qualcomm Technologies, Inc. SOCs. The
+	  controller supports SD/MMC/SDIO devices.
+
+	  If you have a controller with this interface, say Y or M here.
+
+	  If unsure, say N.
+
 config MMC_MXC
 	tristate "Freescale i.MX21/27/31 or MPC512x Multimedia Card support"
 	depends on ARCH_MXC || PPC_MPC512x
@@ -1103,3 +1116,20 @@ config MMC_OWL
 
 config MMC_SDHCI_EXTERNAL_DMA
 	bool
+
+config MMC_CRYPTO_QTI
+        tristate "Vendor specific CQHCI Crypto Engine Support"
+        depends on MMC_CRYPTO
+        help
+         Enable Vendor Crypto Engine Support in CQHCI
+         Enabling this allows kernel to use CQHCI crypto operations defined
+         and implemented by QTI.
+
+config SDHCI_MSM_DBG
+	bool "SDHCI_MSM_DBG"
+	depends on MMC_SDHCI_MSM
+	help
+	  This enables the IPC tracing events for sdhci_msm driver to
+	  trace significant events used for debugging purpose.
+
+	  If unsure, say N here.

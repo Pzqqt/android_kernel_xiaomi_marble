@@ -227,6 +227,14 @@ config ZYNQMP_IPI_MBOX
 	  message to the IPI buffer and will access the IPI control
 	  registers to kick the other processor or enquire status.
 
+config MSM_QMP
+	tristate "QTI Mailbox Protocol(QMP)"
+	help
+	  Say yes to add support for the QTI Mailbox Protocol mailbox driver.
+	  QMP is a lightweight communication protocol for sending messages to
+	  a remote processor. This protocol fits into the Generic Mailbox
+	  Framework. QMP uses a mailbox located in shared memory.
+
 config SUN6I_MSGBOX
 	tristate "Allwinner sun6i/sun8i/sun9i/sun50i Message Box"
 	depends on ARCH_SUNXI || COMPILE_TEST
