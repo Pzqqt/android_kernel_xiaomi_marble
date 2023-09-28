@@ -1,0 +1,18 @@
+#
+# RMNET MAP driver
+#
+
+menuconfig RMNET_CORE
+	default m 
+	select GRO_CELLS
+	---help---
+	  If you select this, you will enable the RMNET module which is used
+	  for handling data in the multiplexing and aggregation protocol (MAP)
+	  format in the embedded data path. RMNET devices can be attached to
+	  any IP mode physical device.
+
+menuconfig RMNET_CTL
+	default m
+	---help---
+	  Enable the RMNET CTL module which is used for handling QMAP commands
+	  for flow control purposes.
