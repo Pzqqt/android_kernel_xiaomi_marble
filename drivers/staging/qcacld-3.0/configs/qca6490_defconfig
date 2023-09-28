@@ -1,0 +1,5 @@
+CONFIG_CNSS_QCA6490 := y
+include $(WLAN_ROOT)/configs/default_defconfig
+
+#Enable Constrained Application Protocol feature
+CONFIG_WLAN_FEATURE_COAP := y
