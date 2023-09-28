@@ -49,4 +49,5 @@ obj-$(CONFIG_KPC2000)		+= kpc2000/
 obj-$(CONFIG_QLGE)		+= qlge/
 obj-$(CONFIG_WFX)		+= wfx/
 obj-y				+= hikey9xx/
+obj-$(CONFIG_EXTEND_RECLAIM)	+= extend_reclaim/
 obj-$(CONFIG_QCA_CLD_WLAN)	+= qcacld-3.0/
