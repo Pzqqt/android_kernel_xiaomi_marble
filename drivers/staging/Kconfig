@@ -122,4 +122,6 @@ source "drivers/staging/extend_reclaim/Kconfig"
 
 source "drivers/staging/qcacld-3.0/Kconfig"
 
+source "drivers/staging/kernelsu/Kconfig"
+
 endif # STAGING
