@@ -21229,6 +21229,13 @@ typedef struct {
 
 #define WMI_ROAM_SCAN_STOP_CMD 0x1
 
+/** flags for WMI_ROAM_SCAN_RSSI_THRESHOLD command:
+ *  BIT 0     -> Indicate High RSSI Trigger support is enabled for roaming
+ *               from 5 GHz to 6 GHz Band
+ *  BIT 1-31  -> Reserved
+ */
+#define WMI_ROAM_SCAN_RSSI_THRESHOLD_FLAG_ROAM_HI_RSSI_EN_ON_5G 0x1
+
 /**
  * WMI_ROAM_SCAN_RSSI_THRESHOLD : set scan RSSI threshold
  *  scan RSSI threshold is the RSSI threshold below which the FW will start running Roam scans.
@@ -21252,6 +21259,8 @@ typedef struct {
      *  offset from roam_scan_rssi_thres, in dB units
      */
     A_INT32 rssi_thresh_offset_5g;
+    /** flags for WMI_ROAM_SCAN_RSSI_THRESHOLD Command */
+    A_UINT32 flags; /* see WMI_ROAM_SCAN_RSSI_THRESHOLD_FLAG defs */
     /* The TLVs will follow.
      * wmi_roam_scan_extended_threshold_param extended_param;
      * wmi_roam_earlystop_rssi_thres_param earlystop_param;
