@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,8 +42,14 @@ struct qdf_dev;
 #define __qdf_for_each_online_cpu(cpu) for_each_online_cpu(cpu)
 #define __qdf_for_each_cpu(cpu, maskp) \
 for_each_cpu(cpu, maskp)
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 2, 0))
+#define __qdf_for_each_cpu_not(cpu, maskp) \
+for_each_cpu_andnot(cpu, cpu_possible_mask, maskp)
+#else
 #define __qdf_for_each_cpu_not(cpu, maskp) \
 for_each_cpu_not(cpu, maskp)
+#endif
 
 /**
  * __qdf_dev_alloc_mem() - allocate memory
