@@ -17631,8 +17631,13 @@ typedef enum {
     WMI_VDEV_PARAM_DYNDTIM_CNT,                              /* 0x7c */
 
     /** VDEV parameter to enable or disable RTT responder role
-      * valid values: 0-Disable responder role 1-Enable responder role
-      */
+     * A value of 0 in a given bit disables corresponding mode.
+     * bit | Responder mode support
+     * -----------------------------------------
+     *  0  | responder mode for 11MC ranging
+     *  1  | responder mode for 11AZ NTB ranging
+     *  2  | responder mode for 11AZ TB ranging
+     */
     WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_RESPONDER_ROLE,        /* 0x7d */
 
     /** Parameter to configure BA mode.
@@ -18423,6 +18428,11 @@ typedef enum {
 #define WMI_VDEV_HE_AX_SOUNDING_IS_ENABLED(mode) WMI_GET_BITS(mode, 0, 1)
 #define WMI_VDEV_HE_MU_SOUNDING_IS_ENABLED(mode) WMI_GET_BITS(mode, 2, 1)
 #define WMI_VDEV_HE_AX_TRIG_SOUNDING_IS_ENABLED(mode) WMI_GET_BITS(mode, 3, 1)
+
+/* Indicates RTT Responder mode support for 11MC, 11AZ NTB, 11AZ TB ranging */
+#define WMI_VDEV_11MC_RESP_ENABLED(param) WMI_GET_BITS(param, 0, 1)
+#define WMI_VDEV_11AZ_NTB_RESP_ENABLED(param) WMI_GET_BITS(param, 1, 1)
+#define WMI_VDEV_11AZ_TB_RESP_ENABLED(param) WMI_GET_BITS(param, 2, 1)
 
 /* vdev capabilities bit mask */
 #define WMI_VDEV_BEACON_SUPPORT  0x1
