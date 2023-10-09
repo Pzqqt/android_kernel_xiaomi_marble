@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <asm/memory.h>
@@ -1777,6 +1778,8 @@ static void cvp_pm_qos_update(struct iris_hfi_device *device, bool vote_on)
 
 	if (device->res->pm_qos.latency_us && device->res->pm_qos.pm_qos_hdls)
 		for (i = 0; i < device->res->pm_qos.silver_count; i++) {
+			if (!cpu_possible(device->res->pm_qos.silver_cores[i]))
+				continue;
 			err = dev_pm_qos_update_request(
 				&device->res->pm_qos.pm_qos_hdls[i],
 				latency);
@@ -1930,6 +1933,8 @@ static int iris_hfi_core_init(void *device)
 
 		for (i = 0; i < dev->res->pm_qos.silver_count; i++) {
 			cpu = dev->res->pm_qos.silver_cores[i];
+			if (!cpu_possible(cpu))
+				continue;
 			err = dev_pm_qos_add_request(
 				get_cpu_device(cpu),
 				&dev->res->pm_qos.pm_qos_hdls[i],
@@ -1984,6 +1989,8 @@ static int iris_hfi_core_release(void *dev)
 	if (device->res->pm_qos.latency_us &&
 		device->res->pm_qos.pm_qos_hdls) {
 		for (i = 0; i < device->res->pm_qos.silver_count; i++) {
+			if (!cpu_possible(device->res->pm_qos.silver_cores[i]))
+				continue;
 			qos_hdl = &device->res->pm_qos.pm_qos_hdls[i];
 			if ((qos_hdl != NULL) && dev_pm_qos_request_active(qos_hdl))
 				dev_pm_qos_remove_request(qos_hdl);
