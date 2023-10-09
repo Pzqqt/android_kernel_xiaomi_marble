@@ -13105,6 +13105,7 @@ void hdd_psoc_idle_timer_start(struct hdd_context *hdd_ctx)
 void hdd_psoc_idle_timer_stop(struct hdd_context *hdd_ctx)
 {
 	qdf_delayed_work_stop_sync(&hdd_ctx->psoc_idle_timeout_work);
+	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_IFACE_CHANGE_TIMER);
 	hdd_debug("Stopped psoc idle timer");
 }
 
