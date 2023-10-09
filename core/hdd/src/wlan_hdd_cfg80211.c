@@ -697,6 +697,8 @@ static const struct ieee80211_iface_limit
 	},
 };
 
+#if defined(WLAN_FEATURE_NAN) && \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0))
 /* STA + NAN disc combination */
 static const struct ieee80211_iface_limit
 	wlan_hdd_sta_nan_iface_limit[] = {
@@ -726,6 +728,7 @@ static const struct ieee80211_iface_limit
 		.types = BIT(NL80211_IFTYPE_NAN),
 	},
 };
+#endif /* WLAN_FEATURE_NAN */
 
 static struct ieee80211_iface_combination
 	wlan_hdd_iface_combination[] = {
@@ -810,6 +813,8 @@ static struct ieee80211_iface_combination
 		.num_different_channels = 2,
 		.n_limits = ARRAY_SIZE(wlan_hdd_mon_iface_limit),
 	},
+#if defined(WLAN_FEATURE_NAN) && \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0))
 	/* NAN + STA */
 	{
 		.limits = wlan_hdd_sta_nan_iface_limit,
@@ -825,6 +830,7 @@ static struct ieee80211_iface_combination
 		.n_limits = ARRAY_SIZE(wlan_hdd_sap_nan_iface_limit),
 		.beacon_int_infra_match = true,
 	},
+#endif /* WLAN_FEATURE_NAN */
 };
 
 static struct cfg80211_ops wlan_hdd_cfg80211_ops;
