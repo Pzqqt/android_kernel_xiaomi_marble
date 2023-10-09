@@ -630,6 +630,9 @@ typedef enum {
     /** WMI Command to set status of CSA event from HOST */
     WMI_CSA_EVENT_STATUS_INDICATION_CMDID,
 
+    /** Request to firmware to probe scheduler modes */
+    WMI_VDEV_SCHED_MODE_PROBE_REQ_CMDID,
+
 
     /* peer specific commands */
 
@@ -1833,6 +1836,8 @@ typedef enum {
     WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID,
     /** event to report latency level honored by FW */
     WMI_VDEV_LATENCY_LEVEL_EVENTID,
+    /** Result from firmware about completed scheduler probing */
+    WMI_VDEV_SCHED_MODE_PROBE_RESP_EVENTID,
 
     /* peer specific events */
     /** FW reauet to kick out the station for reasons like inactivity,lack of response ..etc */
@@ -36950,6 +36955,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_NAN_OEM_DATA_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_WSI_STATS_INFO_CMDID);
         WMI_RETURN_STRING(WMI_CSA_EVENT_STATUS_INDICATION_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_SCHED_MODE_PROBE_REQ_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -45926,6 +45932,100 @@ typedef struct {
      *     wmi_per_peer_sched_mode_disable per_peer_sched_mode_disable[];
      */
 } wmi_peer_sched_mode_disable_fixed_param;
+
+typedef enum {
+    /*
+     * No timestamp source is used, and the start_timestamp field  should be
+     * ignored. FW will start the probing of the requested mode ASAP after
+     * receiving this message.
+     */
+    WMI_SCHED_MODE_PROBE_TSTAMP_SRC_NONE = 0,
+} WMI_SCHED_MODE_PROBE_TSTAMP_SRC;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_sched_mode_probe_req_fixed_param */
+
+    A_UINT32 vdev_id;
+
+    /*
+     * The scheduler mode to probe. Only a single mode may currently be
+     * specified in this WMI command (separate commands must be sent to probe
+     * multiple modes). This limitation may be removed in a future version of
+     * FW.
+     *
+     * This command is not supported in STA mode.
+     *
+     * The WMI_SCHED_MODE_FLAGS enum defines the scheduler mode values.
+     */
+    A_UINT32 sched_mode_to_probe;
+
+    /*
+     * 32-bit cookie that will be sent back in the probing completion / stats
+     * WMI message. FW does not interpret any bits in this field, and simply
+     * replays it back to the host.
+     */
+    A_UINT32 cookie;
+
+    /*
+     * The clock reference to use for the start_timestamp field. The enum
+     * WMI_SCHED_MODE_PROBE_TSTAMP_SRC defines the valid timestamp sources.
+     */
+    A_UINT32 timestamp_source;
+
+    /*
+     * The start timestamp indicating when the FW scheduler should start the
+     * probing period. Note that although the FW tries to honor this start
+     * time, it may not always be possible to. For instance, if the command
+     * arrives after the indicated start timestamp, or if channel congestion
+     * delays the APs ability to transmit over the air.
+     *
+     * If the timestamp_source field is set to
+     * WMI_SCHED_MODE_PROBE_TSTAMP_SRC_NONE, then the value of this field is
+     * ignored by FW.
+     */
+    A_UINT32 start_timestamp_lo;
+    A_UINT32 start_timestamp_hi;
+
+    /*
+     * The on and off duration of the probing mode.
+     *
+     * The scheduler will turn the mode on first for the specified
+     * "on_duration_ms", and then turn it off for the specified
+     * "off_duration_ms".
+     *
+     * During the on and off duration, FW will collect delivered bytes
+     * statistics to estimate the vdev level throughput achieved for both the
+     * on and off region. These statistics will be delivered in the
+     * wmi_vdev_sched_mode_probe_resp WMI message after both the "on" and "off"
+     * durations have elapsed.
+     */
+    A_UINT32 on_duration_ms;
+    A_UINT32 off_duration_ms;
+} wmi_vdev_sched_mode_probe_req_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_sched_mode_probe_resp_fixed_param */
+
+    A_UINT32 vdev_id;
+
+    /*
+     * The 32-bit cookie copied from the wmi_vdev_sched_mode_probe_req
+     * message.
+     */
+    A_UINT32 cookie;
+
+    /*
+     * The observed throughput at the vdev level during the mode-enabled
+     * portion of the mode probe.
+     */
+    A_UINT32 tput_mbps_on;
+
+    /*
+     * The observed throughput at the vdev level during the mode-disabled
+     * portion of the mode probe.
+     */
+    A_UINT32 tput_mbps_off;
+} wmi_vdev_sched_mode_probe_resp_fixed_param;
 
 /** Coordinated-AP TDMA **/
 
