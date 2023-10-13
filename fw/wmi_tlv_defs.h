@@ -1405,6 +1405,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_mlo_link_state_switch_trigger_reason_tlv_param,
     WMITLV_TAG_STRUC_wmi_vdev_sched_mode_probe_req_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_sched_mode_probe_resp_fixed_param,
+    WMITLV_TAG_STRUC_wmi_vdev_stop_mlo_params,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -3499,7 +3500,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_UP_CMDID);
 
 /* Vdev stop cmd */
 #define WMITLV_TABLE_WMI_VDEV_STOP_CMDID(id,op,buf,len) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_stop_cmd_fixed_param, wmi_vdev_stop_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_stop_cmd_fixed_param, wmi_vdev_stop_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_vdev_stop_mlo_params, mlo_params, WMITLV_SIZE_VAR)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_STOP_CMDID);
 
