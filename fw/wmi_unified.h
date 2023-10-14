@@ -40576,14 +40576,45 @@ typedef struct {
 
     /*
      * This fixed_param TLV is followed by the below TLVs:
-     * num_pwr_levels of wmi_vdev_set_tpc_power_atomic_fixed_param
-     * For PSD power, it is the PSD/EIRP power of the frequency (20MHz chunks).
-     * For non-psd power, the power values are for 20, 40, and till
-     * BSS BW power levels.
-     * The num_pwr_levels will be checked by sw how many elements present
-     * in the variable-length array.
      *
-     * wmi_vdev_set_tpc_power_atomic_fixed_param;
+     * Based on power_type_6ghz sent in fixed param, the array TLVs
+     * will be interpreted as described below:
+     *
+     * For power_type_6ghz - LPI and VLP power mode:
+     *   num_pwr_levels of wmi_vdev_ch_power_info
+     *     This array TLV will be filled based on psd_power field in
+     *     fixed param.
+     *       If psd_power = 1, TLV carries 20MHz sub-channel center frequency
+     *       and PSD-power values.
+     *       If psd_power = 0, TLV carries Cfreq and EIRP for all BWs
+     *       (<= current channel BSS BW).
+     *   wmi_vdev_ch_power_psd_info & wmi_vdev_ch_power_eirp_info are not used
+     *   for LPI and VLP power mode.
+     *
+     * For power_type_6ghz SP and SP_CLIENT power mode:
+     *     num_pwr_levels of wmi_vdev_ch_power_psd_info is filled as below
+     *         Holds BSS sub-channel center frequency and OOBE PSD-power values.
+     *         OOBE PSD values for AP and STA are filled in below manner:
+     *         AP case:
+     *             For example, DUT is operating in 160 MHz and pri20
+     *             lies in first sub-channel,
+     *                 OOBE_PSD_20 | MIN_OOBE_PSD_40 | MIN_OOBE_PSD_80 |
+     *                 MIN_OOBE_PSD_80 | MIN_OOBE_PSD_160 | MIN_OOBE__PSD_160 |
+     *                 MIN_OOBE_PSD_160 | MIN_OOBE_PSD_160
+     *         STA case:
+     *             For example,STA is operating in 160 MHz
+     *                 OOBE_PSD_20 | OOBE_PSD_20 | OOBE_PSD_20 | OOBE_PSD_20 |
+     *                 OOBE_PSD_20 | OOBE_PSD_20 | OOBE_PSD_20 | OOBE_PSD_20
+     *
+     *     num_pwr_levels of wmi_vdev_ch_power_eirp_info
+     *         Carries Cfreq and EIRP for all BWs (<= current channel BSS BW).
+     *         For both AP and STA, EIRP are filled in below manner:
+     *         Example: If operating BW is 160 MHz
+     *                  EIRP_20 | EIRP_40 | EIRP_80 | EIRP_160
+     *
+     *     If the wmi_vdev_ch_power_psd_info or wmi_vdev_ch_power_eirp_info TLV
+     *     arrays are not both present, check for older TLV
+     *     (wmi_vdev_ch_power_info) as explained for LPI and VLP.
      */
 } wmi_vdev_set_tpc_power_fixed_param;
 
@@ -40592,6 +40623,18 @@ typedef struct {
     A_UINT32 chan_cfreq; /* Channel center frequency (MHz) */
     A_UINT32 tx_power;   /* Unit: dBm, either PSD/EIRP power for this frequency or incremental for non-PSD BW */
 } wmi_vdev_ch_power_info;
+
+typedef struct {
+    A_UINT32 tlv_header;
+    A_UINT32 chan_cfreq; /* Channel center frequency (MHz) of all BSS Sub-channel */
+    A_INT32 psd_power;   /* Unit: dBm/MHz, OOBE PSD power of sub-channel */
+} wmi_vdev_ch_power_psd_info;
+
+typedef struct {
+    A_UINT32 tlv_header;
+    A_UINT32 chan_cfreq; /* Channel center frequency (MHz) for all BWs (<= current channel BSS BW) */
+    A_INT32 eirp_power;   /* Unit: dBm, EIRP power for all BWs (<= current channel BSS BW) */
+ } wmi_vdev_ch_power_eirp_info;
 
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals wmi_txpower_query_cmd_fixed_param  */
