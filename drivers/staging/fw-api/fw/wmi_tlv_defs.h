@@ -1400,6 +1400,9 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_enhanced_aoa_per_band_caps_param,
     WMITLV_TAG_STRUC_WMI_RADAR_FLAGS,
     WMITLV_TAG_STRUC_wmi_dma_buf_release_cqi_upload_meta_data,
+    WMITLV_TAG_STRUC_wmi_csa_event_status_ind_fixed_param,
+    WMITLV_TAG_STRUC_wmi_mlo_link_state_switch_req_evt_fixed_param,
+    WMITLV_TAG_STRUC_wmi_mlo_link_state_switch_trigger_reason_tlv_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -1935,6 +1938,7 @@ typedef enum {
     OP(WMI_MLO_LINK_SWITCH_CONF_CMDID) \
     OP(WMI_NAN_OEM_DATA_CMDID) \
     OP(WMI_PDEV_WSI_STATS_INFO_CMDID) \
+    OP(WMI_CSA_EVENT_STATUS_INDICATION_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2251,6 +2255,7 @@ typedef enum {
     OP(WMI_MLO_LINK_SWITCH_REQUEST_EVENTID) \
     OP(WMI_NAN_OEM_DATA_EVENTID) \
     OP(WMI_PDEV_ENHANCED_AOA_PHASEDELTA_EVENTID) \
+    OP(WMI_MLO_LINK_STATE_SWITCH_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -5459,13 +5464,22 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_SET_BSS_PARAMS_CMDID);
 
 /* MLO link switch confirmation command to inform FW about host side status and reason code */
 #define WMITLV_TABLE_WMI_MLO_LINK_SWITCH_CONF_CMDID(id,op,buf,len) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_link_switch_cnf_fixed_param, wmi_mlo_link_switch_cnf_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_link_switch_cnf_fixed_param, wmi_mlo_link_switch_cnf_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mlo_link_set_active_cmd_fixed_param, set_link_params, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mlo_set_active_link_number_param, link_number_param,  WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, ieee_link_id_bitmap, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, ieee_link_id_bitmap2, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_SWITCH_CONF_CMDID);
 
 /* WMI CMD used to send WSI stats info. */
 #define WMITLV_TABLE_WMI_PDEV_WSI_STATS_INFO_CMDID(id,op,buf,len) \
         WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_wsi_stats_info_cmd_fixed_param, wmi_pdev_wsi_stats_info_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_WSI_STATS_INFO_CMDID);
+
+/* CSA status indication  command to inform FW about host accepting or rejecting csa event*/
+#define WMITLV_TABLE_WMI_CSA_EVENT_STATUS_INDICATION_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_csa_event_status_ind_fixed_param ,  wmi_csa_event_status_ind_fixed_param,fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_CSA_EVENT_STATUS_INDICATION_CMDID);
 
 
 
@@ -7463,6 +7477,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_enhanced_aoa_gain_phase_data_hdr, aoa_data_hdr, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, aoa_data_buf, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_ENHANCED_AOA_PHASEDELTA_EVENTID);
+
+/* MLO Link State Switch Event */
+#define WMITLV_TABLE_WMI_MLO_LINK_STATE_SWITCH_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_link_state_switch_req_evt_fixed_param, wmi_mlo_link_state_switch_req_evt_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mlo_link_state_switch_trigger_reason, switch_trigger_reason, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_STATE_SWITCH_EVENTID);
 
 
 #ifdef __cplusplus
