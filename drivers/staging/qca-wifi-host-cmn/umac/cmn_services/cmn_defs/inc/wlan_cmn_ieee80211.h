@@ -273,6 +273,8 @@
 
 #define WLAN_MAX_SRP_IE_LEN                      21
 #define WLAN_MAX_MUEDCA_IE_LEN                   14
+#define WLAN_MIN_HECAP_IE_LEN                    22
+#define WLAN_MAX_HECAP_IE_LEN                    55
 #define WLAN_MAX_HE_6G_CAP_IE_LEN                3
 #define WLAN_MAX_HEOP_IE_LEN                     16
 #define WLAN_HEOP_OUI_TYPE                       "\x24"
@@ -1566,6 +1568,8 @@ struct wlan_ie_vhtop {
 #define WLAN_HE_MACCAP_LEN 6
 #define WLAN_HE_PHYCAP_LEN 11
 #define WLAN_HE_MAX_MCS_MAPS 3
+#define WLAN_HE_MCS_MAP_LEN 2
+#define WLAN_INVALID_RX_MCS_MAP 0xFFFF
 /**
  * struct wlan_ie_hecaps - HT capabilities
  * @elem_id: HE caps IE

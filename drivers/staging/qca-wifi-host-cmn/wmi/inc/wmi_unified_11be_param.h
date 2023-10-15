@@ -1,7 +1,7 @@
 
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -45,12 +45,12 @@ struct wmi_mlo_ready_params {
 };
 
 /** enum wmi_mlo_teardown_reason - Reason code in WMI MLO teardown command
- * @WMI_MLO_TEARDOWN_REASON_DOWN: Wifi down
- * @WMI_MLO_TEARDOWN_REASON_SSR: Wifi Recovery
+ * @WMI_HOST_MLO_TEARDOWN_REASON_DOWN: Wifi down
+ * @WMI_HOST_MLO_TEARDOWN_REASON_SSR: Wifi Recovery
  */
 enum wmi_mlo_teardown_reason {
-	WMI_MLO_TEARDOWN_REASON_DOWN,
-	WMI_MLO_TEARDOWN_REASON_SSR,
+	WMI_HOST_MLO_TEARDOWN_REASON_DOWN,
+	WMI_HOST_MLO_TEARDOWN_REASON_SSR,
 };
 
 /** struct wmi_mlo_teardown_params - MLO teardown command params
@@ -63,12 +63,12 @@ struct wmi_mlo_teardown_params {
 };
 
 /** enum wmi_mlo_setup_status - Status code in WMI MLO setup completion event
- * @WMI_MLO_SETUP_STATUS_SUCCESS: Success
- * @WMI_MLO_SETUP_STATUS_FAILURE: Failure
+ * @WMI_HOST_MLO_SETUP_STATUS_SUCCESS: Success
+ * @WMI_HOST_MLO_SETUP_STATUS_FAILURE: Failure
  */
 enum wmi_mlo_setup_status {
-	WMI_MLO_SETUP_STATUS_SUCCESS,
-	WMI_MLO_SETUP_STATUS_FAILURE,
+	WMI_HOST_MLO_SETUP_STATUS_SUCCESS,
+	WMI_HOST_MLO_SETUP_STATUS_FAILURE,
 };
 
 /** struct wmi_mlo_setup_complete_params - MLO setup complete event params
@@ -82,12 +82,12 @@ struct wmi_mlo_setup_complete_params {
 
 /** enum wmi_mlo_teardown_status - Status code in WMI MLO teardown completion
  *                                 event
- * @WMI_MLO_TEARDOWN_STATUS_SUCCESS: Success
- * @WMI_MLO_TEARDOWN_STATUS_FAILURE: Failure
+ * @WMI_HOST_MLO_TEARDOWN_STATUS_SUCCESS: Success
+ * @WMI_HOST_MLO_TEARDOWN_STATUS_FAILURE: Failure
  */
 enum wmi_mlo_teardown_status {
-	WMI_MLO_TEARDOWN_STATUS_SUCCESS,
-	WMI_MLO_TEARDOWN_STATUS_FAILURE,
+	WMI_HOST_MLO_TEARDOWN_STATUS_SUCCESS,
+	WMI_HOST_MLO_TEARDOWN_STATUS_FAILURE,
 };
 
 /** struct wmi_mlo_teardown_cmpl_params - MLO setup teardown event params
