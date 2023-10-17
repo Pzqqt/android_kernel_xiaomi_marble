@@ -18423,6 +18423,10 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_configure_multi_client_ll_support] =
 				WMI_SERVICE_MULTI_CLIENT_LL_SUPPORT;
 #endif
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	wmi_service[wmi_service_5ghz_hi_rssi_roam_support] =
+					WMI_SERVICE_5GHZ_HI_RSSI_ROAM_SUPPORT;
+#endif
 }
 
 /**

@@ -5397,6 +5397,9 @@ typedef enum {
 #ifdef MULTI_CLIENT_LL_SUPPORT
 	wmi_service_configure_multi_client_ll_support,
 #endif
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	wmi_service_5ghz_hi_rssi_roam_support,
+#endif
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
