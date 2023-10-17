@@ -47014,6 +47014,18 @@ typedef struct {
     A_UINT32 status; /* accept: 1 reject : 0 */
 } wmi_csa_event_status_ind_fixed_param;
 
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_utf_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    A_UINT32 pdev_id;
+} wmi_pdev_utf_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_utf_event_fixed_param */
+    A_UINT32 tlv_header;
+    A_UINT32 pdev_id;
+} wmi_pdev_utf_event_fixed_param;
+
 
 
 /* ADD NEW DEFS HERE */

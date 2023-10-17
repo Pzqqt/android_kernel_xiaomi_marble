@@ -1408,6 +1408,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_vdev_stop_mlo_params,
     WMITLV_TAG_STRUC_wmi_vdev_ch_power_psd_info,
     WMITLV_TAG_STRUC_wmi_vdev_ch_power_eirp_info,
+    WMITLV_TAG_STRUC_wmi_pdev_utf_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_utf_event_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -3019,7 +3021,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_CHATTER_SET_MODE_CMDID);
 
 /* PDEV UTF Cmd */
 #define WMITLV_TABLE_WMI_PDEV_UTF_CMDID(id,op,buf,len)\
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_utf_cmd_fixed_param, wmi_pdev_utf_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_UTF_CMDID);
 
 /* PDEV QVIT Cmd */
@@ -5998,7 +6001,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_WLAN_PROFILE_DATA_EVENTID);
 
 /* PDEV UTF Event */
 #define WMITLV_TABLE_WMI_PDEV_UTF_EVENTID(id,op,buf,len)\
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_utf_event_fixed_param, wmi_pdev_utf_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_UTF_EVENTID);
 
 /* Update SCPC calibrated data Event */
