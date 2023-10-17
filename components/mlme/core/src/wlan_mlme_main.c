@@ -283,6 +283,7 @@ mlme_peer_object_created_notification(struct wlan_objmgr_peer *peer,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_legacy_err("unable to attach peer_priv obj to peer obj");
 		qdf_mem_free(peer_priv);
+		return status;
 	}
 
 	qdf_wake_lock_create(&peer_priv->peer_set_key_wakelock, "peer_set_key");

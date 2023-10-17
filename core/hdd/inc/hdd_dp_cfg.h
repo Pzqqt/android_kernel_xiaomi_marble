@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1591,6 +1591,34 @@
 #define CFG_DP_HL_BUNDLE
 #endif
 
+#ifdef FEATURE_ENABLE_CE_DP_IRQ_AFFINE
+/*
+ * <ini>
+ * Enable_ce_dp_irq_affine - Enable/disable affinity on datapath CE IRQs
+ *
+ * @Min: 0
+ * @Max: 1
+ * Default: 0
+ *
+ * This ini param is used to enable/disable the affinity on datapath
+ * Copy Engine IRQs.
+ *
+ * Supported Feature: STA/SAP
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_CE_DP_IRQ_AFFINE CFG_INI_BOOL(\
+		"Enable_ce_dp_irq_affine", \
+		0, \
+		"Enable/disable irq affinity on datapath CEs")
+#define CFG_ENABLE_CE_DP_IRQ_AFFINE_ALL \
+	CFG(CFG_ENABLE_CE_DP_IRQ_AFFINE)
+#else
+#define CFG_ENABLE_CE_DP_IRQ_AFFINE_ALL
+#endif
+
 #define CFG_HDD_DP_ALL \
 	CFG(CFG_DP_NAPI_CE_CPU_MASK) \
 	CFG(CFG_DP_RX_THREAD_CPU_MASK) \
@@ -1617,5 +1645,6 @@
 	CFG_HDD_DP_LEGACY_TX_FLOW \
 	CFG_DP_ENABLE_NUD_TRACKING_ALL \
 	CFG_DP_CONFIG_DP_TRACE_ALL \
-	CFG_DP_HL_BUNDLE
+	CFG_DP_HL_BUNDLE \
+	CFG_ENABLE_CE_DP_IRQ_AFFINE_ALL
 #endif

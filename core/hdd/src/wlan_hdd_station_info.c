@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1064,7 +1064,7 @@ static int32_t hdd_add_sta_info_sap(struct sk_buff *skb, int8_t rssi,
 		goto fail;
 
 	if (nla_put_u8(skb, NL80211_STA_INFO_SIGNAL,
-		       rssi - HDD_NOISE_FLOOR_DBM)) {
+		       rssi)) {
 		hdd_err("put fail");
 		goto fail;
 	}
@@ -1360,7 +1360,7 @@ static int hdd_get_cached_station_remote(struct hdd_context *hdd_ctx,
 		"Remote STA Info:: freq:%d, RSSI:%d, Tx NSS:%d, Reason code:%d,"
 		"capability:0x%x, Supported mode:%d, chan_width:%d, Tx rate:%d,"
 		"Rx rate:%d, dot11mode:%d",
-		stainfo->freq, stainfo->rssi - HDD_NOISE_FLOOR_DBM,
+		stainfo->freq, stainfo->rssi,
 		stainfo->nss, stainfo->reason_code, stainfo->capability,
 		stainfo->support_mode, channel_width, stainfo->tx_rate,
 		stainfo->rx_rate, stainfo->dot11_mode);
