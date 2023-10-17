@@ -123,6 +123,9 @@ static inline struct qrtr_sock *qrtr_sk(struct sock *sk)
 static unsigned int qrtr_local_nid = CONFIG_QRTR_NODE_ID;
 static unsigned int qrtr_wakeup_ms = CONFIG_QRTR_WAKEUP_MS;
 
+/* For local IPC logging context*/
+static void *qrtr_local_ilc;
+
 /* for node ids */
 static RADIX_TREE(qrtr_nodes, GFP_ATOMIC);
 static DEFINE_SPINLOCK(qrtr_nodes_lock);
@@ -444,6 +447,7 @@ static void __qrtr_node_release(struct kref *kref)
 	kthread_stop(node->task);
 
 	skb_queue_purge(&node->rx_queue);
+	xa_destroy(&node->no_wake_svc);
 	kfree(node);
 }
 
@@ -947,6 +951,11 @@ int qrtr_endpoint_post(struct qrtr_endpoint *ep, const void *data, size_t len)
 		cb->dst_port = QRTR_PORT_CTRL;
 
 	if (!size || len != ALIGN(size, 4) + hdrlen)
+		goto err;
+
+	if ((cb->type == QRTR_TYPE_NEW_SERVER ||
+	     cb->type == QRTR_TYPE_RESUME_TX) &&
+	    size < sizeof(struct qrtr_ctrl_pkt))
 		goto err;
 
 	if (cb->dst_port != QRTR_PORT_CTRL && cb->type != QRTR_TYPE_DATA &&
@@ -1631,6 +1640,12 @@ static int qrtr_local_enqueue(struct qrtr_node *node, struct sk_buff *skb,
 	cb->src_node = from->sq_node;
 	cb->src_port = from->sq_port;
 
+	QRTR_INFO(qrtr_local_ilc,
+		  "LOCAL ENQUEUE: cmd:0x%x src[0x%x:0x%x] dst[0x%x:0x%x] [%s] pid:%d\n",
+		  type, from->sq_node, from->sq_port,
+		  to->sq_node, to->sq_port, current->comm,
+		  current->pid);
+
 	if (sock_queue_rcv_skb(&ipc->sk, skb)) {
 		qrtr_port_put(ipc);
 		kfree_skb(skb);
@@ -2100,6 +2115,9 @@ static const struct net_proto_family qrtr_family = {
 static int __init qrtr_proto_init(void)
 {
 	int rc;
+
+	qrtr_local_ilc = ipc_log_context_create(QRTR_LOG_PAGE_CNT,
+						"qrtr_local", 0);
 
 	rc = proto_register(&qrtr_proto, 1);
 	if (rc)

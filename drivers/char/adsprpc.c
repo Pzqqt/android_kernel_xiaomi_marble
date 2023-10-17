@@ -616,8 +616,7 @@ struct fastrpc_mmap {
 	uintptr_t attr;
 	struct timespec64 map_start_time;
 	struct timespec64 map_end_time;
-	/* Mapping for fastrpc shell */
-	bool is_filemap;
+	bool is_filemap; /* flag to indicate map used in process init */
 	unsigned int ctx_refs; /* Indicates reference count for context map */
 };
 
@@ -2210,11 +2209,16 @@ static void context_free(struct smq_invoke_ctx *ctx)
 	struct fastrpc_apps *me = &gfa;
 	int nbufs = REMOTE_SCALARS_INBUFS(ctx->sc) +
 		    REMOTE_SCALARS_OUTBUFS(ctx->sc);
-	int cid = ctx->fl->cid;
+	int cid = -1;
 	struct fastrpc_channel_ctx *chan = NULL;
 	unsigned long irq_flags = 0;
 	int err = 0;
 
+	if (!ctx->fl) {
+		err = -EBADF;
+		return;
+	}
+	cid = ctx->fl->cid;
 	VERIFY(err, VALID_FASTRPC_CID(cid));
 	if (err) {
 		ADSPRPC_ERR(
@@ -4303,6 +4307,8 @@ static int fastrpc_init_create_static_process(struct fastrpc_file *fl,
 		mutex_lock(&fl->map_mutex);
 		err = fastrpc_mmap_create(fl, -1, NULL, 0, init->mem,
 			 init->memlen, ADSP_MMAP_REMOTE_HEAP_ADDR, &mem);
+		if (mem)
+			mem->is_filemap = true;
 		mutex_unlock(&fl->map_mutex);
 		if (err)
 			goto bail;
