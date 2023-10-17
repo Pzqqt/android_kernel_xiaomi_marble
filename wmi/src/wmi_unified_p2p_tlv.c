@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2018, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -69,11 +70,11 @@ static QDF_STATUS send_set_p2pgo_noa_req_cmd_tlv(wmi_unified_t wmi_handle,
 	noa_discriptor->type_count = noa->count;
 	noa_discriptor->duration = duration;
 	noa_discriptor->interval = noa->interval;
-	noa_discriptor->start_time = 0;
+	noa_discriptor->start_time = noa->start;
 
-	wmi_debug("SET P2P GO NOA:vdev_id:%d count:%d duration:%d interval:%d",
-		 cmd->vdev_id, noa->count, noa_discriptor->duration,
-		 noa->interval);
+	wmi_debug("SET P2P GO NOA:vdev_id:%d count:%d duration:%d interval:%d start:%d",
+		  cmd->vdev_id, noa->count, noa_discriptor->duration,
+		  noa->interval, noa->start);
 	wmi_mtrace(WMI_FWTEST_P2P_SET_NOA_PARAM_CMDID, cmd->vdev_id, 0);
 	status = wmi_unified_cmd_send(wmi_handle, buf, len,
 				      WMI_FWTEST_P2P_SET_NOA_PARAM_CMDID);
