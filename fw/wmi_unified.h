@@ -633,6 +633,9 @@ typedef enum {
     /** Request to firmware to probe scheduler modes */
     WMI_VDEV_SCHED_MODE_PROBE_REQ_CMDID,
 
+    /** Connect request on the vdev */
+    WMI_VDEV_OOB_CONNECTION_REQ_CMDID,
+
 
     /* peer specific commands */
 
@@ -1838,6 +1841,8 @@ typedef enum {
     WMI_VDEV_LATENCY_LEVEL_EVENTID,
     /** Result from firmware about completed scheduler probing */
     WMI_VDEV_SCHED_MODE_PROBE_RESP_EVENTID,
+    /** Connect response */
+    WMI_VDEV_OOB_CONNECTION_RESP_EVENTID,
 
     /* peer specific events */
     /** FW reauet to kick out the station for reasons like inactivity,lack of response ..etc */
@@ -36975,6 +36980,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_WSI_STATS_INFO_CMDID);
         WMI_RETURN_STRING(WMI_CSA_EVENT_STATUS_INDICATION_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_SCHED_MODE_PROBE_REQ_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_OOB_CONNECTION_REQ_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -47025,6 +47031,53 @@ typedef struct {
     A_UINT32 tlv_header;
     A_UINT32 pdev_id;
 } wmi_pdev_utf_event_fixed_param;
+
+typedef enum {
+    /* Used when peer attempts connection with vdev */
+    VDEV_OOB_CONNECT_REQUEST = 0,
+
+    /* Used when upper layers wanted to cancel the connect request */
+    VDEV_OOB_CONNECT_CANCEL = 1,
+
+    /* Used as a response from FW that start request is accepted */
+    VDEV_OOB_CONNECT_STARTED = 2,
+
+    /*
+     * Used as a response when connection is complete, or as a response
+     * to cancel command.
+     */
+    VDEV_OOB_CONNECT_COMPLETED = 3,
+
+    /* Used as a response if connect request can not be honored in FW */
+    VDEV_OOB_CONNECT_CANCELLED = 4,
+
+    VDEV_OOB_CONNECT_INVALID = 255,
+} VDEV_OOB_CONNECT_REQ_RESP_TYPE;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_vdev_oob_connection_req_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
+    /* OOB connection request type based on VDEV_OOB_CONNECT_REQ_RESP_TYPE */
+    A_UINT32 connect_req_type;
+    /* vdev_available_duration:
+     * specifies duration in msecs for which device needs to be available
+     * on vdev chan
+     */
+    A_UINT32 vdev_available_duration;
+} wmi_vdev_oob_connection_req_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_vdev_oob_connection_resp_event_fixed_param */
+    A_UINT32 tlv_header;
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
+    /* OOB connection response type based on VDEV_OOB_CONNECT_REQ_RESP_TYPE */
+    A_UINT32 connect_resp_type;
+} wmi_vdev_oob_connection_resp_event_fixed_param;
 
 
 

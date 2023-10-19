@@ -1410,6 +1410,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_vdev_ch_power_eirp_info,
     WMITLV_TAG_STRUC_wmi_pdev_utf_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_utf_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_vdev_oob_connection_req_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_vdev_oob_connection_resp_event_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -1947,6 +1949,7 @@ typedef enum {
     OP(WMI_PDEV_WSI_STATS_INFO_CMDID) \
     OP(WMI_CSA_EVENT_STATUS_INDICATION_CMDID) \
     OP(WMI_VDEV_SCHED_MODE_PROBE_REQ_CMDID) \
+    OP(WMI_VDEV_OOB_CONNECTION_REQ_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2265,6 +2268,7 @@ typedef enum {
     OP(WMI_PDEV_ENHANCED_AOA_PHASEDELTA_EVENTID) \
     OP(WMI_MLO_LINK_STATE_SWITCH_EVENTID) \
     OP(WMI_VDEV_SCHED_MODE_PROBE_RESP_EVENTID) \
+    OP(WMI_VDEV_OOB_CONNECTION_RESP_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -5498,6 +5502,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_CSA_EVENT_STATUS_INDICATION_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_sched_mode_probe_req_fixed_param, wmi_vdev_sched_mode_probe_req_fixed_param, fixed_param, WMITLV_SIZE_FIX)
  WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SCHED_MODE_PROBE_REQ_CMDID);
 
+#define WMITLV_TABLE_WMI_VDEV_OOB_CONNECTION_REQ_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_oob_connection_req_cmd_fixed_param, wmi_vdev_oob_connection_req_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_OOB_CONNECTION_REQ_CMDID);
+
 
 
 /************************** TLV definitions of WMI events *******************************/
@@ -7505,6 +7513,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_STATE_SWITCH_EVENTID);
 #define WMITLV_TABLE_WMI_VDEV_SCHED_MODE_PROBE_RESP_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_sched_mode_probe_resp_fixed_param, wmi_vdev_sched_mode_probe_resp_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SCHED_MODE_PROBE_RESP_EVENTID);
+
+#define WMITLV_TABLE_WMI_VDEV_OOB_CONNECTION_RESP_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_oob_connection_resp_event_fixed_param, wmi_vdev_oob_connection_resp_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_OOB_CONNECTION_RESP_EVENTID);
+
 
 
 #ifdef __cplusplus
