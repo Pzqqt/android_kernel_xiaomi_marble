@@ -93,6 +93,20 @@ wlan_cm_tgt_send_roam_full_scan_6ghz_on_disc(
 					struct wlan_objmgr_psoc *psoc,
 					uint8_t vdev_id,
 					uint8_t roam_full_scan_6ghz_on_disc);
+
+/**
+ * wlan_cm_tgt_send_roam_scan_offload_rssi_params() - Set the RSSI parameters
+ * for roam offload scan
+ * @vdev: Pointer to vdev object
+ * @roam_rssi_params: structure containing parameters for roam offload scan
+ * based on RSSI
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_tgt_send_roam_scan_offload_rssi_params(
+		struct wlan_objmgr_vdev *vdev,
+		struct wlan_roam_offload_scan_rssi_params *roam_rssi_params);
 #else
 static inline QDF_STATUS
 wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
