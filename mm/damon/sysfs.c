@@ -1853,3 +1853,5 @@ out:
 	return err;
 }
 subsys_initcall(damon_sysfs_init);
+
+#include "sysfs-test.h"
