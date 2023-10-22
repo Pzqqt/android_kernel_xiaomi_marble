@@ -642,7 +642,6 @@ typedef  enum  {
     WMI_SERVICE_MULTIPLE_RF_PATH_SOC_SUPPORT = 389, /* Indicates FW supports Multiple RF Path on SOC Level */
     WMI_SERVICE_RADAR_FLAGS_SUPPORT = 390, /* Indicates FW supports radar flags, such as full bandwidth need put to NOL */
     WMI_SERVICE_XPAN_SUPPORT = 391, /* Indicate FW support XPAN configuration */
-    WMI_SERVICE_5GHZ_HI_RSSI_ROAM_SUPPORT = 392, /* Indicate FW supports High RSSI Roam from 5 GHz Band to 6 GHz Band */
 
     WMI_MAX_EXT2_SERVICE
 
