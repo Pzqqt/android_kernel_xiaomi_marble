@@ -23366,6 +23366,8 @@ typedef enum wake_reason_e {
     WOW_REASON_COEX_CHAVD,
     /* vdev repurpose request event */
     WOW_REASON_VDEV_REPURPOSE,
+    /* STX High duty cycle event */
+    WOW_REASON_STX_WOW_HIGH_DUTY_CYCLE,
 
     /* add new WOW_REASON_ defs before this line */
     WOW_REASON_MAX,
