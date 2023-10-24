@@ -1412,6 +1412,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_pdev_utf_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_oob_connection_req_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_oob_connection_resp_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_audio_transport_switch_resp_status_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_audio_transport_switch_type_event_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -1950,6 +1952,7 @@ typedef enum {
     OP(WMI_CSA_EVENT_STATUS_INDICATION_CMDID) \
     OP(WMI_VDEV_SCHED_MODE_PROBE_REQ_CMDID) \
     OP(WMI_VDEV_OOB_CONNECTION_REQ_CMDID) \
+    OP(WMI_AUDIO_TRANSPORT_SWITCH_RESP_STATUS_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2269,6 +2272,7 @@ typedef enum {
     OP(WMI_MLO_LINK_STATE_SWITCH_EVENTID) \
     OP(WMI_VDEV_SCHED_MODE_PROBE_RESP_EVENTID) \
     OP(WMI_VDEV_OOB_CONNECTION_RESP_EVENTID) \
+    OP(WMI_AUDIO_TRANSPORT_SWITCH_TYPE_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -5402,6 +5406,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_PARAM_ENABLE_SR_PROHIBIT_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_xgap_enable_cmd_fixed_param, wmi_xgap_enable_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_XGAP_ENABLE_CMDID);
 
+/* WMI cmd to indicate bearer switch response status (succcess, fail or timeout) to the corresponding switch type request */
+#define WMITLV_TABLE_WMI_AUDIO_TRANSPORT_SWITCH_RESP_STATUS_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_audio_transport_switch_resp_status_cmd_fixed_param, wmi_audio_transport_switch_resp_status_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_AUDIO_TRANSPORT_SWITCH_RESP_STATUS_CMDID);
+
 #define WMITLV_TABLE_WMI_ODD_LIVEDUMP_REQUEST_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_livedump_request_cmd_fixed_param, wmi_livedump_request_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, odd_livedump_id_list, WMITLV_SIZE_VAR)
@@ -7399,6 +7408,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_HEALTH_MON_INIT_DONE_EVENTID);
 #define WMITLV_TABLE_WMI_XGAP_ENABLE_COMPLETE_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_xgap_enable_complete_event_fixed_param, wmi_xgap_enable_complete_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_XGAP_ENABLE_COMPLETE_EVENTID);
+
+/* Event to switch to xpan to ble or ble to xpan */
+#define WMITLV_TABLE_WMI_AUDIO_TRANSPORT_SWITCH_TYPE_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_audio_transport_switch_type_event_fixed_param, wmi_audio_transport_switch_type_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_AUDIO_TRANSPORT_SWITCH_TYPE_EVENTID);
 
 /* ODD Livedump */
 #define  WMITLV_TABLE_WMI_ODD_LIVEDUMP_RESPONSE_EVENTID(id,op,buf,len) \
