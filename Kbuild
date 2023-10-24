@@ -4381,6 +4381,11 @@ endif
 # Flag to enable Constrained Application Protocol feature
 cppflags-$(CONFIG_WLAN_FEATURE_COAP) += -DWLAN_FEATURE_COAP
 
+# Flag to Enable TPUT shaping feature
+ifeq ($(CONFIG_FEATURE_COEX_TPUT_SHAPING_ENABLE), y)
+cppflags-y += -DFEATURE_COEX_TPUT_SHAPING_CONFIG
+endif
+
 KBUILD_CPPFLAGS += $(cppflags-y)
 
 # Currently, for versions of gcc which support it, the kernel Makefile

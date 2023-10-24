@@ -406,7 +406,7 @@ pkt_capture_process_tx_data(void *soc, void *log_data, u_int16_t vdev_id,
  * Return: true, if filter bit is set
  *         false, if filter bit is not set
  */
-static bool
+bool
 pkt_capture_is_frame_filter_set(qdf_nbuf_t buf,
 				struct pkt_capture_frame_filter *frame_filter,
 				bool direction)
@@ -594,8 +594,6 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 		struct htt_tx_offload_deliver_ind_hdr_t *offload_deliver_msg;
 		bool is_pkt_during_roam = false;
 		uint32_t freq = 0;
-		qdf_nbuf_t buf = log_data +
-				sizeof(struct htt_tx_offload_deliver_ind_hdr_t);
 
 		if (!frame_filter->data_tx_frame_filter) {
 			pkt_capture_vdev_put_ref(vdev);
@@ -615,17 +613,9 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 			vdev_id = offload_deliver_msg->vdev_id;
 		}
 
-		if (frame_filter->data_tx_frame_filter &
-		    PKT_CAPTURE_DATA_FRAME_TYPE_ALL) {
-			pkt_capture_offload_deliver_indication_handler(
+		pkt_capture_offload_deliver_indication_handler(
 							log_data,
 							vdev_id, bssid, soc);
-		} else if (pkt_capture_is_frame_filter_set(
-			   buf, frame_filter, IEEE80211_FC1_DIR_TODS)) {
-			pkt_capture_offload_deliver_indication_handler(
-							log_data,
-							vdev_id, bssid, soc);
-		}
 		break;
 	}
 
@@ -1256,7 +1246,7 @@ QDF_STATUS pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
 	ol_txrx_soc_handle soc;
 	QDF_STATUS status;
 	enum pkt_capture_config config = 0;
-	bool check_enable_beacon = 0, send_bcn = 0;
+	bool send_bcn = 0;
 	struct vdev_mlme_obj *vdev_mlme;
 	uint32_t bcn_interval, nth_beacon_value;
 
@@ -1341,16 +1331,13 @@ QDF_STATUS pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
 		    PKT_CAPTURE_MGMT_CONNECT_NO_BEACON) {
 			mode |= PACKET_CAPTURE_MODE_MGMT_ONLY;
 			config |= PACKET_CAPTURE_CONFIG_NO_BEACON_ENABLE;
-		} else {
-			check_enable_beacon = 1;
 		}
-	}
 
-	if (check_enable_beacon) {
 		if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
-		    PKT_CAPTURE_MGMT_CONNECT_BEACON)
+		    PKT_CAPTURE_MGMT_CONNECT_BEACON) {
 			if (!send_bcn)
 				config |= PACKET_CAPTURE_CONFIG_BEACON_ENABLE;
+		}
 
 		if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
 		    PKT_CAPTURE_MGMT_CONNECT_SCAN_BEACON)
