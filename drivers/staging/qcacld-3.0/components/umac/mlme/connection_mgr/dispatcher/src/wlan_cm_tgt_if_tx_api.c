@@ -303,6 +303,34 @@ QDF_STATUS wlan_cm_tgt_send_roam_full_scan_6ghz_on_disc(
 
 	return status;
 }
+
+QDF_STATUS
+wlan_cm_tgt_send_roam_scan_offload_rssi_params(
+		struct wlan_objmgr_vdev *vdev,
+		struct wlan_roam_offload_scan_rssi_params *roam_rssi_params)
+{
+	QDF_STATUS status;
+	uint8_t vdev_id;
+	struct wlan_cm_roam_tx_ops *roam_tx_ops;
+
+	vdev_id = wlan_vdev_get_id(vdev);
+
+	roam_tx_ops = wlan_cm_roam_get_tx_ops_from_vdev(vdev);
+	if (!roam_tx_ops || !roam_tx_ops->send_roam_scan_offload_rssi_params) {
+		mlme_err("vdev %d send_roam_scan_offload_rssi_params is NULL",
+			 vdev_id);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = roam_tx_ops->send_roam_scan_offload_rssi_params(
+						vdev, roam_rssi_params);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_debug("vdev %d fail to send roam scan offload RSSI params",
+			   vdev_id);
+
+	return status;
+}
 #endif
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)

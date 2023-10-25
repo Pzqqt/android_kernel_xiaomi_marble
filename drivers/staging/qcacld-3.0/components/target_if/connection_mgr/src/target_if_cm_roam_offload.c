@@ -305,6 +305,56 @@ target_if_cm_roam_rssi_diff_6ghz(struct wlan_objmgr_vdev *vdev,
 	return status;
 }
 
+static QDF_STATUS
+target_if_cm_roam_scan_offload_rssi_thresh(
+				wmi_unified_t wmi_handle,
+				struct wlan_roam_offload_scan_rssi_params *req);
+
+/**
+ * target_if_cm_roam_scan_offload_rssi_params() - Set the RSSI parameters
+ * for roam offload scan
+ * @vdev: vdev object
+ * @roam_rssi_params: structure containing parameters for roam offload scan
+ * based on RSSI
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+target_if_cm_roam_scan_offload_rssi_params(
+		struct wlan_objmgr_vdev *vdev,
+		struct wlan_roam_offload_scan_rssi_params *roam_rssi_params)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = target_if_cm_roam_get_wmi_handle_from_vdev(vdev);
+	if (!wmi_handle)
+		return status;
+
+	status = target_if_cm_roam_scan_offload_rssi_thresh(wmi_handle,
+							    roam_rssi_params);
+
+	return status;
+}
+
+static void
+target_if_check_hi_rssi_5ghz_support(
+		wmi_unified_t wmi_handle,
+		struct wlan_roam_offload_scan_rssi_params *roam_rssi_params)
+{
+	if ((roam_rssi_params->flags &
+	     ROAM_SCAN_RSSI_THRESHOLD_FLAG_ROAM_HI_RSSI_EN_ON_5G) &&
+	    wmi_service_enabled(wmi_handle,
+				wmi_service_5ghz_hi_rssi_roam_support)) {
+		target_if_debug("FW supports Hi RSSI roam in 5 GHz");
+		roam_rssi_params->flags |=
+			WMI_ROAM_SCAN_RSSI_THRESHOLD_FLAG_ROAM_HI_RSSI_EN_ON_5G;
+	} else {
+		roam_rssi_params->flags &=
+			~ROAM_SCAN_RSSI_THRESHOLD_FLAG_ROAM_HI_RSSI_EN_ON_5G;
+	}
+}
+
 static void
 target_if_cm_roam_register_lfr3_ops(struct wlan_cm_roam_tx_ops *tx_ops)
 {
@@ -317,6 +367,8 @@ target_if_cm_roam_register_lfr3_ops(struct wlan_cm_roam_tx_ops *tx_ops)
 				target_if_cm_exclude_rm_partial_scan_freq;
 	tx_ops->send_roam_full_scan_6ghz_on_disc =
 				target_if_cm_roam_full_scan_6ghz_on_disc;
+	tx_ops->send_roam_scan_offload_rssi_params =
+				target_if_cm_roam_scan_offload_rssi_params;
 }
 #else
 static inline void
@@ -357,6 +409,12 @@ target_if_cm_roam_rssi_diff_6ghz(struct wlan_objmgr_vdev *vdev,
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
+
+static inline void
+target_if_check_hi_rssi_5ghz_support(
+		wmi_unified_t wmi_handle,
+		struct wlan_roam_offload_scan_rssi_params *roam_rssi_params)
+{}
 #endif
 
 /**
@@ -718,6 +776,9 @@ target_if_cm_roam_scan_offload_rssi_thresh(
 			req->roam_earlystop_thres_max = 0;
 		}
 	}
+
+	if (req->hi_rssi_scan_rssi_delta)
+		target_if_check_hi_rssi_5ghz_support(wmi_handle, req);
 
 	target_if_debug("RSO_CFG: vdev %d: db2dbm enabled:%d, good_rssi_threshold:%d, early_stop_thresholds en:%d, min:%d, max:%d, roam_scan_rssi_thresh:%d, roam_rssi_thresh_diff:%d",
 			req->vdev_id, db2dbm_enabled, req->good_rssi_threshold,

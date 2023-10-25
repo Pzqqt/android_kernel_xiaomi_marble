@@ -151,7 +151,7 @@ QDF_STATUS os_if_monitor_mode_configure(struct hdd_adapter *adapter,
 			BIT(SET_MONITOR_MODE_CONNECTED_BEACON_INTERVAL);
 	}
 
-	osif_debug("Monitor mode config %s data tx %d data rx %d mgmt tx %d mgmt rx %d ctrl tx %d ctrl rx %d bi %d\n",
+	osif_debug("Monitor mode config data tx %d data rx %d mgmt tx %d mgmt rx %d ctrl tx %d ctrl rx %d bi %d\n",
 		   frame_filter.data_tx_frame_filter,
 		   frame_filter.data_rx_frame_filter,
 		   frame_filter.mgmt_tx_frame_filter,
