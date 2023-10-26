@@ -18227,6 +18227,11 @@ typedef enum {
      */
     WMI_VDEV_PARAM_DISABLE_TWT_INFO_FRAME,                /* 0xC0 */
 
+    /*
+     * Set the Recommended Max allowed active links
+     */
+    WMI_VDEV_PARAM_MLO_MAX_RECOM_ACTIVE_LINKS,            /* 0xC1 */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
