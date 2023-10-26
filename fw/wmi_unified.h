@@ -9860,6 +9860,14 @@ typedef struct {
     /* current 64 bit TSF timestamp */
     A_UINT32 tx_tsf_l32;
     A_UINT32 tx_tsf_u32;
+    /* info:
+     * Bit[0:2]   - band on which frame is sent, band value will be
+     *              one of the wmi_mlo_band_info_t enum constants.
+     *              Macros WMI_ROAM_BTM_RESP_MLO_BAND_INFO_GET,SET
+     *              can be reused for setting mlo band info.
+     * Bit[3:31]  - reserved
+     */
+    A_UINT32 info;
 } wmi_mgmt_tx_compl_event_fixed_param;
 
 typedef struct {

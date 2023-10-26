@@ -8297,6 +8297,8 @@ typedef struct {
      * nfcal_iteration_counts[0] - home NF iteration counter
      * nfcal_iteration_counts[1] - scan NF iteration counter
      * nfcal_iteration_counts[2] - periodic NF iteration counter
+     * These counters are not reset automatically; they are only reset
+     * when explicitly requested by the host.
      */
     A_UINT32 nfcal_iteration_counts[3];
 } htt_stats_phy_reset_stats_tlv;
