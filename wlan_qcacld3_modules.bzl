@@ -6,6 +6,9 @@ _target_chipset_map = {
 	"blair":[
 		"wlan",
 	],
+	"monaco":[
+		"wlan",
+	],
 }
 
 _chipset_hw_map = {
