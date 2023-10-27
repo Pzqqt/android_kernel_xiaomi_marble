@@ -626,7 +626,7 @@ _conditional_srcs = {
             "core/hdd/src/wlan_hdd_unit_test.c",
         ],
     },
-	"CONFIG_WLAN_WEXT_SUPPORT_ENABLE": {
+    "CONFIG_WLAN_WEXT_SUPPORT_ENABLE": {
         True: [
             "core/hdd/src/wlan_hdd_hostapd_wext.c",
             "core/hdd/src/wlan_hdd_wext.c",
@@ -1884,7 +1884,6 @@ def _define_module_for_target_variant_chipset(target, variant, chipset):
     hw_ipaths = _hw_header_map[hw]
 
     ipaths = chipset_ipaths + hw_ipaths + _fixed_ipaths
-#    ipaths = chipset_ipaths + hw_ipaths
 
     iglobs = []
     for i in _fixed_includes:
