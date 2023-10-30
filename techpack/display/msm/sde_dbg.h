@@ -152,7 +152,7 @@ struct sde_dbg_evtlog_log {
 struct sde_dbg_evtlog {
 	struct sde_dbg_evtlog_log logs[SDE_EVTLOG_ENTRY];
 	u32 first;
-	u32 last;
+	atomic_t last;
 	u32 last_dump;
 	atomic_t curr;
 	u32 next;
