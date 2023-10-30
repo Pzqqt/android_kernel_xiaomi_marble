@@ -36,31 +36,6 @@ struct msm_commit {
 	struct kthread_work commit_work;
 };
 
-static struct drm_connector_state *_msm_get_conn_state(struct drm_crtc_state *crtc_state)
-{
-	struct drm_connector *conn;
-	struct drm_connector_state *conn_state = NULL;
-	struct drm_device *dev;
-	struct drm_connector_list_iter conn_iter;
-
-	if (!crtc_state || !crtc_state->crtc)
-		return NULL;
-
-	dev = crtc_state->crtc->dev;
-	drm_connector_list_iter_begin(dev, &conn_iter);
-
-	drm_for_each_connector_iter(conn, &conn_iter) {
-		if (drm_connector_mask(conn) & crtc_state->connector_mask) {
-			if (!(conn_state && conn->connector_type ==
-					DRM_MODE_CONNECTOR_VIRTUAL))
-				conn_state = conn->state;
-		}
-	}
-
-	drm_connector_list_iter_end(&conn_iter);
-	return conn_state;
-}
-
 static inline bool _msm_seamless_for_crtc(struct drm_atomic_state *state,
 			struct drm_crtc_state *crtc_state, bool enable)
 {

@@ -1052,6 +1052,15 @@ void sde_crtc_reset_sw_state(struct drm_crtc *crtc);
 */
 void sde_crtc_disable_cp_features(struct drm_crtc *crtc);
 
+/**
+ * sde_crtc_get_src_encoder_of_clone- find source encoder of a clone mode encoder
+ * @cstate:      Pointer to DRM crtc object
+*/
+struct drm_encoder *sde_crtc_get_src_encoder_of_clone(struct drm_crtc *crtc);
+
+/* DigitalDimming: To resore PCC when power on */
+void sde_cp_crtc_restore_pcc(struct drm_crtc *crtc);
+
 /*
  * _sde_crtc_clear_dim_layers_v1 - clear all dim layer settings
  * @cstate:      Pointer to drm crtc state

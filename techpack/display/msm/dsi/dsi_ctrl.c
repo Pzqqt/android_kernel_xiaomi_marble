@@ -395,6 +395,8 @@ static void dsi_ctrl_dma_cmd_wait_for_done(struct dsi_ctrl *dsi_ctrl)
 		}
 		dsi_ctrl_disable_status_interrupt(dsi_ctrl,
 					DSI_SINT_CMD_MODE_DMA_DONE);
+
+		SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_EXIT);
 	}
 	SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_EXIT);
 
@@ -1790,8 +1792,10 @@ static int dsi_message_rx(struct dsi_ctrl *dsi_ctrl, struct dsi_cmd_desc *cmd_de
 					buff, total_bytes_read,
 					total_read_len, rd_pkt_size,
 					&hw_read_cnt);
-		if (!dlen)
+		if (!dlen) {
+			buff = head;
 			goto error;
+		}
 
 		if (short_resp)
 			break;
@@ -2069,6 +2073,10 @@ static int dsi_ctrl_dts_parse(struct dsi_ctrl *dsi_ctrl,
 
 	dsi_ctrl->split_link_supported = of_property_read_bool(of_node,
 					"qcom,split-link-supported");
+
+	/*just for m16t 30hz by adjust hfp*/
+	dsi_ctrl->max_hs_timer_supported = of_property_read_bool(of_node,
+					"mi,support-max-hs-timer");
 
 	rc = of_property_read_u32(of_node, "frame-threshold-time-us",
 			&frame_threshold_time_us);
@@ -2920,8 +2928,10 @@ static int _dsi_ctrl_setup_isr(struct dsi_ctrl *dsi_ctrl)
 
 	if (!dsi_ctrl)
 		return -EINVAL;
-	if (dsi_ctrl->irq_info.irq_num != -1)
+	if (dsi_ctrl->irq_info.irq_num != -1) {
+		SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_CASE1);
 		return 0;
+	}
 
 	init_completion(&dsi_ctrl->irq_info.cmd_dma_done);
 	init_completion(&dsi_ctrl->irq_info.vid_frame_done);
@@ -2942,6 +2952,7 @@ static int _dsi_ctrl_setup_isr(struct dsi_ctrl *dsi_ctrl)
 		} else {
 			dsi_ctrl->irq_info.irq_num = irq_num;
 			disable_irq_nosync(irq_num);
+			SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_CASE2);
 
 			DSI_CTRL_INFO(dsi_ctrl, "IRQ %d registered\n", irq_num);
 		}
@@ -2962,6 +2973,8 @@ static void _dsi_ctrl_destroy_isr(struct dsi_ctrl *dsi_ctrl)
 		devm_free_irq(&dsi_ctrl->pdev->dev,
 				dsi_ctrl->irq_info.irq_num, dsi_ctrl);
 		dsi_ctrl->irq_info.irq_num = -1;
+		SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_CASE2,
+			dsi_ctrl->irq_info.irq_num, dsi_ctrl->irq_info.irq_stat_mask);
 	}
 }
 
@@ -2982,8 +2995,10 @@ void dsi_ctrl_enable_status_interrupt(struct dsi_ctrl *dsi_ctrl,
 
 	if (dsi_ctrl->irq_info.irq_stat_refcount[intr_idx] == 0) {
 		/* enable irq on first request */
-		if (dsi_ctrl->irq_info.irq_stat_mask == 0)
+		if (dsi_ctrl->irq_info.irq_stat_mask == 0) {
+			SDE_EVT32(SDE_EVTLOG_FUNC_CASE1);
 			enable_irq(dsi_ctrl->irq_info.irq_num);
+		}
 
 		/* update hardware mask */
 		dsi_ctrl->irq_info.irq_stat_mask |= BIT(intr_idx);
@@ -2998,6 +3013,10 @@ void dsi_ctrl_enable_status_interrupt(struct dsi_ctrl *dsi_ctrl,
 
 	if (event_info)
 		dsi_ctrl->irq_info.irq_stat_cb[intr_idx] = *event_info;
+
+	SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_EXIT, intr_idx,
+		dsi_ctrl->irq_info.irq_num, dsi_ctrl->irq_info.irq_stat_mask,
+		dsi_ctrl->irq_info.irq_stat_refcount[intr_idx]);
 
 	spin_unlock_irqrestore(&dsi_ctrl->irq_info.irq_lock, flags);
 }
@@ -3024,9 +3043,15 @@ void dsi_ctrl_disable_status_interrupt(struct dsi_ctrl *dsi_ctrl,
 
 			/* don't need irq if no lines are enabled */
 			if (dsi_ctrl->irq_info.irq_stat_mask == 0 &&
-				dsi_ctrl->irq_info.irq_num != -1)
+				dsi_ctrl->irq_info.irq_num != -1) {
+				SDE_EVT32_IRQ(SDE_EVTLOG_FUNC_CASE1);
 				disable_irq_nosync(dsi_ctrl->irq_info.irq_num);
+			}
 		}
+
+	SDE_EVT32_IRQ(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_EXIT, intr_idx,
+		dsi_ctrl->irq_info.irq_num, dsi_ctrl->irq_info.irq_stat_mask,
+		dsi_ctrl->irq_info.irq_stat_refcount[intr_idx]);
 
 	spin_unlock_irqrestore(&dsi_ctrl->irq_info.irq_lock, flags);
 }

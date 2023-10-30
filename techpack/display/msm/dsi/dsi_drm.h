@@ -113,11 +113,13 @@ void dsi_drm_bridge_cleanup(struct dsi_bridge *bridge);
  * @connector: Pointer to drm connector structure
  * @display: Pointer to private display structure
  * @params: Parameters for kickoff-time programming
+ * @force_update_dsi_update: Bool to force clock update
  * Returns: Zero on success
  */
 int dsi_conn_pre_kickoff(struct drm_connector *connector,
 		void *display,
-		struct msm_display_kickoff_params *params);
+		struct msm_display_kickoff_params *params,
+		bool force_update_dsi_clocks);
 
 /**
  * dsi_display_post_kickoff - program post kickoff-time features

@@ -1424,7 +1424,6 @@ void reg_dmav1_setup_dspp_pccv4(struct sde_hw_dspp *ctx, void *cfg)
 		}
 		//Flags unsupported for PCCv4
 		pcc_cfg = hw_cfg->payload;
-		pcc_cfg->flags = 0;
 	}
 	reg_dmav1_setup_dspp_pcc_common(ctx, cfg);
 }
@@ -4280,7 +4279,7 @@ void reg_dmav2_setup_dspp_3d_gamutv43(struct sde_hw_dspp *ctx, void *cfg)
 	if (len % transfer_size_bytes)
 		len = len + (transfer_size_bytes - len % transfer_size_bytes);
 
-	data = kvzalloc(len, GFP_KERNEL);
+	data = vzalloc(len);
 	if (!data)
 		return;
 
@@ -4356,7 +4355,7 @@ void reg_dmav2_setup_dspp_3d_gamutv43(struct sde_hw_dspp *ctx, void *cfg)
 	_perform_sbdma_kickoff(ctx, hw_cfg, dma_ops, blk, GAMUT);
 
 exit:
-	kvfree(data);
+	vfree(data);
 }
 
 void reg_dmav2_setup_vig_gamutv61(struct sde_hw_pipe *ctx, void *cfg)

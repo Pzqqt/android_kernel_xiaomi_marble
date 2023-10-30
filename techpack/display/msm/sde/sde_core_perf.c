@@ -92,14 +92,45 @@ static void _sde_core_perf_calc_crtc(struct sde_kms *kms,
 		struct sde_core_perf_params *perf)
 {
 	struct sde_crtc_state *sde_cstate;
+	struct msm_drm_private *priv;
+	struct msm_display_mode *msm_mode;
+	struct msm_display_info mode_info;
+	bool switch_vsync_delay = false;
 	int i;
 
-	if (!kms || !kms->catalog || !crtc || !state || !perf) {
+	if (!kms || !kms->catalog || !kms->dev || !crtc || !crtc->state || !state || !perf) {
 		SDE_ERROR("invalid parameters\n");
 		return;
 	}
 
+	priv = kms->dev->dev_private;
+	msm_mode = priv ? priv->kms->funcs->get_msm_mode(_msm_get_conn_state(state)) : NULL;
+	if (!msm_mode) {
+		SDE_ERROR("invalid msm mode\n");
+		return;
+	}
+
 	sde_cstate = to_sde_crtc_state(state);
+
+	for (i = 0; i < sde_cstate->num_connectors; i++) {
+		struct drm_connector *conn = sde_cstate->connectors[i];
+
+		if (!conn || !conn->state)
+			continue;
+
+		sde_connector_get_info(conn, &mode_info);
+		if (mode_info.switch_vsync_delay) {
+			switch_vsync_delay = true;
+			break;
+		}
+	}
+
+	if (msm_is_mode_seamless_dms(msm_mode) && switch_vsync_delay &&
+		(drm_mode_vrefresh(&crtc->state->adjusted_mode) >
+		drm_mode_vrefresh(&state->adjusted_mode))) {
+		sde_cstate = to_sde_crtc_state(crtc->state);
+	}
+
 	memset(perf, 0, sizeof(struct sde_core_perf_params));
 
 	perf->bw_ctl[SDE_POWER_HANDLE_DBUS_ID_MNOC] =
@@ -900,9 +931,12 @@ static void _sde_core_perf_crtc_update_check(struct drm_crtc *crtc,
 	struct sde_core_perf_params *old = &sde_crtc->cur_perf;
 	struct sde_core_perf_params *new = &sde_crtc->new_perf;
 	int i;
+	bool bw_change_req = true;
 
 	if (!kms)
 		return;
+
+	bw_change_req = sde_crtc_has_fps_switch_to_low_set(crtc) ? false : true;
 
 	for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++) {
 		/*
@@ -948,9 +982,8 @@ static void _sde_core_perf_crtc_update_check(struct drm_crtc *crtc,
 				get_sde_rsc_current_state(SDE_RSC_INDEX) !=
 				SDE_RSC_CLK_STATE) {
 			/* update new bandwidth in all cases */
-			if (params_changed && ((new->bw_ctl[i] !=
-					old->bw_ctl[i]) ||
-					(new->max_per_pipe_ib[i] !=
+			if (bw_change_req && params_changed && ((new->bw_ctl[i] !=
+					old->bw_ctl[i]) || (new->max_per_pipe_ib[i] !=
 					old->max_per_pipe_ib[i]))) {
 				old->bw_ctl[i] = new->bw_ctl[i];
 				old->max_per_pipe_ib[i] =

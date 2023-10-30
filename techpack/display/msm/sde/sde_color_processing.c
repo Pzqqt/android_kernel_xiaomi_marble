@@ -44,6 +44,11 @@ struct sde_cp_prop_attach {
 	uint64_t val;
 };
 
+static struct drm_msm_pcc pcc_value_;
+static struct sde_hw_cp_cfg stored_pcc_config_;
+static bool need_restore_pcc_ = false;
+static bool right_after_restore_ = false;
+
 #define ALIGNED_OFFSET (U32_MAX & ~(LTM_GUARD_BYTES))
 
 static void _dspp_pcc_install_property(struct drm_crtc *crtc);
@@ -252,8 +257,21 @@ static int _set_dspp_pcc_feature(struct sde_hw_dspp *hw_dspp,
 
 	if (!hw_dspp || !hw_dspp->ops.setup_pcc)
 		ret = -EINVAL;
-	else
+	else {
 		hw_dspp->ops.setup_pcc(hw_dspp, hw_cfg);
+		if (hw_cfg->payload && hw_cfg->len == sizeof(struct drm_msm_pcc)) {
+			struct drm_msm_pcc *pcc_cfg = hw_cfg->payload;
+			if (pcc_cfg->flags & 0x2) {
+				need_restore_pcc_ = true;
+			} else {
+				memcpy(&stored_pcc_config_, hw_cfg, sizeof(struct sde_hw_cp_cfg));
+				stored_pcc_config_.payload = &pcc_value_;
+				memcpy(&pcc_value_, hw_cfg->payload, sizeof(struct drm_msm_pcc));
+				stored_pcc_config_.len = sizeof(struct drm_msm_pcc);
+				need_restore_pcc_ = false;
+			}
+               }
+	}
 	return ret;
 }
 
@@ -2112,6 +2130,38 @@ static void _sde_clear_ltm_merge_mode(struct sde_crtc *sde_crtc)
 	spin_unlock_irqrestore(&sde_crtc->ltm_lock, irq_flags);
 }
 
+void sde_cp_crtc_restore_pcc(struct drm_crtc *crtc)
+{
+	struct sde_crtc *sde_crtc = NULL;
+	u32 num_mixers = 0, i = 0;
+	struct sde_hw_dspp *hw_dspp = NULL;
+
+	if (!need_restore_pcc_)
+		return;
+
+	sde_crtc = to_sde_crtc(crtc);
+	if (!sde_crtc) {
+		DRM_ERROR("invalid sde_crtc %pK\n", sde_crtc);
+		return;
+	}
+
+	num_mixers = sde_crtc->num_mixers;
+	if (!num_mixers) {
+		DRM_ERROR("no mixers for this crtc\n");
+		return;
+	}
+
+	for (i = 0; i < num_mixers; i++) {
+		hw_dspp = sde_crtc->mixers[i].hw_dspp;
+		if (!hw_dspp || !hw_dspp->ops.setup_pcc)
+			continue;
+		else {
+			hw_dspp->ops.setup_pcc(hw_dspp, &stored_pcc_config_);
+			need_restore_pcc_ = false;
+			right_after_restore_ = true;
+		}
+	}
+}
 void sde_cp_crtc_apply_properties(struct drm_crtc *crtc)
 {
 	struct sde_crtc *sde_crtc = NULL;
@@ -2171,6 +2221,16 @@ void sde_cp_crtc_apply_properties(struct drm_crtc *crtc)
 		set_lm_flush = true;
 	}
 
+	if (right_after_restore_) {
+		list_for_each_entry_safe(prop_node, n, &sde_crtc->cp_dirty_list,
+			cp_dirty_list) {
+			if (prop_node->feature == SDE_CP_CRTC_DSPP_PCC) {
+				list_del_init(&prop_node->cp_dirty_list);
+				right_after_restore_ = false;
+				break;
+			}
+		}
+	}
 	list_for_each_entry_safe(prop_node, n, &sde_crtc->cp_dirty_list,
 			cp_dirty_list) {
 		_sde_cp_crtc_commit_feature(prop_node, sde_crtc);
@@ -2498,6 +2558,7 @@ static int _sde_cp_flush_properties(struct drm_crtc *crtc)
 			i++;
 			continue;
 		}
+
 		property = cstate->cp_prop_values[feature].prop;
 		prop_node = cstate->cp_prop_values[feature].cp_node;
 		val = cstate->cp_prop_values[feature].prop_val;
@@ -3812,7 +3873,6 @@ int sde_cp_hist_interrupt(struct drm_crtc *crtc_drm, bool en,
 	struct sde_irq_callback *hist_irq)
 {
 	struct sde_kms *kms = NULL;
-	u32 num_mixers;
 	struct sde_hw_mixer *hw_lm;
 	struct sde_hw_dspp *hw_dspp = NULL;
 	struct sde_crtc *crtc;
@@ -3832,11 +3892,14 @@ int sde_cp_hist_interrupt(struct drm_crtc *crtc_drm, bool en,
 	}
 
 	kms = get_kms(crtc_drm);
-	num_mixers = crtc->num_mixers;
 
-	for (i = 0; i < num_mixers; i++) {
+	for (i = 0; i < crtc->num_mixers; i++) {
 		hw_lm = crtc->mixers[i].hw_lm;
 		hw_dspp = crtc->mixers[i].hw_dspp;
+		if (!hw_lm)  {
+			DRM_DEBUG_DRIVER("invalid lm\n");
+			return -ENODEV;
+		}
 		if (!hw_lm->cfg.right_mixer)
 			break;
 	}

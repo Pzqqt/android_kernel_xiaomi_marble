@@ -16,6 +16,8 @@
 #include "sde_dbg.h"
 #include "sde_dsc_helper.h"
 #include "sde_vdc_helper.h"
+#include "mi_panel_id.h"
+#include "dsi_ctrl.h"
 
 #define MMSS_MISC_CLAMP_REG_OFF           0x0014
 #define DSI_CTRL_DYNAMIC_FORCE_ON         (0x23F|BIT(8)|BIT(9)|BIT(11)|BIT(21))
@@ -457,6 +459,7 @@ void dsi_ctrl_hw_cmn_set_video_timing(struct dsi_ctrl_hw *ctrl,
 	u32 bytes_per_pkt = 0, pkt_per_line = 0, eol_byte_num = 0;
 	u32 vs_start = 0, vs_end = 0;
 	u32 vpos_start = 0, vpos_end, active_v_start, active_v_end, v_total;
+	struct dsi_ctrl *dsi_ctrl = NULL;
 
 	if (dsi_compression_enabled(mode)) {
 		dsi_ctrl_hw_cmn_get_vid_dce_params(mode,
@@ -520,12 +523,23 @@ void dsi_ctrl_hw_cmn_set_video_timing(struct dsi_ctrl_hw *ctrl,
 	reg = ((vpos_end & 0xFFFF) << 16) | (vpos_start & 0xFFFF);
 	DSI_W32(ctrl, DSI_VIDEO_MODE_VSYNC_VPOS, reg);
 
+	dsi_ctrl = container_of(ctrl, struct dsi_ctrl, hw);
 	/* TODO: HS TIMER value? */
-	DSI_W32(ctrl, DSI_HS_TIMER_CTRL, 0x3FD08);
+	if (dsi_ctrl->max_hs_timer_supported)
+		/*
+		* Setting HS TIMER value assuming maximum
+		* HS transmission time required will be 40ms
+		*/
+		DSI_W32(ctrl, DSI_HS_TIMER_CTRL, 0x4BB80);
+	else
+		DSI_W32(ctrl, DSI_HS_TIMER_CTRL, 0x3FD08);
+
 	DSI_W32(ctrl, DSI_MISR_VIDEO_CTRL, 0x10100);
 	DSI_W32(ctrl, DSI_DSI_TIMING_FLUSH, 0x1);
-	DSI_CTRL_HW_DBG(ctrl, "ctrl video parameters updated\n");
-	SDE_EVT32(v_total, h_total);
+	DSI_CTRL_HW_DBG(ctrl, "ctrl video parameters updated DSI_HS_TIMER_CTRL=%x\n",
+					DSI_R32(ctrl,DSI_HS_TIMER_CTRL));
+	SDE_EVT32(v_total, h_total, DSI_R32(ctrl, DSI_HS_TIMER_CTRL));
+
 }
 
 /**
@@ -552,6 +566,7 @@ void dsi_ctrl_hw_cmn_setup_cmd_stream(struct dsi_ctrl_hw *ctrl,
 	int pic_width = 0, this_frame_slices = 0, intf_ip_w = 0;
 	u32 pkt_per_line = 0, eol_byte_num = 0, bytes_in_slice = 0;
 	u32 bpp;
+	struct dsi_ctrl *dsi_ctrl = NULL;
 
 	if (roi && (!roi->w || !roi->h))
 		return;
@@ -639,8 +654,12 @@ void dsi_ctrl_hw_cmn_setup_cmd_stream(struct dsi_ctrl_hw *ctrl,
 				reg_ctrl, reg_ctrl2);
 	}
 
+	dsi_ctrl = container_of(ctrl, struct dsi_ctrl, hw);
 	/* HS Timer value */
-	DSI_W32(ctrl, DSI_HS_TIMER_CTRL, 0x3FD08);
+	if (dsi_ctrl->max_hs_timer_supported)
+		DSI_W32(ctrl, DSI_HS_TIMER_CTRL, 0x4BB80);
+	else
+		DSI_W32(ctrl, DSI_HS_TIMER_CTRL, 0x3FD08);
 
 	stream_ctrl = (stride_final + 1) << 16;
 	stream_ctrl |= (vc_id & 0x3) << 8;
@@ -664,8 +683,9 @@ void dsi_ctrl_hw_cmn_setup_cmd_stream(struct dsi_ctrl_hw *ctrl,
 		DSI_W32(ctrl, DSI_COMMAND_MODE_NULL_INSERTION_CTRL, data);
 	}
 
-	DSI_CTRL_HW_DBG(ctrl, "stream_ctrl 0x%x stream_total 0x%x\n",
-			stream_ctrl, stream_total);
+	DSI_CTRL_HW_DBG(ctrl, "stream_ctrl 0x%x stream_total 0x%x DSI_HS_TIMER_CTRL=%x\n",
+			stream_ctrl, stream_total, DSI_R32(ctrl,DSI_HS_TIMER_CTRL));
+	SDE_EVT32(stream_ctrl, stream_total, DSI_R32(ctrl,DSI_HS_TIMER_CTRL));
 }
 
 /**

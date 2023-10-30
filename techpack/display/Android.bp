@@ -5,6 +5,7 @@ headers_src = [
 display_headers_out = [
     "display/drm/msm_drm_pp.h",
     "display/drm/sde_drm.h",
+    "display/drm/mi_disp.h",
     "display/hdcp/msm_hdmi_hdcp_mgr.h",
     "display/media/mmm_color_fmt.h",
     "display/media/msm_sde_rotator.h",
