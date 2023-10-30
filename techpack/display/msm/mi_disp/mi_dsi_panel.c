@@ -1049,6 +1049,10 @@ int mi_dsi_panel_set_doze_brightness(struct dsi_panel *panel,
 {
 	int rc = 0;
 	struct mi_dsi_panel_cfg *mi_cfg;
+	unsigned long mode_flags = 0;
+	u8 m16t_pb_cmd = 0x51;
+	u8 m16t_pb_data_lbm[2] = {0x00, 0x10};
+	u8 m16t_pb_data_hbm[2] = {0x00, 0xe5};
 
 	mutex_lock(&panel->panel_lock);
 
@@ -1065,7 +1069,18 @@ int mi_dsi_panel_set_doze_brightness(struct dsi_panel *panel,
 		|| mi_cfg->doze_brightness != doze_brightness) {
 		if (doze_brightness == DOZE_BRIGHTNESS_HBM) {
 			panel->mi_cfg.panel_state = PANEL_STATE_DOZE_HIGH;
-			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_MI_DOZE_HBM);
+			if (mi_get_panel_id_by_dsi_panel(panel) == M16T_PANEL_PB &&
+				panel->cur_mode->timing.refresh_rate != 30) {
+				DISP_INFO("[%s] skip send DOZE_HBM cmd, refresh rate=%d\n",
+					  panel->type, panel->cur_mode->timing.refresh_rate);
+				mode_flags = panel->mipi_device.mode_flags;
+				panel->mipi_device.mode_flags |= MIPI_DSI_MODE_LPM;
+				rc = mipi_dsi_dcs_write(&panel->mipi_device, m16t_pb_cmd,
+					m16t_pb_data_hbm, sizeof(m16t_pb_data_hbm));
+				panel->mipi_device.mode_flags = mode_flags;
+			} else {
+				rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_MI_DOZE_HBM);
+			}
 			if (rc) {
 				DISP_ERROR("[%s] failed to send DOZE_HBM cmd, rc=%d\n",
 					panel->type, rc);
@@ -1077,7 +1092,18 @@ int mi_dsi_panel_set_doze_brightness(struct dsi_panel *panel,
 			if (mi_get_panel_id_by_dsi_panel(panel) == L2_PANEL_PA &&
 				panel->mi_cfg.panel_batch_number < 0x20)
 				mi_dsi_panel_update_doze_cmd_locked(panel, 0x25);
-			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_MI_DOZE_LBM);
+			if (mi_get_panel_id_by_dsi_panel(panel) == M16T_PANEL_PB &&
+				panel->cur_mode->timing.refresh_rate != 30) {
+				DISP_INFO("[%s] skip send DOZE_LBM cmd, refresh rate=%d\n",
+					  panel->type, panel->cur_mode->timing.refresh_rate);
+				mode_flags = panel->mipi_device.mode_flags;
+				panel->mipi_device.mode_flags |= MIPI_DSI_MODE_LPM;
+				rc = mipi_dsi_dcs_write(&panel->mipi_device, m16t_pb_cmd,
+					m16t_pb_data_lbm, sizeof(m16t_pb_data_lbm));
+				panel->mipi_device.mode_flags = mode_flags;
+			} else {
+				rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_MI_DOZE_LBM);
+			}
 			if (rc) {
 				DISP_ERROR("[%s] failed to send DOZE_LBM cmd, rc=%d\n",
 					panel->type, rc);
