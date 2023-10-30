@@ -132,6 +132,7 @@ struct dsi_phy_cfg {
 	enum dsi_phy_type phy_type;
 	unsigned long bit_clk_rate_hz;
 	struct dsi_split_link_config split_link;
+	unsigned long clk_strength;
 };
 
 struct dsi_phy_hw;

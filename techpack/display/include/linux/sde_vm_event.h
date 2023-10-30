@@ -9,8 +9,8 @@
 #include <linux/list.h>
 #include <linux/types.h>
 #include <linux/slab.h>
-#include <linux/platform_device.h>
 #include <drm/drm_device.h>
+#include <linux/platform_device.h>
 
 /**
  * struct - msm_io_irq_entry - define irq item

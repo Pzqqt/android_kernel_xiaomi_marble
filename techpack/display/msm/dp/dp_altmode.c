@@ -48,6 +48,7 @@ static int dp_altmode_set_usb_dp_mode(struct dp_altmode_private *altmode)
 	struct device_node *usb_node;
 	struct platform_device *usb_pdev;
 	int timeout = 250;
+	u32 lanes = 4;
 
 	if (!altmode || !altmode->dev) {
 		DP_ERR("invalid args\n");
@@ -55,6 +56,9 @@ static int dp_altmode_set_usb_dp_mode(struct dp_altmode_private *altmode)
 	}
 
 	np = altmode->dev->of_node;
+
+	if (altmode->connected && altmode->dp_altmode.base.force_multi_func)
+		lanes = 2;
 
 	usb_node = of_parse_phandle(np, "usb-controller", 0);
 	if (!usb_node) {

@@ -3,6 +3,10 @@ DISPLAY_SELECT := CONFIG_DRM_MSM=m
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
+ifeq (1, $(strip $(FACTORY_BUILD)))
+	DISPLAY_FACTORY_BUILD := CONFIG_DISPLAY_FACTORY_BUILD=1
+endif
+
 # This makefile is only for DLKM
 ifneq ($(findstring vendor,$(LOCAL_PATH)),)
 
@@ -21,8 +25,20 @@ KBUILD_OPTIONS := DISPLAY_ROOT=$(DISPLAY_BLD_DIR)
 KBUILD_OPTIONS += MODNAME=msm_drm
 KBUILD_OPTIONS += BOARD_PLATFORM=$(TARGET_BOARD_PLATFORM)
 KBUILD_OPTIONS += $(DISPLAY_SELECT)
+KBUILD_OPTIONS += $(DISPLAY_FACTORY_BUILD)
 
 KBUILD_OPTIONS += KBUILD_EXTRA_SYMBOLS=$(PWD)/$(call intermediates-dir-for,DLKM,mmrm-module-symvers)/Module.symvers
+
+include $(CLEAR_VARS)
+# For incremental compilation
+LOCAL_SRC_FILES           := $(wildcard $(LOCAL_PATH)/**/*) $(wildcard $(LOCAL_PATH)/*)
+LOCAL_MODULE              := msm_drm-module-symvers
+LOCAL_MODULE_STEM         := Module.symvers
+LOCAL_MODULE_KBUILD_NAME  := Module.symvers
+LOCAL_MODULE_PATH         := $(KERNEL_MODULES_OUT)
+# Include kp_module.ko in the /vendor/lib/modules (vendor.img)
+# BOARD_VENDOR_KERNEL_MODULES += $(LOCAL_MODULE_PATH)/$(LOCAL_MODULE)
+include $(DLKM_DIR)/Build_external_kernelmodule.mk
 
 ###########################################################
 include $(CLEAR_VARS)

@@ -16,6 +16,10 @@
 #include "msm_drv.h"
 #include "sde_encoder.h"
 
+#include "mi_disp_print.h"
+#include "mi_dsi_display.h"
+#include "mi_panel_id.h"
+
 #define to_dsi_bridge(x)     container_of((x), struct dsi_bridge, base)
 #define to_dsi_state(x)      container_of((x), struct dsi_connector_state, base)
 
@@ -193,6 +197,7 @@ static void dsi_bridge_pre_enable(struct drm_bridge *bridge)
 {
 	int rc = 0;
 	struct dsi_bridge *c_bridge = to_dsi_bridge(bridge);
+	struct dsi_display *display;
 
 	if (!bridge) {
 		DSI_ERR("Invalid params\n");
@@ -203,6 +208,8 @@ static void dsi_bridge_pre_enable(struct drm_bridge *bridge)
 		DSI_ERR("Incorrect bridge details\n");
 		return;
 	}
+
+	display = c_bridge->display;
 
 	if (bridge->encoder->crtc->state->active_changed)
 		atomic_set(&c_bridge->display->panel->esd_recovery_pending, 0);
@@ -246,6 +253,8 @@ static void dsi_bridge_pre_enable(struct drm_bridge *bridge)
 	if (rc)
 		DSI_ERR("Continuous splash pipeline cleanup failed, rc=%d\n",
 									rc);
+	sde_connector_update_panel_dead(display->drm_conn, !display->panel->panel_initialized);
+
 }
 
 static void dsi_bridge_enable(struct drm_bridge *bridge)
@@ -283,6 +292,12 @@ static void dsi_bridge_enable(struct drm_bridge *bridge)
 				true);
 		}
 	}
+
+	rc = mi_dsi_display_esd_irq_ctrl(c_bridge->display, true);
+	if (rc) {
+		DISP_ERROR("[%d] DSI display enable esd irq failed, rc=%d\n",
+				c_bridge->id, rc);
+	}
 }
 
 static void dsi_bridge_disable(struct drm_bridge *bridge)
@@ -300,6 +315,12 @@ static void dsi_bridge_disable(struct drm_bridge *bridge)
 
 	if (display)
 		display->enabled = false;
+
+	rc = mi_dsi_display_esd_irq_ctrl(c_bridge->display, false);
+	if (rc) {
+		DISP_ERROR("[%d] DSI display disable esd irq failed, rc=%d\n",
+				c_bridge->id, rc);
+	}
 
 	if (display && display->drm_conn) {
 		conn_state = to_sde_connector_state(display->drm_conn->state);
@@ -555,6 +576,7 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 	/* convert back to drm mode, propagating the private info & flags */
 	dsi_convert_to_drm_mode(&dsi_mode, adjusted_mode);
 	dsi_convert_to_msm_mode(&dsi_mode, &conn_state->msm_mode);
+
 	return true;
 }
 
@@ -1123,8 +1145,9 @@ int dsi_connector_get_modes(struct drm_connector *connector, void *data,
 	struct drm_display_mode drm_mode;
 	struct dsi_display *display = data;
 	struct edid edid;
-	unsigned int width_mm = connector->display_info.width_mm;
-	unsigned int height_mm = connector->display_info.height_mm;
+	/* use u16 to handle panel AA size in 0.1*(mm) */
+	u16 width_mm = connector->display_info.width_mm;
+	u16 height_mm = connector->display_info.height_mm;
 	const u8 edid_buf[EDID_LENGTH] = {
 		0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x44, 0x6D,
 		0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x1B, 0x10, 0x01, 0x03,
@@ -1245,14 +1268,15 @@ enum drm_mode_status dsi_conn_mode_valid(struct drm_connector *connector,
 
 int dsi_conn_pre_kickoff(struct drm_connector *connector,
 		void *display,
-		struct msm_display_kickoff_params *params)
+		struct msm_display_kickoff_params *params,
+		bool force_update_dsi_clocks)
 {
 	if (!connector || !display || !params) {
 		DSI_ERR("Invalid params\n");
 		return -EINVAL;
 	}
 
-	return dsi_display_pre_kickoff(connector, display, params);
+	return dsi_display_pre_kickoff(connector, display, params, force_update_dsi_clocks);
 }
 
 int dsi_conn_prepare_commit(void *display,
@@ -1372,6 +1396,10 @@ int dsi_conn_post_kickoff(struct drm_connector *connector,
 			dsi_ctrl_setup_avr(display->ctrl[i].ctrl, enable);
 	}
 
+	if (mi_get_panel_id_by_dsi_panel(display->panel) == M16T_PANEL_PA ||
+		mi_get_panel_id_by_dsi_panel(display->panel) == M16T_PANEL_PB) {
+		dsi_panel_post_aod_inVideo(display->panel);
+	}
 	return 0;
 }
 

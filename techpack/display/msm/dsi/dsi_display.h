@@ -746,11 +746,13 @@ int dsi_display_set_power(struct drm_connector *connector,
  * @connector: Pointer to drm connector structure
  * @display: Pointer to private display structure
  * @params: Parameters for kickoff-time programming
+ * @force_update_dsi_clocks: Bool to force clock update
  * Returns: Zero on success
  */
 int dsi_display_pre_kickoff(struct drm_connector *connector,
 		struct dsi_display *display,
-		struct msm_display_kickoff_params *params);
+		struct msm_display_kickoff_params *params,
+		bool force_update_dsi_clocks);
 
 /*
  * dsi_display_pre_commit - program pre commit features
@@ -830,5 +832,11 @@ int dsi_display_restore_bit_clk(struct dsi_display *display, struct dsi_display_
  */
 bool dsi_display_mode_match(const struct dsi_display_mode *mode1,
 		struct dsi_display_mode *mode2, unsigned int match_flags);
+
+int dsi_display_ctrl_get_host_init_state(struct dsi_display *dsi_display,
+		bool *state);
+int dsi_display_cmd_rx(struct dsi_display *display,
+                              struct dsi_cmd_desc *cmd);
+char *mi_dsi_display_get_cmdline_panel_info(struct dsi_display *display);
 
 #endif /* _DSI_DISPLAY_H_ */

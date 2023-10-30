@@ -244,6 +244,7 @@ int dsi_pll_init(struct platform_device *pdev, struct dsi_pll_resource **pll)
 	const char *label;
 	struct dsi_pll_resource *pll_res = NULL;
 	bool in_trusted_vm = false;
+	bool ssc_disable;
 
 	if (!pdev->dev.of_node) {
 		pr_err("Invalid DSI PHY node\n");
@@ -284,7 +285,15 @@ int dsi_pll_init(struct platform_device *pdev, struct dsi_pll_resource **pll)
 
 	pll_res->ssc_en = of_property_read_bool(pdev->dev.of_node,
 						"qcom,dsi-pll-ssc-en");
+	
+	ssc_disable = of_property_read_bool(pdev->dev.of_node,
+						"qcom,dsi-pll-ssc-disable");
 
+	if (pll_res->ssc_en == true && ssc_disable == true) {
+		pll_res->ssc_en = false;
+		pr_info("ssc disable due to qcom,dsi-pll-ssc-disable is defined\n");
+	}
+	
 	if (pll_res->ssc_en) {
 		DSI_PLL_INFO(pll_res, "PLL SSC enabled\n");
 
