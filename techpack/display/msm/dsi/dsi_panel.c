@@ -4975,7 +4975,7 @@ int dsi_panel_set_lp2(struct dsi_panel *panel)
 	if (panel->mi_cfg.panel_state == PANEL_STATE_DOZE_HIGH
 		|| panel->mi_cfg.panel_state == PANEL_STATE_DOZE_LOW
 		|| panel->mi_cfg.aod_to_normal_status == true) {
-		DSI_INFO("panel already in aod mode, skip set DSI_CMD_SET_LP2\n");
+		DSI_DEBUG("panel already in aod mode, skip set DSI_CMD_SET_LP2\n");
 		goto exit;
 	} else {
 		need_set_doze = true;
@@ -5453,7 +5453,7 @@ int dsi_panel_post_aod_inVideo_locked(struct dsi_panel *panel)
 	}
 
 	if (!panel->panel_initialized) {
-		DSI_WARN("panel_initialized has not done\n");
+		DSI_DEBUG("panel_initialized has not done\n");
 		return -EINVAL;
 	}
 
