@@ -2954,7 +2954,7 @@ static int _dsi_ctrl_setup_isr(struct dsi_ctrl *dsi_ctrl)
 			disable_irq_nosync(irq_num);
 			SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_CASE2);
 
-			DSI_CTRL_INFO(dsi_ctrl, "IRQ %d registered\n", irq_num);
+			DSI_CTRL_DEBUG(dsi_ctrl, "IRQ %d registered\n", irq_num);
 		}
 	}
 	return rc;

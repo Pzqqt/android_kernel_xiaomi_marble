@@ -7962,7 +7962,7 @@ int dsi_display_set_mode(struct dsi_display *display,
 		DSI_ERR("[%s] failed to set mode\n", display->name);
 		goto error;
 	}
-		DSI_INFO("mdp_transfer_time=%d, hactive=%d, hbp=%d , hsw=%d, hfp=%d, hskew=%d, vactive=%d, vbp=%d , vsw=%d, vfp=%d, fps=%d, clk_rate=%u\n",
+		DSI_DEBUG("mdp_transfer_time=%d, hactive=%d, hbp=%d , hsw=%d, hfp=%d, hskew=%d, vactive=%d, vbp=%d , vsw=%d, vfp=%d, fps=%d, clk_rate=%u\n",
 		adj_mode.priv_info->mdp_transfer_time_us,
 		timing.h_active,timing.h_back_porch, timing.h_sync_width,  timing.h_front_porch, timing.h_skew,
 		timing.v_active, timing.v_back_porch, timing.v_sync_width,  timing.v_front_porch,
