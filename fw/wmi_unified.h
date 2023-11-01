@@ -10080,6 +10080,12 @@ typedef struct {
     wmi_channel chan;
 } wmi_pdev_set_channel_cmd;
 
+typedef struct {
+    A_UINT32 tlv_header;
+    /* DBW puncture bitmap */
+    A_UINT32 dbw_puncture_20mhz_bitmap;
+} wmi_dbw_chan_info;
+
 typedef enum {
     WMI_PKTLOG_EVENT_RX =  0x00000001,
     WMI_PKTLOG_EVENT_TX =  0x00000002,
@@ -16971,6 +16977,10 @@ typedef struct {
  *     wmi_partner_link_info link_info[]; <-- partner link info
  *         optional TLV, only present for MLO vdevs,
  *         If the vdev is non-MLO the array length should be 0.
+ *     wmi_channel dbw_chan; <-- WMI channel
+ *         optional TLV for dbw_chan
+ *     wmi_dbw_chan_info dbw_chan_info
+ *         optional TLV used for dbw_chan_info
  */
 } wmi_vdev_start_request_cmd_fixed_param;
 
@@ -37901,6 +37911,10 @@ typedef struct {
      *    with vdev ID as index.
      * A_UINT32 preferred_rx_streams[]; <-- Array of preferred_rx_streams
      *    with vdev ID as index.
+     * wmi_channel dbw_chan; <-- WMI channel
+     *     optional TLV for dbw_chan
+     * wmi_dbw_chan_info dbw_chan_info
+     *     optional TLV used for dbw_chan_info
      */
 } wmi_pdev_multiple_vdev_restart_request_cmd_fixed_param;
 
