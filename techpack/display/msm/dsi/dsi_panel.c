@@ -5572,6 +5572,22 @@ int dsi_panel_switch(struct dsi_panel *panel)
 	return rc;
 }
 
+int dsi_panel_gamma_switch(struct dsi_panel *panel)
+{
+	int rc = 0;
+
+	if (!panel) {
+		DSI_ERR("Invalid params\n");
+		return -EINVAL;
+	}
+
+	mutex_lock(&panel->panel_lock);
+	rc = dsi_panel_gamma_switch_locked(panel);
+	mutex_unlock(&panel->panel_lock);
+
+	return rc;
+}
+
 int dsi_panel_post_switch(struct dsi_panel *panel)
 {
 	int rc = 0;
@@ -5670,7 +5686,6 @@ int dsi_panel_post_enable(struct dsi_panel *panel)
 		       panel->name, rc);
 		goto error;
 	}
-error:
 	if((mi_get_panel_id(panel->mi_cfg.mi_panel_id) == M80_PANEL_PA)) {
 		rc = mi_dsi_panel_match_fps_pen_setting(panel, panel->cur_mode);
 		if (rc) {
@@ -5686,6 +5701,8 @@ error:
             	mi_get_panel_id_by_dsi_panel(panel) == N16_PANEL_PB) {
 		rc = dsi_panel_gamma_switch_locked(panel);
 	}
+
+error:
 	mutex_unlock(&panel->panel_lock);
 	if (panel->mi_cfg.panel_batch_number_read_done == false) {
 		rc = mi_dsi_panel_read_batch_number(panel);

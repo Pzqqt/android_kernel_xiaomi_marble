@@ -409,6 +409,8 @@ int dsi_panel_switch(struct dsi_panel *panel);
 int dsi_panel_post_switch(struct dsi_panel *panel);
 
 // xiaomi add start
+int dsi_panel_gamma_switch(struct dsi_panel *panel);
+
 int dsi_panel_gamma_switch_locked(struct dsi_panel *panel);
 
 int dsi_panel_pre_aod_inVideo(struct dsi_panel *panel);
