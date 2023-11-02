@@ -4806,13 +4806,15 @@ void sde_encoder_kickoff(struct drm_encoder *drm_enc, bool config_changed)
 
 	if (dsi_display && dsi_display->panel
 		&& sde_enc->disp_info.intf_type == DRM_MODE_CONNECTOR_DSI
-		&& (mi_get_panel_id_by_dsi_panel(dsi_display->panel) == M16T_PANEL_PA
-		|| mi_get_panel_id_by_dsi_panel(dsi_display->panel) == M16T_PANEL_PB)
 		&& adj_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR) {
-		mutex_lock(&dsi_display->panel->panel_lock);
-		sde_encoder_vid_wait_for_active(drm_enc);
-		dsi_panel_gamma_switch_locked(dsi_display->panel);
-		mutex_unlock(&dsi_display->panel->panel_lock);
+		if (mi_get_panel_id_by_dsi_panel(dsi_display->panel) == M16T_PANEL_PA)
+			sde_encoder_vid_wait_for_active(drm_enc);
+		else if (mi_get_panel_id_by_dsi_panel(dsi_display->panel) == M16T_PANEL_PB) {
+			mutex_lock(&dsi_display->panel->panel_lock);
+			sde_encoder_vid_wait_for_active(drm_enc);
+			dsi_panel_gamma_switch_locked(dsi_display->panel);
+			mutex_unlock(&dsi_display->panel->panel_lock);
+		}
 	}
 
 	if (dsi_display && dsi_display->panel && sde_enc->disp_info.intf_type == DRM_MODE_CONNECTOR_DSI
@@ -4877,6 +4879,13 @@ void sde_encoder_kickoff(struct drm_encoder *drm_enc, bool config_changed)
 	    (adj_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR)) {
 		mi_dsi_panel_match_fps_pen_setting(dsi_display->panel, &adj_mode);
 		mutex_unlock(&dsi_display->panel->panel_lock);
+	}
+
+	if (dsi_display && dsi_display->panel
+		&& sde_enc->disp_info.intf_type == DRM_MODE_CONNECTOR_DSI
+		&& mi_get_panel_id_by_dsi_panel(dsi_display->panel) == M16T_PANEL_PA
+		&& adj_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR) {
+		dsi_panel_gamma_switch(dsi_display->panel);
 	}
 
 	SDE_ATRACE_END("encoder_kickoff");
