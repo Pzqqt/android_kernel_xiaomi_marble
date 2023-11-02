@@ -1919,6 +1919,48 @@ lim_get_bss_dot11_mode(struct bss_description *bss_desc,
 }
 
 static QDF_STATUS
+lim_handle_11abg_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
+			    enum mlme_dot11_mode *intersected_mode,
+			    struct bss_description *bss_desc)
+{
+	if (!WLAN_REG_IS_24GHZ_CH_FREQ(bss_desc->chan_freq) &&
+	    !WLAN_REG_IS_5GHZ_CH_FREQ(bss_desc->chan_freq)) {
+		pe_err("self Dot11mode is 11ABG, BSS freq %d not 2.4 or 5 GHz",
+		       bss_desc->chan_freq);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	switch (bss_dot11_mode) {
+	case MLME_DOT11_MODE_11B:
+		*intersected_mode = MLME_DOT11_MODE_11B;
+		break;
+	case MLME_DOT11_MODE_11A:
+		*intersected_mode = MLME_DOT11_MODE_11A;
+		break;
+	case MLME_DOT11_MODE_11G:
+		*intersected_mode = MLME_DOT11_MODE_11G;
+		break;
+	case MLME_DOT11_MODE_11N:
+		fallthrough;
+	case MLME_DOT11_MODE_11AC:
+		fallthrough;
+	case MLME_DOT11_MODE_11AX:
+		fallthrough;
+	case MLME_DOT11_MODE_11BE:
+		if (WLAN_REG_IS_24GHZ_CH_FREQ(bss_desc->chan_freq))
+			*intersected_mode = MLME_DOT11_MODE_11G;
+		else
+			*intersected_mode = MLME_DOT11_MODE_11A;
+		break;
+	default:
+		pe_err("Invalid bss dot11mode %d passed", bss_dot11_mode);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
 lim_handle_11a_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 			  enum mlme_dot11_mode *intersected_mode,
 			  struct bss_description *bss_desc)
@@ -2450,6 +2492,9 @@ lim_get_intersected_dot11_mode_sta_ap(struct mac_context *mac_ctx,
 	case MLME_DOT11_MODE_11BE_ONLY:
 		return lim_handle_11be_only_dot11_mode(bss_dot11_mode,
 						       intersected_mode);
+	case MLME_DOT11_MODE_ABG:
+		return lim_handle_11abg_dot11_mode(bss_dot11_mode,
+						   intersected_mode, bss_desc);
 	default:
 		pe_err("Invalid self dot11mode %d not supported",
 		       self_dot11_mode);

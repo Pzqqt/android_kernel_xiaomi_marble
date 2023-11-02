@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -907,12 +907,12 @@ uint32_t csr_translate_to_wni_cfg_dot11_mode(struct mac_context *mac,
 			ret = MLME_DOT11_MODE_11N;
 		break;
 #endif
+	case eCSR_CFG_DOT11_MODE_ABG:
+		ret = MLME_DOT11_MODE_ABG;
+		break;
 	default:
 		sme_warn("doesn't expect %d as csrDo11Mode", csrDot11Mode);
-		if (BAND_2G == mac->mlme_cfg->gen.band)
-			ret = MLME_DOT11_MODE_11G;
-		else
-			ret = MLME_DOT11_MODE_11A;
+		ret = MLME_DOT11_MODE_ALL;
 		break;
 	}
 
