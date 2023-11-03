@@ -1415,6 +1415,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_audio_transport_switch_resp_status_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_audio_transport_switch_type_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_dbw_chan_info,
+    WMITLV_TAG_STRUC_wmi_peer_multiple_reorder_queue_setup_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_peer_per_reorder_q_setup_params_t,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -1954,6 +1956,7 @@ typedef enum {
     OP(WMI_VDEV_SCHED_MODE_PROBE_REQ_CMDID) \
     OP(WMI_VDEV_OOB_CONNECTION_REQ_CMDID) \
     OP(WMI_AUDIO_TRANSPORT_SWITCH_RESP_STATUS_CMDID) \
+    OP(WMI_PEER_MULTIPLE_REORDER_QUEUE_SETUP_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -4616,6 +4619,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_REORDER_QUEUE_SETUP_CMDID);
 #define WMITLV_TABLE_WMI_PEER_REORDER_QUEUE_REMOVE_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_reorder_queue_remove_cmd_fixed_param, wmi_peer_reorder_queue_remove_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_REORDER_QUEUE_REMOVE_CMDID);
+
+/* peer multiple reorder queue setup cmd */
+#define WMITLV_TABLE_WMI_PEER_MULTIPLE_REORDER_QUEUE_SETUP_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_multiple_reorder_queue_setup_cmd_fixed_param, wmi_peer_multiple_reorder_queue_setup_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_per_reorder_q_setup_params_t, reorder_params_list, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_MULTIPLE_REORDER_QUEUE_SETUP_CMDID);
 
 /* Filter in monitor mode parameters Cmd */
 #define WMITLV_TABLE_WMI_MNT_FILTER_CMDID(id,op,buf,len) \
