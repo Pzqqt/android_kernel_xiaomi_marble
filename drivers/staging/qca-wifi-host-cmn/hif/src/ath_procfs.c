@@ -485,8 +485,8 @@ static ssize_t ath_procfs_diag_read(struct file *file, char __user *buf,
 	if (offset & 0x3)
 		return -EINVAL;
 
-	hif_info("rd cnt %zu offset 0x%x op_type %d type %d pos %llx",
-		 count, offset, op_type, memtype, *pos);
+	hif_debug("rd cnt %zu offset 0x%x op_type %d type %d pos %llx",
+		  count, offset, op_type, memtype, *pos);
 
 	switch (op_type) {
 	case OP_TYPE_LEGACY:
@@ -527,8 +527,8 @@ static ssize_t ath_procfs_diag_write(struct file *file,
 	if (offset & 0x3)
 		return -EINVAL;
 
-	hif_info("wr cnt %zu offset 0x%x op_type %d mem_type %d",
-		 count, offset, op_type, memtype);
+	hif_debug("wr cnt %zu offset 0x%x op_type %d mem_type %d",
+		  count, offset, op_type, memtype);
 
 	switch (op_type) {
 	case OP_TYPE_LEGACY:
