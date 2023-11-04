@@ -7,6 +7,7 @@ endef
 
 LOCAL_PATH := $(call my-dir)
 $(call wlog,LOCAL_PATH=$(LOCAL_PATH))
+BOARD_OPENSOURCE_DIR ?= vendor/qcom/opensource
 
 ENABLE_QCACLD := true
 ifeq ($(TARGET_USES_QMAA), true)
@@ -41,7 +42,7 @@ ifneq ($(WLAN_CHIPSET),)
 ifneq ($(findstring vendor,$(LOCAL_PATH)),)
 
 ifneq ($(findstring opensource,$(LOCAL_PATH)),)
-	WLAN_BLD_DIR := vendor/qcom/opensource/wlan
+	WLAN_BLD_DIR := $(BOARD_OPENSOURCE_DIR)/wlan
 endif # opensource
 
 # Multi-ko check

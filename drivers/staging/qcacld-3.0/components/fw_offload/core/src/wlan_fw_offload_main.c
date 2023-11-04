@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -110,6 +110,10 @@ fwol_init_coex_config_in_cfg(struct wlan_objmgr_psoc *psoc,
 	fwol_three_way_coex_config_legacy_config_get(psoc, coex_config);
 	coex_config->ble_scan_coex_policy = cfg_get(psoc,
 						    CFG_BLE_SCAN_COEX_POLICY);
+#ifdef FEATURE_COEX_TPUT_SHAPING_CONFIG
+	coex_config->coex_tput_shaping_enable =
+				cfg_get(psoc, CFG_TPUT_SHAPING_ENABLE);
+#endif
 }
 
 #ifdef THERMAL_STATS_SUPPORT
