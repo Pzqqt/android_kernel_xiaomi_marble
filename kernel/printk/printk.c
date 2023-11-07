@@ -2114,11 +2114,13 @@ asmlinkage __visible int printk(const char *fmt, ...)
 	if (in_task())
 		// /vendor/bin/hw/vendor.qti.hardware.display.composer-service
 		// /vendor/bin/hw/vendor.xiaomi.hardware.displayfeature@1.0-service
-		// https://github.com/xiaomi-sm8450-kernel/android_vendor_qcom_opensource_display-drivers/blob/5f879d978969f748e7e61f9402bf6d85285015eb/msm/msm_drv.c#L612
+		// https://github.com/MiCode/vendor_opensource_display-drivers/blob/bf0d5e23be5457001a18aa9dcd68cb17994ae36a/msm/msm_drv.c#L612
+		// https://github.com/MiCode/vendor_opensource_display-drivers/blob/bf0d5e23be5457001a18aa9dcd68cb17994ae36a/msm/mi_disp/mi_disp_feature.c#L65
 		if (unlikely(
 		    !strcmp(current->group_leader->comm, "composer-servic") ||
 		    !strcmp(current->group_leader->comm, "displayfeature@") ||
-		    !strncmp(current->comm, "crtc_commit:", 12)
+		    !strncmp(current->comm, "crtc_commit:", 12) ||
+		    !strncmp(current->comm, "disp_feature:", 13)
 		))
 			return 0;
 
