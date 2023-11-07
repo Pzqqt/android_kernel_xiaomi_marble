@@ -557,11 +557,15 @@ int ksu_handle_setuid(struct cred *new, const struct cred *old)
 	// when we umount for such process, that is a disaster!
 	bool is_zygote_child = is_zygote(old->security);
 	if (!is_zygote_child) {
+#ifdef CONFIG_KSU_DEBUG
 		pr_info("handle umount ignore non zygote child: %d\n", current->pid);
+#endif
 		return 0;
 	}
 	// umount the target mnt
+#ifdef CONFIG_KSU_DEBUG
 	pr_info("handle umount for uid: %d, pid: %d\n", new_uid.val, current->pid);
+#endif
 
 	// fixme: use `collect_mounts` and `iterate_mount` to iterate all mountpoint and
 	// filter the mountpoint whose target is `/data/adb`

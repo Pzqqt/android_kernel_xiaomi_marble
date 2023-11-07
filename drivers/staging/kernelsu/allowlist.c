@@ -93,6 +93,7 @@ static struct work_struct ksu_load_work;
 
 bool persistent_allow_list(void);
 
+#ifdef CONFIG_KSU_DEBUG
 void ksu_show_allow_list(void)
 {
 	struct perm_data *p = NULL;
@@ -105,7 +106,6 @@ void ksu_show_allow_list(void)
 	}
 }
 
-#ifdef CONFIG_KSU_DEBUG
 static void ksu_grant_root_to_shell()
 {
 	struct app_profile profile = {
@@ -205,6 +205,7 @@ bool ksu_set_app_profile(struct app_profile *profile, bool persist)
 	}
 
 	memcpy(&p->profile, profile, sizeof(*profile));
+#ifdef CONFIG_KSU_DEBUG
 	if (profile->allow_su) {
 		pr_info("set root profile, key: %s, uid: %d, gid: %d, context: %s\n",
 			profile->key, profile->current_uid,
@@ -215,6 +216,7 @@ bool ksu_set_app_profile(struct app_profile *profile, bool persist)
 			profile->key, profile->current_uid,
 			profile->nrp_config.profile.umount_modules);
 	}
+#endif
 	list_add_tail(&p->list, &allow_list);
 
 out:
@@ -431,13 +433,17 @@ void do_load_allow_list(struct work_struct *work)
 			break;
 		}
 
+#ifdef CONFIG_KSU_DEBUG
 		pr_info("load_allow_uid, name: %s, uid: %d, allow: %d\n",
 			profile.key, profile.current_uid, profile.allow_su);
+#endif
 		ksu_set_app_profile(&profile, false);
 	}
 
 exit:
+#ifdef CONFIG_KSU_DEBUG
 	ksu_show_allow_list();
+#endif
 	filp_close(fp, 0);
 }
 

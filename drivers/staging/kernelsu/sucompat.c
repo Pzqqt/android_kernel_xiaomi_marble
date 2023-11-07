@@ -53,7 +53,9 @@ int ksu_handle_faccessat(int *dfd, const char __user **filename_user, int *mode,
 	ksu_strncpy_from_user_nofault(path, *filename_user, sizeof(path));
 
 	if (unlikely(!memcmp(path, su, sizeof(su)))) {
+#ifdef CONFIG_KSU_DEBUG
 		pr_info("faccessat su->sh!\n");
+#endif
 		*filename_user = sh_user_path();
 	}
 
@@ -78,7 +80,9 @@ int ksu_handle_stat(int *dfd, const char __user **filename_user, int *flags)
 	ksu_strncpy_from_user_nofault(path, *filename_user, sizeof(path));
 
 	if (unlikely(!memcmp(path, su, sizeof(su)))) {
+#ifdef CONFIG_KSU_DEBUG
 		pr_info("newfstatat su->sh!\n");
+#endif
 		*filename_user = sh_user_path();
 	}
 
@@ -107,7 +111,9 @@ int ksu_handle_execveat_sucompat(int *fd, struct filename **filename_ptr,
 	if (!ksu_is_allow_uid(current_uid().val))
 		return 0;
 
+#ifdef CONFIG_KSU_DEBUG
 	pr_info("do_execveat_common su found\n");
+#endif
 	memcpy((void *)filename->name, sh, sizeof(sh));
 
 	escape_to_root();
