@@ -44671,6 +44671,7 @@ typedef enum {
     WMI_MLO_LINK_FORCE_INACTIVE_LINK_NUM      = 4, /* Force inactive a number of links, firmware to decide which links to inactive */
     WMI_MLO_LINK_NO_FORCE                     = 5, /* Cancel the force operation of specific links, allow firmware to decide */
     WMI_MLO_LINK_FORCE_ACTIVE_INACTIVE        = 6, /* combination of force specific links active & force specific links inactive */
+    WMI_MLO_LINK_NON_FORCE_UPDATE             = 7, /* Used when host wants to update other fields like disallow_mlo_mode_bmap */
 } WMI_MLO_LINK_FORCE_MODE;
 
 typedef enum {
@@ -44764,6 +44765,8 @@ typedef struct wmi_mlo_link_set_active_cmd
  *     For force mode WMI_MLO_LINK_FORCE_ACTIVE_INACTIVE ieee_link_id_bitmap2[]
  *     carry the inactive linkid bitmap.
  *     In other cases the length of the array should be 0.
+ *---
+ * wmi_disallowed_mlo_mode_bitmap_param_t disallow_mlo_mode_bmap[];
  */
 } wmi_mlo_link_set_active_cmd_fixed_param;
 
@@ -44784,6 +44787,77 @@ typedef struct wmi_mlo_set_active_link_number_param
     A_UINT32 home_freq;
 
 } wmi_mlo_set_active_link_number_param;
+
+#define WMI_MLO_MODE_MLMR  0x1;
+#define WMI_MLO_MODE_EMLSR 0x2;
+
+
+#define WMI_MLO_IEEE_LINK_ID_COMB_GET_LINK_ID1(ieee_link_id_comb) WMI_GET_BITS(ieee_link_id_comb, 0, 8)
+#define WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID1(ieee_link_id_comb, value) WMI_SET_BITS(ieee_link_id_comb, 0, 8, value)
+
+#define WMI_MLO_IEEE_LINK_ID_COMB_GET_LINK_ID2(ieee_link_id_comb) WMI_GET_BITS(ieee_link_id_comb, 8, 8)
+#define WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID2(ieee_link_id_comb, value) WMI_SET_BITS(ieee_link_id_comb, 8, 8, value)
+
+#define WMI_MLO_IEEE_LINK_ID_COMB_GET_LINK_ID3(ieee_link_id_comb) WMI_GET_BITS(ieee_link_id_comb, 16, 8)
+#define WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID3(ieee_link_id_comb, value) WMI_SET_BITS(ieee_link_id_comb, 16, 8, value)
+
+#define WMI_MLO_IEEE_LINK_ID_COMB_GET_LINK_ID4(ieee_link_id_comb) WMI_GET_BITS(ieee_link_id_comb, 24, 8)
+#define WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID4(ieee_link_id_comb, value) WMI_SET_BITS(ieee_link_id_comb, 24, 8, value)
+
+
+typedef struct wmi_disallowed_mlo_mode_bitmap_param
+{
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_disallowed_mlo_mode_bitmap_param */
+    A_UINT32 tlv_header;
+    /** disallowed_mode_bitmap:
+     * Bitmap of MLO Modes like MLMR, eMLSR which are not allowed.
+     * Refer to WMI_MLO_MODE_*
+     * disallowed_mode_bitmap          Meaning
+     * ======================          =================
+     *   0x0                           No restriction
+     *   0x1                           MLMR is not allowed
+     *   0x2                           EMLSR is not allowed
+     *   0x3                           MLMR and EMLSR are not allowed
+     */
+    A_UINT32 disallowed_mode_bitmap;
+
+    /** ieee_link_id_comb:
+     * Give combination of IEEE link IDs for which above disallowed_mode_bitmap
+     * is applicable.
+     * Each 8-bits in ieee_link_id_comb represents one link ID.
+     * Use WMI_MLO_IEEE_LINK_ID_COMB_GET_LINK_ID* and _SET_LINK_ID* to get/set
+     * link IDs in this field.
+     */
+    A_UINT32 ieee_link_id_comb;
+
+
+    /** Example:
+     * Say there are 3 MLO links with ieee link IDs as 1,2 and 32.
+     * Say host wants to disallow MLMR between links with IDs 1 and 2,
+     *                   disallow eMLSR between links with IDs 1 and 32,
+     *                   disallow MLMR and eMLSR for links with IDs 2 and 32.
+     * There will be 3 TLVs of type wmi_disallowed_mlo_mode_bitmap_param
+     * like below.
+     *
+     *  wmi_disallowed_mlo_mode_bitmap_param[0]:
+     *       disallowed_mode_bitmap = 0x1,
+     *       ieee_link_id_comb = 0x00000201
+     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID1(ieee_link_id_comb, 0x1)
+     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID2(ieee_link_id_comb, 0x2)
+     *
+     *  wmi_disallowed_mlo_mode_bitmap_param[1]
+     *       disallowed_mode_bitmap = 0x2,
+     *       ieee_link_id_comb = 0x00002001
+     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID1(ieee_link_id_comb, 0x1)
+     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID2(ieee_link_id_comb, 0x20)
+     *
+     *  wmi_disallowed_mlo_mode_bitmap_param[2]
+     *       disallowed_mode_bitmap = 0x3,
+     *       ieee_link_id_comb = 0x00002002
+     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID1(ieee_link_id_comb, 0x2)
+     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID2(ieee_link_id_comb, 0x20)
+     */
+} wmi_disallowed_mlo_mode_bitmap_param;
 
 typedef enum {
     WMI_MLO_LINK_SET_ACTIVE_STATUS_SUCCESS     = 0,
