@@ -1379,6 +1379,7 @@ typedef enum {
     WMI_COEX_DBAM_CMDID,
     WMI_TAS_POWER_HISTORY_CMDID,
     WMI_ESL_EGID_CMDID,
+    WMI_COEX_MULTIPLE_CONFIG_CMDID,
 
     /**
      *  OBSS scan offload enable/disable commands
@@ -34694,7 +34695,7 @@ typedef enum wmi_coex_config_type {
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
-    A_UINT32 tlv_header;
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_COEX_CONFIG_CMD_fixed_param */
     A_UINT32 vdev_id;
     A_UINT32 config_type; /* wmi_coex_config_type enum */
     A_UINT32 config_arg1;
@@ -34704,6 +34705,14 @@ typedef struct {
     A_UINT32 config_arg5;
     A_UINT32 config_arg6;
 } WMI_COEX_CONFIG_CMD_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_coex_multiple_config_cmd_fixed_param */
+    /*
+     * This struct is followed by other TLVs:
+     *   WMI_COEX_CONFIG_CMD_fixed_param config_list[num_config];
+     */
+} wmi_coex_multiple_config_cmd_fixed_param;
 
 typedef enum wmi_coex_dbam_mode_type {
     WMI_COEX_DBAM_DISABLE = 0,
@@ -37054,6 +37063,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_OOB_CONNECTION_REQ_CMDID);
         WMI_RETURN_STRING(WMI_AUDIO_TRANSPORT_SWITCH_RESP_STATUS_CMDID);
         WMI_RETURN_STRING(WMI_PEER_MULTIPLE_REORDER_QUEUE_SETUP_CMDID);
+        WMI_RETURN_STRING(WMI_COEX_MULTIPLE_CONFIG_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";

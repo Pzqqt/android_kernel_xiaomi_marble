@@ -1417,6 +1417,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_dbw_chan_info,
     WMITLV_TAG_STRUC_wmi_peer_multiple_reorder_queue_setup_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_per_reorder_q_setup_params_t,
+    WMITLV_TAG_STRUC_wmi_coex_multiple_config_cmd_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -1957,6 +1958,7 @@ typedef enum {
     OP(WMI_VDEV_OOB_CONNECTION_REQ_CMDID) \
     OP(WMI_AUDIO_TRANSPORT_SWITCH_RESP_STATUS_CMDID) \
     OP(WMI_PEER_MULTIPLE_REORDER_QUEUE_SETUP_CMDID) \
+    OP(WMI_COEX_MULTIPLE_CONFIG_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -5530,6 +5532,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_CSA_EVENT_STATUS_INDICATION_CMDID);
 #define WMITLV_TABLE_WMI_VDEV_OOB_CONNECTION_REQ_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_oob_connection_req_cmd_fixed_param, wmi_vdev_oob_connection_req_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_OOB_CONNECTION_REQ_CMDID);
+
+/* Multiple BTCOEX config commands. */
+#define WMITLV_TABLE_WMI_COEX_MULTIPLE_CONFIG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_coex_multiple_config_cmd_fixed_param, wmi_coex_multiple_config_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, WMI_COEX_CONFIG_CMD_fixed_param, config_list, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_COEX_MULTIPLE_CONFIG_CMDID);
 
 
 
