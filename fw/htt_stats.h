@@ -5493,7 +5493,10 @@ typedef htt_stats_tx_pdev_rate_stats_be_ofdma_tlv
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    /** Tx PPDU duration histogram **/
+    /** tx_ppdu_dur_hist:
+     * Tx PPDU duration histogram, which holds the tx duration of PPDUs
+     * under histogram bins of interval 250us
+     */
     A_UINT32 tx_ppdu_dur_hist[HTT_PDEV_STATS_PPDU_DUR_HIST_BINS];
     A_UINT32 tx_success_time_us_low;
     A_UINT32 tx_success_time_us_high;
@@ -5501,6 +5504,11 @@ typedef struct {
     A_UINT32 tx_fail_time_us_high;
     A_UINT32 pdev_up_time_us_low;
     A_UINT32 pdev_up_time_us_high;
+    /** tx_ofdma_ppdu_dur_hist:
+     * Tx OFDMA PPDU duration histogram, which holds the tx duration of
+     * OFDMA PPDUs under histogram bins of interval 250us
+     */
+    A_UINT32 tx_ofdma_ppdu_dur_hist[HTT_PDEV_STATS_PPDU_DUR_HIST_BINS];
 } htt_stats_tx_pdev_ppdu_dur_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_tx_pdev_ppdu_dur_tlv htt_tx_pdev_ppdu_dur_stats_tlv;
