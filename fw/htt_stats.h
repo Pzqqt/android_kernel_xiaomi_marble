@@ -1355,6 +1355,17 @@ typedef htt_stats_whal_tx_tlv htt_hw_stats_whal_tx_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
+
+    A_UINT32 wsib_event_watchdog_timeout;
+    A_UINT32 wsib_event_slave_tlv_length_error;
+    A_UINT32 wsib_event_slave_parity_error;
+    A_UINT32 wsib_event_slave_direct_message;
+    A_UINT32 wsib_event_slave_backpressure_error;
+    A_UINT32 wsib_event_master_tlv_length_error;
+} htt_stats_whal_wsi_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
     /**
      * BIT [ 7 :  0]   :- mac_id
      * BIT [31 :  8]   :- reserved
