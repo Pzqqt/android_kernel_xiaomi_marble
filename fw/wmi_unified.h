@@ -9345,6 +9345,15 @@ typedef enum {
 
     /** Parameter to enable/disable large OFDMA M-RUs **/
     WMI_PDEV_PARAM_ENABLE_LARGE_MRU,
+
+    /** Parameter to enable/disable delayed LMR feedback.
+     * Note: Delayed LMR feedback is supported only up to two ranging peers to
+     * enable Location certification
+     * 0 - Immediate LMR feedback is enabled for all ranging peers.
+     * 1 (non zero) - delayed LMR feedback is enabled. Third peer onward will
+     *     default to immediate LMR feedback.
+     **/
+    WMI_PDEV_PARAM_ENABLE_DELAYED_LMR_FEEDBACK,
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
