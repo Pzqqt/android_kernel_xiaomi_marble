@@ -9012,14 +9012,19 @@ typedef htt_stats_ml_link_info_details_tlv htt_ml_link_info_tlv;
 #define HTT_ML_PEER_DETAILS_LINK_INIT_COUNT_S               19
 #define HTT_ML_PEER_DETAILS_NON_STR_M                       0x00400000
 #define HTT_ML_PEER_DETAILS_NON_STR_S                       22
-#define HTT_ML_PEER_DETAILS_EMLSR_M                         0x00800000
-#define HTT_ML_PEER_DETAILS_EMLSR_S                         23
+#define HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE_M               0x00800000
+#define HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE_S               23
+  /* for backwards compatibility, retain the old EMLSR name of the bitfield */
+  #define HTT_ML_PEER_DETAILS_EMLSR_M HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE_M
+  #define HTT_ML_PEER_DETAILS_EMLSR_S HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE_S
 #define HTT_ML_PEER_DETAILS_IS_STA_KO_M                     0x01000000
 #define HTT_ML_PEER_DETAILS_IS_STA_KO_S                     24
 #define HTT_ML_PEER_DETAILS_NUM_LOCAL_LINKS_M               0x06000000
 #define HTT_ML_PEER_DETAILS_NUM_LOCAL_LINKS_S               25
 #define HTT_ML_PEER_DETAILS_ALLOCATED_M                     0x08000000
 #define HTT_ML_PEER_DETAILS_ALLOCATED_S                     27
+#define HTT_ML_PEER_DETAILS_EMLSR_SUPPORT_M                 0x10000000
+#define HTT_ML_PEER_DETAILS_EMLSR_SUPPORT_S                 28
 
 #define HTT_ML_PEER_DETAILS_PARTICIPATING_CHIPS_BITMAP_M    0x000000ff
 #define HTT_ML_PEER_DETAILS_PARTICIPATING_CHIPS_BITMAP_S    0
@@ -9090,16 +9095,31 @@ typedef htt_stats_ml_link_info_details_tlv htt_ml_link_info_tlv;
         ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_NON_STR_S)); \
     } while (0)
 
-#define HTT_ML_PEER_DETAILS_EMLSR_GET(_var) \
-    (((_var) & HTT_ML_PEER_DETAILS_EMLSR_M) >> \
-     HTT_ML_PEER_DETAILS_EMLSR_S)
+#define HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE_GET(_var) \
+    (((_var) & HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE_M) >> \
+     HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE_S)
 
-#define HTT_ML_PEER_DETAILS_EMLSR_SET(_var, _val) \
+#define HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE_SET(_var, _val) \
     do { \
-        HTT_CHECK_SET_VAL(HTT_ML_PEER_DETAILS_EMLSR, _val); \
-        ((_var) &= ~(HTT_ML_PEER_DETAILS_EMLSR_M)); \
-        ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_EMLSR_S)); \
+        HTT_CHECK_SET_VAL(HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE, _val); \
+        ((_var) &= ~(HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE_M)); \
+        ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE_S)); \
     } while (0)
+
+    /* start deprecated:
+     * For backwards compatibility, retain a macro definition that uses
+     * the old EMLSR name of the bitfield
+     */
+    #define HTT_ML_PEER_DETAILS_EMLSR_GET(_var) \
+        (((_var) & HTT_ML_PEER_DETAILS_EMLSR_M) >> \
+         HTT_ML_PEER_DETAILS_EMLSR_S)
+    #define HTT_ML_PEER_DETAILS_EMLSR_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_ML_PEER_DETAILS_EMLSR, _val); \
+            ((_var) &= ~(HTT_ML_PEER_DETAILS_EMLSR_M)); \
+            ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_EMLSR_S)); \
+        } while (0)
+    /* end deprecated */
 
 #define HTT_ML_PEER_DETAILS_IS_STA_KO_GET(_var) \
     (((_var) & HTT_ML_PEER_DETAILS_IS_STA_KO_M) >> \
@@ -9134,6 +9154,18 @@ typedef htt_stats_ml_link_info_details_tlv htt_ml_link_info_tlv;
         ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_ALLOCATED_S)); \
     } while (0)
 
+#define HTT_ML_PEER_DETAILS_EMLSR_SUPPORT_GET(_var) \
+    (((_var) & HTT_ML_PEER_DETAILS_EMLSR_SUPPORT_M) >> \
+     HTT_ML_PEER_DETAILS_EMLSR_SUPPORT_S)
+
+#define HTT_ML_PEER_DETAILS_EMLSR_SUPPORT_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_PEER_DETAILS_EMLSR_SUPPORT, _val); \
+        ((_var) &= ~(HTT_ML_PEER_DETAILS_EMLSR_SUPPORT_M)); \
+        ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_EMLSR_SUPPORT_S)); \
+    } while (0)
+
+
 #define HTT_ML_PEER_DETAILS_PARTICIPATING_CHIPS_BITMAP_GET(_var) \
     (((_var) & HTT_ML_PEER_DETAILS_PARTICIPATING_CHIPS_BITMAP_M) >> \
      HTT_ML_PEER_DETAILS_PARTICIPATING_CHIPS_BITMAP_S)
@@ -9156,11 +9188,21 @@ typedef struct {
                      primary_chip_id   : 2,
                      link_init_count   : 3,
                      non_str           : 1,
-                     emlsr             : 1,
+                     is_emlsr_active   : 1,
                      is_sta_ko         : 1,
                      num_local_links   : 2,
                      allocated         : 1,
-                     reserved          : 4;
+                     emlsr_support     : 1,
+                     reserved          : 3;
+        };
+        struct {
+            /*
+             * For backwards compatibility, use a dummy union element to
+             * retain the old "emlsr" name for the "is_emlsr_active" bitfield.
+             */
+            A_UINT32 dummy1 : 23,
+                     emlsr  : 1,
+                     dummy2 : 8;
         };
         A_UINT32 msg_dword_1;
     };
