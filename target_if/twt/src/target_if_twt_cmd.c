@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,7 +21,7 @@
 #include <target_if_twt.h>
 #include <target_if_twt_cmd.h>
 #include <target_if_ext_twt.h>
-#include "twt/core/src/wlan_twt_common.h"
+#include "wlan_twt_common.h"
 
 QDF_STATUS
 target_if_twt_enable_req(struct wlan_objmgr_psoc *psoc,

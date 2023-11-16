@@ -583,6 +583,7 @@ enum element_ie {
  * @WLAN_EXTN_ELEMID_MUEDCA: MU-EDCA IE
  * @WLAN_EXTN_ELEMID_HE_6G_CAP: HE 6GHz Band Capabilities IE
  * @WLAN_EXTN_ELEMID_SRP:    spatial reuse parameter IE
+ * @WLAN_EXTN_ELEMID_OCI:    OCI IE
  * @WLAN_EXTN_ELEMID_NONINHERITANCE: Non inheritance IE
  * @WLAN_EXTN_ELEMID_EHTOP: EHT Operation IE
  * @WLAN_EXTN_ELEMID_MULTI_LINK: Multi-Link IE
@@ -594,6 +595,7 @@ enum extn_element_ie {
 	WLAN_EXTN_ELEMID_HEOP        = 36,
 	WLAN_EXTN_ELEMID_MUEDCA      = 38,
 	WLAN_EXTN_ELEMID_SRP         = 39,
+	WLAN_EXTN_ELEMID_OCI         = 54,
 	WLAN_EXTN_ELEMID_NONINHERITANCE = 56,
 	WLAN_EXTN_ELEMID_HE_6G_CAP   = 59,
 	WLAN_EXTN_ELEMID_ESP         = 11,
@@ -1070,6 +1072,7 @@ enum wlan_status_code {
 #define WLAN_ASE_SHA256_PSK              0x100
 #define WLAN_ASE_WPS                     0x200
 
+#define RSN_CAP_MFP_DISABLED 0x00
 #define RSN_CAP_MFP_CAPABLE 0x80
 #define RSN_CAP_MFP_REQUIRED 0x40
 
