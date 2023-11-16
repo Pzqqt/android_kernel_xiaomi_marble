@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/gpio.h>
@@ -8,6 +8,7 @@
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/of_device.h>
+#include <linux/arch_topology.h>
 #include <sound/control.h>
 #include <sound/core.h>
 #include <sound/soc.h>
@@ -20,6 +21,10 @@
 #include <dsp/digital-cdc-rsc-mgr.h>
 
 #include "msm_common.h"
+
+#ifndef topology_cluster_id
+#define topology_cluster_id(cpu) topology_physical_package_id(cpu)
+#endif
 
 struct snd_card_pdata {
 	struct kobject snd_card_kobj;
@@ -71,13 +76,12 @@ struct chmap_pdata {
 };
 
 #define MAX_USR_INPUT 10
+#define MAX_CPU_CLUSTER 3 /*Silver, Gold, Prime*/
 
 static int qos_vote_status;
 static struct dev_pm_qos_request latency_pm_qos_req; /* pm_qos request */
 static unsigned int qos_client_active_cnt;
-/* set audio task affinity to core 1 & 2 */
-static const unsigned int audio_core_list[] = {1, 2};
-static cpumask_t audio_cpu_map = CPU_MASK_NONE;
+static int cluster_first_cpu[MAX_CPU_CLUSTER] = {-1, };
 static struct dev_pm_qos_request *msm_audio_req = NULL;
 static bool kregister_pm_qos_latency_controls = false;
 #define MSM_LL_QOS_VALUE	300 /* time in us to ensure LPM doesn't go in C3/C4 */
@@ -599,32 +603,42 @@ void msm_common_snd_shutdown(struct snd_pcm_substream *substream)
 
 static void msm_audio_add_qos_request()
 {
-	int i;
+	int num_req = 0;
 	int cpu = 0;
 	int ret = 0;
+	int cid, prev_cid = -1;
+	int cluster_num = 0;
+	cpumask_t* cluster_cpu_mask = NULL;
 
 	msm_audio_req = kcalloc(num_possible_cpus(),
 			sizeof(struct dev_pm_qos_request), GFP_KERNEL);
 	if (!msm_audio_req)
 		return;
 
-	for (i = 0; i < ARRAY_SIZE(audio_core_list); i++) {
-		if (audio_core_list[i] >= num_possible_cpus())
-			pr_err("%s incorrect cpu id: %d specified.\n",
-					__func__, audio_core_list[i]);
-		else
-			cpumask_set_cpu(audio_core_list[i], &audio_cpu_map);
+	for_each_cpu(cpu, cpu_possible_mask) {
+		cid = topology_cluster_id(cpu);
+		if(cid != prev_cid) {
+			cluster_first_cpu[cluster_num++] = cpu;
+			prev_cid = cid;
+		}
 	}
 
-	for_each_cpu(cpu, &audio_cpu_map) {
+	/* Pick the first cluster as it represents the Silver cluster. */
+	cluster_cpu_mask = topology_core_cpumask(cluster_first_cpu[0]);
+
+	for_each_cpu(cpu, cluster_cpu_mask) {
 		ret = dev_pm_qos_add_request(get_cpu_device(cpu),
 				&msm_audio_req[cpu],
 				DEV_PM_QOS_RESUME_LATENCY,
 				PM_QOS_CPU_LATENCY_DEFAULT_VALUE);
 		if (ret < 0)
 			pr_err("%s error (%d) adding resume latency to cpu %d.\n",
-							__func__, ret, cpu);
-		pr_debug("%s set cpu affinity to core %d.\n", __func__, cpu);
+                                                __func__, ret, cpu);
+		pr_debug("%s set cpu affinity to logical core %d.\n", __func__, cpu);
+
+		/* Limit the request to 2 silver cpu cores. */
+		if (++num_req == 2)
+			break;
 	}
 }
 
@@ -632,9 +646,12 @@ static void msm_audio_remove_qos_request()
 {
 	int cpu = 0;
 	int ret = 0;
+	cpumask_t* cluster_cpu_mask = NULL;
+
+	cluster_cpu_mask = topology_core_cpumask(cluster_first_cpu[0]);
 
 	if (msm_audio_req) {
-		for_each_cpu(cpu, &audio_cpu_map) {
+		for_each_cpu(cpu, cluster_cpu_mask) {
 			ret = dev_pm_qos_remove_request(
 					&msm_audio_req[cpu]);
 			if (ret < 0)
@@ -920,9 +937,13 @@ static void msm_audio_update_qos_request(u32 latency)
 {
 	int cpu = 0;
 	int ret = -1;
+	int num_req = 0;
+	cpumask_t* cluster_cpu_mask = NULL;
+
+	cluster_cpu_mask = topology_core_cpumask(cluster_first_cpu[0]);
 
 	if (msm_audio_req) {
-		for_each_cpu(cpu, &audio_cpu_map) {
+		for_each_cpu(cpu, cluster_cpu_mask) {
 			ret = dev_pm_qos_update_request(
 					&msm_audio_req[cpu], latency);
 			if (1 == ret ) {
@@ -935,6 +956,9 @@ static void msm_audio_update_qos_request(u32 latency)
 				pr_err("%s: failed to update latency of core %d, error %d \n",
 								__func__, cpu, ret);
 			}
+			/* Limit the request to 2 Silver CPU cores. */
+			if (++num_req == 2)
+				break;
 		}
 	}
 }
