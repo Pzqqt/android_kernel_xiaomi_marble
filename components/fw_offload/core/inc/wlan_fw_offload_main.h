@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012 - 2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -82,6 +82,8 @@ enum wlan_fwol_southbound_event {
  *                             config legacy feature
  * @ble_scan_coex_policy: BLE Scan policy, true - better BLE scan result, false
  *                        better wlan throughput
+ * @coex_tput_shaping_enable: wifi traffic shaping enable, true - enable,
+ *					false - disable
  */
 struct wlan_fwol_coex_config {
 	uint8_t btc_mode;
@@ -103,6 +105,9 @@ struct wlan_fwol_coex_config {
 	bool    btc_three_way_coex_config_legacy_enable;
 #endif
 	bool ble_scan_coex_policy;
+#ifdef FEATURE_COEX_TPUT_SHAPING_CONFIG
+	bool coex_tput_shaping_enable;
+#endif
 };
 
 #define FWOL_THERMAL_LEVEL_MAX 4

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -17,8 +17,8 @@
  */
 #include <wlan_twt_ucfg_ext_api.h>
 #include <wlan_twt_ucfg_ext_cfg.h>
-#include "twt/core/src/wlan_twt_cfg.h"
-#include "twt/core/src/wlan_twt_main.h"
+#include "wlan_twt_cfg.h"
+#include "wlan_twt_main.h"
 
 QDF_STATUS ucfg_twt_psoc_open(struct wlan_objmgr_psoc *psoc)
 {

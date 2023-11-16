@@ -523,7 +523,8 @@ cm_roam_scan_offload_fill_lfr3_config(struct wlan_objmgr_vdev *vdev,
 	 * Instead of making another infra, send the RSN-CAPS in MSB of
 	 * beacon Caps.
 	 */
-	rsn_caps = rso_cfg->orig_sec_info.rsn_caps;
+	/* RSN caps with global user MFP which can be used for cross-AKM roam */
+	rsn_caps = rso_cfg->rso_rsn_caps;
 
 	/* Fill LFR3 specific self capabilities for roam scan mode TLV */
 	self_caps.ess = 1;

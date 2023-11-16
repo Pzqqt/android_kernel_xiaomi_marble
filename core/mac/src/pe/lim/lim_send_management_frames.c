@@ -5693,9 +5693,12 @@ returnAfterError:
 #endif
 
 QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
-		tSirMacAddr peer_mac, uint16_t tid,
-		struct pe_session *session, uint8_t addba_extn_present,
-		uint8_t amsdu_support, uint8_t is_wep, uint16_t calc_buff_size)
+					 tSirMacAddr peer_mac, uint16_t tid,
+					 struct pe_session *session,
+					 uint8_t addba_extn_present,
+					 uint8_t amsdu_support, uint8_t is_wep,
+					 uint16_t calc_buff_size,
+					 tSirMacAddr bssid)
 {
 
 	tDot11faddba_rsp frm;
@@ -5869,7 +5872,8 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 
 	/* Update A3 with the BSSID */
 	mgmt_hdr = (tpSirMacMgmtHdr) frame_ptr;
-	sir_copy_mac_addr(mgmt_hdr->bssId, session->bssId);
+
+	sir_copy_mac_addr(mgmt_hdr->bssId, bssid);
 
 	/* ADDBA Response is a robust mgmt action frame,
 	 * set the "protect" (aka WEP) bit in the FC

@@ -6283,6 +6283,36 @@ static void disconnect_sta_and_restart_sap(struct hdd_context *hdd_ctx,
 }
 
 /**
+ * hdd_check_chan_and_fill_freq() - to validate chan and convert into freq
+ * @pdev: The physical dev to cache the channels for
+ * @in_chan: input as channel number or freq
+ * @freq: frequency for input in_chan (output parameter)
+ *
+ * This function checks input "in_chan" is channel number, if yes then fills
+ * appropriate frequency into "freq" out param. If the "in_param" is greater
+ * than MAX_5GHZ_CHANNEL then gets the valid frequencies for legacy channels
+ * else get the valid channel for 6Ghz frequency.
+ *
+ * Return: true if "in_chan" is valid channel/frequency; false otherwise
+ */
+static bool hdd_check_chan_and_fill_freq(struct wlan_objmgr_pdev *pdev,
+					 uint32_t *in_chan, qdf_freq_t *freq)
+{
+	if (IS_CHANNEL_VALID(*in_chan)) {
+		*freq = wlan_reg_legacy_chan_to_freq(pdev, *in_chan);
+	} else if (WLAN_REG_IS_24GHZ_CH_FREQ(*in_chan) ||
+		   WLAN_REG_IS_5GHZ_CH_FREQ(*in_chan) ||
+		   WLAN_REG_IS_6GHZ_CHAN_FREQ(*in_chan)) {
+		*freq = *in_chan;
+		*in_chan = wlan_reg_freq_to_chan(pdev, *in_chan);
+	} else {
+		return false;
+	}
+
+	return true;
+}
+
+/**
  * hdd_parse_disable_chan_cmd() - Parse the channel list received
  * in command.
  * @adapter: pointer to hdd adapter
@@ -6291,11 +6321,13 @@ static void disconnect_sta_and_restart_sap(struct hdd_context *hdd_ctx,
  * This function parses the channel list received in the command.
  * command should be a string having format
  * SET_DISABLE_CHANNEL_LIST <num of channels>
- * <channels separated by spaces>.
- * If the command comes multiple times than this function will compare
- * the channels received in the command with the channles cached in the
- * first command, if the channel list matches with the cached channles,
- * it returns success otherwise returns failure.
+ * <channels separated by spaces>/<frequency separated by spaces>
+ * If this command has frequency as input, this function first converts into
+ * equivalent channel.
+ * If the command comes multiple times then the channels received in the
+ * command or channels converted from frequency will be compared with the
+ * channels cached in the first command, if the channel list matches with
+ * the cached channels, it returns success otherwise returns failure.
  *
  * Return: 0 on success, Error code on failure
  */
@@ -6307,6 +6339,7 @@ static int hdd_parse_disable_chan_cmd(struct hdd_adapter *adapter, uint8_t *ptr)
 	int j, i, temp_int, ret = 0, num_channels;
 	qdf_freq_t *chan_freq_list = NULL;
 	bool is_command_repeated = false;
+	qdf_freq_t freq = 0;
 
 	if (!hdd_ctx) {
 		hdd_err("HDD Context is NULL");
@@ -6406,15 +6439,16 @@ static int hdd_parse_disable_chan_cmd(struct hdd_adapter *adapter, uint8_t *ptr)
 			goto parse_failed;
 		}
 
-		if (!IS_CHANNEL_VALID(temp_int)) {
+		if (!hdd_check_chan_and_fill_freq(hdd_ctx->pdev, &temp_int,
+						  &freq)) {
 			hdd_err("Invalid channel number received");
 			ret = -EINVAL;
 			goto parse_failed;
 		}
 
-		hdd_debug("channel[%d] = %d", j, temp_int);
-		chan_freq_list[j] = wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev,
-								 temp_int);
+		hdd_debug("channel[%d] = %d Frequency[%d] = %d", j, temp_int,
+			  j, freq);
+		chan_freq_list[j] = freq;
 	}
 
 	/*extra arguments check*/
