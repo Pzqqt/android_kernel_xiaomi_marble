@@ -8198,6 +8198,41 @@ typedef struct {
     A_UINT32 fw_run_time;
     /** per chain runtime noise floor values in dBm */
     A_INT32 runTime_nf_chain[HTT_STATS_MAX_CHAINS];
+
+    /** DFS SW based progressive stats - start **/
+
+    /* current AP operating bandwidth (refer to WLAN_PHY_MODE) */
+    A_UINT32 current_OBW;
+    /* current AP device bandwidth (refer to WLAN_PHY_MODE) */
+    A_UINT32 current_DBW;
+    /* last_radar_type: last detected radar type
+     * This last_radar_type field contains a value whose meaning is not
+     * exposed to the host; this field is only provided for debug purposes.
+     */
+    A_UINT32 last_radar_type;
+    /* dfs_reg_domain: curent DFS regulatory domain
+     * This dfs_reg_domain field contains a value whose meaning is not
+     * exposed to the host; this field is only provided for debug purposes.
+     */
+    A_UINT32 dfs_reg_domain;
+    /* radar_mask_bit: Radar mask setting programmed in HW registers.
+     * Each bit represents a 20 MHz portion of the channel.
+     * Bit 0 represents the highest 20 MHz portion within the channel.
+     * For example...
+     * For a 80 MHz channel, bit0 = highest 20 MHz, bit3 = lowest 20 MHz
+     * For a 320 MHz channel, bit0 = highest 20 MHz, bit15 = lowest 20 MHz
+     */
+    A_UINT32 radar_mask_bit;
+    /* DFS radar rssi threshold (units = dBm) */
+    A_INT32 radar_rssi;
+    /* DFS global flags (refer to IEEE80211_CHAN_* defines) */
+    A_UINT32 radar_dfs_flags;
+    /* band center frequency of operating bandwidth (units = MHz) */
+    A_UINT32 band_center_frequency_OBW;
+    /* band center frequency of device bandwidth (units = MHz) */
+    A_UINT32 band_center_frequency_DBW;
+
+    /** DFS SW based progressive stats - end **/
 } htt_stats_phy_stats_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_phy_stats_tlv htt_phy_stats_tlv;
