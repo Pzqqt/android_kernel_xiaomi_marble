@@ -19179,6 +19179,7 @@ void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx)
 	bool is_bigtk_supported;
 	bool is_ocv_supported;
 	uint8_t iface_num;
+	bool dbs_one_by_one, dbs_two_by_two;
 
 	if (!wiphy) {
 		hdd_err("Invalid wiphy");
@@ -19246,7 +19247,17 @@ void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx)
 			}
 		}
 
-		if (!ucfg_policy_mgr_is_fw_supports_dbs(hdd_ctx->psoc)) {
+		status = ucfg_policy_mgr_get_dbs_hw_modes(hdd_ctx->psoc,
+							  &dbs_one_by_one,
+							  &dbs_two_by_two);
+
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("HW mode failure");
+			return;
+		}
+
+		if (!ucfg_policy_mgr_is_fw_supports_dbs(hdd_ctx->psoc) ||
+		    (dbs_one_by_one && !dbs_two_by_two)) {
 			wiphy->iface_combinations =
 						wlan_hdd_derived_combination;
 			iface_num = ARRAY_SIZE(wlan_hdd_derived_combination);

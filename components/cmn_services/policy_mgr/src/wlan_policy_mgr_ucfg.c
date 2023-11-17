@@ -271,3 +271,11 @@ bool ucfg_policy_mgr_is_fw_supports_dbs(struct wlan_objmgr_psoc *psoc)
 {
 	return policy_mgr_find_if_fw_supports_dbs(psoc);
 }
+
+QDF_STATUS ucfg_policy_mgr_get_dbs_hw_modes(struct wlan_objmgr_psoc *psoc,
+					    bool *one_by_one_dbs,
+					    bool *two_by_two_dbs)
+{
+	return policy_mgr_get_dbs_hw_modes(psoc, one_by_one_dbs,
+					   two_by_two_dbs);
+}
