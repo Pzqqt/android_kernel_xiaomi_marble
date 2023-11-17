@@ -497,6 +497,8 @@ struct owe_transition_mode_info {
  * @roam_invoke_source: roam invoke source
  * @roam_invoke_bssid: mac address used for roam invoke
  * @is_forced_roaming: bool value indicating if its forced roaming
+ * @rso_rsn_caps: rsn caps with global user MFP which can be used for
+ *                cross-AKM roaming
  */
 struct rso_config {
 #ifdef WLAN_FEATURE_HOST_ROAM
@@ -546,6 +548,7 @@ struct rso_config {
 	enum wlan_cm_source roam_invoke_source;
 	struct qdf_mac_addr roam_invoke_bssid;
 	bool is_forced_roaming;
+	uint16_t rso_rsn_caps;
 };
 
 /**
@@ -1534,6 +1537,19 @@ struct wlan_roam_scan_offload_params {
 };
 
 /**
+ * enum wlan_roam_offload_scan_rssi_flags - Flags for roam scan RSSI threshold
+ * params, this enums will be used in flags param of the structure
+ * wlan_roam_offload_scan_rssi_params
+ * @ROAM_SCAN_RSSI_THRESHOLD_INVALID_FLAG: invalid flag
+ * @ROAM_SCAN_RSSI_THRESHOLD_FLAG_ROAM_HI_RSSI_EN_ON_5G: enable high RSSI roam
+ * trigger support to roam from 5 GHz to 6 GHz band
+ */
+enum wlan_roam_offload_scan_rssi_flags {
+	ROAM_SCAN_RSSI_THRESHOLD_INVALID_FLAG,
+	ROAM_SCAN_RSSI_THRESHOLD_FLAG_ROAM_HI_RSSI_EN_ON_5G = BIT(0),
+};
+
+/**
  * struct wlan_roam_offload_scan_rssi_params - structure containing
  *              parameters for roam offload scan based on RSSI
  * @rssi_thresh: rssi threshold
@@ -1568,6 +1584,7 @@ struct wlan_roam_scan_offload_params {
  *                                  roam
  * @roam_data_rssi_threshold: Bad data RSSI threshold to roam
  * @rx_data_inactivity_time: Rx duration to check data RSSI
+ * @flags: Flags for roam scan RSSI threshold params
  */
 struct wlan_roam_offload_scan_rssi_params {
 	int8_t rssi_thresh;
@@ -1599,6 +1616,7 @@ struct wlan_roam_offload_scan_rssi_params {
 	uint32_t roam_data_rssi_threshold_triggers;
 	int32_t roam_data_rssi_threshold;
 	uint32_t rx_data_inactivity_time;
+	uint32_t flags;
 };
 
 /**
@@ -2295,6 +2313,8 @@ struct roam_pmkid_req_event {
  * scan that are already scanned as part of partial scan.
  * @send_roam_full_scan_6ghz_on_disc: Include the 6 GHz channels in roam full
  * scan only on prior discovery of any 6 GHz support in the environment.
+ * @send_roam_scan_offload_rssi_params: Set the RSSI parameters for roam
+ * offload scan
  */
 struct wlan_cm_roam_tx_ops {
 	QDF_STATUS (*send_vdev_set_pcl_cmd)(struct wlan_objmgr_vdev *vdev,
@@ -2334,6 +2354,9 @@ struct wlan_cm_roam_tx_ops {
 	QDF_STATUS (*send_roam_full_scan_6ghz_on_disc)(
 						struct wlan_objmgr_vdev *vdev,
 						uint8_t value);
+	QDF_STATUS (*send_roam_scan_offload_rssi_params)(
+		struct wlan_objmgr_vdev *vdev,
+		struct wlan_roam_offload_scan_rssi_params *roam_rssi_params);
 #endif
 };
 

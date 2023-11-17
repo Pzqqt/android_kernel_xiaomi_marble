@@ -5025,6 +5025,7 @@ roam_control_policy[QCA_ATTR_ROAM_CONTROL_MAX + 1] = {
 			.type = NLA_U8},
 	[QCA_ATTR_ROAM_CONTROL_FULL_SCAN_6GHZ_ONLY_ON_PRIOR_DISCOVERY] = {
 			.type = NLA_U8},
+	[QCA_ATTR_ROAM_CONTROL_CONNECTED_HIGH_RSSI_OFFSET] = {.type = NLA_U8},
 };
 
 /**
@@ -5707,6 +5708,31 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 							     vdev_id, value);
 		if (QDF_IS_STATUS_ERROR(status))
 			hdd_err("Fail to decide inclusion of 6 GHz channels");
+	}
+
+	attr = tb2[QCA_ATTR_ROAM_CONTROL_CONNECTED_HIGH_RSSI_OFFSET];
+	if (attr) {
+		value = nla_get_u8(attr);
+		if (!cfg_in_range(CFG_LFR_ROAM_SCAN_HI_RSSI_DELTA, value)) {
+			hdd_err("High RSSI offset value %d is out of range",
+				value);
+			return -EINVAL;
+		}
+
+		hdd_debug("%s roam scan high RSSI with offset: %d for vdev %d",
+			  value ? "Enable" : "Disable", value, vdev_id);
+
+		if (!value &&
+		    !wlan_cm_get_roam_scan_high_rssi_offset(hdd_ctx->psoc)) {
+			hdd_debug("Roam scan high RSSI is already disabled");
+			return -EINVAL;
+		}
+
+		status = ucfg_cm_set_roam_scan_high_rssi_offset(hdd_ctx->psoc,
+								vdev_id, value);
+		if (QDF_IS_STATUS_ERROR(status))
+			hdd_err("Fail to set roam scan high RSSI offset for vdev %d",
+				vdev_id);
 	}
 
 	return qdf_status_to_os_return(status);
@@ -19022,6 +19048,17 @@ static void wlan_hdd_update_lfr_wiphy(struct hdd_context *hdd_ctx)
 }
 #endif
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0))
+static void wlan_hdd_set_mfp_optional(struct wiphy *wiphy)
+{
+	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_MFP_OPTIONAL);
+}
+#else
+static void wlan_hdd_set_mfp_optional(struct wiphy *wiphy)
+{
+}
+#endif
+
 /*
  * In this function, wiphy structure is updated after QDF
  * initialization. In wlan_hdd_cfg80211_init, only the
@@ -19112,6 +19149,8 @@ void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx)
 	mac_spoofing_enabled = ucfg_scan_is_mac_spoofing_enabled(hdd_ctx->psoc);
 	if (mac_spoofing_enabled)
 		wlan_hdd_cfg80211_scan_randomization_init(wiphy);
+
+	wlan_hdd_set_mfp_optional(wiphy);
 }
 
 /**

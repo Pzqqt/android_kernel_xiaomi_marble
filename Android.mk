@@ -5,6 +5,14 @@ define wlog
 $(if $(WLAN_BUILD_DEBUG),$(info $(1)))
 endef
 
+LOCAL_MODULE_DDK_BUILD := false
+LOCAL_MODULE_DDK_ALLOW_UNSAFE_HEADERS := false
+
+ifeq ($(TARGET_BOARD_PLATFORM), blair)
+LOCAL_MODULE_DDK_BUILD := true
+LOCAL_MODULE_DDK_ALLOW_UNSAFE_HEADERS := true
+endif
+
 LOCAL_PATH := $(call my-dir)
 $(call wlog,LOCAL_PATH=$(LOCAL_PATH))
 BOARD_OPENSOURCE_DIR ?= vendor/qcom/opensource
@@ -61,7 +69,13 @@ endif
 endif
 
 ifeq ($(LOCAL_MULTI_KO), true)
+LOCAL_ANDROID_ROOT := $(shell pwd)
+LOCAL_WLAN_BLD_DIR := $(LOCAL_ANDROID_ROOT)/$(WLAN_BLD_DIR)
+$(shell find $(LOCAL_WLAN_BLD_DIR)/qcacld-3.0/ -maxdepth 1 \
+	-name '.*' ! -name '.git' -delete {} +)
 
+$(foreach chip, $(TARGET_WLAN_CHIP), \
+	$(shell ln -sf . $(LOCAL_WLAN_BLD_DIR)/qcacld-3.0/.$(chip)))
 include $(foreach chip, $(TARGET_WLAN_CHIP), $(LOCAL_PATH)/.$(chip)/Android.mk)
 
 else # Multi-ok check

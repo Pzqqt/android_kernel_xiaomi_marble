@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,7 +24,7 @@
 #include <target_if.h>
 #include <target_if_ext_twt.h>
 #include <wlan_twt_api.h>
-#include "twt/core/src/wlan_twt_main.h"
+#include "wlan_twt_main.h"
 
 static int
 target_if_twt_setup_complete_event_handler(ol_scn_t scn, uint8_t *event,

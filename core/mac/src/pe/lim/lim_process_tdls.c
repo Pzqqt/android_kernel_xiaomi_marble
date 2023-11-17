@@ -271,6 +271,7 @@ static void populate_dot11f_tdls_offchannel_params(
 		break;
 	}
 
+	wlan_reg_read_current_country(mac->psoc, reg_cc);
 	op_class = wlan_reg_dmn_get_opclass_from_channel(
 		reg_cc,
 		wlan_reg_freq_to_chan(mac->pdev, pe_session->curr_op_freq),
