@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,7 +25,7 @@
 #include <wlan_twt_public_structs.h>
 #include <wlan_twt_tgt_if_rx_api.h>
 #include <wlan_twt_tgt_if_ext_rx_ops.h>
-#include "twt/core/src/wlan_twt_common.h"
+#include "wlan_twt_common.h"
 
 static QDF_STATUS
 tgt_twt_enable_complete_resp_handler(struct wlan_objmgr_psoc *psoc,
