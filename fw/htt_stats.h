@@ -992,49 +992,64 @@ typedef struct {
     /** pdev uptime in microseconds **/
     A_UINT32 pdev_up_time_us_low;
     A_UINT32 pdev_up_time_us_high;
-} htt_tx_pdev_stats_cmn_tlv;
+} htt_stats_tx_pdev_cmn_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_cmn_tlv htt_tx_pdev_stats_cmn_tlv;
 
 #define HTT_TX_PDEV_STATS_URRN_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 /* NOTE: Variable length TLV, use length spec to infer array size */
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     A_UINT32      urrn_stats[1]; /* HTT_TX_PDEV_MAX_URRN_STATS */
-} htt_tx_pdev_stats_urrn_tlv_v;
+} htt_stats_tx_pdev_underrun_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_underrun_tlv htt_tx_pdev_stats_urrn_tlv_v;
 
 #define HTT_TX_PDEV_STATS_FLUSH_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 /* NOTE: Variable length TLV, use length spec to infer array size */
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     A_UINT32      flush_errs[1]; /* HTT_TX_PDEV_MAX_FLUSH_REASON_STATS */
-} htt_tx_pdev_stats_flush_tlv_v;
+} htt_stats_tx_pdev_flush_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_flush_tlv htt_tx_pdev_stats_flush_tlv_v;
 
 #define HTT_TX_PDEV_STATS_MLO_ABORT_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 /* NOTE: Variable length TLV, use length spec to infer array size */
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    A_UINT32      mlo_abort_cnt[]; /* HTT_TX_PDEV_MAX_MLO_ABORT_REASON_STATS */
-} htt_tx_pdev_stats_mlo_abort_tlv_v;
+    A_UINT32      mlo_abort_cnt[1]; /* HTT_TX_PDEV_MAX_MLO_ABORT_REASON_STATS */
+} htt_stats_tx_pdev_mlo_abort_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_mlo_abort_tlv htt_tx_pdev_stats_mlo_abort_tlv_v;
 
 #define HTT_TX_PDEV_STATS_MLO_TXOP_ABORT_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 /* NOTE: Variable length TLV, use length spec to infer array size */
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    A_UINT32      mlo_txop_abort_cnt[]; /* HTT_TX_PDEV_MAX_MLO_ABORT_REASON_STATS */
-} htt_tx_pdev_stats_mlo_txop_abort_tlv_v;
+    A_UINT32      mlo_txop_abort_cnt[1]; /* HTT_TX_PDEV_MAX_MLO_ABORT_REASON_STATS */
+} htt_stats_tx_pdev_mlo_txop_abort_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_mlo_txop_abort_tlv
+    htt_tx_pdev_stats_mlo_txop_abort_tlv_v;
 
 #define HTT_TX_PDEV_STATS_SIFS_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 /* NOTE: Variable length TLV, use length spec to infer array size */
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     A_UINT32      sifs_status[1]; /* HTT_TX_PDEV_MAX_SIFS_BURST_STATS */
-} htt_tx_pdev_stats_sifs_tlv_v;
+} htt_stats_tx_pdev_sifs_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_sifs_tlv htt_tx_pdev_stats_sifs_tlv_v;
 
 #define HTT_TX_PDEV_STATS_PHY_ERR_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 /* NOTE: Variable length TLV, use length spec to infer array size */
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     A_UINT32      phy_errs[1]; /* HTT_TX_PDEV_MAX_PHY_ERR_STATS */
-} htt_tx_pdev_stats_phy_err_tlv_v;
+} htt_stats_tx_pdev_phy_err_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_phy_err_tlv htt_tx_pdev_stats_phy_err_tlv_v;
 
 /*
  * Each array in the below struct has 16 elements, to cover the 16 possible
@@ -1048,7 +1063,10 @@ typedef struct { /* DEPRECATED */
     A_UINT32 aifs[HTT_NUM_AC_WMM][HTT_STATS_MUEDCA_VALUE_MAX];
     A_UINT32 cw_min[HTT_NUM_AC_WMM][HTT_STATS_MUEDCA_VALUE_MAX];
     A_UINT32 cw_max[HTT_NUM_AC_WMM][HTT_STATS_MUEDCA_VALUE_MAX];
-} htt_tx_pdev_muedca_params_stats_tlv_v;
+} htt_stats_tx_pdev_muedca_params_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_muedca_params_stats_tlv
+    htt_tx_pdev_muedca_params_stats_tlv_v;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -1059,7 +1077,10 @@ typedef struct {
     A_UINT32 muofdma_relaxed_mu_edca[HTT_NUM_AC_WMM];
     A_UINT32 latency_mu_edca[HTT_NUM_AC_WMM];
     A_UINT32 psd_boost_mu_edca[HTT_NUM_AC_WMM];
-} htt_tx_pdev_mu_edca_params_stats_tlv_v;
+} htt_stats_tx_pdev_mu_edca_params_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_mu_edca_params_stats_tlv
+    htt_tx_pdev_mu_edca_params_stats_tlv_v;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -1071,7 +1092,10 @@ typedef struct {
     A_UINT32 ul_muofdma_medium_aggressive[HTT_NUM_AC_WMM];
     A_UINT32 ul_muofdma_highly_aggressive[HTT_NUM_AC_WMM];
     A_UINT32 ul_muofdma_default_relaxed[HTT_NUM_AC_WMM];
-} htt_tx_pdev_ap_edca_params_stats_tlv_v;
+} htt_stats_tx_pdev_ap_edca_params_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_ap_edca_params_stats_tlv
+    htt_tx_pdev_ap_edca_params_stats_tlv_v;
 
 #define HTT_TX_PDEV_SIFS_BURST_HIST_STATS 10
 #define HTT_TX_PDEV_STATS_SIFS_HIST_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
@@ -1079,7 +1103,9 @@ typedef struct {
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     A_UINT32      sifs_hist_status[1]; /* HTT_TX_PDEV_SIFS_BURST_HIST_STATS */
-} htt_tx_pdev_stats_sifs_hist_tlv_v;
+} htt_stats_tx_pdev_sifs_hist_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_sifs_hist_tlv htt_tx_pdev_stats_sifs_hist_tlv_v;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -1088,7 +1114,10 @@ typedef struct {
     A_UINT32      num_data_ppdus_ax_su;
     A_UINT32      num_data_ppdus_ac_su_txbf;
     A_UINT32      num_data_ppdus_ax_su_txbf;
-} htt_tx_pdev_stats_tx_ppdu_stats_tlv_v;
+} htt_stats_tx_pdev_tx_ppdu_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_tx_ppdu_stats_tlv
+    htt_tx_pdev_stats_tx_ppdu_stats_tlv_v;
 
 typedef enum {
     HTT_TX_WAL_ISR_SCHED_SUCCESS,
@@ -1130,8 +1159,9 @@ typedef struct {
     A_UINT32 mu_mimo_num_seq_posted[HTT_STATS_NUM_NR_BINS];
 
     A_UINT32 mu_mimo_num_ppdu_posted_per_burst[HTT_STATS_MAX_NUM_MU_PPDU_PER_BURST_WORDS];
-
-} htt_pdev_mu_ppdu_dist_tlv_v;
+} htt_stats_mu_ppdu_dist_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_mu_ppdu_dist_tlv htt_pdev_mu_ppdu_dist_tlv_v;
 
 #define HTT_TX_PDEV_STATS_TRIED_MPDU_CNT_HIST_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 /* NOTE: Variable length TLV, use length spec to infer array size .
@@ -1151,13 +1181,18 @@ typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     A_UINT32      hist_bin_size;
     A_UINT32      tried_mpdu_cnt_hist[1]; /* HTT_TX_PDEV_TRIED_MPDU_CNT_HIST */
-} htt_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v;
+} htt_stats_tx_pdev_tried_mpdu_cnt_hist_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_tried_mpdu_cnt_hist_tlv
+    htt_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /* Num MGMT MPDU transmitted by the target */
     A_UINT32 fw_tx_mgmt_subtype[HTT_STATS_SUBTYPE_MAX];
-} htt_pdev_ctrl_path_tx_stats_tlv_v;
+} htt_stats_pdev_ctrl_path_tx_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_pdev_ctrl_path_tx_stats_tlv htt_pdev_ctrl_path_tx_stats_tlv_v;
 
 /* STATS_TYPE: HTT_DBG_EXT_STATS_PDEV_TX
  * TLV_TAGS:
@@ -1177,16 +1212,16 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct _htt_tx_pdev_stats {
-    htt_tx_pdev_stats_cmn_tlv                   cmn_tlv;
-    htt_tx_pdev_stats_urrn_tlv_v                underrun_tlv;
-    htt_tx_pdev_stats_sifs_tlv_v                sifs_tlv;
-    htt_tx_pdev_stats_flush_tlv_v               flush_tlv;
-    htt_tx_pdev_stats_phy_err_tlv_v             phy_err_tlv;
-    htt_tx_pdev_stats_sifs_hist_tlv_v           sifs_hist_tlv;
-    htt_tx_pdev_stats_tx_ppdu_stats_tlv_v       tx_su_tlv;
-    htt_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v tried_mpdu_cnt_hist_tlv;
-    htt_pdev_ctrl_path_tx_stats_tlv_v           ctrl_path_tx_tlv;
-    htt_pdev_mu_ppdu_dist_tlv_v                 mu_ppdu_dist_tlv;
+    htt_stats_tx_pdev_cmn_tlv                   cmn_tlv;
+    htt_stats_tx_pdev_underrun_tlv              underrun_tlv;
+    htt_stats_tx_pdev_sifs_tlv                  sifs_tlv;
+    htt_stats_tx_pdev_flush_tlv                 flush_tlv;
+    htt_stats_tx_pdev_phy_err_tlv               phy_err_tlv;
+    htt_stats_tx_pdev_sifs_hist_tlv             sifs_hist_tlv;
+    htt_stats_tx_pdev_tx_ppdu_stats_tlv         tx_su_tlv;
+    htt_stats_tx_pdev_tried_mpdu_cnt_hist_tlv   tried_mpdu_cnt_hist_tlv;
+    htt_stats_pdev_ctrl_path_tx_stats_tlv       ctrl_path_tx_tlv;
+    htt_stats_mu_ppdu_dist_tlv                  mu_ppdu_dist_tlv;
 } htt_tx_pdev_stats_t;
 
 /* == SOC ERROR STATS == */
@@ -1199,7 +1234,9 @@ typedef struct {
     A_UINT8  hw_intr_name[HTT_STATS_MAX_HW_INTR_NAME_LEN];
     A_UINT32 mask;
     A_UINT32 count;
-} htt_hw_stats_intr_misc_tlv;
+} htt_stats_hw_intr_misc_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_hw_intr_misc_tlv htt_hw_stats_intr_misc_tlv;
 
 #define HTT_STATS_MAX_HW_MODULE_NAME_LEN 8
 typedef struct {
@@ -1207,7 +1244,9 @@ typedef struct {
     /* Stored as little endian */
     A_UINT8  hw_module_name[HTT_STATS_MAX_HW_MODULE_NAME_LEN];
     A_UINT32 count;
-} htt_hw_stats_wd_timeout_tlv;
+} htt_stats_hw_wd_timeout_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_hw_wd_timeout_tlv htt_hw_stats_wd_timeout_tlv;
 
 #define HTT_HW_STATS_PDEV_ERRS_MAC_ID_M 0x000000ff
 #define HTT_HW_STATS_PDEV_ERRS_MAC_ID_S 0
@@ -1288,7 +1327,9 @@ typedef struct {
     A_UINT32 rx_dest_drain_prerequisite_invld;
     A_UINT32 rx_dest_drain_skip_for_non_lmac_reset;
     A_UINT32 rx_dest_drain_hw_fifo_not_empty_post_drain_wait;
-} htt_hw_stats_pdev_errs_tlv;
+} htt_stats_hw_pdev_errs_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_hw_pdev_errs_tlv htt_hw_stats_pdev_errs_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -1308,7 +1349,9 @@ typedef struct {
     A_UINT32 sch_rx_ppdu_no_response;
     A_UINT32 sch_selfgen_response;
     A_UINT32 sch_rx_sifs_resp_trigger;
-} htt_hw_stats_whal_tx_tlv;
+} htt_stats_whal_tx_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_whal_tx_tlv htt_hw_stats_whal_tx_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -1333,7 +1376,9 @@ typedef struct {
      * track of which HW WAR is WAR 0, which HW WAR is WAR 1, etc.
      */
     A_UINT32 hw_wars[1/*or more*/];
-} htt_hw_war_stats_tlv;
+} htt_stats_hw_war_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_hw_war_tlv htt_hw_war_stats_tlv;
 
 /* STATS_TYPE: HTT_DBG_EXT_STATS_PDEV_ERROR
  * TLV_TAGS:
@@ -1348,11 +1393,11 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct _htt_pdev_err_stats {
-    htt_hw_stats_pdev_errs_tlv  pdev_errs;
-    htt_hw_stats_intr_misc_tlv  misc_stats[1];
-    htt_hw_stats_wd_timeout_tlv wd_timeout[1];
-    htt_hw_stats_whal_tx_tlv    whal_tx_stats;
-    htt_hw_war_stats_tlv        hw_war;
+    htt_stats_hw_pdev_errs_tlv  pdev_errs;
+    htt_stats_hw_intr_misc_tlv  misc_stats[1];
+    htt_stats_hw_wd_timeout_tlv wd_timeout[1];
+    htt_stats_whal_tx_tlv       whal_tx_stats;
+    htt_stats_hw_war_tlv        hw_war;
 } htt_hw_err_stats_t;
 
 /* ============ PEER STATS ============ */
@@ -1419,7 +1464,9 @@ typedef struct _htt_msdu_flow_stats_tlv {
      * BIT [31 : 16]   :- reserved
      */
     A_UINT32 current_drop_th;
-} htt_msdu_flow_stats_tlv;
+} htt_stats_peer_msdu_flowq_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_peer_msdu_flowq_tlv htt_msdu_flow_stats_tlv;
 
 #define MAX_HTT_TID_NAME 8
 
@@ -1508,7 +1555,9 @@ typedef struct _htt_tx_tid_stats_tlv {
     A_UINT32 block_module_id;
     /** tid tx airtime in sec */
     A_UINT32 tid_tx_airtime;
-} htt_tx_tid_stats_tlv;
+} htt_stats_tx_tid_details_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_tid_details_tlv htt_tx_tid_stats_tlv;
 
 /* Tidq stats */
 typedef struct _htt_tx_tid_stats_v1_tlv {
@@ -1572,7 +1621,9 @@ typedef struct _htt_tx_tid_stats_v1_tlv {
      */
     A_UINT32 head_msdu_tqm_timestamp_us;
     A_UINT32 head_msdu_tqm_latency_us;
-} htt_tx_tid_stats_v1_tlv;
+} htt_stats_tx_tid_details_v1_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_tid_details_v1_tlv htt_tx_tid_stats_v1_tlv;
 
 #define HTT_RX_TID_STATS_SW_PEER_ID_M 0x0000ffff
 #define HTT_RX_TID_STATS_SW_PEER_ID_S 0
@@ -1620,7 +1671,9 @@ typedef struct _htt_rx_tid_stats_tlv {
     A_UINT32 rxdesc_err_decrypt;
     /** tid rx airtime in sec */
     A_UINT32 tid_rx_airtime;
-} htt_rx_tid_stats_tlv;
+} htt_stats_rx_tid_details_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_tid_details_tlv htt_rx_tid_stats_tlv;
 
 #define HTT_MAX_COUNTER_NAME 8
 typedef struct {
@@ -1628,7 +1681,9 @@ typedef struct {
     /** Stored as little endian */
     A_UINT8  counter_name[HTT_MAX_COUNTER_NAME];
     A_UINT32 count;
-} htt_counter_tlv;
+} htt_stats_counter_name_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_counter_name_tlv htt_counter_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -1670,7 +1725,9 @@ typedef struct {
     A_UINT32 inactive_time;
     /** Number of MPDUs dropped after max retries */
     A_UINT32 remove_mpdus_max_retries;
-} htt_peer_stats_cmn_tlv;
+} htt_stats_peer_stats_cmn_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_peer_stats_cmn_tlv htt_peer_stats_cmn_tlv;
 
 #define HTT_PEER_DETAILS_ML_PEER_OFFSET_BYTES 32
 #define HTT_PEER_DETAILS_ML_PEER_OFFSET_DWORD 8
@@ -1720,7 +1777,9 @@ typedef struct {
     /* Dword 9 */
     A_UINT32     src_info          : 12,  /* [11:0] */
                  rsvd1             : 20;  /* [31:12] */
-} htt_peer_details_tlv;
+} htt_stats_peer_details_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_peer_details_tlv htt_peer_details_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -1743,7 +1802,9 @@ typedef struct {
         tx_monitor_override_sta : 1,
         rx_monitor_override_sta : 1,
         reserved1               : 30;
-} htt_ast_entry_tlv;
+} htt_stats_ast_entry_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_ast_entry_tlv htt_ast_entry_tlv;
 
 typedef enum {
     HTT_STATS_DIRECTION_TX,
@@ -1853,7 +1914,9 @@ typedef struct _htt_tx_peer_rate_stats_tlv {
     A_UINT32 tx_gi_ext[HTT_TX_PEER_STATS_NUM_GI_COUNTERS][HTT_TX_PEER_STATS_NUM_EXTRA_MCS_COUNTERS];
     A_UINT32 reduced_tx_bw[HTT_TX_PEER_STATS_NUM_REDUCED_CHAN_TYPES][HTT_TX_PEER_STATS_NUM_BW_COUNTERS];
     A_UINT32 tx_bw_320mhz;
-} htt_tx_peer_rate_stats_tlv;
+} htt_stats_peer_tx_rate_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_peer_tx_rate_stats_tlv htt_tx_peer_rate_stats_tlv;
 
 #define HTT_RX_PEER_STATS_NUM_MCS_COUNTERS 12 /* 0-11 */
 #define HTT_RX_PEER_STATS_NUM_EXTRA_MCS_COUNTERS 2 /* 12, 13 */
@@ -1931,7 +1994,9 @@ typedef struct _htt_rx_peer_rate_stats_tlv {
     A_UINT32 rx_gi_ext[HTT_RX_PEER_STATS_NUM_GI_COUNTERS][HTT_RX_PEER_STATS_NUM_EXTRA_MCS_COUNTERS];
     A_UINT32 reduced_rx_bw[HTT_RX_PEER_STATS_NUM_REDUCED_CHAN_TYPES][HTT_RX_PEER_STATS_NUM_BW_COUNTERS];
     A_INT8   rx_per_chain_rssi_in_dbm_ext[HTT_RX_PEER_STATS_NUM_SPATIAL_STREAMS][HTT_RX_PEER_STATS_NUM_BW_EXT_COUNTERS];
-} htt_rx_peer_rate_stats_tlv;
+} htt_stats_peer_rx_rate_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_peer_rx_rate_stats_tlv htt_rx_peer_rate_stats_tlv;
 
 typedef enum {
     HTT_PEER_STATS_REQ_MODE_NO_QUERY,
@@ -1968,7 +2033,9 @@ typedef struct {
     A_UINT32 peer_rx_active_dur_us_low;
     A_UINT32 peer_rx_active_dur_us_high;
     A_UINT32 peer_curr_rate_kbps;
-} htt_peer_sched_stats_tlv;
+} htt_stats_peer_sched_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_peer_sched_stats_tlv htt_peer_sched_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -1996,7 +2063,9 @@ typedef struct {
     /* Per peer Manual 11ax UL OFDMA trigger and trigger error counts */
     A_UINT32 ax_manual_ulofdma_trig_count;
     A_UINT32 ax_manual_ulofdma_trig_err_count;
-} htt_peer_ax_ofdma_stats_tlv;
+} htt_stats_peer_ax_ofdma_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_peer_ax_ofdma_stats_tlv htt_peer_ax_ofdma_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -2004,7 +2073,9 @@ typedef struct {
     /* Per peer Manual 11be UL OFDMA trigger and trigger error counts */
     A_UINT32 be_manual_ulofdma_trig_count;
     A_UINT32 be_manual_ulofdma_trig_err_count;
-} htt_peer_be_ofdma_stats_tlv;
+} htt_stats_peer_be_ofdma_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_peer_be_ofdma_stats_tlv htt_peer_be_ofdma_stats_tlv;
 
 
 /* config_param0 */
@@ -2084,19 +2155,19 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct _htt_peer_stats {
-    htt_peer_stats_cmn_tlv cmn_tlv;
+    htt_stats_peer_stats_cmn_tlv      cmn_tlv;
 
-    htt_peer_details_tlv peer_details;
+    htt_stats_peer_details_tlv        peer_details;
     /* from g_rate_info_stats */
-    htt_tx_peer_rate_stats_tlv tx_rate;
-    htt_rx_peer_rate_stats_tlv rx_rate;
-    htt_tx_tid_stats_tlv       tx_tid_stats[1];
-    htt_rx_tid_stats_tlv       rx_tid_stats[1];
-    htt_msdu_flow_stats_tlv    msdu_flowq[1];
-    htt_tx_tid_stats_v1_tlv    tx_tid_stats_v1[1];
-    htt_peer_sched_stats_tlv   peer_sched_stats;
-    htt_peer_ax_ofdma_stats_tlv ax_ofdma_stats;
-    htt_peer_be_ofdma_stats_tlv be_ofdma_stats;
+    htt_stats_peer_tx_rate_stats_tlv  tx_rate;
+    htt_stats_peer_rx_rate_stats_tlv  rx_rate;
+    htt_stats_tx_tid_details_tlv      tx_tid_stats[1];
+    htt_stats_rx_tid_details_tlv      rx_tid_stats[1];
+    htt_stats_peer_msdu_flowq_tlv     msdu_flowq[1];
+    htt_stats_tx_tid_details_v1_tlv   tx_tid_stats_v1[1];
+    htt_stats_peer_sched_stats_tlv    peer_sched_stats;
+    htt_stats_peer_ax_ofdma_stats_tlv ax_ofdma_stats;
+    htt_stats_peer_be_ofdma_stats_tlv be_ofdma_stats;
 } htt_peer_stats_t;
 
 /* =========== ACTIVE PEER LIST ========== */
@@ -2110,7 +2181,7 @@ typedef struct _htt_peer_stats {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_peer_details_tlv peer_details[1];
+    htt_stats_peer_details_tlv peer_details[1];
 } htt_active_peer_details_list_t;
 
 /* =========== MUMIMO HWQ stats =========== */
@@ -2124,7 +2195,9 @@ typedef struct {
     A_UINT32      mu_mimo_sch_failed;
     /** number of MU MIMO PPDUs posted to HW */
     A_UINT32      mu_mimo_ppdu_posted;
-} htt_tx_hwq_mu_mimo_sch_stats_tlv;
+} htt_stats_tx_hwq_mumimo_sch_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_hwq_mumimo_sch_stats_tlv htt_tx_hwq_mu_mimo_sch_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -2142,7 +2215,10 @@ typedef struct {
     A_UINT32      mu_mimo_mpdu_underrun_usr;
     /** 11AC DL MU MIMO ampdu underrun encountered, per user */
     A_UINT32      mu_mimo_ampdu_underrun_usr;
-} htt_tx_hwq_mu_mimo_mpdu_stats_tlv;
+} htt_stats_tx_hwq_mumimo_mpdu_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_hwq_mumimo_mpdu_stats_tlv
+    htt_tx_hwq_mu_mimo_mpdu_stats_tlv;
 
 #define HTT_TX_HWQ_MU_MIMO_CMN_STATS_MAC_ID_M 0x000000ff
 #define HTT_TX_HWQ_MU_MIMO_CMN_STATS_MAC_ID_S 0
@@ -2179,19 +2255,21 @@ typedef struct {
      * BIT [31 : 16]   :- reserved
      */
     A_UINT32 mac_id__hwq_id__word;
-} htt_tx_hwq_mu_mimo_cmn_stats_tlv;
+} htt_stats_tx_hwq_mumimo_cmn_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_hwq_mumimo_cmn_stats_tlv htt_tx_hwq_mu_mimo_cmn_stats_tlv;
 
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    struct _hwq_mu_mimo_stats {
-        htt_tx_hwq_mu_mimo_cmn_stats_tlv  cmn_tlv;
+    struct {
+        htt_stats_tx_hwq_mumimo_cmn_stats_tlv cmn_tlv;
         /** WAL_TX_STATS_MAX_GROUP_SIZE */
-        htt_tx_hwq_mu_mimo_sch_stats_tlv  mu_mimo_sch_stats_tlv[1];
+        htt_stats_tx_hwq_mumimo_sch_stats_tlv  mu_mimo_sch_stats_tlv[1];
         /** WAL_TX_STATS_TX_MAX_NUM_USERS */
-        htt_tx_hwq_mu_mimo_mpdu_stats_tlv mu_mimo_mpdu_stats_tlv[1];
+        htt_stats_tx_hwq_mumimo_mpdu_stats_tlv mu_mimo_mpdu_stats_tlv[1];
     } hwq[1];
 } htt_tx_hwq_mu_mimo_stats_t;
 
@@ -2284,7 +2362,9 @@ typedef struct {
 
     /** Number of times txq timeout happened */
     A_UINT32 txq_timeout;
-} htt_tx_hwq_stats_cmn_tlv;
+} htt_stats_tx_hwq_cmn_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_hwq_cmn_tlv htt_tx_hwq_stats_cmn_tlv;
 
 #define HTT_TX_HWQ_DIFS_LATENCY_STATS_TLV_SZ(_num_elems) (sizeof(A_UINT32) + /* hist_intvl */ \
                                                           (sizeof(A_UINT32) * (_num_elems)))
@@ -2294,7 +2374,9 @@ typedef struct {
     A_UINT32      hist_intvl;
     /** histogram of ppdu post to hwsch - > cmd status received */
     A_UINT32 difs_latency_hist[1]; /* HTT_TX_HWQ_MAX_DIFS_LATENCY_BINS */
-} htt_tx_hwq_difs_latency_stats_tlv_v;
+} htt_stats_tx_hwq_difs_latency_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_hwq_difs_latency_tlv htt_tx_hwq_difs_latency_stats_tlv_v;
 
 #define HTT_TX_HWQ_CMD_RESULT_STATS_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 
@@ -2303,7 +2385,9 @@ typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /** Histogram of sched cmd result */
     A_UINT32 cmd_result[1]; /* HTT_TX_HWQ_MAX_CMD_RESULT_STATS */
-} htt_tx_hwq_cmd_result_stats_tlv_v;
+} htt_stats_tx_hwq_cmd_result_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_hwq_cmd_result_tlv htt_tx_hwq_cmd_result_stats_tlv_v;
 
 #define HTT_TX_HWQ_CMD_STALL_STATS_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 
@@ -2312,7 +2396,9 @@ typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /** Histogram of various pause conitions */
     A_UINT32 cmd_stall_status[1]; /* HTT_TX_HWQ_MAX_CMD_STALL_STATS */
-} htt_tx_hwq_cmd_stall_stats_tlv_v;
+} htt_stats_tx_hwq_cmd_stall_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_hwq_cmd_stall_tlv htt_tx_hwq_cmd_stall_stats_tlv_v;
 
 #define HTT_TX_HWQ_FES_RESULT_STATS_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 
@@ -2321,7 +2407,9 @@ typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /** Histogram of number of user fes result */
     A_UINT32 fes_result[1]; /* HTT_TX_HWQ_MAX_FES_RESULT_STATS */
-} htt_tx_hwq_fes_result_stats_tlv_v;
+} htt_stats_tx_hwq_fes_status_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_hwq_fes_status_tlv htt_tx_hwq_fes_result_stats_tlv_v;
 
 #define HTT_TX_HWQ_TRIED_MPDU_CNT_HIST_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 /* NOTE: Variable length TLV, use length spec to infer array size
@@ -2342,7 +2430,10 @@ typedef struct {
     A_UINT32      hist_bin_size;
     /** Histogram of number of mpdus on tried mpdu */
     A_UINT32 tried_mpdu_cnt_hist[1]; /* HTT_TX_HWQ_TRIED_MPDU_CNT_HIST */
-} htt_tx_hwq_tried_mpdu_cnt_hist_tlv_v;
+} htt_stats_tx_hwq_tried_mpdu_cnt_hist_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_hwq_tried_mpdu_cnt_hist_tlv
+    htt_tx_hwq_tried_mpdu_cnt_hist_tlv_v;
 
 #define HTT_TX_HWQ_TXOP_USED_CNT_HIST_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 /* NOTE: Variable length TLV, use length spec to infer array size
@@ -2360,7 +2451,10 @@ typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /** Histogram of txop used cnt */
     A_UINT32 txop_used_cnt_hist[1]; /* HTT_TX_HWQ_TXOP_USED_CNT_HIST */
-} htt_tx_hwq_txop_used_cnt_hist_tlv_v;
+} htt_stats_tx_hwq_txop_used_cnt_hist_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_hwq_txop_used_cnt_hist_tlv
+    htt_tx_hwq_txop_used_cnt_hist_tlv_v;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_TX_HWQ
  * TLV_TAGS:
@@ -2383,14 +2477,14 @@ typedef struct {
  * HWQ distinctly.
  */
 typedef struct _htt_tx_hwq_stats {
-    htt_stats_string_tlv                 hwq_str_tlv;
-    htt_tx_hwq_stats_cmn_tlv             cmn_tlv;
-    htt_tx_hwq_difs_latency_stats_tlv_v  difs_tlv;
-    htt_tx_hwq_cmd_result_stats_tlv_v    cmd_result_tlv;
-    htt_tx_hwq_cmd_stall_stats_tlv_v     cmd_stall_tlv;
-    htt_tx_hwq_fes_result_stats_tlv_v    fes_stats_tlv;
-    htt_tx_hwq_tried_mpdu_cnt_hist_tlv_v tried_mpdu_tlv;
-    htt_tx_hwq_txop_used_cnt_hist_tlv_v  txop_used_tlv;
+    htt_stats_string_tlv                     hwq_str_tlv;
+    htt_stats_tx_hwq_cmn_tlv                 cmn_tlv;
+    htt_stats_tx_hwq_difs_latency_tlv        difs_tlv;
+    htt_stats_tx_hwq_cmd_result_tlv          cmd_result_tlv;
+    htt_stats_tx_hwq_cmd_stall_tlv           cmd_stall_tlv;
+    htt_stats_tx_hwq_fes_status_tlv          fes_stats_tlv;
+    htt_stats_tx_hwq_tried_mpdu_cnt_hist_tlv tried_mpdu_tlv;
+    htt_stats_tx_hwq_txop_used_cnt_hist_tlv  txop_used_tlv;
 } htt_tx_hwq_stats_t;
 
 /* == TX SELFGEN STATS == */
@@ -2539,7 +2633,9 @@ typedef struct {
      * (Smart basic triggers are only used with intervals <= 40 ms.)
      */
     A_UINT32 smart_basic_trig_sch_histogram[HTT_MAX_NUM_SBT_INTR];
-} htt_tx_selfgen_cmn_stats_tlv;
+} htt_stats_tx_selfgen_cmn_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_selfgen_cmn_stats_tlv htt_tx_selfgen_cmn_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -2571,7 +2667,9 @@ typedef struct {
     A_UINT32 ac_mu_mimo_brpoll_2_queued;
     /** 11AC VHT MU MIMO BR-POLL for user 3 frame queued to the HW */
     A_UINT32 ac_mu_mimo_brpoll_3_queued;
-} htt_tx_selfgen_ac_stats_tlv;
+} htt_stats_tx_selfgen_ac_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_selfgen_ac_stats_tlv htt_tx_selfgen_ac_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -2646,7 +2744,9 @@ typedef struct {
     A_UINT32 ax_mu_bar_trigger_per_ac[HTT_NUM_AC_WMM];
     /** 11AX HE MU-BAR Trigger frames per AC completed with error(s) */
     A_UINT32 ax_mu_bar_trigger_errors_per_ac[HTT_NUM_AC_WMM];
-} htt_tx_selfgen_ax_stats_tlv;
+} htt_stats_tx_selfgen_ax_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_selfgen_ax_stats_tlv htt_tx_selfgen_ax_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -2709,7 +2809,9 @@ typedef struct {
     A_UINT32 be_mu_bar_trigger_per_ac[HTT_NUM_AC_WMM];
     /** 11BE EHT MU-BAR Trigger frames per AC completed with error(s) */
     A_UINT32 be_mu_bar_trigger_errors_per_ac[HTT_NUM_AC_WMM];
-} htt_tx_selfgen_be_stats_tlv;
+} htt_stats_tx_selfgen_be_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_selfgen_be_stats_tlv htt_tx_selfgen_be_stats_tlv;
 
 typedef struct { /* DEPRECATED */
     htt_tlv_hdr_t tlv_hdr;
@@ -2721,7 +2823,9 @@ typedef struct { /* DEPRECATED */
     A_UINT32 ax_ofdma_ndpa_flushed[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
     /** 11AX HE OFDMA NDPA frame completed with error(s) */
     A_UINT32 ax_ofdma_ndpa_err[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
-} htt_txbf_ofdma_ndpa_stats_tlv;
+} htt_stats_txbf_ofdma_ndpa_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_txbf_ofdma_ndpa_stats_tlv htt_txbf_ofdma_ndpa_stats_tlv;
 
 typedef struct { /* DEPRECATED */
     htt_tlv_hdr_t tlv_hdr;
@@ -2733,7 +2837,9 @@ typedef struct { /* DEPRECATED */
     A_UINT32 ax_ofdma_ndp_flushed[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
     /** 11AX HE OFDMA NDPA frame completed with error(s) */
     A_UINT32 ax_ofdma_ndp_err[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
-} htt_txbf_ofdma_ndp_stats_tlv;
+} htt_stats_txbf_ofdma_ndp_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_txbf_ofdma_ndp_stats_tlv htt_txbf_ofdma_ndp_stats_tlv;
 
 typedef struct { /* DEPRECATED */
     htt_tlv_hdr_t tlv_hdr;
@@ -2750,7 +2856,9 @@ typedef struct { /* DEPRECATED */
      * completed with error(s)
      */
     A_UINT32 ax_ofdma_brp_err_num_cbf_rcvd[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS+1];
-} htt_txbf_ofdma_brp_stats_tlv;
+} htt_stats_txbf_ofdma_brp_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_txbf_ofdma_brp_stats_tlv htt_txbf_ofdma_brp_stats_tlv;
 
 typedef struct { /* DEPRECATED */
     htt_tlv_hdr_t tlv_hdr;
@@ -2773,7 +2881,9 @@ typedef struct { /* DEPRECATED */
     A_UINT32 ax_ofdma_num_usrs_sound[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
     /** 11AX HE OFDMA number of users for which sounding was forced during TX */
     A_UINT32 ax_ofdma_num_usrs_force_sound[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
-} htt_txbf_ofdma_steer_stats_tlv;
+} htt_stats_txbf_ofdma_steer_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_txbf_ofdma_steer_stats_tlv htt_txbf_ofdma_steer_stats_tlv;
 
 /* Note:
  * This struct htt_tx_pdev_txbf_ofdma_stats_t and all its constituent
@@ -2781,10 +2891,10 @@ typedef struct { /* DEPRECATED */
  * stats into a variable length array
  */
 typedef struct { /* DEPRECATED */
-    htt_txbf_ofdma_ndpa_stats_tlv ofdma_ndpa_tlv;
-    htt_txbf_ofdma_ndp_stats_tlv ofdma_ndp_tlv;
-    htt_txbf_ofdma_brp_stats_tlv ofdma_brp_tlv;
-    htt_txbf_ofdma_steer_stats_tlv ofdma_steer_tlv;
+    htt_stats_txbf_ofdma_ndpa_stats_tlv  ofdma_ndpa_tlv;
+    htt_stats_txbf_ofdma_ndp_stats_tlv   ofdma_ndp_tlv;
+    htt_stats_txbf_ofdma_brp_stats_tlv   ofdma_brp_tlv;
+    htt_stats_txbf_ofdma_steer_stats_tlv ofdma_steer_tlv;
 } htt_tx_pdev_txbf_ofdma_stats_t;
 
 typedef struct {
@@ -2814,7 +2924,9 @@ typedef struct {
      */
     A_UINT32 arr_elem_size_ax_ndpa;
     htt_txbf_ofdma_ax_ndpa_stats_elem_t ax_ndpa[1]; /* variable length */
-} htt_txbf_ofdma_ax_ndpa_stats_tlv;
+} htt_stats_txbf_ofdma_ax_ndpa_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_txbf_ofdma_ax_ndpa_stats_tlv htt_txbf_ofdma_ax_ndpa_stats_tlv;
 
 typedef struct {
     /** 11AX HE OFDMA NDP frame queued to the HW */
@@ -2843,7 +2955,9 @@ typedef struct {
      */
     A_UINT32 arr_elem_size_ax_ndp;
     htt_txbf_ofdma_ax_ndp_stats_elem_t ax_ndp[1]; /* variable length */
-} htt_txbf_ofdma_ax_ndp_stats_tlv;
+} htt_stats_txbf_ofdma_ax_ndp_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_txbf_ofdma_ax_ndp_stats_tlv htt_txbf_ofdma_ax_ndp_stats_tlv;
 
 typedef struct {
     /** 11AX HE OFDMA MU BRPOLL frame queued to the HW */
@@ -2877,7 +2991,9 @@ typedef struct {
      */
     A_UINT32 arr_elem_size_ax_brp;
     htt_txbf_ofdma_ax_brp_stats_elem_t ax_brp[1]; /* variable length */
-} htt_txbf_ofdma_ax_brp_stats_tlv;
+} htt_stats_txbf_ofdma_ax_brp_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_txbf_ofdma_ax_brp_stats_tlv htt_txbf_ofdma_ax_brp_stats_tlv;
 
 typedef struct {
     /**
@@ -2917,7 +3033,10 @@ typedef struct {
      */
     A_UINT32 arr_elem_size_ax_steer;
     htt_txbf_ofdma_ax_steer_stats_elem_t ax_steer[1]; /* variable length */
-} htt_txbf_ofdma_ax_steer_stats_tlv;
+} htt_stats_txbf_ofdma_ax_steer_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_txbf_ofdma_ax_steer_stats_tlv
+    htt_txbf_ofdma_ax_steer_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -2929,7 +3048,10 @@ typedef struct {
     A_UINT32 ax_ofdma_sifs_steer_mpdus_tried;
     /* 11AX HE OFDMA MPDUs failed in sifs steering */
     A_UINT32 ax_ofdma_sifs_steer_mpdus_failed;
-} htt_txbf_ofdma_ax_steer_mpdu_stats_tlv;
+} htt_stats_txbf_ofdma_ax_steer_mpdu_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_txbf_ofdma_ax_steer_mpdu_stats_tlv
+    htt_txbf_ofdma_ax_steer_mpdu_stats_tlv;
 
 typedef struct {
     /** 11BE EHT OFDMA NDPA frame queued to the HW */
@@ -2958,7 +3080,9 @@ typedef struct {
      */
     A_UINT32 arr_elem_size_be_ndpa;
     htt_txbf_ofdma_be_ndpa_stats_elem_t be_ndpa[1]; /* variable length */
-} htt_txbf_ofdma_be_ndpa_stats_tlv;
+} htt_stats_txbf_ofdma_be_ndpa_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_txbf_ofdma_be_ndpa_stats_tlv htt_txbf_ofdma_be_ndpa_stats_tlv;
 
 typedef struct {
     /** 11BE EHT OFDMA NDP frame queued to the HW */
@@ -2987,7 +3111,9 @@ typedef struct {
      */
     A_UINT32 arr_elem_size_be_ndp;
     htt_txbf_ofdma_be_ndp_stats_elem_t be_ndp[1]; /* variable length */
-} htt_txbf_ofdma_be_ndp_stats_tlv;
+} htt_stats_txbf_ofdma_be_ndp_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_txbf_ofdma_be_ndp_stats_tlv htt_txbf_ofdma_be_ndp_stats_tlv;
 
 typedef struct {
     /** 11BE EHT OFDMA MU BRPOLL frame queued to the HW */
@@ -3021,7 +3147,9 @@ typedef struct {
      */
     A_UINT32 arr_elem_size_be_brp;
     htt_txbf_ofdma_be_brp_stats_elem_t be_brp[1]; /* variable length */
-} htt_txbf_ofdma_be_brp_stats_tlv;
+} htt_stats_txbf_ofdma_be_brp_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_txbf_ofdma_be_brp_stats_tlv htt_txbf_ofdma_be_brp_stats_tlv;
 
 typedef struct {
     /**
@@ -3063,7 +3191,10 @@ typedef struct {
      */
     A_UINT32 arr_elem_size_be_steer;
     htt_txbf_ofdma_be_steer_stats_elem_t be_steer[1]; /* variable length */
-} htt_txbf_ofdma_be_steer_stats_tlv;
+} htt_stats_txbf_ofdma_be_steer_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_txbf_ofdma_be_steer_stats_tlv
+    htt_txbf_ofdma_be_steer_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -3075,7 +3206,10 @@ typedef struct {
     A_UINT32 be_ofdma_sifs_steer_mpdus_tried;
     /* 11BE EHT OFDMA MPDUs failed in sifs steering */
     A_UINT32 be_ofdma_sifs_steer_mpdus_failed;
-} htt_txbf_ofdma_be_steer_mpdu_stats_tlv;
+} htt_stats_txbf_ofdma_be_steer_mpdu_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_txbf_ofdma_be_steer_mpdu_stats_tlv
+    htt_txbf_ofdma_be_steer_mpdu_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TXBF_OFDMA
  * TLV_TAGS:
@@ -3121,7 +3255,9 @@ typedef struct {
     A_UINT32 ac_mu_mimo_brpoll2_flushed;
     /** 11AC VHT MU MIMO BRPOLL for user 3 frame flushed by HW */
     A_UINT32 ac_mu_mimo_brpoll3_flushed;
-} htt_tx_selfgen_ac_err_stats_tlv;
+} htt_stats_tx_selfgen_ac_err_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_selfgen_ac_err_stats_tlv htt_tx_selfgen_ac_err_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -3183,7 +3319,9 @@ typedef struct {
     A_UINT32 ax_bsr_trigger_partial_resp;
     /** 11AX HE MU BAR Trigger frame completed with partial user response */
     A_UINT32 ax_mu_bar_trigger_partial_resp;
-} htt_tx_selfgen_ax_err_stats_tlv;
+} htt_stats_tx_selfgen_ax_err_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_selfgen_ax_err_stats_tlv htt_tx_selfgen_ax_err_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -3233,7 +3371,9 @@ typedef struct {
     A_UINT32 be_bsr_trigger_partial_resp;
     /** 11BE EHT MU BAR Trigger frame completed with partial user response */
     A_UINT32 be_mu_bar_trigger_partial_resp;
-} htt_tx_selfgen_be_err_stats_tlv;
+} htt_stats_tx_selfgen_be_err_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_selfgen_be_err_stats_tlv htt_tx_selfgen_be_err_stats_tlv;
 
 /*
  * Scheduler completion status reason code.
@@ -3283,7 +3423,10 @@ typedef struct {
     A_UINT32 ac_mu_mimo_brp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
     /** 11AC VHT MU MIMO BRPOLL scheduler error code */
     A_UINT32 ac_mu_mimo_brp_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
-} htt_tx_selfgen_ac_sched_status_stats_tlv;
+} htt_stats_tx_selfgen_ac_sched_status_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_selfgen_ac_sched_status_stats_tlv
+    htt_tx_selfgen_ac_sched_status_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -3319,7 +3462,10 @@ typedef struct {
     A_UINT32 ax_ulmumimo_trig_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
     /** 11AX HE UL MUMIMO Basic Trigger scheduler error code */
     A_UINT32 ax_ulmumimo_trig_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
-} htt_tx_selfgen_ax_sched_status_stats_tlv;
+} htt_stats_tx_selfgen_ax_sched_status_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_selfgen_ax_sched_status_stats_tlv
+    htt_tx_selfgen_ax_sched_status_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -3355,7 +3501,10 @@ typedef struct {
     A_UINT32 be_ulmumimo_trig_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
     /** 11BE EHT UL MUMIMO Basic Trigger scheduler error code */
     A_UINT32 be_ulmumimo_trig_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
-} htt_tx_selfgen_be_sched_status_stats_tlv;
+} htt_stats_tx_selfgen_be_sched_status_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_selfgen_be_sched_status_stats_tlv
+    htt_tx_selfgen_be_sched_status_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_SELFGEN_INFO
  * TLV_TAGS:
@@ -3375,16 +3524,16 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_tx_selfgen_cmn_stats_tlv cmn_tlv;
-    htt_tx_selfgen_ac_stats_tlv ac_tlv;
-    htt_tx_selfgen_ax_stats_tlv ax_tlv;
-    htt_tx_selfgen_ac_err_stats_tlv ac_err_tlv;
-    htt_tx_selfgen_ax_err_stats_tlv ax_err_tlv;
-    htt_tx_selfgen_ac_sched_status_stats_tlv ac_sched_status_tlv;
-    htt_tx_selfgen_ax_sched_status_stats_tlv ax_sched_status_tlv;
-    htt_tx_selfgen_be_stats_tlv be_tlv;
-    htt_tx_selfgen_be_err_stats_tlv be_err_tlv;
-    htt_tx_selfgen_be_sched_status_stats_tlv be_sched_status_tlv;
+    htt_stats_tx_selfgen_cmn_stats_tlv cmn_tlv;
+    htt_stats_tx_selfgen_ac_stats_tlv ac_tlv;
+    htt_stats_tx_selfgen_ax_stats_tlv ax_tlv;
+    htt_stats_tx_selfgen_ac_err_stats_tlv ac_err_tlv;
+    htt_stats_tx_selfgen_ax_err_stats_tlv ax_err_tlv;
+    htt_stats_tx_selfgen_ac_sched_status_stats_tlv ac_sched_status_tlv;
+    htt_stats_tx_selfgen_ax_sched_status_stats_tlv ax_sched_status_tlv;
+    htt_stats_tx_selfgen_be_stats_tlv be_tlv;
+    htt_stats_tx_selfgen_be_err_stats_tlv be_err_tlv;
+    htt_stats_tx_selfgen_be_sched_status_stats_tlv be_sched_status_tlv;
 } htt_tx_pdev_selfgen_stats_t;
 
 /* == TX MU STATS == */
@@ -3439,7 +3588,9 @@ typedef struct {
     A_UINT32 be_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
     /** Number of 11AC DL MU MIMO schedules posted per group size (4-7) */
     A_UINT32 ac_mu_mimo_sch_posted_per_grp_sz_ext[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
-} htt_tx_pdev_mu_mimo_sch_stats_tlv;
+} htt_stats_tx_pdev_mu_mimo_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_mu_mimo_stats_tlv htt_tx_pdev_mu_mimo_sch_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -3460,8 +3611,9 @@ typedef struct {
     A_UINT32 ul_mumimo_grp_best_num_usrs[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
 
     A_UINT32 ul_mumimo_grp_tputs[HTT_STATS_MUMIMO_TPUT_NUM_BINS];
-
-} htt_tx_pdev_mumimo_grp_stats_tlv;
+} htt_stats_tx_pdev_mumimo_grp_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_mumimo_grp_stats_tlv htt_tx_pdev_mumimo_grp_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -3495,19 +3647,28 @@ typedef struct {
     A_UINT32 be_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
     /** Number of 11AC DL MU MIMO schedules posted per group size (4 - 7)*/
     A_UINT32 ac_mu_mimo_sch_posted_per_grp_sz_ext[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
-} htt_tx_pdev_dl_mu_mimo_sch_stats_tlv;
+} htt_stats_tx_pdev_dl_mu_mimo_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_dl_mu_mimo_stats_tlv
+    htt_tx_pdev_dl_mu_mimo_sch_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /** Represents the count for 11AX DL MU OFDMA sequences */
     A_UINT32 ax_mu_ofdma_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
-} htt_tx_pdev_dl_mu_ofdma_sch_stats_tlv;
+} htt_stats_tx_pdev_dl_mu_ofdma_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_dl_mu_ofdma_stats_tlv
+    htt_tx_pdev_dl_mu_ofdma_sch_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /** Represents the count for 11BE DL MU OFDMA sequences */
     A_UINT32 be_mu_ofdma_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
-} htt_tx_pdev_be_dl_mu_ofdma_sch_stats_tlv;
+} htt_stats_tx_pdev_be_dl_mu_ofdma_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_be_dl_mu_ofdma_stats_tlv
+    htt_tx_pdev_be_dl_mu_ofdma_sch_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -3527,7 +3688,10 @@ typedef struct {
      * Represents the count for 11AX UL MU OFDMA sequences with BRP Triggers
      */
     A_UINT32 ax_ul_mu_ofdma_brp_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
-} htt_tx_pdev_ul_mu_ofdma_sch_stats_tlv;
+} htt_stats_tx_pdev_ul_mu_ofdma_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_ul_mu_ofdma_stats_tlv
+    htt_tx_pdev_ul_mu_ofdma_sch_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -3547,7 +3711,10 @@ typedef struct {
      * Represents the count for 11BE UL MU OFDMA sequences with BRP Triggers
      */
     A_UINT32 be_ul_mu_ofdma_brp_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
-} htt_tx_pdev_be_ul_mu_ofdma_sch_stats_tlv;
+} htt_stats_tx_pdev_be_ul_mu_ofdma_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_be_ul_mu_ofdma_stats_tlv
+    htt_tx_pdev_be_ul_mu_ofdma_sch_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -3559,7 +3726,10 @@ typedef struct {
      * Represents the count for 11AX UL MU MIMO sequences with BRP Triggers
      */
     A_UINT32 ax_ul_mu_mimo_brp_sch_nusers[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS];
-} htt_tx_pdev_ul_mu_mimo_sch_stats_tlv;
+} htt_stats_tx_pdev_ul_mu_mimo_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_ul_mu_mimo_stats_tlv
+    htt_tx_pdev_ul_mu_mimo_sch_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -3571,7 +3741,10 @@ typedef struct {
      * Represents the count for 11BE UL MU MIMO sequences with BRP Triggers
      */
     A_UINT32 be_ul_mu_mimo_brp_sch_nusers[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS];
-} htt_tx_pdev_be_ul_mu_mimo_sch_stats_tlv;
+} htt_stats_tx_pdev_be_ul_mu_mimo_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_be_ul_mu_mimo_stats_tlv
+    htt_tx_pdev_be_ul_mu_mimo_sch_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -3619,7 +3792,10 @@ typedef struct {
     A_UINT32 ax_ofdma_mpdu_underrun_usr;
     /** 11AX MU OFDMA ampdu underrun encountered, per user */
     A_UINT32 ax_ofdma_ampdu_underrun_usr;
-} htt_tx_pdev_mu_mimo_mpdu_stats_tlv;
+} htt_stats_tx_pdev_mumimo_mpdu_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_mumimo_mpdu_stats_tlv
+    htt_tx_pdev_mu_mimo_mpdu_stats_tlv;
 
 #define HTT_STATS_TX_SCHED_MODE_MU_MIMO_AC  1 /* SCHED_TX_MODE_MU_MIMO_AC */
 #define HTT_STATS_TX_SCHED_MODE_MU_MIMO_AX  2 /* SCHED_TX_MODE_MU_MIMO_AX */
@@ -3640,7 +3816,9 @@ typedef struct {
     A_UINT32 user_index;
     /** HTT_STATS_TX_SCHED_MODE_xxx */
     A_UINT32 tx_sched_mode;
-} htt_tx_pdev_mpdu_stats_tlv;
+} htt_stats_tx_pdev_mpdu_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_mpdu_stats_tlv htt_tx_pdev_mpdu_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_TX_MU
  * TLV_TAGS:
@@ -3652,17 +3830,17 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_tx_pdev_mu_mimo_sch_stats_tlv mu_mimo_sch_stats_tlv[1]; /* WAL_TX_STATS_MAX_GROUP_SIZE */
-    htt_tx_pdev_dl_mu_mimo_sch_stats_tlv dl_mu_mimo_sch_stats_tlv[1];
-    htt_tx_pdev_ul_mu_mimo_sch_stats_tlv ul_mu_mimo_sch_stats_tlv[1];
-    htt_tx_pdev_dl_mu_ofdma_sch_stats_tlv dl_mu_ofdma_sch_stats_tlv[1];
-    htt_tx_pdev_ul_mu_ofdma_sch_stats_tlv ul_mu_ofdma_sch_stats_tlv[1];
+    htt_stats_tx_pdev_mu_mimo_stats_tlv mu_mimo_sch_stats_tlv[1]; /* WAL_TX_STATS_MAX_GROUP_SIZE */
+    htt_stats_tx_pdev_dl_mu_mimo_stats_tlv dl_mu_mimo_sch_stats_tlv[1];
+    htt_stats_tx_pdev_ul_mu_mimo_stats_tlv ul_mu_mimo_sch_stats_tlv[1];
+    htt_stats_tx_pdev_dl_mu_ofdma_stats_tlv dl_mu_ofdma_sch_stats_tlv[1];
+    htt_stats_tx_pdev_ul_mu_ofdma_stats_tlv ul_mu_ofdma_sch_stats_tlv[1];
     /*
      * Note that though mu_mimo_mpdu_stats_tlv is named MU-MIMO,
      * it can also hold MU-OFDMA stats.
      */
-    htt_tx_pdev_mpdu_stats_tlv mu_mimo_mpdu_stats_tlv[1]; /* WAL_TX_STATS_MAX_NUM_USERS */
-    htt_tx_pdev_mumimo_grp_stats_tlv mumimo_grp_stats_tlv;
+    htt_stats_tx_pdev_mpdu_stats_tlv mu_mimo_mpdu_stats_tlv[1]; /* WAL_TX_STATS_MAX_NUM_USERS */
+    htt_stats_tx_pdev_mumimo_grp_stats_tlv mumimo_grp_stats_tlv;
 } htt_tx_pdev_mu_mimo_stats_t;
 
 /* == TX SCHED STATS == */
@@ -3674,7 +3852,9 @@ typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /** Scheduler command posted per tx_mode */
     A_UINT32 sched_cmd_posted[1/* length = num tx modes */];
-} htt_sched_txq_cmd_posted_tlv_v;
+} htt_stats_sched_txq_cmd_posted_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_sched_txq_cmd_posted_tlv htt_sched_txq_cmd_posted_tlv_v;
 
 #define HTT_SCHED_TXQ_CMD_REAPED_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 
@@ -3683,7 +3863,9 @@ typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /** Scheduler command reaped per tx_mode */
     A_UINT32 sched_cmd_reaped[1/* length = num tx modes */];
-} htt_sched_txq_cmd_reaped_tlv_v;
+} htt_stats_sched_txq_cmd_reaped_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_sched_txq_cmd_reaped_tlv htt_sched_txq_cmd_reaped_tlv_v;
 
 #define HTT_SCHED_TXQ_SCHED_ORDER_SU_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 
@@ -3698,7 +3880,9 @@ typedef struct {
      * the (NUM_SCHED_ORDER_LOG-1) most recent scheduler invocation.
      */
     A_UINT32 sched_order_su[1]; /* HTT_TX_PDEV_NUM_SCHED_ORDER_LOG */
-} htt_sched_txq_sched_order_su_tlv_v;
+} htt_stats_sched_txq_sched_order_su_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_sched_txq_sched_order_su_tlv htt_sched_txq_sched_order_su_tlv_v;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -3764,7 +3948,10 @@ typedef struct {
      * Indexed by htt_sched_txq_sched_ineligibility_tlv_enum.
      */
     A_UINT32 sched_ineligibility[1];
-} htt_sched_txq_sched_ineligibility_tlv_v;
+} htt_stats_sched_txq_sched_ineligibility_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_sched_txq_sched_ineligibility_tlv
+    htt_sched_txq_sched_ineligibility_tlv_v;
 
 typedef enum {
     HTT_SCHED_SUPERCYCLE_TRIGGER_NONE = 0,                 /* Supercycle not triggered */
@@ -3793,7 +3980,10 @@ typedef struct {
      * are reset upon request.
      */
     A_UINT32 supercycle_triggers[1/*HTT_SCHED_SUPERCYCLE_TRIGGER_MAX*/];
-} htt_sched_txq_supercycle_triggers_tlv_v;
+} htt_stats_sched_txq_supercycle_trigger_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_sched_txq_supercycle_trigger_tlv
+    htt_sched_txq_supercycle_triggers_tlv_v;
 
 #define HTT_TX_PDEV_STATS_SCHED_PER_TXQ_MAC_ID_M 0x000000ff
 #define HTT_TX_PDEV_STATS_SCHED_PER_TXQ_MAC_ID_S 0
@@ -3889,7 +4079,10 @@ typedef struct {
     A_UINT32 num_subcycles_with_sort;
     /** Num of subcycles without sort for this Txq */
     A_UINT32 num_subcycles_no_sort;
-} htt_tx_pdev_stats_sched_per_txq_tlv;
+} htt_stats_tx_pdev_scheduler_txq_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_scheduler_txq_stats_tlv
+    htt_tx_pdev_stats_sched_per_txq_tlv;
 
 #define HTT_STATS_TX_SCHED_CMN_MAC_ID_M 0x000000ff
 #define HTT_STATS_TX_SCHED_CMN_MAC_ID_S 0
@@ -3932,13 +4125,13 @@ typedef struct {
  */
 typedef struct {
     htt_stats_tx_sched_cmn_tlv cmn_tlv;
-    struct _txq_tx_sched_stats {
-        htt_tx_pdev_stats_sched_per_txq_tlv     txq_tlv;
-        htt_sched_txq_cmd_posted_tlv_v          cmd_posted_tlv;
-        htt_sched_txq_cmd_reaped_tlv_v          cmd_reaped_tlv;
-        htt_sched_txq_sched_order_su_tlv_v      sched_order_su_tlv;
-        htt_sched_txq_sched_ineligibility_tlv_v sched_ineligibility_tlv;
-        htt_sched_txq_supercycle_triggers_tlv_v sched_supercycle_trigger_tlv;
+    struct {
+        htt_stats_tx_pdev_scheduler_txq_stats_tlv     txq_tlv;
+        htt_stats_sched_txq_cmd_posted_tlv      cmd_posted_tlv;
+        htt_stats_sched_txq_cmd_reaped_tlv      cmd_reaped_tlv;
+        htt_stats_sched_txq_sched_order_su_tlv      sched_order_su_tlv;
+        htt_stats_sched_txq_sched_ineligibility_tlv sched_ineligibility_tlv;
+        htt_stats_sched_txq_supercycle_trigger_tlv  htt_sched_txq_sched_ineligibility_tlv_esched_supercycle_trigger_tlv;
     } txq[1];
 } htt_stats_tx_sched_t;
 
@@ -3954,7 +4147,9 @@ typedef struct {
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     A_UINT32      gen_mpdu_end_reason[1]; /* HTT_TX_TQM_MAX_GEN_MPDU_END_REASON */
-} htt_tx_tqm_gen_mpdu_stats_tlv_v;
+} htt_stats_tx_tqm_gen_mpdu_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_tqm_gen_mpdu_tlv htt_tx_tqm_gen_mpdu_stats_tlv_v;
 
 #define HTT_TX_TQM_LIST_MPDU_STATS_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 
@@ -3962,7 +4157,9 @@ typedef struct {
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     A_UINT32      list_mpdu_end_reason[1]; /* HTT_TX_TQM_MAX_LIST_MPDU_END_REASON */
-} htt_tx_tqm_list_mpdu_stats_tlv_v;
+} htt_stats_tx_tqm_list_mpdu_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_tqm_list_mpdu_tlv htt_tx_tqm_list_mpdu_stats_tlv_v;
 
 #define HTT_TX_TQM_LIST_MPDU_CNT_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 
@@ -3970,7 +4167,9 @@ typedef struct {
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     A_UINT32      list_mpdu_cnt_hist[1]; /* HTT_TX_TQM_MAX_LIST_MPDU_CNT_HISTOGRAM_BINS */
-} htt_tx_tqm_list_mpdu_cnt_tlv_v;
+} htt_stats_tx_tqm_list_mpdu_cnt_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_tqm_list_mpdu_cnt_tlv htt_tx_tqm_list_mpdu_cnt_tlv_v;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -4017,7 +4216,9 @@ typedef struct {
     A_UINT32 sched_udp_notify2;
     A_UINT32 sched_nonudp_notify1;
     A_UINT32 sched_nonudp_notify2;
-} htt_tx_tqm_pdev_stats_tlv_v;
+} htt_stats_tx_tqm_pdev_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_tqm_pdev_tlv htt_tx_tqm_pdev_stats_tlv_v;
 
 #define HTT_TX_TQM_CMN_STATS_MAC_ID_M 0x000000ff
 #define HTT_TX_TQM_CMN_STATS_MAC_ID_S 0
@@ -4063,7 +4264,9 @@ typedef struct {
     A_UINT32 total_get_mpdu_head_info_cmds_by_tac;
     A_UINT32 total_gen_mpdu_cmds_by_sched_algo_la_query;
     A_UINT32 high_prio_q_not_empty;
-} htt_tx_tqm_cmn_stats_tlv;
+} htt_stats_tx_tqm_cmn_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_tqm_cmn_tlv htt_tx_tqm_cmn_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -4090,7 +4293,9 @@ typedef struct {
     A_UINT32 tqm_reset_flush_cache_cmd_trig_type;
     A_UINT32 tqm_reset_flush_cache_cmd_trig_cfg;
     A_UINT32 tqm_reset_flush_cache_cmd_skip_cmd_status_null;
-} htt_tx_tqm_error_stats_tlv;
+} htt_stats_tx_tqm_error_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_tqm_error_stats_tlv htt_tx_tqm_error_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_TQM
  * TLV_TAGS:
@@ -4106,12 +4311,12 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_tx_tqm_cmn_stats_tlv         cmn_tlv;
-    htt_tx_tqm_error_stats_tlv       err_tlv;
-    htt_tx_tqm_gen_mpdu_stats_tlv_v  gen_mpdu_stats_tlv;
-    htt_tx_tqm_list_mpdu_stats_tlv_v list_mpdu_stats_tlv;
-    htt_tx_tqm_list_mpdu_cnt_tlv_v   list_mpdu_cnt_tlv;
-    htt_tx_tqm_pdev_stats_tlv_v      tqm_pdev_stats_tlv;
+    htt_stats_tx_tqm_cmn_tlv           cmn_tlv;
+    htt_stats_tx_tqm_error_stats_tlv   err_tlv;
+    htt_stats_tx_tqm_gen_mpdu_tlv      gen_mpdu_stats_tlv;
+    htt_stats_tx_tqm_list_mpdu_tlv     list_mpdu_stats_tlv;
+    htt_stats_tx_tqm_list_mpdu_cnt_tlv list_mpdu_cnt_tlv;
+    htt_stats_tx_tqm_pdev_tlv          tqm_pdev_stats_tlv;
 } htt_tx_tqm_pdev_stats_t;
 
 /* == TQM CMDQ stats == */
@@ -4161,7 +4366,9 @@ typedef struct {
     A_UINT32 flush_cache_cmd;
     A_UINT32 update_mpduq_cmd;
     A_UINT32 update_msduq_cmd;
-} htt_tx_tqm_cmdq_status_tlv;
+} htt_stats_tx_tqm_cmdq_status_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_tqm_cmdq_status_tlv htt_tx_tqm_cmdq_status_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TQM_CMDQ
  * TLV_TAGS:
@@ -4173,9 +4380,9 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    struct _cmdq_stats {
-        htt_stats_string_tlv       cmdq_str_tlv;
-        htt_tx_tqm_cmdq_status_tlv status_tlv;
+    struct {
+        htt_stats_string_tlv             cmdq_str_tlv;
+        htt_stats_tx_tqm_cmdq_status_tlv status_tlv;
     } q[1];
 } htt_tx_tqm_cmdq_stats_t;
 
@@ -4195,7 +4402,9 @@ typedef struct {
     A_UINT32 eapol_start_packets;
     A_UINT32 eapol_logoff_packets;
     A_UINT32 eapol_encap_asf_packets;
-} htt_tx_de_eapol_packets_stats_tlv;
+} htt_stats_tx_de_eapol_packets_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_de_eapol_packets_tlv htt_tx_de_eapol_packets_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -4218,7 +4427,9 @@ typedef struct {
     A_UINT32 incomplete_llc;
     A_UINT32 eapol_duplicate_m3;
     A_UINT32 eapol_duplicate_m4;
-} htt_tx_de_classify_failed_stats_tlv;
+} htt_stats_tx_de_classify_failed_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_de_classify_failed_tlv htt_tx_de_classify_failed_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -4260,7 +4471,9 @@ typedef struct {
      * multicast/broadcast packets received on STA side.
      */
     A_UINT32 mec_notify;
-} htt_tx_de_classify_stats_tlv;
+} htt_stats_tx_de_classify_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_de_classify_stats_tlv htt_tx_de_classify_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -4272,21 +4485,27 @@ typedef struct {
     A_UINT32 send_host_unknown_dest;
     A_UINT32 send_host;
     A_UINT32 status_invalid;
-} htt_tx_de_classify_status_stats_tlv;
+} htt_stats_tx_de_classify_status_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_de_classify_status_tlv htt_tx_de_classify_status_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     A_UINT32 enqueued_pkts;
     A_UINT32 to_tqm;
     A_UINT32 to_tqm_bypass;
-} htt_tx_de_enqueue_packets_stats_tlv;
+} htt_stats_tx_de_enqueue_packets_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_de_enqueue_packets_tlv htt_tx_de_enqueue_packets_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     A_UINT32 discarded_pkts;
     A_UINT32 local_frames;
     A_UINT32 is_ext_msdu;
-} htt_tx_de_enqueue_discard_stats_tlv;
+} htt_stats_tx_de_enqueue_discard_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_de_enqueue_discard_tlv htt_tx_de_enqueue_discard_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -4295,7 +4514,9 @@ typedef struct {
     A_UINT32 tqm_notify_frame;
     A_UINT32 fw2wbm_enq;
     A_UINT32 tqm_bypass_frame;
-} htt_tx_de_compl_stats_tlv;
+} htt_stats_tx_de_compl_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_de_compl_stats_tlv htt_tx_de_compl_stats_tlv;
 
 #define HTT_TX_DE_CMN_STATS_MAC_ID_M 0x000000ff
 #define HTT_TX_DE_CMN_STATS_MAC_ID_S 0
@@ -4325,7 +4546,10 @@ typedef struct {
     htt_tlv_hdr_t tlv_hdr;
 
     A_UINT32 fw2wbm_ring_full_hist[1];
-} htt_tx_de_fw2wbm_ring_full_hist_tlv;
+} htt_stats_tx_de_fw2wbm_ring_full_hist_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_de_fw2wbm_ring_full_hist_tlv
+    htt_tx_de_fw2wbm_ring_full_hist_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -4346,7 +4570,9 @@ typedef struct {
     A_UINT32 invalid_vdev;
     A_UINT32 invalid_tcl_exp_frame_desc;
     A_UINT32 vdev_id_mismatch_cnt;
-} htt_tx_de_cmn_stats_tlv;
+} htt_stats_tx_de_cmn_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_de_cmn_tlv htt_tx_de_cmn_stats_tlv;
 
 #define HTT_STATS_RX_FW_RING_SIZE_NUM_ENTRIES(dword) ((dword >> 0)  & 0xffff)
 #define HTT_STATS_RX_FW_RING_CURR_NUM_ENTRIES(dword) ((dword >> 16) & 0xffff)
@@ -4382,7 +4608,9 @@ typedef struct {
      * element 2: above 500ms
      */
     A_UINT32 reo2sw4ringipa_backpress_hist[3];
-} htt_rx_fw_ring_stats_tlv_v;
+} htt_stats_rx_ring_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_ring_stats_tlv htt_rx_fw_ring_stats_tlv_v;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_DE_INFO
  * TLV_TAGS:
@@ -4401,15 +4629,15 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_tx_de_cmn_stats_tlv             cmn_tlv;
-    htt_tx_de_fw2wbm_ring_full_hist_tlv fw2wbm_hist_tlv;
-    htt_tx_de_eapol_packets_stats_tlv   eapol_stats_tlv;
-    htt_tx_de_classify_stats_tlv        classify_stats_tlv;
-    htt_tx_de_classify_failed_stats_tlv classify_failed_tlv;
-    htt_tx_de_classify_status_stats_tlv classify_status_rlv;
-    htt_tx_de_enqueue_packets_stats_tlv enqueue_packets_tlv;
-    htt_tx_de_enqueue_discard_stats_tlv enqueue_discard_tlv;
-    htt_tx_de_compl_stats_tlv           comp_status_tlv;
+    htt_stats_tx_de_cmn_tlv                   cmn_tlv;
+    htt_stats_tx_de_fw2wbm_ring_full_hist_tlv fw2wbm_hist_tlv;
+    htt_stats_tx_de_eapol_packets_tlv         eapol_stats_tlv;
+    htt_stats_tx_de_classify_stats_tlv        classify_stats_tlv;
+    htt_stats_tx_de_classify_failed_tlv       classify_failed_tlv;
+    htt_stats_tx_de_classify_status_tlv       classify_status_rlv;
+    htt_stats_tx_de_enqueue_packets_tlv       enqueue_packets_tlv;
+    htt_stats_tx_de_enqueue_discard_tlv       enqueue_discard_tlv;
+    htt_stats_tx_de_compl_stats_tlv           comp_status_tlv;
 } htt_tx_de_stats_t;
 
 /* == RING-IF STATS == */
@@ -4558,7 +4786,9 @@ typedef struct {
     A_UINT32 cons_blockwait_count;
     A_UINT32 low_wm_hit_count[HTT_STATS_LOW_WM_BINS];
     A_UINT32 high_wm_hit_count[HTT_STATS_HIGH_WM_BINS];
-} htt_ring_if_stats_tlv;
+} htt_stats_ring_if_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_ring_if_tlv htt_ring_if_stats_tlv;
 
 #define HTT_RING_IF_CMN_MAC_ID_M 0x000000ff
 #define HTT_RING_IF_CMN_MAC_ID_S 0
@@ -4582,7 +4812,9 @@ typedef struct {
      */
     A_UINT32 mac_id__word;
     A_UINT32 num_records;
-} htt_ring_if_cmn_tlv;
+} htt_stats_ring_if_cmn_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_ring_if_cmn_tlv htt_ring_if_cmn_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_RING_IF_INFO
  * TLV_TAGS:
@@ -4595,11 +4827,11 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_ring_if_cmn_tlv cmn_tlv;
+    htt_stats_ring_if_cmn_tlv cmn_tlv;
     /** Variable based on the Number of records. */
-    struct _ring_if {
+    struct {
         htt_stats_string_tlv  ring_str_tlv;
-        htt_ring_if_stats_tlv ring_tlv;
+        htt_stats_ring_if_tlv ring_tlv;
     } r[1];
 } htt_ring_if_stats_t;
 
@@ -4612,7 +4844,9 @@ typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /** Number of DWORDS used per user and per client */
     A_UINT32 dwords_used_by_user_n[1];
-} htt_sfm_client_user_tlv_v;
+} htt_stats_sfm_client_user_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_sfm_client_user_tlv htt_sfm_client_user_tlv_v;
 
 typedef struct  {
     htt_tlv_hdr_t tlv_hdr;
@@ -4630,7 +4864,9 @@ typedef struct  {
     A_UINT32 buf_avail;
     /** Number of users */
     A_UINT32 num_users;
-} htt_sfm_client_tlv;
+} htt_stats_sfm_client_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_sfm_client_tlv htt_sfm_client_tlv;
 
 #define HTT_SFM_CMN_MAC_ID_M 0x000000ff
 #define HTT_SFM_CMN_MAC_ID_S 0
@@ -4667,7 +4903,9 @@ typedef struct {
     A_UINT32 deallocate_bufs;
     /** Number of Records */
     A_UINT32 num_records;
-} htt_sfm_cmn_tlv;
+} htt_stats_sfm_cmn_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_sfm_cmn_tlv htt_sfm_cmn_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_RING_IF_INFO
  * TLV_TAGS:
@@ -4681,12 +4919,12 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_sfm_cmn_tlv cmn_tlv;
+    htt_stats_sfm_cmn_tlv cmn_tlv;
     /** Variable based on the Number of records. */
-    struct _sfm_client {
-        htt_stats_string_tlv      client_str_tlv;
-        htt_sfm_client_tlv        client_tlv;
-        htt_sfm_client_user_tlv_v user_tlv;
+    struct {
+        htt_stats_string_tlv          client_str_tlv;
+        htt_stats_sfm_client_tlv      client_tlv;
+        htt_stats_sfm_client_user_tlv user_tlv;
     } r[1];
 } htt_sfm_stats_t;
 
@@ -4895,12 +5133,16 @@ typedef struct {
      * BIT [31 : 16]   :- internal_tail_ptr
      */
     A_UINT32 prefetch_count__internal_tail_ptr;
-} htt_sring_stats_tlv;
+} htt_stats_sring_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_sring_stats_tlv htt_sring_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     A_UINT32      num_records;
-} htt_sring_cmn_tlv;
+} htt_stats_sring_cmn_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_sring_cmn_tlv htt_sring_cmn_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_SRNG_INFO
  * TLV_TAGS:
@@ -4913,11 +5155,11 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_sring_cmn_tlv cmn_tlv;
+    htt_stats_sring_cmn_tlv cmn_tlv;
     /** Variable based on the Number of records */
-    struct _sring_stats {
+    struct {
         htt_stats_string_tlv sring_str_tlv;
-        htt_sring_stats_tlv  sring_stats_tlv;
+        htt_stats_sring_stats_tlv sring_stats_tlv;
     } r[1];
 } htt_sring_stats_t;
 
@@ -5145,7 +5387,9 @@ typedef struct {
     A_UINT32 trigger_type_11be[HTT_TX_PDEV_STATS_NUM_11BE_TRIGGER_TYPES];
     /** Stats for Extra EHT LTF */
     A_UINT32 extra_eht_ltf;
-} htt_tx_pdev_rate_stats_tlv;
+} htt_stats_tx_pdev_rate_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_rate_stats_tlv htt_tx_pdev_rate_stats_tlv;
 
 typedef struct {
      /* 11be mode pdev rate stats; placed in a separate TLV to adhere to size restrictions */
@@ -5160,7 +5404,9 @@ typedef struct {
     A_UINT32 be_mu_mimo_tx_gi[HTT_TX_PDEV_STATS_NUM_GI_COUNTERS][HTT_TX_PDEV_STATS_NUM_BE_MCS_COUNTERS];
     /** 11BE DL MU MIMO LDPC count */
     A_UINT32 be_mu_mimo_tx_ldpc;
-} htt_tx_pdev_rate_stats_be_tlv;
+} htt_stats_tx_pdev_be_rate_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_be_rate_stats_tlv htt_tx_pdev_rate_stats_be_tlv;
 
 typedef struct {
     /*
@@ -5200,7 +5446,9 @@ typedef struct {
 
     /** Indicates how many within SIFS burst failed to deliver any pkt */
     A_UINT32 su_burst_rate_drop_fail_cnt;
-} htt_tx_pdev_rate_stats_sawf_tlv;
+} htt_stats_tx_pdev_sawf_rate_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_sawf_rate_stats_tlv htt_tx_pdev_rate_stats_sawf_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -5227,7 +5475,10 @@ typedef struct {
     A_UINT32 be_ofdma_tx_ru_size[HTT_TX_PDEV_STATS_NUM_BE_RU_SIZE_COUNTERS];
     /** 11BE EHT DL MU OFDMA EHT-SIG MCS stats */
     A_UINT32 be_ofdma_eht_sig_mcs[HTT_TX_PDEV_STATS_NUM_EHT_SIG_MCS_COUNTERS];
-} htt_tx_pdev_rate_stats_be_ofdma_tlv;
+} htt_stats_tx_pdev_rate_stats_be_ofdma_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_rate_stats_be_ofdma_tlv
+    htt_tx_pdev_rate_stats_be_ofdma_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -5239,7 +5490,9 @@ typedef struct {
     A_UINT32 tx_fail_time_us_high;
     A_UINT32 pdev_up_time_us_low;
     A_UINT32 pdev_up_time_us_high;
-} htt_tx_pdev_ppdu_dur_stats_tlv;
+} htt_stats_tx_pdev_ppdu_dur_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_pdev_ppdu_dur_tlv htt_tx_pdev_ppdu_dur_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_TX_RATE
  * TLV_TAGS:
@@ -5250,10 +5503,10 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_tx_pdev_rate_stats_tlv rate_tlv;
-    htt_tx_pdev_rate_stats_be_tlv rate_be_tlv;
-    htt_tx_pdev_rate_stats_sawf_tlv rate_sawf_tlv;
-    htt_tx_pdev_ppdu_dur_stats_tlv tx_ppdu_dur_tlv;
+    htt_stats_tx_pdev_rate_stats_tlv rate_tlv;
+    htt_stats_tx_pdev_be_rate_stats_tlv rate_be_tlv;
+    htt_stats_tx_pdev_sawf_rate_stats_tlv rate_sawf_tlv;
+    htt_stats_tx_pdev_ppdu_dur_tlv tx_ppdu_dur_tlv;
 } htt_tx_pdev_rate_stats_t;
 
 /* == PDEV RX RATE CTRL STATS == */
@@ -5500,13 +5753,17 @@ typedef struct {
  * No further fields should be added to this TLV without very careful
  * review to ensure the size increase is acceptable.
  */
-} htt_rx_pdev_rate_stats_tlv;
+} htt_stats_rx_pdev_rate_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_pdev_rate_stats_tlv htt_rx_pdev_rate_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /** Tx PPDU duration histogram **/
     A_UINT32 rx_ppdu_dur_hist[HTT_PDEV_STATS_PPDU_DUR_HIST_BINS];
-} htt_rx_pdev_ppdu_dur_stats_tlv;
+} htt_stats_rx_pdev_ppdu_dur_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_pdev_ppdu_dur_tlv htt_rx_pdev_ppdu_dur_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_RX_RATE
  * TLV_TAGS:
@@ -5517,8 +5774,8 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_rx_pdev_rate_stats_tlv rate_tlv;
-    htt_rx_pdev_ppdu_dur_stats_tlv rx_ppdu_dur_tlv;
+    htt_stats_rx_pdev_rate_stats_tlv rate_tlv;
+    htt_stats_rx_pdev_ppdu_dur_tlv rx_ppdu_dur_tlv;
 } htt_rx_pdev_rate_stats_t;
 
 typedef struct {
@@ -5550,7 +5807,9 @@ typedef struct {
     A_UINT32 reduced_rx_bw[HTT_RX_PDEV_STATS_NUM_REDUCED_CHAN_TYPES][HTT_RX_PDEV_STATS_NUM_BW_COUNTERS];
     A_UINT8  rssi_chain_ext_2[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS][HTT_RX_PDEV_STATS_NUM_BW_EXT_2_COUNTERS]; /* units = dB above noise floor */
     A_INT8   rx_per_chain_rssi_ext_2_in_dbm[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS][HTT_RX_PDEV_STATS_NUM_BW_EXT_2_COUNTERS];
-} htt_rx_pdev_rate_ext_stats_tlv;
+} htt_stats_rx_pdev_rate_ext_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_pdev_rate_ext_stats_tlv htt_rx_pdev_rate_ext_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_RX_RATE_EXT
  * TLV_TAGS:
@@ -5561,7 +5820,7 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_rx_pdev_rate_ext_stats_tlv rate_tlv;
+    htt_stats_rx_pdev_rate_ext_stats_tlv rate_tlv;
 } htt_rx_pdev_rate_ext_stats_t;
 
 #define HTT_STATS_CMN_MAC_ID_M 0x000000ff
@@ -5636,7 +5895,9 @@ typedef struct {
      * response to basic trigger. Typically a data response is expected.
      */
     A_UINT32 ul_ofdma_basic_trigger_rx_qos_null_only;
-} htt_rx_pdev_ul_trigger_stats_tlv;
+} htt_stats_rx_pdev_ul_trig_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_pdev_ul_trig_stats_tlv htt_rx_pdev_ul_trigger_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_UL_TRIG_STATS
  * TLV_TAGS:
@@ -5646,7 +5907,7 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_rx_pdev_ul_trigger_stats_tlv ul_trigger_tlv;
+    htt_stats_rx_pdev_ul_trig_stats_tlv ul_trigger_tlv;
 } htt_rx_pdev_ul_trigger_stats_t;
 
 typedef struct {
@@ -5713,7 +5974,10 @@ typedef struct {
     A_UINT32 ul_mlo_proc_qdepth_params_count;
     A_UINT32 ul_mlo_proc_accepted_qdepth_params_count;
     A_UINT32 ul_mlo_proc_discarded_qdepth_params_count;
-} htt_rx_pdev_be_ul_trigger_stats_tlv;
+} htt_stats_rx_pdev_be_ul_trig_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_pdev_be_ul_trig_stats_tlv
+    htt_rx_pdev_be_ul_trigger_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_UL_TRIG_STATS
  * TLV_TAGS:
@@ -5723,7 +5987,7 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_rx_pdev_be_ul_trigger_stats_tlv ul_trigger_tlv;
+    htt_stats_rx_pdev_be_ul_trig_stats_tlv ul_trigger_tlv;
 } htt_rx_pdev_be_ul_trigger_stats_t;
 
 typedef struct {
@@ -5740,7 +6004,10 @@ typedef struct {
     A_UINT32 rx_ulofdma_mpdu_fail;
     A_UINT32 rx_ulofdma_non_data_nusers;
     A_UINT32 rx_ulofdma_data_nusers;
-} htt_rx_pdev_ul_ofdma_user_stats_tlv;
+} htt_stats_rx_pdev_ul_ofdma_user_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_pdev_ul_ofdma_user_stats_tlv
+    htt_rx_pdev_ul_ofdma_user_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -5756,7 +6023,10 @@ typedef struct {
     A_UINT32 be_rx_ulofdma_mpdu_fail;
     A_UINT32 be_rx_ulofdma_non_data_nusers;
     A_UINT32 be_rx_ulofdma_data_nusers;
-} htt_rx_pdev_be_ul_ofdma_user_stats_tlv;
+} htt_stats_rx_pdev_be_ul_ofdma_user_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_pdev_be_ul_ofdma_user_stats_tlv
+    htt_rx_pdev_be_ul_ofdma_user_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -5770,7 +6040,10 @@ typedef struct {
     A_UINT32 rx_ulmumimo_mpdu_ok;
     /** MPDU level */
     A_UINT32 rx_ulmumimo_mpdu_fail;
-} htt_rx_pdev_ul_mimo_user_stats_tlv;
+} htt_stats_rx_pdev_ul_mimo_user_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_pdev_ul_mimo_user_stats_tlv
+    htt_rx_pdev_ul_mimo_user_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -5784,7 +6057,10 @@ typedef struct {
     A_UINT32 be_rx_ulmumimo_mpdu_ok;
     /** MPDU level */
     A_UINT32 be_rx_ulmumimo_mpdu_fail;
-} htt_rx_pdev_be_ul_mimo_user_stats_tlv;
+} htt_stats_rx_pdev_be_ul_mimo_user_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_pdev_be_ul_mimo_user_stats_tlv
+    htt_rx_pdev_be_ul_mimo_user_stats_tlv;
 
 /* == RX PDEV/SOC STATS == */
 
@@ -5842,7 +6118,10 @@ typedef struct {
      * response to basic trigger. Typically a data response is expected.
      */
     A_UINT32 ul_mumimo_basic_trigger_rx_qos_null_only;
-} htt_rx_pdev_ul_mumimo_trig_stats_tlv;
+} htt_stats_rx_pdev_ul_mumimo_trig_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_pdev_ul_mumimo_trig_stats_tlv
+    htt_rx_pdev_ul_mumimo_trig_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -5895,7 +6174,10 @@ typedef struct {
      * in response to basic trigger. Typically a data response is expected.
      */
     A_UINT32 be_ul_mumimo_basic_trigger_rx_qos_null_only;
-} htt_rx_pdev_ul_mumimo_trig_be_stats_tlv;
+} htt_stats_rx_pdev_ul_mumimo_trig_be_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_pdev_ul_mumimo_trig_be_stats_tlv
+    htt_rx_pdev_ul_mumimo_trig_be_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_UL_MUMIMO_TRIG_STATS
  * TLV_TAGS:
@@ -5903,8 +6185,8 @@ typedef struct {
  *    - HTT_STATS_RX_PDEV_UL_MUMIMO_TRIG_BE_STATS_TAG
  */
 typedef struct {
-    htt_rx_pdev_ul_mumimo_trig_stats_tlv ul_mumimo_trig_tlv;
-    htt_rx_pdev_ul_mumimo_trig_be_stats_tlv ul_mumimo_trig_be_tlv;
+    htt_stats_rx_pdev_ul_mumimo_trig_stats_tlv    ul_mumimo_trig_tlv;
+    htt_stats_rx_pdev_ul_mumimo_trig_be_stats_tlv ul_mumimo_trig_be_tlv;
 } htt_rx_pdev_ul_mumimo_trig_stats_t;
 
 typedef struct {
@@ -5937,7 +6219,9 @@ typedef struct {
      * including packets from WBM and REO
      */
     A_UINT32 target_refill_ring_recycle_cnt;
-} htt_rx_soc_fw_stats_tlv;
+} htt_stats_rx_soc_fw_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_soc_fw_stats_tlv htt_rx_soc_fw_stats_tlv;
 
 #define HTT_RX_SOC_FW_REFILL_RING_EMPTY_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 
@@ -5946,7 +6230,10 @@ typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /** Num ring empty encountered */
     A_UINT32 refill_ring_empty_cnt[1]; /* HTT_RX_STATS_REFILL_MAX_RING */
-} htt_rx_soc_fw_refill_ring_empty_tlv_v;
+} htt_stats_rx_soc_fw_refill_ring_empty_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_soc_fw_refill_ring_empty_tlv
+    htt_rx_soc_fw_refill_ring_empty_tlv_v;
 
 #define HTT_RX_SOC_FW_REFILL_RING_EMPTY_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 
@@ -5955,7 +6242,10 @@ typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /** Num total buf refilled from refill ring */
     A_UINT32 refill_ring_num_refill[1]; /* HTT_RX_STATS_REFILL_MAX_RING */
-} htt_rx_soc_fw_refill_ring_num_refill_tlv_v;
+} htt_stats_rx_soc_fw_refill_ring_num_refill_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_soc_fw_refill_ring_num_refill_tlv
+    htt_rx_soc_fw_refill_ring_num_refill_tlv_v;
 
 /* RXDMA error code from WBM released packets */
 typedef enum {
@@ -5997,7 +6287,10 @@ typedef struct {
      * indices are >= the MAX_ERR_CODE value the host was compiled with.
      */
     A_UINT32 rxdma_err[1]; /* HTT_RX_RXDMA_MAX_ERR_CODE */
-} htt_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v;
+} htt_stats_rx_refill_rxdma_err_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_refill_rxdma_err_tlv
+    htt_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v;
 
 /* REO error code from WBM released packets */
 typedef enum {
@@ -6039,18 +6332,22 @@ typedef struct {
      * indices are >= the MAX_ERR_CODE value the host was compiled with.
      */
     A_UINT32 reo_err[1]; /* HTT_RX_REO_MAX_ERR_CODE */
-} htt_rx_soc_fw_refill_ring_num_reo_err_tlv_v;
+} htt_stats_rx_refill_reo_err_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_refill_reo_err_tlv
+    htt_rx_soc_fw_refill_ring_num_reo_err_tlv_v;
 
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_rx_soc_fw_stats_tlv                       fw_tlv;
-    htt_rx_soc_fw_refill_ring_empty_tlv_v         fw_refill_ring_empty_tlv;
-    htt_rx_soc_fw_refill_ring_num_refill_tlv_v    fw_refill_ring_num_refill_tlv;
-    htt_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v fw_refill_ring_num_rxdma_err_tlv;
-    htt_rx_soc_fw_refill_ring_num_reo_err_tlv_v   fw_refill_ring_num_reo_err_tlv;
+    htt_stats_rx_soc_fw_stats_tlv              fw_tlv;
+    htt_stats_rx_soc_fw_refill_ring_empty_tlv  fw_refill_ring_empty_tlv;
+    htt_stats_rx_soc_fw_refill_ring_num_refill_tlv
+                                               fw_refill_ring_num_refill_tlv;
+    htt_stats_rx_refill_rxdma_err_tlv          fw_refill_ring_num_rxdma_err_tlv;
+    htt_stats_rx_refill_reo_err_tlv            fw_refill_ring_num_reo_err_tlv;
 } htt_rx_soc_stats_t;
 
 /* == RX PDEV STATS == */
@@ -6169,7 +6466,9 @@ typedef struct {
     A_UINT32 rx_flush_cnt;
     /** Num rx recovery */
     A_UINT32 rx_recovery_reset_cnt;
-} htt_rx_pdev_fw_stats_tlv;
+} htt_stats_rx_pdev_fw_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_pdev_fw_stats_tlv htt_rx_pdev_fw_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -6179,7 +6478,10 @@ typedef struct {
     A_UINT32 peer_tx_mgmt_subtype[HTT_STATS_SUBTYPE_MAX];
     /** Num of rx mgmt frames with subtype on peer level */
     A_UINT32 peer_rx_mgmt_subtype[HTT_STATS_SUBTYPE_MAX];
-} htt_peer_ctrl_path_txrx_stats_tlv;
+} htt_stats_peer_ctrl_path_txrx_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_peer_ctrl_path_txrx_stats_tlv
+    htt_peer_ctrl_path_txrx_stats_tlv;
 
 #define HTT_STATS_PHY_ERR_MAX 43
 
@@ -6242,7 +6544,9 @@ typedef struct {
      * 42 phyrx_err_other
      */
     A_UINT32 phy_err[HTT_STATS_PHY_ERR_MAX];
-} htt_rx_pdev_fw_stats_phy_err_tlv;
+} htt_stats_rx_pdev_fw_stats_phy_err_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_pdev_fw_stats_phy_err_tlv htt_rx_pdev_fw_stats_phy_err_tlv;
 
 #define HTT_RX_PDEV_FW_RING_MPDU_ERR_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 
@@ -6251,7 +6555,10 @@ typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /** Num error MPDU for each RxDMA error type */
     A_UINT32 fw_ring_mpdu_err[1]; /* HTT_RX_STATS_RXDMA_MAX_ERR */
-} htt_rx_pdev_fw_ring_mpdu_err_tlv_v;
+} htt_stats_rx_pdev_fw_ring_mpdu_err_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_pdev_fw_ring_mpdu_err_tlv
+    htt_rx_pdev_fw_ring_mpdu_err_tlv_v;
 
 #define HTT_RX_PDEV_FW_MPDU_DROP_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 
@@ -6260,7 +6567,9 @@ typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /** Num MPDU dropped  */
     A_UINT32 fw_mpdu_drop[1]; /* HTT_RX_STATS_FW_DROP_REASON_MAX */
-} htt_rx_pdev_fw_mpdu_drop_tlv_v;
+} htt_stats_rx_pdev_fw_mpdu_drop_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_pdev_fw_mpdu_drop_tlv htt_rx_pdev_fw_mpdu_drop_tlv_v;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_RX
  * TLV_TAGS:
@@ -6277,10 +6586,10 @@ typedef struct {
  */
 typedef struct {
     htt_rx_soc_stats_t                 soc_stats;
-    htt_rx_pdev_fw_stats_tlv           fw_stats_tlv;
-    htt_rx_pdev_fw_ring_mpdu_err_tlv_v fw_ring_mpdu_err_tlv;
-    htt_rx_pdev_fw_mpdu_drop_tlv_v     fw_ring_mpdu_drop;
-    htt_rx_pdev_fw_stats_phy_err_tlv   fw_stats_phy_err_tlv;
+    htt_stats_rx_pdev_fw_stats_tlv         fw_stats_tlv;
+    htt_stats_rx_pdev_fw_ring_mpdu_err_tlv fw_ring_mpdu_err_tlv;
+    htt_stats_rx_pdev_fw_mpdu_drop_tlv     fw_ring_mpdu_drop;
+    htt_stats_rx_pdev_fw_stats_phy_err_tlv fw_stats_phy_err_tlv;
 } htt_rx_pdev_stats_t;
 
 /* STATS_TYPE : HTT_DBG_EXT_PEER_CTRL_PATH_TXRX_STATS
@@ -6289,7 +6598,7 @@ typedef struct {
  *
  */
 typedef struct {
-    htt_peer_ctrl_path_txrx_stats_tlv peer_ctrl_path_txrx_stats_tlv;
+    htt_stats_peer_ctrl_path_txrx_stats_tlv peer_ctrl_path_txrx_stats_tlv;
 } htt_ctrl_path_txrx_stats_t;
 
 #define HTT_PDEV_CCA_STATS_TX_FRAME_INFO_PRESENT (0x1)
@@ -6314,7 +6623,9 @@ typedef struct {
     A_UINT32 med_tx_idle_global_usec;
     A_UINT32 cca_obss_usec;
     A_UINT32 pre_rx_frame_usec;
-} htt_pdev_stats_cca_counters_tlv;
+} htt_stats_pdev_cca_counters_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_pdev_cca_counters_tlv htt_pdev_stats_cca_counters_tlv;
 
 /* NOTE: THIS htt_pdev_cca_stats_hist_tlv STRUCTURE IS DEPRECATED,
  * due to lack of support in some host stats infrastructures for
@@ -6359,7 +6670,7 @@ typedef struct {
      * Then the pdev_cca_stats[0] element contains the oldest CCA stats
      * and pdev_cca_stats[N-1] will have the most recent CCA stats.
      */
-    htt_pdev_stats_cca_counters_tlv cca_hist_tlv[1];
+    htt_stats_pdev_cca_counters_tlv cca_hist_tlv[1];
 } htt_pdev_cca_stats_hist_tlv;
 
 typedef struct {
@@ -6485,7 +6796,9 @@ typedef struct {
     A_UINT32     wake_dura_us;
     A_UINT32     wake_intvl_us;
     A_UINT32     sp_offset_us;
-} htt_pdev_stats_twt_session_tlv;
+} htt_stats_pdev_twt_session_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_pdev_twt_session_tlv htt_pdev_stats_twt_session_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -6493,8 +6806,10 @@ typedef struct {
     A_UINT32 pdev_id;
     A_UINT32 num_sessions;
 
-    htt_pdev_stats_twt_session_tlv twt_session[1];
-} htt_pdev_stats_twt_sessions_tlv;
+    htt_stats_pdev_twt_session_tlv twt_session[1];
+} htt_stats_pdev_twt_sessions_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_pdev_twt_sessions_tlv htt_pdev_stats_twt_sessions_tlv;
 
 /* STATS_TYPE: HTT_DBG_EXT_STATS_TWT_SESSIONS
  * TLV_TAGS:
@@ -6506,7 +6821,7 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_pdev_stats_twt_sessions_tlv twt_sessions[1];
+    htt_stats_pdev_twt_session_tlv twt_sessions[1];
 } htt_pdev_twt_sessions_stats_t;
 
 typedef enum {
@@ -6551,7 +6866,9 @@ typedef struct {
     A_UINT32 last_non_zeros_avg;
     /** Num of last non zero samples */
     A_UINT32 last_non_zeros_sample;
-} htt_rx_reo_resource_stats_tlv_v;
+} htt_stats_rx_reo_resource_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_reo_resource_stats_tlv htt_rx_reo_resource_stats_tlv_v;
 
 /* STATS_TYPE: HTT_DBG_EXT_STATS_REO_RESOURCE_STATS
  * TLV_TAGS:
@@ -6562,7 +6879,7 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_rx_reo_resource_stats_tlv_v reo_resource_stats;
+    htt_stats_rx_reo_resource_stats_tlv reo_resource_stats;
 } htt_soc_reo_resource_stats_t;
 
 /* == TX SOUNDING STATS == */
@@ -6769,7 +7086,9 @@ typedef struct {
     A_UINT32 cv_corr_upload_total_num_users[HTT_TX_CV_CORR_MAX_NUM_COLUMNS];
     /** number of streams present in uploaded CV Correlation results buffer */
     A_UINT32 cv_corr_upload_total_num_streams[HTT_TX_CV_CORR_MAX_NUM_COLUMNS];
-} htt_tx_sounding_stats_tlv;
+} htt_stats_tx_sounding_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_tx_sounding_stats_tlv htt_tx_sounding_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_SOUNDING_INFO
  * TLV_TAGS:
@@ -6780,7 +7099,7 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_tx_sounding_stats_tlv sounding_tlv;
+    htt_stats_tx_sounding_stats_tlv sounding_tlv;
 } htt_tx_sounding_stats_t;
 
 typedef struct {
@@ -6903,14 +7222,16 @@ typedef struct {
      * exceeding aborted OBSS frame duration
      */
     A_UINT32 num_sr_ppdu_abort_flush_cnt;
-} htt_pdev_obss_pd_stats_tlv;
+} htt_stats_pdev_obss_pd_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_pdev_obss_pd_tlv htt_pdev_obss_pd_stats_tlv;
 
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_pdev_obss_pd_stats_tlv obss_pd_stat;
+    htt_stats_pdev_obss_pd_tlv obss_pd_stat;
 } htt_pdev_obss_pd_stats_t;
 
 typedef struct {
@@ -6939,7 +7260,9 @@ typedef struct {
      * continuously in backpressure state beyond 500ms.
      */
     A_UINT32 backpressure_hist[5];
-} htt_ring_backpressure_stats_tlv;
+} htt_stats_ring_backpressure_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_ring_backpressure_stats_tlv htt_ring_backpressure_stats_tlv;
 
 /* STATS_TYPE : HTT_STATS_RING_BACKPRESSURE_STATS_INFO
  * TLV_TAGS:
@@ -6950,10 +7273,10 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_sring_cmn_tlv cmn_tlv;
+    htt_stats_sring_cmn_tlv cmn_tlv;
     struct {
         htt_stats_string_tlv sring_str_tlv;
-        htt_ring_backpressure_stats_tlv backpressure_stats_tlv;
+        htt_stats_ring_backpressure_stats_tlv backpressure_stats_tlv;
     } r[1]; /* variable-length array */
 } htt_ring_backpressure_stats_t;
 
@@ -7006,7 +7329,9 @@ typedef struct {
      * bin2 contains the number of sampling windows that had > 4 interrupts
      */
     A_UINT32 interrupts_hist[HTT_INTERRUPTS_LATENCY_PROFILE_MAX_HIST];
-} htt_latency_prof_stats_tlv;
+} htt_stats_latency_prof_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_latency_prof_stats_tlv htt_latency_prof_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t   tlv_hdr;
@@ -7019,13 +7344,17 @@ typedef struct {
     A_UINT32 tx_ppdu_cnt;
     A_UINT32 rx_msdu_cnt;
     A_UINT32 rx_mpdu_cnt;
-} htt_latency_prof_ctx_tlv;
+} htt_stats_latency_ctx_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_latency_ctx_tlv htt_latency_prof_ctx_tlv;
 
 typedef struct {
     htt_tlv_hdr_t   tlv_hdr;
     /** count of enabled profiles */
     A_UINT32 prof_enable_cnt;
-} htt_latency_prof_cnt_tlv;
+} htt_stats_latency_cnt_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_latency_cnt_tlv htt_latency_prof_cnt_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_LATENCY_PROF_STATS
  * TLV_TAGS:
@@ -7038,9 +7367,9 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_latency_prof_stats_tlv latency_prof_stat;
-    htt_latency_prof_ctx_tlv latency_ctx_stat;
-    htt_latency_prof_cnt_tlv latency_cnt_stat;
+    htt_stats_latency_prof_stats_tlv latency_prof_stat;
+    htt_stats_latency_ctx_tlv latency_ctx_stat;
+    htt_stats_latency_cnt_tlv latency_cnt_stat;
 } htt_soc_latency_stats_t;
 
 #define HTT_RX_MAX_PEAK_OCCUPANCY_INDEX 10
@@ -7158,14 +7487,16 @@ typedef struct {
      */
     A_UINT32 fse_search_stat_peak_cnt[HTT_RX_MAX_PEAK_SEARCH_INDEX];
     A_UINT32 fse_search_stat_search_pending_cnt[HTT_RX_MAX_PENDING_SEARCH_INDEX];
-} htt_rx_fse_stats_tlv;
+} htt_stats_rx_fse_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_rx_fse_stats_tlv htt_rx_fse_stats_tlv;
 
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_rx_fse_stats_tlv rx_fse_stats;
+    htt_stats_rx_fse_stats_tlv rx_fse_stats;
 } htt_rx_fse_stats_t;
 
 #define HTT_TX_TXBF_RATE_STATS_NUM_MCS_COUNTERS 14
@@ -7210,7 +7541,9 @@ typedef struct {
     A_UINT32 txbf_flag_not_set_disable_ul_dl_ofdma;
     A_UINT32 txbf_flag_not_set_mcs_threshold_value;
     A_UINT32 txbf_flag_not_set_final_status;
-} htt_tx_pdev_txbf_rate_stats_tlv;
+} htt_stats_pdev_tx_rate_txbf_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_pdev_tx_rate_txbf_stats_tlv htt_tx_pdev_txbf_rate_stats_tlv;
 
 typedef enum {
     HTT_STATS_RC_MODE_DLSU     = 0,
@@ -7269,20 +7602,22 @@ typedef struct {
 
     A_UINT32 probe_cnt_per_rcmode[HTT_RC_MODE_2D_COUNT];
 
-    htt_stats_ru_type ru_type; /* refer to htt_stats_ru_type */
+    A_UINT32 ru_type; /* refer to htt_stats_ru_type enum */
     htt_tx_rate_stats_t per_ru[HTT_TX_PDEV_STATS_NUM_BE_RU_SIZE_COUNTERS];
-} htt_tx_rate_stats_per_tlv;
+} htt_stats_per_rate_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_per_rate_stats_tlv htt_tx_rate_stats_per_tlv;
 
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_tx_pdev_txbf_rate_stats_tlv txbf_rate_stats;
+    htt_stats_pdev_tx_rate_txbf_stats_tlv txbf_rate_stats;
 } htt_pdev_txbf_rate_stats_t;
 
 typedef struct {
-    htt_tx_rate_stats_per_tlv per_stats;
+    htt_stats_per_rate_stats_tlv per_stats;
 } htt_tx_pdev_per_stats_t;
 
 typedef enum {
@@ -7392,14 +7727,16 @@ typedef struct {
     /** AIFS value - 0 -255 */
     A_UINT32 current_aifs[HTT_NUM_AC_WMM];
     A_UINT32 reduced_ul_ofdma_tx_bw[HTT_STA_UL_OFDMA_NUM_REDUCED_CHAN_TYPES][HTT_STA_UL_OFDMA_NUM_BW_COUNTERS];
-} htt_sta_ul_ofdma_stats_tlv;
+} htt_stats_sta_ul_ofdma_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_sta_ul_ofdma_stats_tlv htt_sta_ul_ofdma_stats_tlv;
 
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_sta_ul_ofdma_stats_tlv ul_ofdma_sta_stats;
+    htt_stats_sta_ul_ofdma_stats_tlv ul_ofdma_sta_stats;
 } htt_sta_11ax_ul_stats_t;
 
 typedef struct {
@@ -7434,10 +7771,12 @@ typedef struct {
     /** Responder terminate count */
     A_UINT32 responder_terminate_cnt;
     A_UINT32 vdev_id;
-} htt_vdev_rtt_resp_stats_tlv;
+} htt_stats_vdev_rtt_resp_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_vdev_rtt_resp_stats_tlv htt_vdev_rtt_resp_stats_tlv;
 
 typedef struct {
-    htt_vdev_rtt_resp_stats_tlv vdev_rtt_resp_stats;
+    htt_stats_vdev_rtt_resp_stats_tlv vdev_rtt_resp_stats;
 } htt_vdev_rtt_resp_stats_t;
 
 typedef struct {
@@ -7466,10 +7805,12 @@ typedef struct {
     A_UINT32 initiator_terminate_cnt;
     /** Debug count to check the Measurement request from host */
     A_UINT32 tx_meas_req_count;
-} htt_vdev_rtt_init_stats_tlv;
+} htt_stats_vdev_rtt_init_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_vdev_rtt_init_stats_tlv htt_vdev_rtt_init_stats_tlv;
 
 typedef struct {
-    htt_vdev_rtt_init_stats_tlv vdev_rtt_init_stats;
+    htt_stats_vdev_rtt_init_stats_tlv vdev_rtt_init_stats;
 } htt_vdev_rtt_init_stats_t;
 
 /* STATS_TYPE : HTT_DBG_EXT_PKTLOG_AND_HTT_RING_STATS
@@ -7493,7 +7834,10 @@ typedef struct {
     A_UINT32 pktlog_ppdu_ctrl_drop_cnt;
     /** No of pktlog sw events payloads that were dropped */
     A_UINT32 pktlog_sw_events_drop_cnt;
-} htt_pktlog_and_htt_ring_stats_tlv;
+} htt_stats_pktlog_and_htt_ring_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_pktlog_and_htt_ring_stats_tlv
+    htt_pktlog_and_htt_ring_stats_tlv;
 
 #define HTT_DLPAGER_STATS_MAX_HIST            10
 #define HTT_DLPAGER_ASYNC_LOCKED_PAGE_COUNT_M 0x000000FF
@@ -7620,7 +7964,9 @@ typedef struct{
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     htt_dl_pager_stats_tlv dl_pager_stats;
-} htt_dlpager_stats_t;
+} htt_stats_dlpager_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_dlpager_stats_tlv htt_dlpager_stats_t;
 
 /*======= PHY STATS ====================*/
 /*
@@ -7811,7 +8157,9 @@ typedef struct {
      * [6] = Service tlv; [7] = Tx Packet End tlv; [8-9]=RSVD;
      */
     A_UINT32 phy_tx_abort_cnt[HTT_MAX_PHY_TX_ABORT_CNT];
-} htt_phy_counters_tlv;
+} htt_stats_phy_counters_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_phy_counters_tlv htt_phy_counters_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -7831,7 +8179,9 @@ typedef struct {
     A_UINT32 fw_run_time;
     /** per chain runtime noise floor values in dBm */
     A_INT32 runTime_nf_chain[HTT_STATS_MAX_CHAINS];
-} htt_phy_stats_tlv;
+} htt_stats_phy_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_phy_stats_tlv htt_phy_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -7942,7 +8292,18 @@ typedef struct {
      * values are specified by the HTT_WHAL_CONFIG enum type
      */
     A_UINT32 whal_config_flag;
-} htt_phy_reset_stats_tlv;
+    /** nfcal_iteration_counts:
+     * iteration count for Home/Scan/Periodic Noise Floor calibrations
+     * nfcal_iteration_counts[0] - home NF iteration counter
+     * nfcal_iteration_counts[1] - scan NF iteration counter
+     * nfcal_iteration_counts[2] - periodic NF iteration counter
+     * These counters are not reset automatically; they are only reset
+     * when explicitly requested by the host.
+     */
+    A_UINT32 nfcal_iteration_counts[3];
+} htt_stats_phy_reset_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_phy_reset_stats_tlv htt_phy_reset_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -7964,7 +8325,9 @@ typedef struct {
 
     /** Temperature based recalibration count */
     A_UINT32 temperature_recal_cnt;
-} htt_phy_reset_counters_tlv;
+} htt_stats_phy_reset_counters_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_phy_reset_counters_tlv htt_phy_reset_counters_tlv;
 
 /* Considering 320 MHz maximum 16 power levels */
 #define HTT_MAX_CH_PWR_INFO_SIZE    16
@@ -8086,18 +8449,20 @@ typedef struct {
         };
         A_UINT32 ctl_args;
     };
-} htt_phy_tpc_stats_tlv;
+} htt_stats_phy_tpc_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_phy_tpc_stats_tlv htt_phy_tpc_stats_tlv;
 
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_phy_counters_tlv phy_counters;
-    htt_phy_stats_tlv phy_stats;
-    htt_phy_reset_counters_tlv phy_reset_counters;
-    htt_phy_reset_stats_tlv phy_reset_stats;
-    htt_phy_tpc_stats_tlv phy_tpc_stats;
+    htt_stats_phy_counters_tlv phy_counters;
+    htt_stats_phy_stats_tlv phy_stats;
+    htt_stats_phy_reset_counters_tlv phy_reset_counters;
+    htt_stats_phy_reset_stats_tlv phy_reset_stats;
+    htt_stats_phy_tpc_stats_tlv phy_tpc_stats;
 } htt_phy_counters_and_phy_stats_t;
 
 /* NOTE:
@@ -8105,8 +8470,8 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_t2h_soc_txrx_stats_common_tlv soc_common_stats;
-    htt_t2h_vdev_txrx_stats_hw_stats_tlv vdev_hw_stats[1/*or more*/];
+    htt_stats_soc_txrx_stats_common_tlv soc_common_stats;
+    htt_stats_vdev_txrx_stats_hw_stats_tlv vdev_hw_stats[1/*or more*/];
 } htt_vdevs_txrx_stats_t;
 
 typedef struct {
@@ -8129,7 +8494,9 @@ typedef struct {
     htt_stats_strm_msdu_queue_id queue_id;
     htt_stats_strm_gen_mpdus_cntr_t svc_interval;
     htt_stats_strm_gen_mpdus_cntr_t burst_size;
-} htt_stats_strm_gen_mpdus_tlv_t;
+} htt_stats_strm_gen_mpdus_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_strm_gen_mpdus_tlv htt_stats_strm_gen_mpdus_tlv_t;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -8168,7 +8535,10 @@ typedef struct {
             burst_size_spec: 16,
             margin_bytes:    16;
     } burst_size;
-} htt_stats_strm_gen_mpdus_details_tlv_t;
+} htt_stats_strm_gen_mpdus_details_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_strm_gen_mpdus_details_tlv
+    htt_stats_strm_gen_mpdus_details_tlv_t;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -8188,7 +8558,9 @@ typedef struct {
     A_UINT32  disengage_count;
     A_UINT32  engage_count;
     A_UINT32  drain_dest_ring_mask;
-} htt_dmac_reset_stats_tlv;
+} htt_stats_dmac_reset_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_dmac_reset_stats_tlv htt_dmac_reset_stats_tlv;
 
 
 /* Support up to 640 MHz mode for future expansion */
@@ -8276,7 +8648,9 @@ typedef struct {
      * The count is incremented once for each OTA PPDU transmitted / received.
      */
     A_UINT32 num_subbands_used_cnt[HTT_PUNCTURE_STATS_MAX_SUBBAND_COUNT];
-} htt_pdev_puncture_stats_tlv;
+} htt_stats_pdev_puncture_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_pdev_puncture_stats_tlv htt_pdev_puncture_stats_tlv;
 
 enum {
     HTT_STATS_CAL_PROF_COLD_BOOT = 0,
@@ -8343,7 +8717,9 @@ typedef struct {
 
     /** No of indices invoked per each cal profile */
     A_UINT32 CalCnt[HTT_STATS_MAX_PROF_CAL];
-} htt_latency_prof_cal_stats_tlv;
+} htt_stats_latency_prof_cal_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_latency_prof_cal_stats_tlv htt_latency_prof_cal_stats_tlv;
 
 #define HTT_ML_PEER_EXT_DETAILS_PEER_ASSOC_IPC_RECVD_M          0x0000003F
 #define HTT_ML_PEER_EXT_DETAILS_PEER_ASSOC_IPC_RECVD_S          0
@@ -8396,7 +8772,9 @@ typedef struct {
         };
         A_UINT32 msg_dword_1;
     };
-} htt_ml_peer_ext_details_tlv;
+} htt_stats_ml_peer_ext_details_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_ml_peer_ext_details_tlv htt_ml_peer_ext_details_tlv;
 
 #define HTT_ML_LINK_INFO_VALID_M                0x00000001
 #define HTT_ML_LINK_INFO_VALID_S                0
@@ -8599,7 +8977,9 @@ typedef struct {
     };
 
     A_UINT32 primary_tid_mask;
-} htt_ml_link_info_tlv;
+} htt_stats_ml_link_info_details_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_ml_link_info_details_tlv htt_ml_link_info_tlv;
 
 #define HTT_ML_PEER_DETAILS_NUM_LINKS_M                     0x00000003
 #define HTT_ML_PEER_DETAILS_NUM_LINKS_S                     0
@@ -8778,7 +9158,9 @@ typedef struct {
      * the host; it is only for off-line debug.
      */
     A_UINT32  ml_peer_flags;
-} htt_ml_peer_details_tlv;
+} htt_stats_ml_peer_details_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_ml_peer_details_tlv htt_ml_peer_details_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_ML_PEERS_INFO
  * TLV_TAGS:
@@ -8791,9 +9173,9 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct _htt_ml_peer_stats {
-    htt_ml_peer_details_tlv         ml_peer_details;
-    htt_ml_peer_ext_details_tlv     ml_peer_ext_details;
-    htt_ml_link_info_tlv            ml_link_info[];
+    htt_stats_ml_peer_details_tlv      ml_peer_details;
+    htt_stats_ml_peer_ext_details_tlv  ml_peer_ext_details;
+    htt_stats_ml_link_info_details_tlv ml_link_info[1];
 } htt_ml_peer_stats_t;
 
 /*
@@ -8896,7 +9278,9 @@ typedef struct {
     A_UINT32 rx_stbc[HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS + HTT_RX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS + HTT_RX_PDEV_STATS_NUM_EXTRA2_MCS_COUNTERS];
     A_UINT32 rts_cnt;
     A_UINT32 rts_success;
-} htt_odd_mandatory_pdev_stats_tlv;
+} htt_stats_odd_pdev_mandatory_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_odd_pdev_mandatory_tlv htt_odd_mandatory_pdev_stats_tlv;
 
 typedef struct _htt_odd_mandatory_mumimo_pdev_stats_tlv {
     htt_tlv_hdr_t tlv_hdr;
@@ -8912,7 +9296,10 @@ typedef struct _htt_odd_mandatory_mumimo_pdev_stats_tlv {
     A_UINT32 rx_ulmumimo_mpdu_fail[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
     A_UINT32 rx_ulmumimo_mpdu_ok[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
     A_UINT32 rx_ulmumimo_data_ppdu[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
-} htt_odd_mandatory_mumimo_pdev_stats_tlv;
+} htt_dbg_odd_mandatory_mumimo_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_dbg_odd_mandatory_mumimo_tlv
+    htt_odd_mandatory_mumimo_pdev_stats_tlv;
 
 typedef struct _htt_odd_mandatory_muofdma_pdev_stats_tlv {
     htt_tlv_hdr_t tlv_hdr;
@@ -8932,7 +9319,10 @@ typedef struct _htt_odd_mandatory_muofdma_pdev_stats_tlv {
     A_UINT32 ax_mu_brp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
     A_UINT32 be_mu_brp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
     A_UINT32 ofdma_tx_ru_size[HTT_TX_PDEV_STATS_NUM_AX_RU_SIZE_COUNTERS];
-} htt_odd_mandatory_muofdma_pdev_stats_tlv;
+} htt_dbg_odd_mandatory_muofdma_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_dbg_odd_mandatory_muofdma_tlv
+    htt_odd_mandatory_muofdma_pdev_stats_tlv;
 
 
 #define HTT_PDEV_SCHED_ALGO_OFDMA_STATS_MAC_ID_M 0x000000ff
@@ -9003,7 +9393,10 @@ typedef struct {
     /** Num of instances where dl ofdma is disabled because there are consecutive mpdu failure */
     A_UINT32 dlofdma_disabled_consec_no_mpdus_success[HTT_NUM_AC_WMM];
     A_UINT32 txbf_ofdma_ineligibility_stat[HTT_STATS_SCHED_OFDMA_TXBF_INELIGIBILITY_MAX];
-} htt_pdev_sched_algo_ofdma_stats_tlv;
+} htt_stats_pdev_sched_algo_ofdma_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_pdev_sched_algo_ofdma_stats_tlv
+    htt_pdev_sched_algo_ofdma_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -9022,7 +9415,10 @@ typedef struct {
     A_UINT32 mu_rts_within_bss;
     A_UINT32 ul_mumimo_trigger_across_bss;
     A_UINT32 ul_mumimo_trigger_within_bss;
-} htt_pdev_mbssid_ctrl_frame_stats_tlv;
+} htt_stats_pdev_mbssid_ctrl_frame_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_pdev_mbssid_ctrl_frame_stats_tlv
+    htt_pdev_mbssid_ctrl_frame_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -9052,7 +9448,9 @@ typedef struct {
     A_UINT32 num_tdma_slot_switches;
     /** Num of TDMA EDCA switches */
     A_UINT32 num_tdma_edca_switches;
-} htt_pdev_tdma_stats_tlv;
+} htt_stats_pdev_tdma_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_pdev_tdma_tlv htt_pdev_tdma_stats_tlv;
 
 #define HTT_STATS_TDMA_MAC_ID_M 0x000000ff
 #define HTT_STATS_TDMA_MAC_ID_S 0
@@ -9180,8 +9578,9 @@ typedef struct {
      * BIT [ 23 : 8]  :- static_pattern
      */
     A_UINT32 phy_mode__static_pattern;
-
-} htt_pdev_bw_mgr_stats_tlv;
+} htt_stats_pdev_bw_mgr_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_pdev_bw_mgr_stats_tlv htt_pdev_bw_mgr_stats_tlv;
 
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_BW_MGR
@@ -9193,7 +9592,7 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct {
-    htt_pdev_bw_mgr_stats_tlv bw_mgr_tlv;
+    htt_stats_pdev_bw_mgr_stats_tlv bw_mgr_tlv;
 } htt_pdev_bw_mgr_stats_t;
 
 
@@ -9276,7 +9675,9 @@ typedef struct {
     A_UINT32 reserved;
     A_UINT32 footprint; /* holds a HTT_MLO_UMAC_SSR_DBG_POINTS value */
     A_UINT32 tqm_hw_tstamp;
-} htt_mlo_umac_ssr_dbg_tlv;
+} htt_stats_mlo_umac_ssr_dbg_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_mlo_umac_ssr_dbg_tlv htt_mlo_umac_ssr_dbg_tlv;
 
 typedef struct {
     A_UINT32 last_mlo_htt_handshake_delta_ms;
@@ -9319,7 +9720,9 @@ typedef struct {
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     htt_mlo_umac_ssr_mlo_stats_t mlo;
-} htt_mlo_umac_ssr_mlo_stats_tlv;
+} htt_stats_mlo_umac_ssr_mlo_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_mlo_umac_ssr_mlo_tlv htt_mlo_umac_ssr_mlo_stats_tlv;
 
 /* dword0 - b'0 - PRE_RESET_DISABLE_RXDMA_PREFETCH */
 #define HTT_UMAC_RECOVERY_DONE_PRE_RESET_DISABLE_RXDMA_PREFETCH_M 0x1
@@ -9659,7 +10062,10 @@ typedef struct {
     A_UINT32 htt_sync_do_pre_reset_ms;
     A_UINT32 htt_sync_do_post_reset_start_ms;
     A_UINT32 htt_sync_do_post_reset_complete_ms;
-} htt_mlo_umac_ssr_kpi_tstamp_stats_tlv;
+} htt_stats_mlo_umac_ssr_kpi_tstmp_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_mlo_umac_ssr_kpi_tstmp_tlv
+    htt_mlo_umac_ssr_kpi_tstamp_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -9670,7 +10076,10 @@ typedef struct {
     A_UINT32 post_t2h_msg_read_shmem_ms;
     A_UINT32 post_t2h_msg_write_shmem_ms;
     A_UINT32 post_t2h_msg_send_msg_to_host_ms;
-} htt_mlo_umac_htt_handshake_stats_tlv;
+} htt_stats_mlo_umac_ssr_handshake_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_mlo_umac_ssr_handshake_tlv
+    htt_mlo_umac_htt_handshake_stats_tlv;
 
 typedef struct {
     /*
@@ -9678,8 +10087,8 @@ typedef struct {
      * to use the TLV header within each element of each of the arrays in
      * this struct to determine where the subsequent item resides.
      */
-    htt_mlo_umac_ssr_dbg_tlv dbg_point[HTT_MLO_UMAC_SSR_DBG_POINT_MAX];
-    htt_mlo_umac_htt_handshake_stats_tlv htt_handshakes[HTT_MLO_UMAC_RECOVERY_HANDSHAKE_COUNT];
+    htt_stats_mlo_umac_ssr_dbg_tlv dbg_point[HTT_MLO_UMAC_SSR_DBG_POINT_MAX];
+    htt_stats_mlo_umac_ssr_handshake_tlv htt_handshakes[HTT_MLO_UMAC_RECOVERY_HANDSHAKE_COUNT];
 } htt_mlo_umac_ssr_kpi_delta_stats_t;
 
 typedef struct {
@@ -9715,7 +10124,9 @@ typedef struct {
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     htt_mlo_umac_ssr_common_stats_t cmn;
-} htt_mlo_umac_ssr_common_stats_tlv;
+} htt_stats_mlo_umac_ssr_cmn_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_mlo_umac_ssr_cmn_tlv htt_mlo_umac_ssr_common_stats_tlv;
 
 typedef struct {
     A_UINT32 trigger_requests_count;
@@ -9735,7 +10146,9 @@ typedef struct {
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     htt_mlo_umac_ssr_trigger_stats_t trigger;
-} htt_mlo_umac_ssr_trigger_stats_tlv;
+} htt_stats_mlo_umac_ssr_trigger_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_mlo_umac_ssr_trigger_tlv htt_mlo_umac_ssr_trigger_stats_tlv;
 
 typedef struct {
     /*
@@ -9743,8 +10156,8 @@ typedef struct {
      * to use the TLV header within each element to determine where the
      * subsequent element resides.
      */
-    htt_mlo_umac_ssr_kpi_delta_stats_tlv   kpi_delta_tlv;
-    htt_mlo_umac_ssr_kpi_tstamp_stats_tlv  kpi_tstamp_tlv;
+    htt_mlo_umac_ssr_kpi_delta_stats_tlv kpi_delta_tlv;
+    htt_stats_mlo_umac_ssr_kpi_tstmp_tlv kpi_tstamp_tlv;
 } htt_mlo_umac_ssr_kpi_stats_t;
 
 typedef struct {
@@ -9767,10 +10180,10 @@ typedef struct {
      * to use the TLV header within each element to determine where the
      * subsequent element resides.
      */
-    htt_mlo_umac_ssr_trigger_stats_tlv trigger_tlv;
+    htt_stats_mlo_umac_ssr_trigger_tlv trigger_tlv;
     htt_mlo_umac_ssr_kpi_stats_tlv     kpi_tlv;
-    htt_mlo_umac_ssr_mlo_stats_tlv     mlo_tlv;
-    htt_mlo_umac_ssr_common_stats_tlv  cmn_tlv;
+    htt_stats_mlo_umac_ssr_mlo_tlv mlo_tlv;
+    htt_stats_mlo_umac_ssr_cmn_tlv cmn_tlv;
 } htt_mlo_umac_ssr_stats_tlv;
 
 /*============= end MLO UMAC SSR stats ============= } */
@@ -9804,7 +10217,9 @@ typedef struct {
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     htt_umac_ssr_stats_t stats;
-} htt_umac_ssr_stats_tlv;
+} htt_stats_umac_ssr_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_umac_ssr_tlv htt_umac_ssr_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -9824,7 +10239,9 @@ typedef struct {
      * some point during the window.
      */
     A_UINT32 codel_no_drops;
-} htt_codel_svc_class_stats_tlv;
+} htt_stats_codel_svc_class_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_codel_svc_class_tlv htt_codel_svc_class_stats_tlv;
 
 #define HTT_CODEL_MSDUQ_STATS_TX_FLOW_NUM_M 0x0000FFFF
 #define HTT_CODEL_MSDUQ_STATS_TX_FLOW_NUM_S 0
@@ -9892,7 +10309,9 @@ typedef struct {
                 codel_no_drops: 16;
         };
     };
-} htt_codel_msduq_stats_tlv;
+} htt_stats_codel_msduq_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_codel_msduq_tlv htt_codel_msduq_stats_tlv;
 
 /*===================== start MLO stats ====================*/
 
@@ -9902,7 +10321,9 @@ typedef struct {
     A_UINT32 pref_link_num_pref_link_timeout;
     A_UINT32 pref_link_num_pref_link_sch_delay_ipc;
     A_UINT32 pref_link_num_pref_link_timeout_ipc;
-} htt_mlo_sched_stats_tlv;
+} htt_stats_mlo_sched_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_mlo_sched_stats_tlv htt_mlo_sched_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_MLO_SCHED_STATS
  * TLV_TAGS:
@@ -9913,7 +10334,7 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct _htt_mlo_sched_stats {
-    htt_mlo_sched_stats_tlv  preferred_link_stats;
+    htt_stats_mlo_sched_stats_tlv  preferred_link_stats;
 } htt_mlo_sched_stats_t;
 
 #define HTT_STATS_HWMLO_MAX_LINKS 6
@@ -9922,7 +10343,9 @@ typedef struct _htt_mlo_sched_stats {
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     A_UINT32 mlo_ipc_ring_full_cnt[HTT_STATS_HWMLO_MAX_LINKS][HTT_STATS_MLO_MAX_IPC_RINGS];
-} htt_pdev_mlo_ipc_stats_tlv;
+} htt_stats_pdev_mlo_ipc_stats_tlv;
+/* preserve old name alias for new name consistent with the tag name */
+typedef htt_stats_pdev_mlo_ipc_stats_tlv htt_pdev_mlo_ipc_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_MLO_IPC_STATS
  * TLV_TAGS:
@@ -9933,7 +10356,7 @@ typedef struct {
  * Instead, use the constituent TLV structures to fill/parse.
  */
 typedef struct _htt_mlo_ipc_stats {
-    htt_pdev_mlo_ipc_stats_tlv  mlo_ipc_stats;
+    htt_stats_pdev_mlo_ipc_stats_tlv mlo_ipc_stats;
 } htt_pdev_mlo_ipc_stats_t;
 
 /*===================== end MLO stats ======================*/
