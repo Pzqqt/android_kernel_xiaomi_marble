@@ -1211,10 +1211,14 @@ int mi_display_powerkey_callback(int status)
 
 bool mi_dsi_display_ramdump_support()
 {
+#ifdef CONFIG_MACH_XIAOMI_MARBLE
+	return true;
+#else
 	/* when debug policy is 0x0 or 0x20, full dump not supported */
 	if (strcmp(display_debug_policy, "0x0") != 0 && strcmp(display_debug_policy, "0x20") != 0)
 		return true;
 	return false;
+#endif
 }
 
 EXPORT_SYMBOL(mi_of_drm_find_panel_for_touch);
