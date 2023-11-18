@@ -2075,8 +2075,12 @@ static int dsi_ctrl_dts_parse(struct dsi_ctrl *dsi_ctrl,
 					"qcom,split-link-supported");
 
 	/*just for m16t 30hz by adjust hfp*/
+#ifdef CONFIG_MACH_XIAOMI_MARBLE
+	dsi_ctrl->max_hs_timer_supported = true;
+#else
 	dsi_ctrl->max_hs_timer_supported = of_property_read_bool(of_node,
 					"mi,support-max-hs-timer");
+#endif
 
 	rc = of_property_read_u32(of_node, "frame-threshold-time-us",
 			&frame_threshold_time_us);
