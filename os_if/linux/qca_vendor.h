@@ -13426,4 +13426,25 @@ enum qca_wlan_vendor_attr_coap_offload {
 	QCA_WLAN_VENDOR_ATTR_COAP_OFFLOAD_MAX =
 	QCA_WLAN_VENDOR_ATTR_COAP_OFFLOAD_AFTER_LAST - 1,
 };
+
+/**
+ * enum qca_wlan_vendor_attr_flush_pending - Attributes for
+ * flush pending traffic in firmware.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_PEER_ADDR: Configure peer mac address.
+ * @QCA_WLAN_VENDOR_ATTR_AC: Configure access category the pending
+ * packets using. It is u8 value with bit0~3 represent AC_BE, AC_BK,
+ * AC_VI, AC_VO respectively. Set the corresponding bit to 1 to flush
+ * packets with access category.
+ */
+enum qca_wlan_vendor_attr_flush_pending {
+	QCA_WLAN_VENDOR_ATTR_FLUSH_PENDING_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_PEER_ADDR = 1,
+	QCA_WLAN_VENDOR_ATTR_AC = 2,
+
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_FLUSH_PENDING_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_FLUSH_PENDING_MAX =
+	QCA_WLAN_VENDOR_ATTR_FLUSH_PENDING_AFTER_LAST - 1,
+};
 #endif
