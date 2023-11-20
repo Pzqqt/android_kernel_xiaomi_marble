@@ -1268,6 +1268,74 @@ static QDF_STATUS send_peer_flush_tids_cmd_tlv(wmi_unified_t wmi,
 	return 0;
 }
 
+#ifdef WLAN_FEATURE_PEER_TXQ_FLUSH_CONF
+/**
+ * map_to_wmi_flush_policy() - Map flush policy to firmware defined values
+ * @policy: The target i/f flush policy value
+ *
+ * Return: WMI layer flush policy
+ */
+static wmi_peer_flush_policy
+map_to_wmi_flush_policy(enum peer_txq_flush_policy policy)
+{
+	switch (policy) {
+	case PEER_TXQ_FLUSH_POLICY_NONE:
+		return WMI_NO_FLUSH;
+	case PEER_TXQ_FLUSH_POLICY_TWT_SP_END:
+		return WMI_TWT_FLUSH;
+	default:
+		return WMI_MAX_FLUSH_POLICY;
+	}
+}
+
+/**
+ * send_peer_txq_flush_config_cmd_tlv() - Send peer TID queue flush config
+ * @wmi: wmi handle
+ * @para: Peer txq flush configuration
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS
+send_peer_txq_flush_config_cmd_tlv(wmi_unified_t wmi,
+				   struct peer_txq_flush_config_params *param)
+{
+	wmi_peer_flush_policy_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	cmd = (wmi_peer_flush_policy_cmd_fixed_param *)wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_peer_flush_policy_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_peer_flush_policy_cmd_fixed_param));
+
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->peer, &cmd->peer_macaddr);
+	cmd->peer_tid_bitmap = param->tid_mask;
+	cmd->vdev_id = param->vdev_id;
+	cmd->flush_policy = map_to_wmi_flush_policy(param->policy);
+	if (cmd->flush_policy == WMI_MAX_FLUSH_POLICY) {
+		wmi_buf_free(buf);
+		wmi_err("Invalid policy");
+		return QDF_STATUS_E_INVAL;
+	}
+	wmi_debug("peer_addr " QDF_MAC_ADDR_FMT "vdev %d tid %x policy %d",
+		  QDF_MAC_ADDR_REF(param->peer), param->vdev_id,
+		  param->tid_mask, param->policy);
+	wmi_mtrace(WMI_PEER_FLUSH_POLICY_CMDID, cmd->vdev_id, 0);
+	if (wmi_unified_cmd_send(wmi, buf, len, WMI_PEER_FLUSH_POLICY_CMDID)) {
+		wmi_err("Failed to send flush policy command");
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 /**
  * send_peer_delete_cmd_tlv() - send PEER delete command to fw
  * @wmi: wmi handle
@@ -17502,6 +17570,10 @@ struct wmi_ops tlv_ops =  {
 #ifdef WLAN_FEATURE_11BE_MLO
 	.extract_quiet_offload_event =
 				extract_quiet_offload_event_tlv,
+#endif
+
+#ifdef WLAN_FEATURE_PEER_TXQ_FLUSH_CONF
+	.send_peer_txq_flush_config_cmd = send_peer_txq_flush_config_cmd_tlv,
 #endif
 };
 

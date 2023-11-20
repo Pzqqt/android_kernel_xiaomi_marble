@@ -89,6 +89,9 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 #ifdef WLAN_DP_FEATURE_SW_LATENCY_MGR
 #include <dp_swlm.h>
 #endif
+#ifdef WLAN_FEATURE_PEER_TXQ_FLUSH_CONF
+#include <target_if_dp.h>
+#endif
 
 #ifdef WLAN_FEATURE_STATS_EXT
 #define INIT_RX_HW_STATS_LOCK(_soc) \
@@ -12863,6 +12866,35 @@ void dp_deregister_packetdump_callback(struct cdp_soc_t *soc_hdl,
 }
 #endif
 
+#ifdef WLAN_FEATURE_PEER_TXQ_FLUSH_CONF
+/**
+ * dp_set_peer_txq_flush_config() - Set the peer txq flush configuration
+ * @soc_hdl: Opaque handle to the DP soc object
+ * @vdev_id: VDEV identifier
+ * @mac: MAC address of the peer
+ * @ac: access category mask
+ * @tid: TID mask
+ * @policy: Flush policy
+ *
+ * Return: 0 on success, errno on failure
+ */
+static int dp_set_peer_txq_flush_config(struct cdp_soc_t *soc_hdl,
+					uint8_t vdev_id, uint8_t *mac,
+					uint8_t ac, uint32_t tid,
+					enum cdp_peer_txq_flush_policy policy)
+{
+	struct dp_soc *soc;
+
+	if (!soc_hdl) {
+		dp_err("soc is null");
+		return -EINVAL;
+	}
+	soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	return target_if_peer_txq_flush_config(soc->ctrl_psoc, vdev_id,
+					       mac, ac, tid, policy);
+}
+#endif
+
 #ifdef DP_PEER_EXTENDED_API
 static struct cdp_misc_ops dp_ops_misc = {
 #ifdef FEATURE_WLAN_TDLS
@@ -12899,6 +12931,9 @@ static struct cdp_misc_ops dp_ops_misc = {
 #ifdef CONNECTIVITY_PKTLOG
 	.register_pktdump_cb = dp_register_packetdump_callback,
 	.unregister_pktdump_cb = dp_deregister_packetdump_callback,
+#endif
+#ifdef WLAN_FEATURE_PEER_TXQ_FLUSH_CONF
+	.set_peer_txq_flush_config = dp_set_peer_txq_flush_config,
 #endif
 };
 #endif

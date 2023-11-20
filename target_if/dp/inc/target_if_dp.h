@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -126,4 +126,30 @@ QDF_STATUS
 target_if_lro_hash_config(struct cdp_ctrl_objmgr_psoc *psoc, uint8_t pdev_id,
 			  struct cdp_lro_hash_config *lro_hash_cfg);
 
-#endif
+
+#ifdef WLAN_FEATURE_PEER_TXQ_FLUSH_CONF
+/**
+ * target_if_peer_txq_flush_config() - Send flush command for pending frames
+ * @psoc: psoc handle pointer
+ * @vdev_id: VDEV id
+ * @mac: MAC addr of peer for which the tx queue flush is intended
+ * @ac: AC mask for identifying the tx queues to be flushed
+ * @tid: TID mask for identifying the tx queues to be flushed
+ * @policy: Defines the flush policy
+ *
+ * Return: 0 for success or error code
+ */
+int target_if_peer_txq_flush_config(struct cdp_ctrl_objmgr_psoc *psoc,
+				    uint8_t vdev_id, uint8_t *mac,
+				    uint8_t ac, uint32_t tid, uint32_t policy);
+#else
+static inline int
+target_if_peer_txq_flush_config(struct cdp_ctrl_objmgr_psoc *psoc,
+				uint8_t vdev_id, uint8_t *mac,
+				uint8_t ac, uint32_t tid,
+				enum cdp_peer_txq_flush_policy policy)
+{
+	return 0;
+}
+#endif /* WLAN_FEATURE_PEER_TXQ_FLUSH_CONF */
+#endif /* _WLAN_TARGET_IF_DP_H_ */
