@@ -40345,6 +40345,14 @@ typedef struct {
     A_UINT32 scoring_capability_bitmap;
 } wmi_roam_capability_report_event_fixed_param;
 
+/*
+ * Definition of disallow connection modes.
+ */
+typedef enum {
+    /* Bit 0: roam to 5GL+5GH MLSR is not allowed if the bit is set. */
+    WMI_ROAM_MLO_CONNECTION_MODE_5GL_5GH_MLSR = 0x1,
+} WMI_ROAM_MLO_CONNECTION_MODES;
+
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_mlo_config_cmd_fixed_param */
     wmi_mac_addr partner_link_addr; /* Assigned link address which can be used as self link addr when vdev is not created */
@@ -40364,6 +40372,13 @@ typedef struct {
      */
     A_UINT32 support_link_band; /* Configure the band bitmap of mlo connection supports. */
     A_UINT32 max_active_links; /* Max active links supported for STA */
+
+    /*
+     * Disallow the specified connection mode(s) when roaming to MLD AP.
+     * Refer to the WMI_ROAM_MLO_CONNECTION_MODES enum for the connection mode
+     * each bit represents.
+     */
+    A_UINT32 disallow_connect_modes;
 } wmi_roam_mlo_config_cmd_fixed_param;
 
 typedef struct {
