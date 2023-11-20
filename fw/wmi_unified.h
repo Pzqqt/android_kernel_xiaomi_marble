@@ -516,6 +516,11 @@ typedef enum {
     WMI_PDEV_SET_RF_PATH_CMDID,
     /** WSI stats info WMI command */
     WMI_PDEV_WSI_STATS_INFO_CMDID,
+    /*
+     * WMI cmd to Enable LED blink based on Tx+Rx Data Rate
+     * and download LED ON/OFF Rate table
+     */
+    WMI_PDEV_ENABLE_LED_BLINK_DOWNLOAD_TABLE_CMDID,
 
 
     /* VDEV (virtual device) specific commands */
@@ -37079,6 +37084,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_AUDIO_TRANSPORT_SWITCH_RESP_STATUS_CMDID);
         WMI_RETURN_STRING(WMI_PEER_MULTIPLE_REORDER_QUEUE_SETUP_CMDID);
         WMI_RETURN_STRING(WMI_COEX_MULTIPLE_CONFIG_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_ENABLE_LED_BLINK_DOWNLOAD_TABLE_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -47228,6 +47234,39 @@ typedef struct {
     A_UINT32 tlv_header;
     A_UINT32 pdev_id;
 } wmi_pdev_utf_event_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_led_blink_rate_table */
+    A_UINT32 tlv_header;
+
+    A_UINT32 on_time;  /* units = milliseconds */
+    A_UINT32 off_time; /* units = milliseconds */
+} wmi_led_blink_rate_table;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_enable_led_blink_download_rate_table_fixed_param */
+    A_UINT32 tlv_header;
+    /* Pdev Id 0 or 1 based on split phy */
+    A_UINT32 pdev_id;
+    /* Feature enable or disable flag 0-disable 1-enable  */
+    A_UINT32 blink_enable_flag;
+    /* Bandwidth (Mbps) of each index in the blink rate table.
+     * This quantum specification tells the FW which of the blink rate table
+     * elements to use; the FW will divide the data rate by this bw_per_index
+     * and round down, to obtain the index into the rate table for the blink
+     * rate corresponding to the data rate.
+     */
+    A_UINT32 bw_per_index;
+
+    /**
+     * Following this fixed_param TLV are the following additional TLVs:
+     *   - wmi_led_blink_rate_table led_blink_rate_table[]
+     *     The led_blink_rate_table[] elements need to be ordered by
+     *     increasing data rate, so that by dividing the data rate by
+     *     bw_per_index, the FW can find which index/element of the
+     *     led_blink_rate_table[] array to use.
+     */
+} wmi_enable_led_blink_download_rate_table_fixed_param;
 
 typedef enum {
     /* Used when peer attempts connection with vdev */
