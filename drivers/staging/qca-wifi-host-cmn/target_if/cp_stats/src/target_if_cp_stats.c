@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018, 2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -37,10 +37,10 @@
 #ifdef WLAN_FEATURE_MIB_STATS
 #include <wlan_cp_stats_mc_defs.h>
 #endif
-#include "cp_stats/core/src/wlan_cp_stats_defs.h"
+#include "wlan_cp_stats_defs.h"
 #include "cdp_txrx_cmn_struct.h"
 #include "cdp_txrx_ctrl.h"
-#include "cp_stats/core/src/wlan_cp_stats_comp_handler.h"
+#include "wlan_cp_stats_comp_handler.h"
 
 #ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
 

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -125,6 +126,7 @@ int ptt_sock_send_msg_to_app(tAniHdr *wmsg, int radio, int src_mod, int pid)
 	struct nlmsghdr *nlh;
 	int wmsg_length = be16_to_cpu(wmsg->length);
 	static int nlmsg_seq;
+	void *out;
 
 	if (radio < 0 || radio > ANI_MAX_RADIOS) {
 		PTT_TRACE(QDF_TRACE_LEVEL_ERROR, "%s: invalid radio id [%d]\n",
@@ -152,7 +154,12 @@ int ptt_sock_send_msg_to_app(tAniHdr *wmsg, int radio, int src_mod, int pid)
 	}
 	wnl = (tAniNlHdr *) nlh;
 	wnl->radio = radio;
-	memcpy(&wnl->wmsg, wmsg, wmsg_length);
+	/* kernel FORTIFY_SOURCE may warn when multiple struct are copied
+	 * using memcpy. So, to avoid, assign a void pointer to the struct
+	 * and copy using memcpy.
+	 */
+	out = &wnl->wmsg;
+	memcpy(out, wmsg, wmsg_length);
 #ifdef PTT_SOCK_DEBUG_VERBOSE
 	ptt_sock_dump_buf((const unsigned char *)skb->data, skb->len);
 #endif
