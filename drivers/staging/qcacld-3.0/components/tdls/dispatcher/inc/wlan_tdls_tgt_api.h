@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,7 +26,7 @@
 #ifndef _WLAN_TDLS_TGT_API_H_
 #define _WLAN_TDLS_TGT_API_H_
 #include <wlan_tdls_public_structs.h>
-#include "../../core/src/wlan_tdls_main.h"
+#include "wlan_tdls_main.h"
 
 /**
  * tgt_tdls_set_fw_state() - invoke lmac tdls update fw

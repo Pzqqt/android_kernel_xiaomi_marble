@@ -1551,7 +1551,7 @@ struct hdd_adapter {
 	uint32_t pkt_type_bitmap;
 	uint32_t track_arp_ip;
 	uint8_t dns_payload[256];
-	uint32_t track_dns_domain_len;
+	uint8_t track_dns_domain_len;
 	uint32_t track_src_port;
 	uint32_t track_dest_port;
 	uint32_t track_dest_ipv4;
