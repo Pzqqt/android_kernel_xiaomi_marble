@@ -234,6 +234,12 @@ static u32 programmable_fetch_get_num_lines(
 	max_fps = sde_encoder_get_dfps_maxfps(phys_enc->parent);
 	vrefresh = (max_fps > timing->vrefresh) ? max_fps : timing->vrefresh;
 
+	/* Avoid programmable fetch config for xr targets,
+	 * with separate scid for left and right display
+	 */
+	if (test_bit(SDE_MDP_LLCC_DISP_LR, &m->mdp[0].features))
+		return 0;
+
 	/* minimum prefill lines are defined based on 60fps */
 	needed_prefill_lines = (vrefresh > fixed_prefill_fps) ?
 		((default_prefill_lines * vrefresh) /
