@@ -1325,6 +1325,12 @@ config RT_SOFTINT_OPTIMIZATION
 	 which may soon block preemptions, such as a CPU running a ksoftirq
 	 thread which handles slow softints.
 
+config UCLAMP_ASSIST
+	bool "UClamp configuration helper"
+	depends on CPUSETS && ANDROID && UCLAMP_TASK && UCLAMP_TASK_GROUP
+	help
+	  This option enabled in-kernel uclamp setting overrides.
+
 config CPUSETS_ASSIST
 	bool "Cpuset configuration helper"
 	depends on CPUSETS
