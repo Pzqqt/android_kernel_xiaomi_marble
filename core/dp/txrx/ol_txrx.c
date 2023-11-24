@@ -6133,6 +6133,171 @@ void ol_deregister_packetdump_callback(struct cdp_soc_t *soc_hdl,
 	pdev->ol_rx_packetdump_cb = NULL;
 }
 
+#ifdef WLAN_FEATURE_PEER_TXQ_FLUSH_CONF
+/**
+ * ol_map_flush_policy() - Map DP layer flush policy values to target i/f layer
+ * @policy: The DP layer flush policy value
+ *
+ * Return: Peer flush policy
+ */
+static enum peer_txq_flush_policy
+ol_map_flush_policy(enum cdp_peer_txq_flush_policy policy)
+{
+	switch (policy) {
+	case  CDP_PEER_TXQ_FLUSH_POLICY_NONE:
+		return PEER_TXQ_FLUSH_POLICY_NONE;
+	case CDP_PEER_TXQ_FLUSH_POLICY_TWT_SP_END:
+		return PEER_TXQ_FLUSH_POLICY_TWT_SP_END;
+	default:
+		return PEER_TXQ_FLUSH_POLICY_INVALID;
+	}
+}
+
+/**
+ * ol_send_peer_txq_flush_conf() - Send flush config for peers TID queues
+ * @mac: MAC addr of peer for which the tx queue flush is intended
+ * @vdev_id: VDEV identifier
+ * @tid: TID mask for identifying the tx queues to be flushed
+ * @policy: The peer tid queue flush policy
+ *
+ * Return: 0 for success or error code
+ */
+static int ol_send_peer_txq_flush_conf(uint8_t *mac, uint8_t vdev_id,
+				       uint32_t tid,
+				       enum cdp_peer_txq_flush_policy policy)
+{
+	enum peer_txq_flush_policy flush_policy;
+	struct peer_txq_flush_config_params param = {0};
+	QDF_STATUS status;
+
+	flush_policy = ol_map_flush_policy(policy);
+	if (flush_policy >= PEER_TXQ_FLUSH_POLICY_INVALID) {
+		ol_txrx_err("Invalid flush policy : %d", policy);
+		return -EINVAL;
+	}
+
+	param.vdev_id = vdev_id;
+	param.tid_mask = tid;
+	param.policy = flush_policy;
+	qdf_mem_copy(param.peer, mac, QDF_MAC_ADDR_SIZE);
+
+	status = wma_peer_txq_flush_config_send(&param);
+	return qdf_status_to_os_return(status);
+}
+
+/**
+ * ol_send_peer_txq_flush_tids() - Send flush command peers TID queues
+ * @mac: MAC addr of peer for which the tx queue flush is intended
+ * @vdev_id: VDEV identifier
+ * @tid: TID mask for identifying the tx queues to be flushed
+ *
+ * Return: 0 for success or error code
+ */
+static int ol_send_peer_txq_flush_tids(uint8_t *mac, uint8_t vdev_id,
+				       uint32_t tid)
+{
+	struct peer_flush_params param;
+	QDF_STATUS status;
+
+	param.vdev_id = vdev_id;
+	param.peer_tid_bitmap = tid;
+	qdf_mem_copy(param.peer_mac, mac, QDF_MAC_ADDR_SIZE);
+
+	status = wma_peer_flush_tids_send(mac, &param);
+	return qdf_status_to_os_return(status);
+}
+
+static int ol_txrx_peer_txq_flush_config(struct wlan_objmgr_psoc *psoc,
+				  uint8_t vdev_id, uint8_t *addr,
+				  uint8_t ac, uint32_t tid,
+				  enum cdp_peer_txq_flush_policy policy)
+{
+	static uint8_t ac_to_tid[4][2] = { {0, 3}, {1, 2}, {4, 5}, {6, 7} };
+	struct wlan_objmgr_peer *peer;
+	int i, rc;
+
+	if (!psoc || !addr) {
+		ol_txrx_err("Invalid params");
+		return -EINVAL;
+	}
+
+	if (!tid && !ac) {
+		ol_txrx_err("no ac/tid mask setting");
+		return -EINVAL;
+	}
+
+	if (tid && policy == CDP_PEER_TXQ_FLUSH_POLICY_INVALID) {
+		ol_txrx_err("Invalid flush policy");
+		return -EINVAL;
+	}
+
+	peer = wlan_objmgr_get_peer_by_mac(psoc, addr, WLAN_DP_ID);
+	if (!peer) {
+		ol_txrx_err("Peer not found in the list");
+		return -EINVAL;
+	}
+	/* If tid mask is provided and policy is immediate use legacy WMI.
+	 * If tid mask is provided and policy is other than immediate use
+	 * the new WMI command for flush config.
+	 * If tid mask is not provided and ac mask is provided, convert to tid,
+	 * use the legacy WMI cmd for flushing the queues immediately.
+	 */
+	if (tid) {
+		if (policy == CDP_PEER_TXQ_FLUSH_POLICY_IMMEDIATE) {
+			rc = ol_send_peer_txq_flush_tids(addr, vdev_id, tid);
+			wlan_objmgr_peer_release_ref(peer, WLAN_DP_ID);
+			return rc;
+		}
+		rc = ol_send_peer_txq_flush_conf(addr, vdev_id, tid, policy);
+		wlan_objmgr_peer_release_ref(peer, WLAN_DP_ID);
+		return rc;
+	}
+
+	if (ac) {
+		tid = 0;
+		for (i = 0; i < 4; ++i) {
+			if (((ac & 0x0f) >> i) & 0x01) {
+				tid |= (1 << ac_to_tid[i][0]) |
+				       (1 << ac_to_tid[i][1]);
+			}
+		}
+		rc = ol_send_peer_txq_flush_tids(addr, vdev_id, tid);
+		wlan_objmgr_peer_release_ref(peer, WLAN_DP_ID);
+		return rc;
+	}
+	 /* should not hit this line */
+	return 0;
+}
+
+/**
+ * ol_txrx_set_peer_txq_flush_config() - Set the peer txq flush configuration
+ * @soc_hdl: Opaque handle to the DP soc object
+ * @vdev_id: VDEV identifier
+ * @mac: MAC address of the peer
+ * @ac: access category mask
+ * @tid: TID mask
+ * @policy: Flush policy
+ *
+ * Return: 0 on success, errno on failure
+ */
+static int
+ol_txrx_set_peer_txq_flush_config(struct cdp_soc_t *soc_hdl,
+				  uint8_t vdev_id, uint8_t *mac,
+				  uint8_t ac, uint32_t tid,
+				  enum cdp_peer_txq_flush_policy policy)
+{
+	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!soc_hdl) {
+		dp_err("soc is null");
+		return -EINVAL;
+	}
+
+	return ol_txrx_peer_txq_flush_config(wma_handle->psoc, vdev_id,
+					     mac, ac, tid, policy);
+}
+#endif
+
 static struct cdp_cmn_ops ol_ops_cmn = {
 	.txrx_soc_attach_target = ol_txrx_soc_attach_target,
 	.txrx_vdev_attach = ol_txrx_vdev_attach,
@@ -6201,6 +6366,9 @@ static struct cdp_misc_ops ol_ops_misc = {
 #ifdef WLAN_SUPPORT_TXRX_HL_BUNDLE
 	.vdev_set_bundle_require_flag = ol_tx_vdev_set_bundle_require,
 	.pdev_reset_bundle_require_flag = ol_tx_pdev_reset_bundle_require,
+#endif
+#ifdef WLAN_FEATURE_PEER_TXQ_FLUSH_CONF
+	.set_peer_txq_flush_config = ol_txrx_set_peer_txq_flush_config,
 #endif
 };
 
