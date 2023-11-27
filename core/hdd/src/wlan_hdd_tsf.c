@@ -1868,6 +1868,11 @@ static int hdd_tx_timestamp(enum htt_tx_status status,
 			break;
 		}
 
+		/* Remove SKB from internal tracking table before submitting
+		 * it to stack
+		 */
+		qdf_net_buf_debug_release_skb(new_netbuf);
+
 		hdd_debug("packet status %d, sock ee_errno %d",
 			  status, serr->ee.ee_errno);
 
