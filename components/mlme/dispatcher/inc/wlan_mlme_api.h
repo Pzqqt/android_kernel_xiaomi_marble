@@ -1125,6 +1125,21 @@ QDF_STATUS wlan_mlme_set_primary_interface(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS wlan_mlme_set_default_primary_iface(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * wlan_mlme_peer_get_assoc_rsp_ies() - Get the assoc response IEs of peer
+ * @peer: WLAN peer objmgr
+ * @ie_buf: Pointer to IE buffer
+ * @ie_len: Length of the IE buffer
+ *
+ * Get the pointer to assoc response IEs of the peer from MLME
+ * and length of the IE buffer.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_mlme_peer_get_assoc_rsp_ies(struct wlan_objmgr_peer *peer,
+					    const uint8_t **ie_buf,
+					    size_t *ie_len);
+
+/**
  * wlan_mlme_get_mcc_duty_cycle_percentage() - Get primary STA iface duty
  * cycle percentage
  * @psoc: pointer to psoc object

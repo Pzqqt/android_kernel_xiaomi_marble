@@ -2492,6 +2492,26 @@ ucfg_mlme_get_vht_tx_mcs_2x2(struct wlan_objmgr_psoc *psoc, uint8_t *value)
 }
 
 /**
+ * ucfg_mlme_peer_get_assoc_rsp_ies() - Get assoc response sent to peer
+ * @peer: WLAN peer objmgr
+ * @ie_buf: Pointer to IE buffer
+ * @ie_len: Length of the IE buffer
+ *
+ * This API is used to get the assoc response sent to peer
+ * as part of association.
+ * Caller to hold reference for peer.
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+ucfg_mlme_peer_get_assoc_rsp_ies(struct wlan_objmgr_peer *peer,
+				 const uint8_t **ie_buf,
+				 size_t *ie_len)
+{
+	return wlan_mlme_peer_get_assoc_rsp_ies(peer, ie_buf, ie_len);
+}
+
+/**
  * ucfg_mlme_get_ini_vdev_config() - get the ini capability of vdev
  * @vdev: pointer to the vdev obj
  *
