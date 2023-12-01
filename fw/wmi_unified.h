@@ -761,6 +761,9 @@ typedef enum {
     /* Group SET cmd for PEERS */
     WMI_PEER_BULK_SET_CMDID,
 
+    /* WMI command to setup reorder queue for multiple TIDs */
+    WMI_PEER_MULTIPLE_REORDER_QUEUE_SETUP_CMDID,
+
     /* beacon/management specific commands */
 
     /** transmit beacon by reference . used for transmitting beacon on low latency interface like pcie */
@@ -5923,6 +5926,7 @@ typedef enum {
 #define WMI_SCAN_FLAG_EXT_RELIABLE_SCAN       0x00010000
 #define WMI_SCAN_FLAG_EXT_FAST_SCAN           0x00020000
 #define WMI_SCAN_FLAG_EXT_LOW_POWER_SCAN      0x00040000
+#define WMI_SCAN_FLAG_EXT_STOP_IF_BSSID_FOUND 0x00080000
 
 
 /**
@@ -10079,6 +10083,12 @@ typedef struct {
     /** idnore power , only use flags , mode and freq */
     wmi_channel chan;
 } wmi_pdev_set_channel_cmd;
+
+typedef struct {
+    A_UINT32 tlv_header;
+    /* DBW puncture bitmap */
+    A_UINT32 dbw_puncture_20mhz_bitmap;
+} wmi_dbw_chan_info;
 
 typedef enum {
     WMI_PKTLOG_EVENT_RX =  0x00000001,
@@ -16971,6 +16981,10 @@ typedef struct {
  *     wmi_partner_link_info link_info[]; <-- partner link info
  *         optional TLV, only present for MLO vdevs,
  *         If the vdev is non-MLO the array length should be 0.
+ *     wmi_channel dbw_chan; <-- WMI channel
+ *         optional TLV for dbw_chan
+ *     wmi_dbw_chan_info dbw_chan_info
+ *         optional TLV used for dbw_chan_info
  */
 } wmi_vdev_start_request_cmd_fixed_param;
 
@@ -31738,6 +31752,39 @@ typedef struct {
                               * established or terminated for the TID. */
 } wmi_peer_reorder_queue_setup_cmd_fixed_param;
 
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_per_reorder_q_setup_params_t */
+    A_UINT32 tid; /* 0 to 15 = QoS TIDs, 16 = non-qos TID */
+    A_UINT32 queue_ptr_lo; /* lower 32 bits of queue desc address */
+    A_UINT32 queue_ptr_hi; /* upper 32 bits of queue desc address */
+    A_UINT32 queue_no; /* 16-bit number assigned by host for queue,
+                        * stored in bits 15:0 of queue_no field */
+    A_UINT32 ba_window_size_valid; /* Is ba_window_size valid?
+                                    * 0 = Invalid, 1 = Valid */
+    A_UINT32 ba_window_size; /* Valid values: 0 to 256
+                              * Host sends the message when BA session is
+                              * established or terminated for the TID. */
+} wmi_peer_per_reorder_q_setup_params_t;
+
+/**
+ * This command is sent from WLAN host driver to firmware for
+ * plugging in reorder queue desc to hw for multiple TIDs in one shot.
+ *
+ * Example: plug-in queue desc
+ *    host->target: WMI_PEER_MULTIPLE_REORDER_QUEUE_SETUP_CMDID,
+ *                  (vdev_id = PEER vdev id,
+ *                   peer_macaddr = PEER mac addr)
+ */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_multiple_reorder_queue_setup_cmd_fixed_param */
+    A_UINT32 vdev_id;
+    wmi_mac_addr peer_macaddr; /* peer mac address */
+/*
+ * This struct is followed by other TLVs:
+ *   wmi_peer_per_reorder_q_setup_params_t q_setup_params[num_queues];
+ */
+} wmi_peer_multiple_reorder_queue_setup_cmd_fixed_param;
+
 /**
  * This command is sent from WLAN host driver to firmware for
  * removing one or more reorder queue desc to lithium hw.
@@ -37006,6 +37053,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_SCHED_MODE_PROBE_REQ_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_OOB_CONNECTION_REQ_CMDID);
         WMI_RETURN_STRING(WMI_AUDIO_TRANSPORT_SWITCH_RESP_STATUS_CMDID);
+        WMI_RETURN_STRING(WMI_PEER_MULTIPLE_REORDER_QUEUE_SETUP_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -37901,6 +37949,10 @@ typedef struct {
      *    with vdev ID as index.
      * A_UINT32 preferred_rx_streams[]; <-- Array of preferred_rx_streams
      *    with vdev ID as index.
+     * wmi_channel dbw_chan; <-- WMI channel
+     *     optional TLV for dbw_chan
+     * wmi_dbw_chan_info dbw_chan_info
+     *     optional TLV used for dbw_chan_info
      */
 } wmi_pdev_multiple_vdev_restart_request_cmd_fixed_param;
 

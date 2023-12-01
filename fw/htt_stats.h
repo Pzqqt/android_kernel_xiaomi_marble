@@ -9350,6 +9350,8 @@ typedef enum {
     HTT_STATS_SCHED_OFDMA_TXBF_INELIGIBILITY_MAX,
 } htt_stats_sched_ofdma_txbf_ineligibility_t;
 
+#define HTT_MAX_NUM_CHAN_ACC_LAT_INTR 9
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /**
@@ -9393,6 +9395,19 @@ typedef struct {
     /** Num of instances where dl ofdma is disabled because there are consecutive mpdu failure */
     A_UINT32 dlofdma_disabled_consec_no_mpdus_success[HTT_NUM_AC_WMM];
     A_UINT32 txbf_ofdma_ineligibility_stat[HTT_STATS_SCHED_OFDMA_TXBF_INELIGIBILITY_MAX];
+    /** Average channel access latency histogram stats
+     *
+     *  avg_chan_acc_lat_hist[0]: channel access latency is < 100 us
+     *  avg_chan_acc_lat_hist[1]: 100 us <= channel access latency < 200 us
+     *  avg_chan_acc_lat_hist[2]: 200 us <= channel access latency < 300 us
+     *  avg_chan_acc_lat_hist[3]: 300 us <= channel access latency < 400 us
+     *  avg_chan_acc_lat_hist[4]: 400 us <= channel access latency < 500 us
+     *  avg_chan_acc_lat_hist[5]: 500 us <= channel access latency < 1000 us
+     *  avg_chan_acc_lat_hist[6]: 1000 us <= channel access latency < 1500 us
+     *  avg_chan_acc_lat_hist[7]: 1500 us <= channel access latency < 2000 us
+     *  avg_chan_acc_lat_hist[8]: channel access latency is >= 2000 us
+    */
+    A_UINT32 avg_chan_acc_lat_hist[HTT_MAX_NUM_CHAN_ACC_LAT_INTR];
 } htt_stats_pdev_sched_algo_ofdma_stats_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_pdev_sched_algo_ofdma_stats_tlv
