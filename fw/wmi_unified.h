@@ -23435,6 +23435,8 @@ typedef enum wake_reason_e {
     WOW_REASON_VDEV_REPURPOSE,
     /* STX High duty cycle event */
     WOW_REASON_STX_WOW_HIGH_DUTY_CYCLE,
+    /* WoW exit reason MCC lite */
+    WOW_REASON_MCC_LITE,
 
     /* add new WOW_REASON_ defs before this line */
     WOW_REASON_MAX,
