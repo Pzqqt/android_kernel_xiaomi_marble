@@ -3382,6 +3382,10 @@ typedef struct {
     A_UINT32 be_bsr_trigger_partial_resp;
     /** 11BE EHT MU BAR Trigger frame completed with partial user response */
     A_UINT32 be_mu_bar_trigger_partial_resp;
+    /** 11BE EHT MU RTS Trigger frame blocked due to partner link TX/RX(eMLSR) */
+    A_UINT32 be_mu_rts_trigger_blocked;
+    /** 11BE EHT MU BSR Trigger frame blocked due to partner link TX/RX(eMLSR) */
+    A_UINT32 be_bsr_trigger_blocked;
 } htt_stats_tx_selfgen_be_err_stats_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_tx_selfgen_be_err_stats_tlv htt_tx_selfgen_be_err_stats_tlv;
