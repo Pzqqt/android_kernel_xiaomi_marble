@@ -2894,11 +2894,14 @@ wma_wow_wakeup_host_trigger_ssr(t_wma_handle *wma, uint32_t reason)
 	uint32_t interval_for_pagefault_wakeup_counts;
 	qdf_time_t curr_time;
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
+	int i;
+	bool ignore_pf = true;
 
 	if (!mac) {
 		wma_debug("NULL mac ptr");
 		return;
 	}
+
 	if (WOW_REASON_PAGE_FAULT != reason)
 		return;
 
@@ -2923,6 +2926,23 @@ wma_wow_wakeup_host_trigger_ssr(t_wma_handle *wma, uint32_t reason)
 
 	curr_time = qdf_get_time_of_the_day_ms();
 
+	for (i = wma->num_page_fault_wakeups - 1; i >= 0; i--) {
+		if (curr_time - wma->pagefault_wakeups_ts[i] >
+		    interval_for_pagefault_wakeup_counts) {
+			if (i == wma->num_page_fault_wakeups - 1) {
+				wma->num_page_fault_wakeups = 0;
+			} else {
+				qdf_mem_copy(&wma->pagefault_wakeups_ts[0],
+					&wma->pagefault_wakeups_ts[i+1],
+					(wma->num_page_fault_wakeups - (i+1)) *
+					sizeof(qdf_time_t));
+				wma->num_page_fault_wakeups -= (i + 1);
+			}
+			ignore_pf = false;
+			break;
+		}
+	}
+
 	if (wma->num_page_fault_wakeups == pagefault_wakeups_for_ssr) {
 		qdf_mem_copy(&wma->pagefault_wakeups_ts[0],
 			     &wma->pagefault_wakeups_ts[1],
@@ -2935,7 +2955,8 @@ wma_wow_wakeup_host_trigger_ssr(t_wma_handle *wma, uint32_t reason)
 
 	wma_nofl_debug("num pagefault wakeups %d", wma->num_page_fault_wakeups);
 
-	if (wma->num_page_fault_wakeups < pagefault_wakeups_for_ssr)
+	if (!ignore_pf ||
+	    (wma->num_page_fault_wakeups < pagefault_wakeups_for_ssr))
 		return;
 
 	if (curr_time - wma->pagefault_wakeups_ts[0] <=

@@ -1994,22 +1994,42 @@ populate_dot11f_supp_channels(struct mac_context *mac,
 			      tDot11fIESuppChannels *pDot11f,
 			      uint8_t nAssocType, struct pe_session *pe_session)
 {
-	uint8_t i;
+	uint8_t i, j = 0;
 	uint8_t *p;
 	struct supported_channels supportedChannels;
+	uint8_t channel, opclass, base_opclass;
+	uint8_t reg_cc[REG_ALPHA2_LEN + 1];
 
 	wlan_add_supported_5Ghz_channels(mac->psoc, mac->pdev,
 					 supportedChannels.channelList,
 					 &supportedChannels.numChnl,
 					 false);
+
 	p = supportedChannels.channelList;
 	pDot11f->num_bands = supportedChannels.numChnl;
+	wlan_reg_read_current_country(mac->psoc, reg_cc);
 
-	for (i = 0U; i < pDot11f->num_bands; ++i, ++p) {
-		pDot11f->bands[i][0] = *p;
-		pDot11f->bands[i][1] = 1;
+	for (i = 0U; i < pDot11f->num_bands; i++) {
+		base_opclass = wlan_reg_dmn_get_opclass_from_channel(
+						reg_cc,
+						p[i], BW20);
+		pDot11f->bands[j][0] = p[i];
+		pDot11f->bands[j][1] = 1;
+		channel = p[i];
+		while (i + 1 < pDot11f->num_bands && (p[i + 1] == channel + 4)) {
+			opclass = wlan_reg_dmn_get_opclass_from_channel(
+						reg_cc,
+						p[i + 1], BW20);
+			if (base_opclass != opclass)
+				goto skip;
+			pDot11f->bands[j][1]++;
+			channel = p[++i];
+		}
+skip:
+		j++;
 	}
 
+	pDot11f->num_bands = j;
 	pDot11f->present = 1;
 
 } /* End populate_dot11f_supp_channels. */
