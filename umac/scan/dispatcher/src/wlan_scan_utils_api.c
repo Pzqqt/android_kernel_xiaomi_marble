@@ -3093,9 +3093,9 @@ util_scan_parse_beacon_frame(struct wlan_objmgr_pdev *pdev,
 		mbssid_ie = util_scan_find_ie(WLAN_ELEMID_MULTIPLE_BSSID,
 					      (uint8_t *)&bcn->ie, ie_len);
 		if (mbssid_ie) {
-			if (mbssid_ie[1] <= 0) {
+			if (mbssid_ie[TAG_LEN_POS] < VALID_ELEM_LEAST_LEN) {
 				scm_debug("MBSSID IE length is wrong %d",
-					  mbssid_ie[1]);
+					  mbssid_ie[TAG_LEN_POS]);
 				return status;
 			}
 			qdf_mem_copy(&mbssid_info.trans_bssid,
