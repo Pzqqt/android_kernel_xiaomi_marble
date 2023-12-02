@@ -247,6 +247,10 @@ static void balance_irqs(void)
 		if (!__irq_can_set_affinity(bi->desc))
 			continue;
 
+		/* Do not balance IRQs marked as performance critical */
+		if (irqd_has_set(&bi->desc->irq_data, IRQD_PERF_CRITICAL))
+			continue;
+
 		/* Ignore for this balancing run if something else moved it */
 		if (cpu != bi->prev_cpu) {
 			bi->prev_cpu = cpu;
