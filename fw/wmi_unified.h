@@ -5450,6 +5450,68 @@ typedef enum {
 #define WMI_SET_STA_DUMP_SUPPORT(feature_bitmap, val)   \
         WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 112, 1, val)
 
+/* Peer protocol features supported info (contd) */
+#define WMI_GET_STA_P2P_SUPPORT(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 113, 1)
+#define WMI_SET_STA_P2P_SUPPORT(feature_bitmap, val)   \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 113, 1, val)
+#define WMI_GET_STA_SAP_SUPPORT(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 114, 1)
+#define WMI_SET_STA_SAP_SUPPORT(feature_bitmap, val)   \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 114, 1, val)
+#define WMI_GET_STA_NAN_SUPPORT(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 115, 1)
+#define WMI_SET_STA_NAN_SUPPORT(feature_bitmap, val)   \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 115, 1, val)
+#define WMI_GET_STA_TDLS_SUPPORT(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 116, 1)
+#define WMI_SET_STA_TDLS_SUPPORT(feature_bitmap, val)   \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 116, 1, val)
+/* Reserving 16 bits for accomodating other 2 port concurrencies later */
+
+#define WMI_GET_STA_SAP_P2P_SUPPORT(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 133, 1)
+#define WMI_SET_STA_SAP_P2P_SUPPORT(feature_bitmap, val)   \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 133, 1, val)
+#define WMI_GET_STA_SAP_NAN_SUPPORT(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 134, 1)
+#define WMI_SET_STA_SAP_NAN_SUPPORT(feature_bitmap, val)   \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 134, 1, val)
+#define WMI_GET_STA_P2P_NAN_SUPPORT(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 135, 1)
+#define WMI_SET_STA_P2P_NAN_SUPPORT(feature_bitmap, val)   \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 135, 1, val)
+#define WMI_GET_STA_P2P_TDLS_SUPPORT(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 136, 1)
+#define WMI_SET_STA_P2P_TDLS_SUPPORT(feature_bitmap, val)   \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 136, 1, val)
+#define WMI_GET_STA_SAP_TDLS_SUPPORT(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 137, 1)
+#define WMI_SET_STA_SAP_TDLS_SUPPORT(feature_bitmap, val)   \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 137, 1, val)
+#define WMI_GET_STA_NAN_TDLS_SUPPORT(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 138, 1)
+#define WMI_SET_STA_NAN_TDLS_SUPPORT(feature_bitmap, val)   \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 138, 1, val)
+/* Reserving 16 bits for accomodating other 3 port concurrencies later */
+
+#define WMI_GET_STA_SAP_P2P_TDLS_SUPPORT(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 155, 1)
+#define WMI_SET_STA_SAP_P2P_TDLS_SUPPORT(feature_bitmap, val)   \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 155, 1, val)
+#define WMI_GET_STA_SAP_NAN_TDLS_SUPPORT(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 156, 1)
+#define WMI_SET_STA_SAP_NAN_TDLS_SUPPORT(feature_bitmap, val)   \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 156, 1, val)
+#define WMI_GET_STA_P2P_P2P_TDLS_SUPPORT(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 157, 1)
+#define WMI_SET_STA_P2P_P2P_TDLS_SUPPORT(feature_bitmap, val)   \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 157, 1, val)
+#define WMI_GET_STA_P2P_NAN_TDLS_SUPPORT(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 158, 1)
+#define WMI_SET_STA_P2P_NAN_TDLS_SUPPORT(feature_bitmap, val)   \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 158, 1, val)
+
 /*
  * Specify how many A_UINT32 words are needed to hold the feature bitmap flags.
  * This value may change over time.
@@ -5457,7 +5519,7 @@ typedef enum {
  * It is provided simply as a convenience for the feature_set_bitmap sender to
  * know how many 32-bit words to allocate for the bitmap.
  */
-#define WMI_FEATURE_SET_BITMAP_ARRAY_LEN32 4
+#define WMI_FEATURE_SET_BITMAP_ARRAY_LEN32 6
 
 /**
  * TLV for channel list
