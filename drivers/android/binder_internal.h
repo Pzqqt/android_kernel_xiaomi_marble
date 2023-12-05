@@ -457,14 +457,73 @@ struct binder_proc {
  * @cred                  struct cred associated with the `struct file`
  *                        in binder_open()
  *                        (invariant after initialized)
+ * @lock:            protects binder_proc->alloc fields
  *
  * Extended binder_proc -- needed to add the "cred" field without
  * changing the KMI for binder_proc.
+ * Extended binder_proc -- needed to add the "lock" field without
+ * changing the KMI for binder_proc->alloc.
  */
 struct binder_proc_ext {
 	struct binder_proc proc;
 	const struct cred *cred;
+	spinlock_t lock;
 };
+
+static inline struct binder_proc *
+binder_proc_entry(struct binder_alloc *alloc)
+{
+	return container_of(alloc, struct binder_proc, alloc);
+}
+
+static inline struct binder_proc_ext *
+binder_proc_ext_entry(struct binder_proc *proc)
+{
+	return container_of(proc, struct binder_proc_ext, proc);
+}
+
+static inline struct binder_proc_ext *
+binder_alloc_to_proc_ext(struct binder_alloc *alloc)
+{
+	return binder_proc_ext_entry(binder_proc_entry(alloc));
+}
+
+static inline void binder_alloc_lock_init(struct binder_alloc *alloc)
+{
+	spin_lock_init(&binder_alloc_to_proc_ext(alloc)->lock);
+}
+
+static inline void binder_alloc_lock(struct binder_alloc *alloc)
+{
+	spin_lock(&binder_alloc_to_proc_ext(alloc)->lock);
+}
+
+static inline void binder_alloc_unlock(struct binder_alloc *alloc)
+{
+	spin_unlock(&binder_alloc_to_proc_ext(alloc)->lock);
+}
+
+static inline int binder_alloc_trylock(struct binder_alloc *alloc)
+{
+	return spin_trylock(&binder_alloc_to_proc_ext(alloc)->lock);
+}
+
+/**
+ * binder_alloc_get_free_async_space() - get free space available for async
+ * @alloc:	binder_alloc for this proc
+ *
+ * Return:	the bytes remaining in the address-space for async transactions
+ */
+static inline size_t
+binder_alloc_get_free_async_space(struct binder_alloc *alloc)
+{
+	size_t free_async_space;
+
+	binder_alloc_lock(alloc);
+	free_async_space = alloc->free_async_space;
+	binder_alloc_unlock(alloc);
+	return free_async_space;
+}
 
 static inline const struct cred *binder_get_cred(struct binder_proc *proc)
 {
