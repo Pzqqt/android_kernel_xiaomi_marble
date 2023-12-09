@@ -34186,9 +34186,37 @@ typedef struct {
     A_UINT32 freqNum;
 } wmi_pdev_nfcal_power_all_channels_freqNum;
 
+/* Bit set/unset definitions for valid_bitmap field in ani_cck_event */
+#define WMI_ANI_CCK_EVENT_PDEV_ID_SET(bitmap, val) \
+    WMI_SET_BITS(bitmap, 0, 8, val)
+#define WMI_ANI_CCK_EVENT_PDEV_ID_GET(bitmap) \
+    WMI_GET_BITS(bitmap, 0, 8)
+
+#define WMI_ANI_CCK_EVENT_PDEV_ID_VALID_BIT_SET(bitmap, val) \
+    WMI_SET_BITS(bitmap, 31, 1, val)
+#define WMI_ANI_CCK_EVENT_PDEV_ID_VALID_BIT_GET(bitmap) \
+    WMI_GET_BITS(bitmap, 31, 1)
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ani_cck_event_fixed_param */
     A_UINT32 cck_level;
+    union {
+        A_UINT32 pdev_id_valid__pdev_id__word;
+        struct {
+            /**
+             * word containng the pdev_id for identifying the MAC
+             * Contents:
+             *     bits  7:0 - pdev ID
+             *     bits 30:8 - reserved
+             *     bit  31   - pdev ID valid flag
+             * See macros starting with WMI_ANI_CCK_EVENT_PDEV_ID_ for values.
+             * pdev_id is valid when pdev_id_valid is set.
+             */
+            A_UINT32 pdev_id: 8,
+                     reserved: 23,
+                     pdev_id_valid: 1;
+        };
+    };
 } wmi_ani_cck_event_fixed_param;
 
 typedef enum wmi_power_debug_reg_fmt_type {
@@ -34551,9 +34579,37 @@ typedef struct {
     A_UINT32 protocol_wake_lock_bitmap[4]; /* bitmap with bits set for modules (from WLAN_MODULE_ID enum) voting against sleep for prolonged duration */
 } wmi_chip_power_save_failure_detected_fixed_param;
 
+/* Bit set/unset definitions for valid_bitmap field in ani_ofdm_event */
+#define WMI_ANI_OFDM_EVENT_PDEV_ID_BIT_SET(bitmap, val) \
+    WMI_SET_BITS(bitmap, 0, 8, val)
+#define WMI_ANI_OFDM_EVENT_PDEV_ID_BIT_GET(bitmap) \
+    WMI_GET_BITS(bitmap, 0, 8)
+
+#define WMI_ANI_OFDM_EVENT_PDEV_ID_VALID_BIT_SET(bitmap, val) \
+    WMI_SET_BITS(bitmap, 31, 1, val)
+#define WMI_ANI_OFDM_EVENT_PDEV_ID_VALID_BIT_GET(bitmap) \
+    WMI_GET_BITS(bitmap, 31, 1)
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ani_ofdm_event_fixed_param */
     A_UINT32 ofdm_level;
+    union {
+        A_UINT32 pdev_id_valid__pdev_id__word;
+        struct {
+            /**
+             * word containng the pdev_id for identifying the MAC
+             * Contents:
+             *     bits  7:0 - pdev ID
+             *     bits 30:8 - reserved
+             *     bit  31   - pdev ID valid flag
+             * See macros starting with WMI_ANI_OFDM_EVENT_PDEV_ID_ for values.
+             * pdev_id is valid when pdev_id_valid is set.
+             */
+            A_UINT32 pdev_id: 8,
+                     reserved: 23,
+                     pdev_id_valid: 1;
+        };
+    };
 } wmi_ani_ofdm_event_fixed_param;
 
 /* When a bit is set it specifies the particular WLAN traffic type is high priority.
