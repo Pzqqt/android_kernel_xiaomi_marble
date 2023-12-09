@@ -1421,6 +1421,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_disallowed_mlo_mode_bitmap_param,
     WMITLV_TAG_STRUC_wmi_led_blink_rate_table,
     WMITLV_TAG_STRUC_wmi_enable_led_blink_download_rate_table_fixed_param,
+    WMITLV_TAG_STRUC_wmi_vdev_get_twt_session_stats_info_cmd_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -1963,6 +1964,7 @@ typedef enum {
     OP(WMI_PEER_MULTIPLE_REORDER_QUEUE_SETUP_CMDID) \
     OP(WMI_COEX_MULTIPLE_CONFIG_CMDID) \
     OP(WMI_PDEV_ENABLE_LED_BLINK_DOWNLOAD_TABLE_CMDID) \
+    OP(WMI_VDEV_GET_TWT_SESSION_STATS_INFO_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -3626,6 +3628,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_WMM_PARAMS_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_pifs_params, pifs_params, WMITLV_SIZE_VAR)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_TWT_EDCA_PARAMS_CMDID);
+
+#define WMITLV_TABLE_WMI_VDEV_GET_TWT_SESSION_STATS_INFO_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_get_twt_session_stats_info_cmd_fixed_param, wmi_vdev_get_twt_session_stats_info_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_GET_TWT_SESSION_STATS_INFO_CMDID);
 
 #define WMITLV_TABLE_WMI_VDEV_SET_GTX_PARAMS_CMDID(id,op,buf,len)                                           \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_set_gtx_params_cmd_fixed_param, wmi_vdev_set_gtx_params_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)

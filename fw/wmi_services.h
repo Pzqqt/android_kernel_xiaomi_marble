@@ -649,6 +649,7 @@ typedef  enum  {
     WMI_SERVICE_MULTIPLE_REORDER_QUEUE_SETUP_SUPPORT = 396, /* Indicate FW supports multiple TID reorder queues setup in one cmd */
     WMI_SERVICE_MULTIPLE_COEX_CONFIG_SUPPORT = 397, /* FW supports mutiple coex configs in one cmd */
     WMI_SERVICE_PCIE_DATA_RATE_LED_BLINK_SUPPORT = 398, /* FW supports Data Rate based LED blinking for PCI chips */
+    WMI_SERVICE_VDEV_DCS_STATS_SUPPORT = 399, /* FW supports VDEV level DCS stats reporting */
 
     WMI_MAX_EXT2_SERVICE
 

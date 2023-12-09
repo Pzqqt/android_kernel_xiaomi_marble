@@ -1514,6 +1514,7 @@ typedef enum {
     WMI_TWT_BTWT_REMOVE_STA_CMDID,
     WMI_TWT_NUDGE_DIALOG_CMDID,
     WMI_VDEV_SET_TWT_EDCA_PARAMS_CMDID, /* XPAN TWT */
+    WMI_VDEV_GET_TWT_SESSION_STATS_INFO_CMDID,
 
     /** WMI commands related to motion detection **/
     WMI_MOTION_DET_CONFIG_PARAM_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_MOTION_DET),
@@ -10498,6 +10499,12 @@ typedef struct {
      */
 } wmi_vdev_set_twt_edca_params_cmd_fixed_param;
 
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_get_twt_session_stats_info_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    A_UINT32 vdev_id;
+} wmi_vdev_get_twt_session_stats_info_cmd_fixed_param;
+
 typedef enum {
     WMI_REQUEST_PEER_STAT            = 0x00001,
     WMI_REQUEST_AP_STAT              = 0x00002,
@@ -17064,6 +17071,9 @@ typedef struct {
 
     A_UINT32 mbssid_multi_group_flag; /* Flag to identify whether multi group mbssid is supported */
     A_UINT32 mbssid_multi_group_id; /* Group id of current vdev only valid when multi group mbssid is supported */
+    /* Target TSF value by which VDEV restart procedure should be completed in FW */
+    A_UINT32 target_tsf_us_lo; /* bits 31:0 */
+    A_UINT32 target_tsf_us_hi; /* bits 63:32 */
 
 /* The TLVs follows this structure:
  *     wmi_channel chan; <-- WMI channel
@@ -18338,6 +18348,9 @@ typedef enum {
      * Set the Recommended Max allowed active links
      */
     WMI_VDEV_PARAM_MLO_MAX_RECOM_ACTIVE_LINKS,            /* 0xC1 */
+
+    /* DCS stats enable configuration at VDEV level */
+    WMI_VDEV_PARAM_DCS,                                   /* 0xC2 */
 
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
@@ -21289,6 +21302,12 @@ typedef struct {
      * See macros starting with WMI_PDEV_ID_ for values.
      */
     A_UINT32 pdev_id;
+    /** VDEV ID for identifying DCS stats reported at VDEV level.
+     * Should be interpreted only when WMI_SERVICE_VDEV_DCS_STATS_SUPPORT
+     * service cap is advertized by target.
+     * And value would be 0xFF if DCS stats is still configured at PDEV level.
+     */
+    A_UINT32 vdev_id;
 /*
  * Following this struct are these TLVs. Note that they are both array of structures
  * but can have at most one element. Which TLV is empty or has one element depends
@@ -44657,12 +44676,16 @@ typedef struct {
     /* service period start TSF */
     A_UINT32     sp_tsf_us_lo; /* bits 31:0 */
     A_UINT32     sp_tsf_us_hi; /* bits 63:32 */
+    /* Current TSF */
+    A_UINT32     curr_tsf_us_lo; /* bits 31:0 */
+    A_UINT32     curr_tsf_us_hi; /* bits 63:32 */
 } wmi_twt_session_stats_info;
 
 enum wmi_twt_session_stats_type {
     WMI_TWT_SESSION_SETUP     = 1,
     WMI_TWT_SESSION_TEARDOWN  = 2,
     WMI_TWT_SESSION_UPDATE    = 3,
+    WMI_TWT_SESSION_QUERY_RSP = 4,
 };
 
 typedef struct {
