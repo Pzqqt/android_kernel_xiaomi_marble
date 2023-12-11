@@ -106,6 +106,23 @@ enum vdev_ll_conn_actions {
 };
 
 /**
+ * enum cdp_peer_txq_flush_policy: Values for peer TX TID queues flush policy
+ * @CDP_PEER_TXQ_FLUSH_POLICY_NONE: No flush policy configured
+ * @CDP_PEER_TXQ_FLUSH_POLICY_IMMEDIATE: Flush peer TX TID queue(s) immediately
+ * @CDP_PEER_TXQ_FLUSH_POLICY_TWT_SP_END: Flush peer TX TID queue(s) at SP end
+ *
+ * This is used to map the 'flush_policy' in WMI_PEER_FLUSH_POLICY_CMDID
+ */
+enum cdp_peer_txq_flush_policy {
+	CDP_PEER_TXQ_FLUSH_POLICY_NONE = 0,
+	CDP_PEER_TXQ_FLUSH_POLICY_IMMEDIATE = 1,
+	CDP_PEER_TXQ_FLUSH_POLICY_TWT_SP_END = 2,
+
+	/* keep last */
+	CDP_PEER_TXQ_FLUSH_POLICY_INVALID,
+};
+
+/**
  * struct cdp_mlo_ops - MLO ops for multichip
  * @mlo_soc_setup: setup DP mlo for SOC
  * @mlo_soc_teardown: teardown DP mlo for SOC
@@ -1341,6 +1358,8 @@ struct ol_if_ops {
  * @set_swlm_enable: Enable or Disable Software Latency Manager.
  * @is_swlm_enabled: Check if Software latency manager is enabled or not.
  * @display_txrx_hw_info: Dump the DP rings info
+ * @set_tx_flush_pending: Configures the ac/tid to be flushed and policy
+ *			  to flush.
  *
  * Function pointers for miscellaneous soc/pdev/vdev related operations.
  */
@@ -1433,6 +1452,12 @@ struct cdp_misc_ops {
 	uint8_t (*is_swlm_enabled)(struct cdp_soc_t *soc_hdl);
 	void (*display_txrx_hw_info)(struct cdp_soc_t *soc_hdl);
 	uint32_t (*get_tx_rings_grp_bitmap)(struct cdp_soc_t *soc_hdl);
+#ifdef WLAN_FEATURE_PEER_TXQ_FLUSH_CONF
+	int (*set_peer_txq_flush_config)(struct cdp_soc_t *soc_hdl,
+					 uint8_t vdev_id, uint8_t *addr,
+					 uint8_t ac, uint32_t tid,
+					 enum cdp_peer_txq_flush_policy policy);
+#endif
 };
 
 /**
