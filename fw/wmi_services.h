@@ -647,6 +647,7 @@ typedef  enum  {
     WMI_SERVICE_PDEV_PARAM_IN_UTF_WMI = 394, /* FW supports receiving and sending pdev_id parameter in WMI_PDEV_UTF_(CMD/EVENT) */
     WMI_SERVICE_SW_PROG_DFS_SUPPORT = 395, /* Indicate FW support SW progressive DFS */
     WMI_SERVICE_MULTIPLE_REORDER_QUEUE_SETUP_SUPPORT = 396, /* Indicate FW supports multiple TID reorder queues setup in one cmd */
+    WMI_SERVICE_MULTIPLE_COEX_CONFIG_SUPPORT = 397, /* FW supports mutiple coex configs in one cmd */
 
     WMI_MAX_EXT2_SERVICE
 

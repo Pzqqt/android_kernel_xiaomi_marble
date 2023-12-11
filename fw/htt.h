@@ -814,6 +814,7 @@ typedef enum {
     HTT_STATS_CODEL_MSDUQ_TAG                      = 189, /* htt_codel_msduq_stats_tlv */
     HTT_STATS_MLO_SCHED_STATS_TAG                  = 190, /* htt_mlo_sched_stats_tlv */
     HTT_STATS_PDEV_MLO_IPC_STATS_TAG               = 191, /* htt_pdev_mlo_ipc_stats_tlv */
+    HTT_STATS_WHAL_WSI_TAG                         = 192, /* htt_stats_whal_wsi_tlv */
 
 
     HTT_STATS_MAX_TAG,
