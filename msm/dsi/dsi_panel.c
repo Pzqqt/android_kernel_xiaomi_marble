@@ -555,10 +555,11 @@ static int mipi_dsi_dcs_subtype_set_display_brightness(struct mipi_dsi_device *d
 	u16 brightness = (u16)bl_lvl;
 	u8 first_byte = brightness & 0xff;
 	u8 second_byte = brightness >> 8;
-	u8 payload[8] = {second_byte, first_byte,
+	u8 payload[9] = {second_byte, first_byte,
 		second_byte, first_byte,
 		second_byte, first_byte,
-		second_byte, first_byte};
+		second_byte, first_byte,
+		02};
 
 	return mipi_dsi_dcs_write(dsi, bl_dcs_subtype, payload, sizeof(payload));
 }
