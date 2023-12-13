@@ -44995,6 +44995,7 @@ typedef struct wmi_mlo_set_active_link_number_param
 #define WMI_MLO_MODE_MLMR  0x1;
 #define WMI_MLO_MODE_EMLSR 0x2;
 
+#define WMI_MLO_IEEE_LINK_ID_INVALID 0xFF
 
 #define WMI_MLO_IEEE_LINK_ID_COMB_GET_LINK_ID1(ieee_link_id_comb) WMI_GET_BITS(ieee_link_id_comb, 0, 8)
 #define WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID1(ieee_link_id_comb, value) WMI_SET_BITS(ieee_link_id_comb, 0, 8, value)
@@ -45029,6 +45030,8 @@ typedef struct wmi_disallowed_mlo_mode_bitmap_param
      * Give combination of IEEE link IDs for which above disallowed_mode_bitmap
      * is applicable.
      * Each 8-bits in ieee_link_id_comb represents one link ID.
+     * A link ID is an integer value between 0 and 14.
+     * Please set WMI_MLO_IEEE_LINK_ID_INVALID (0xff) if 8-bits is not used.
      * Use WMI_MLO_IEEE_LINK_ID_COMB_GET_LINK_ID* and _SET_LINK_ID* to get/set
      * link IDs in this field.
      */
@@ -45036,30 +45039,30 @@ typedef struct wmi_disallowed_mlo_mode_bitmap_param
 
 
     /** Example:
-     * Say there are 3 MLO links with ieee link IDs as 1,2 and 32.
+     * Say there are 3 MLO links with ieee link IDs as 1,2 and 10.
      * Say host wants to disallow MLMR between links with IDs 1 and 2,
-     *                   disallow eMLSR between links with IDs 1 and 32,
-     *                   disallow MLMR and eMLSR for links with IDs 2 and 32.
+     *                   disallow eMLSR between links with IDs 1 and 10,
+     *                   disallow MLMR and eMLSR for links with IDs 2 and 10.
      * There will be 3 TLVs of type wmi_disallowed_mlo_mode_bitmap_param
      * like below.
      *
      *  wmi_disallowed_mlo_mode_bitmap_param[0]:
      *       disallowed_mode_bitmap = 0x1,
-     *       ieee_link_id_comb = 0x00000201
-     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID1(ieee_link_id_comb, 0x1)
-     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID2(ieee_link_id_comb, 0x2)
+     *       ieee_link_id_comb = 0xFFFF0201
+     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID1(ieee_link_id_comb, 0x01)
+     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID2(ieee_link_id_comb, 0x02)
      *
      *  wmi_disallowed_mlo_mode_bitmap_param[1]
      *       disallowed_mode_bitmap = 0x2,
-     *       ieee_link_id_comb = 0x00002001
-     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID1(ieee_link_id_comb, 0x1)
-     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID2(ieee_link_id_comb, 0x20)
+     *       ieee_link_id_comb = 0xFFFF0A01
+     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID1(ieee_link_id_comb, 0x01)
+     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID2(ieee_link_id_comb, 0x0a)
      *
      *  wmi_disallowed_mlo_mode_bitmap_param[2]
      *       disallowed_mode_bitmap = 0x3,
-     *       ieee_link_id_comb = 0x00002002
-     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID1(ieee_link_id_comb, 0x2)
-     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID2(ieee_link_id_comb, 0x20)
+     *       ieee_link_id_comb = 0xFFFF0A02
+     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID1(ieee_link_id_comb, 0x02)
+     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID2(ieee_link_id_comb, 0x0a)
      */
 } wmi_disallowed_mlo_mode_bitmap_param;
 
