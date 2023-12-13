@@ -45342,8 +45342,8 @@ typedef struct{
     A_UINT32 pdev_id;
     /** vdev_id for identifying the MLO Vap */
     A_UINT32 vdev_id;
-    /** disabled link bits */
-    A_UINT32 disabled_link_bitmap;
+    /** DEPRECATED: disabled link bits */
+    A_UINT32 disabled_link_bitmap; /* DEPRECATED */
     /**
      * Following this structure is the TLV:
      * struct wmi_mlo_ap_vdev_tid_to_link_map_ie_info[];
@@ -45701,6 +45701,9 @@ typedef struct {
      *      hw_tid_7_link_map:16
      */
     A_UINT32 hw_tid_6_7_link_map;
+
+    /* Indicates the disabled link map for 802.11be T2LM */
+    A_UINT32 disabled_link_bitmap;
 } wmi_mlo_ap_vdev_tid_to_link_map_ie_info;
 
 #define WMI_IGMP_OFFLOAD_SUPPORT_DISABLE_BITMASK    0x0
