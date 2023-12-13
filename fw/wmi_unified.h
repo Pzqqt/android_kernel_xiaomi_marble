@@ -521,6 +521,8 @@ typedef enum {
      * and download LED ON/OFF Rate table
      */
     WMI_PDEV_ENABLE_LED_BLINK_DOWNLOAD_TABLE_CMDID,
+    /** WMI Command to enable wifi radar */
+    WMI_PDEV_ENABLE_WIFI_RADAR_CMDID,
 
 
     /* VDEV (virtual device) specific commands */
@@ -37248,6 +37250,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PEER_MULTIPLE_REORDER_QUEUE_SETUP_CMDID);
         WMI_RETURN_STRING(WMI_COEX_MULTIPLE_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_ENABLE_LED_BLINK_DOWNLOAD_TABLE_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_ENABLE_WIFI_RADAR_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -39126,6 +39129,7 @@ typedef enum {
     WMI_DMA_RING_CONFIG_MODULE_SPECTRAL,
     WMI_DMA_RING_CONFIG_MODULE_RTT,
     WMI_DMA_RING_CONFIG_MODULE_CV_UPLOAD,
+    WMI_DMA_RING_CONFIG_MODULE_WIFI_RADAR,
 } WMI_DMA_RING_SUPPORTED_MODULE;
 
 typedef struct {
@@ -39287,6 +39291,8 @@ typedef struct {
      * wmi_dma_buf_release_cv_upload_meta_data cv_meta_data[num_meta_data_entry]
      * wmi_dma_buf_release_cqi_upload_meta_data
      *     cqi_meta_data[num_meta_data_entry]
+     * wmi_dma_buf_release_wifi_radar_meta_data
+     *     wifi_radar_meta_data[num_meta_data_entry]
      */
 } wmi_dma_buf_release_fixed_param;
 
@@ -46866,6 +46872,30 @@ typedef struct {
 } wmi_dma_buf_release_cv_upload_meta_data;
 
 typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_dma_buf_release_radar_meta_data */
+    /* timestamp at the time of the capture */
+    A_UINT32 timestamp_us;
+    /* phy mode WLAN_PHY_MODE of the channel defined in wlan_defs.h */
+    A_UINT32 phy_mode;
+    /* frequency (in MHz) of the primary 20 MHz channel */
+    A_UINT32 chan_mhz;
+    /* Center frequency 1 in MHz */
+    A_UINT32 band_center_freq1;
+    /* Center frequency 2 in MHz - valid only for 11acvht 80plus80 mode */
+    A_UINT32 band_center_freq2;
+    /* tx chain mask */
+    A_UINT32 tx_chain_mask;
+    /* rx chain mask */
+    A_UINT32 rx_chain_mask;
+    /* number of LTFs sent for capture */
+    A_UINT32 num_ltf_tx;
+    /* number of LTFs skipped in rx */
+    A_UINT32 num_skip_ltf_rx;
+    /* number of LTFs used for accumulation */
+    A_UINT32 num_ltf_accumulation;
+} wmi_dma_buf_release_wifi_radar_meta_data;
+
+typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_dma_buf_release_cqi_upload_meta_data */
     A_UINT32 tlv_header;
 
@@ -47514,6 +47544,40 @@ typedef struct {
     /** This indicates for which switch type (WLAN(XPAN) or non-WLAN(BLE)) the switch response status is intended to */
     A_UINT32 switch_type;  /* see definition of WMI_AUDIO_TRANSPORT_SWITCH_TYPE */
 } wmi_audio_transport_switch_resp_status_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_pdev_enable_wifi_radar_cmd_fixed_param
+     */
+    A_UINT32 tlv_header;
+    /* host pdev id */
+    A_UINT32 pdev_id;
+    /* tx_chain_mask:
+     * tx chain mask to use for wifi radar tx.
+     * Only one chain is supposed to be set.
+     */
+    A_UINT32 tx_chain_mask;
+    /* rx chain mask for wifi radar capture. Can have multiple bits set. */
+    A_UINT32 rx_chain_mask;
+    /* number of LTFs to send for capture */
+    A_UINT32 num_ltf_tx;
+    /* number of extra LTFs that are to be skipped for accumulation */
+    A_UINT32 num_skip_ltf_rx;
+    /* number of LTFs to use for accumulation. Must be power of 2. */
+    A_UINT32 num_ltf_accumulation;
+    /* bandwidth to use for capture
+     *     0 = 20 MHz
+     *     1 = 40 MHz
+     *     2 = 80 MHz
+     *     3 = 160 MHz
+     *     4 = 320 MHz
+     */
+    A_UINT32 bw;
+    /* 0 to stop capture, 1 to start periodic capture, 2 to do calibration */
+    A_UINT32 capture_calibrate;
+    /* periodicity of capture in milliseconds */
+    A_UINT32 capture_interval_ms;
+} wmi_pdev_enable_wifi_radar_cmd_fixed_param;
 
 
 
