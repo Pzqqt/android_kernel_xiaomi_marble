@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -63,7 +63,7 @@ struct wifi_pos_field {
  */
 struct wifi_pos_field_info {
 	uint32_t count;
-	struct wifi_pos_field fields[1];
+	QDF_FLEX_ARRAY(struct wifi_pos_field, fields);
 };
 
 /* Length of interface name */
