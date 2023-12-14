@@ -460,7 +460,7 @@ struct beacon_tim_ie {
 	uint8_t dtim_count;
 	uint8_t dtim_period;
 	uint8_t tim_bitctl;
-	uint8_t tim_bitmap[1];
+	QDF_FLEX_ARRAY(uint8_t, tim_bitmap);
 } __ATTRIB_PACK;
 
 /**
