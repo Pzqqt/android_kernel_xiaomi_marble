@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -64,7 +65,7 @@ struct qdf_ptr_hash_bucket {
 struct qdf_ptr_hash {
 	int8_t bits;
 	int16_t count;
-	struct qdf_ptr_hash_bucket buckets[0];
+	struct qdf_ptr_hash_bucket buckets[];
 };
 
 /**

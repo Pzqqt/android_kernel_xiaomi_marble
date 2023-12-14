@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -163,7 +164,7 @@ struct wlan_afc_host_resp {
 	uint32_t time_to_live;
 	uint32_t length;
 	uint32_t resp_format;
-	uint8_t  afc_resp[0];
+	uint8_t afc_resp[];
 } qdf_packed;
 
 /**
