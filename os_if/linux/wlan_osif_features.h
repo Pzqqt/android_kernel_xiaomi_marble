@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -101,4 +101,49 @@
 	(defined IEEE80211_EHT_OPER_INFO_PRESENT))
 #define CFG80211_TX_CONTROL_PORT_LINK_SUPPORT 1
 #endif
+
+/*
+ * WLAN_MLD_AP_STA_CONNECT_SUPPORT
+ * Used to indicate Linux Kernel supports ML connection on SAP.
+ */
+#if (defined(__ANDROID_COMMON_KERNEL__) && \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)) && \
+	(defined CFG80211_MLD_AP_STA_CONNECT_SUPPORT))
+#define WLAN_MLD_AP_STA_CONNECT_SUPPORT 1
+#endif
+
+/*
+ * WLAN_MLD_AP_OWE_INFO_SUPPORT
+ * Used to indicate Linux Kernel supports ML OWE connection
+ * on SAP
+ */
+#if (defined(__ANDROID_COMMON_KERNEL__) && \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)) && \
+	(defined CFG80211_MLD_AP_OWE_INFO_SUPPORT))
+#define WLAN_MLD_AP_OWE_INFO_SUPPORT 1
+#endif
+
+/*
+ * WLAN_MLD_AP_STA_CONNECT_SUPPORT
+ * Used to indicate Linux Upstream Kernel supports ML connection on SAP.
+ *
+ * This feature was introduced in Linux Kernel 6.3 via:
+ * a42e59e: wifi: cfg80211: Extend cfg80211_new_sta() for MLD AP
+ * 8bb588d: wifi: cfg80211: Extend cfg80211_update_owe_info_event() for MLD AP
+ *
+ * This feature was backported to Android Common Kernel 5.15.74 via:
+ * https://android-review.googlesource.com/c/kernel/common/+/2450265
+ * https://android-review.googlesource.com/c/kernel/common/+/2450266
+ *
+ * This feature was backported to Android Common Kernel 6.1 via:
+ * https://android-review.googlesource.com/c/kernel/common/+/2470890
+ * https://android-review.googlesource.com/c/kernel/common/+/2470891
+ */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0) || \
+	(defined(__ANDROID_COMMON_KERNEL__) && \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)) && \
+	(defined CFG80211_MLD_AP_STA_CONNECT_UPSTREAM_SUPPORT)))
+#define WLAN_MLD_AP_STA_CONNECT_UPSTREAM_SUPPORT 1
+#endif
+
 #endif

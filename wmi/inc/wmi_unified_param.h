@@ -3468,6 +3468,34 @@ enum wmi_ratemask_type {
 };
 
 /**
+ * enum peer_txq_flush_policy - Peer flush policy values
+ * @PEER_TXQ_FLUSH_POLICY_NONE: No policy configured for peer TID queues
+ * @PEER_TXQ_FLUSH_POLICY_TWT_SP_END: flush peer TID queues after SP end
+ *
+ * This is mapped to 'flush_policy' in WMI_PEER_FLUSH_POLICY_CMDID
+ */
+enum peer_txq_flush_policy {
+	PEER_TXQ_FLUSH_POLICY_NONE = 0,
+	PEER_TXQ_FLUSH_POLICY_TWT_SP_END = 1,
+	/*keep last */
+	PEER_TXQ_FLUSH_POLICY_INVALID,
+};
+
+/**
+ * struct peer_txq_flush_config_params: Peer TXQ flush configuration parameters
+ * @vdev_id: vdev id
+ * @peer: Peer mac address
+ * @tid_mask: TID queues of the peer being configured
+ * @policy: Policy to be applied
+ */
+struct peer_txq_flush_config_params {
+	uint8_t vdev_id;
+	uint8_t peer[QDF_MAC_ADDR_SIZE];
+	uint32_t tid_mask;
+	enum peer_txq_flush_policy policy;
+};
+
+/**
  * enum gpio_pull_type - GPIO PULL TYPE
  * @WMI_HOST_GPIO_PULL_NONE: set gpio pull type to none
  * @WMI_HOST_GPIO_PULL_UP: set gpio to pull up

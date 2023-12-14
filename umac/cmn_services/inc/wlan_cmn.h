@@ -293,6 +293,7 @@
  * @WLAN_UMAC_COMP_MBSS:          MBSS Framework
  * @WLAN_UMAC_COMP_WIFI_RADAR:    WIFI RADAR component
  * @WLAN_UMAC_COMP_TWT:           Target Wake Time (TWT) Component
+ * @WLAN_COMP_DP:                 DP component
  * @WLAN_UMAC_COMP_COAP:          Constrained Application Protocol component
  * @WLAN_UMAC_COMP_ID_MAX:        Maximum components in UMAC
  *
@@ -345,6 +346,7 @@ enum wlan_umac_comp_id {
 	WLAN_UMAC_COMP_MBSS               = 42,
 	WLAN_UMAC_COMP_WIFI_RADAR         = 43,
 	WLAN_UMAC_COMP_TWT                = 44,
+	WLAN_COMP_DP                      = 46,
 	WLAN_UMAC_COMP_COAP               = 48,
 	WLAN_UMAC_COMP_ID_MAX,
 };
