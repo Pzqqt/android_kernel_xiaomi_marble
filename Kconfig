@@ -1366,4 +1366,16 @@ config ENABLE_DEBUG_ADDRESS_MARKING
 config WLAN_FEATURE_SAP_ACS_OPTIMIZE
 	bool "Enable WLAN_FEATURE_SAP_ACS_OPTIMIZE"
 	default n
+
+config AGEIE_ON_SCAN_RESULTS
+	bool "Enable AGEIE_ON_SCAN_RESULTS"
+	default n
+
+config INTERFACE_MGR
+	bool "Enable INTERFACE_MGR"
+	default n
+
+config ENABLE_LOW_POWER_MODE
+	bool "Enable ENABLE_LOW_POWER_MODE"
+	default n
 endif # QCA_CLD_WLAN

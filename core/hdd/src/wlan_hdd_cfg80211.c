@@ -178,6 +178,7 @@
 #include "wlan_hdd_mdns_offload.h"
 #include "wlan_pkt_capture_ucfg_api.h"
 #include "os_if_pkt_capture.h"
+#include "wlan_hdd_peer_txq_flush.h"
 #include "wlan_osif_features.h"
 #include "wlan_hdd_coap.h"
 
@@ -692,11 +693,13 @@ wlan_hdd_p2p_p2p_iface_limit[] = {
 static const struct ieee80211_iface_limit
 	wlan_hdd_mon_iface_limit[] = {
 	{
-		.max = 3,       /* Monitor interface */
+		.max = 2,       /* Monitor interface */
 		.types = BIT(NL80211_IFTYPE_MONITOR),
 	},
 };
 
+#if defined(WLAN_FEATURE_NAN) && \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0))
 /* STA + NAN disc combination */
 static const struct ieee80211_iface_limit
 	wlan_hdd_sta_nan_iface_limit[] = {
@@ -726,6 +729,7 @@ static const struct ieee80211_iface_limit
 		.types = BIT(NL80211_IFTYPE_NAN),
 	},
 };
+#endif /* WLAN_FEATURE_NAN */
 
 static struct ieee80211_iface_combination
 	wlan_hdd_iface_combination[] = {
@@ -806,10 +810,12 @@ static struct ieee80211_iface_combination
 	/* Monitor */
 	{
 		.limits = wlan_hdd_mon_iface_limit,
-		.max_interfaces = 3,
+		.max_interfaces = 2,
 		.num_different_channels = 2,
 		.n_limits = ARRAY_SIZE(wlan_hdd_mon_iface_limit),
 	},
+#if defined(WLAN_FEATURE_NAN) && \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0))
 	/* NAN + STA */
 	{
 		.limits = wlan_hdd_sta_nan_iface_limit,
@@ -825,8 +831,106 @@ static struct ieee80211_iface_combination
 		.n_limits = ARRAY_SIZE(wlan_hdd_sap_nan_iface_limit),
 		.beacon_int_infra_match = true,
 	},
+#endif /* WLAN_FEATURE_NAN */
 };
 
+/* 1 and 2 port concurrencies */
+static struct ieee80211_iface_combination
+	wlan_hdd_derived_combination[] = {
+	/* STA */
+	{
+		.limits = wlan_hdd_sta_iface_limit,
+		.num_different_channels = 2,
+		.max_interfaces = 2,
+		.n_limits = ARRAY_SIZE(wlan_hdd_sta_iface_limit),
+	},
+	/* AP */
+	{
+		.limits = wlan_hdd_ap_iface_limit,
+		.num_different_channels = 2,
+		.max_interfaces = (QDF_MAX_NO_OF_SAP_MODE),
+		.n_limits = ARRAY_SIZE(wlan_hdd_ap_iface_limit),
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)) || \
+	defined(CFG80211_BEACON_INTERVAL_BACKPORT)
+		.beacon_int_min_gcd = 1,
+#endif
+	},
+#ifndef WLAN_FEATURE_NO_P2P_CONCURRENCY
+	/* P2P */
+	{
+		.limits = wlan_hdd_p2p_iface_limit,
+		.num_different_channels = 2,
+		.max_interfaces = 2,
+		.n_limits = ARRAY_SIZE(wlan_hdd_p2p_iface_limit),
+	},
+
+	/* SAP + P2P */
+	{
+		.limits = wlan_hdd_sap_p2p_iface_limit,
+		.num_different_channels = 2,
+		/* 1-SAP + 1-P2P */
+		.max_interfaces = 2,
+		.n_limits = ARRAY_SIZE(wlan_hdd_sap_p2p_iface_limit),
+		.beacon_int_infra_match = true,
+	},
+	/* P2P + P2P */
+	{
+		.limits = wlan_hdd_p2p_p2p_iface_limit,
+		.num_different_channels = 2,
+		/* 2-P2P */
+		.max_interfaces = 2,
+		.n_limits = ARRAY_SIZE(wlan_hdd_p2p_p2p_iface_limit),
+		.beacon_int_infra_match = true,
+	},
+#endif
+	/* STA + P2P */
+	{
+		.limits = wlan_hdd_sta_p2p_iface_limit,
+		.num_different_channels = 2,
+		.max_interfaces = 2,
+		.n_limits = ARRAY_SIZE(wlan_hdd_sta_p2p_iface_limit),
+		.beacon_int_infra_match = true,
+	},
+#ifndef WLAN_FEATURE_NO_STA_SAP_CONCURRENCY
+	/* STA + SAP */
+	{
+		.limits = wlan_hdd_sta_ap_iface_limit,
+		.num_different_channels = 2,
+		.max_interfaces = 2,
+		.n_limits = ARRAY_SIZE(wlan_hdd_sta_ap_iface_limit),
+		.beacon_int_infra_match = true,
+	},
+#endif /* WLAN_FEATURE_NO_STA_SAP_CONCURRENCY */
+	/* Monitor */
+	{
+		.limits = wlan_hdd_mon_iface_limit,
+		.max_interfaces = 2,
+		.num_different_channels = 2,
+		.n_limits = ARRAY_SIZE(wlan_hdd_mon_iface_limit),
+	},
+#if defined(WLAN_FEATURE_NAN) && \
+	   (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0))
+#ifndef WLAN_FEATURE_NO_STA_NAN_CONCURRENCY
+	/* NAN + STA */
+	{
+		.limits = wlan_hdd_sta_nan_iface_limit,
+		.max_interfaces = 2,
+		.num_different_channels = 2,
+		.n_limits = ARRAY_SIZE(wlan_hdd_sta_nan_iface_limit),
+	},
+#endif /* WLAN_FEATURE_NO_STA_NAN_CONCURRENCY */
+#ifndef WLAN_FEATURE_NO_SAP_NAN_CONCURRENCY
+	/* NAN + SAP */
+	{
+		.limits = wlan_hdd_sap_nan_iface_limit,
+		.num_different_channels = 2,
+		.max_interfaces = 2,
+		.n_limits = ARRAY_SIZE(wlan_hdd_sap_nan_iface_limit),
+		.beacon_int_infra_match = true,
+	},
+#endif /* !WLAN_FEATURE_NO_SAP_NAN_CONCURRENCY */
+#endif /* WLAN_FEATURE_NAN */
+};
 static struct cfg80211_ops wlan_hdd_cfg80211_ops;
 
 #ifdef WLAN_NL80211_TESTMODE
@@ -18211,6 +18315,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	},
 #endif
 	FEATURE_COAP_OFFLOAD_COMMANDS
+	FEATURE_PEER_FLUSH_VENDOR_COMMANDS
 };
 
 struct hdd_context *hdd_cfg80211_wiphy_alloc(void)
@@ -19075,6 +19180,8 @@ void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx)
 	uint8_t allow_mcc_go_diff_bi = 0, enable_mcc = 0;
 	bool is_bigtk_supported;
 	bool is_ocv_supported;
+	uint8_t iface_num;
+	bool dbs_one_by_one, dbs_two_by_two;
 
 	if (!wiphy) {
 		hdd_err("Invalid wiphy");
@@ -19141,9 +19248,27 @@ void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx)
 					beacon_int_infra_match = true;
 			}
 		}
-		wiphy->n_iface_combinations =
-			ARRAY_SIZE(wlan_hdd_iface_combination);
-		wiphy->iface_combinations = wlan_hdd_iface_combination;
+
+		status = ucfg_policy_mgr_get_dbs_hw_modes(hdd_ctx->psoc,
+							  &dbs_one_by_one,
+							  &dbs_two_by_two);
+
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("HW mode failure");
+			return;
+		}
+
+		if (!ucfg_policy_mgr_is_fw_supports_dbs(hdd_ctx->psoc) ||
+		    (dbs_one_by_one && !dbs_two_by_two)) {
+			wiphy->iface_combinations =
+						wlan_hdd_derived_combination;
+			iface_num = ARRAY_SIZE(wlan_hdd_derived_combination);
+		} else {
+			wiphy->iface_combinations = wlan_hdd_iface_combination;
+			iface_num = ARRAY_SIZE(wlan_hdd_iface_combination);
+		}
+
+		wiphy->n_iface_combinations = iface_num;
 	}
 
 	mac_spoofing_enabled = ucfg_scan_is_mac_spoofing_enabled(hdd_ctx->psoc);
@@ -23982,6 +24107,91 @@ void hdd_set_rate_bw(struct rate_info *info, enum hdd_rate_info_bw hdd_bw)
 
 #if defined(CFG80211_EXTERNAL_DH_UPDATE_SUPPORT) || \
 (LINUX_VERSION_CODE > KERNEL_VERSION(5, 2, 0))
+
+#ifdef WLAN_MLD_AP_OWE_INFO_SUPPORT
+static void
+hdd_ml_sap_owe_fill_ml_info(struct hdd_adapter *adapter,
+			    struct cfg80211_update_owe_info *owe_info,
+			    uint8_t *peer_mac)
+{
+	bool is_mlo_vdev;
+	struct wlan_objmgr_peer *peer;
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t *peer_mld_addr;
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
+	if (!vdev)
+		return;
+
+	is_mlo_vdev = wlan_vdev_mlme_is_mlo_vdev(vdev);
+	if (is_mlo_vdev)
+		owe_info->link_id = wlan_vdev_get_link_id(vdev);
+	else
+		owe_info->link_id = -1;
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
+
+	if (!is_mlo_vdev)
+		return;
+
+	peer = wlan_objmgr_get_peer_by_mac(adapter->hdd_ctx->psoc,
+					   peer_mac, WLAN_OSIF_ID);
+	if (!peer) {
+		hdd_err("Peer not found with MAC " QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer_mac));
+		return;
+	}
+
+	peer_mld_addr = wlan_peer_mlme_get_mldaddr(peer);
+	qdf_mem_copy(&owe_info->peer_mld_addr[0], peer_mld_addr, ETH_ALEN);
+	wlan_objmgr_peer_release_ref(peer, WLAN_OSIF_ID);
+}
+#elif defined(CFG80211_MLD_AP_STA_CONNECT_UPSTREAM_SUPPORT)
+static void
+hdd_ml_sap_owe_fill_ml_info(struct hdd_adapter *adapter,
+			    struct cfg80211_update_owe_info *owe_info,
+			    uint8_t *peer_mac)
+{
+	bool is_mlo_vdev;
+	struct wlan_objmgr_peer *peer;
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t *peer_mld_addr;
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter,
+					   WLAN_HDD_ID_OBJ_MGR);
+	if (!vdev)
+		return;
+
+	is_mlo_vdev = wlan_vdev_mlme_is_mlo_vdev(vdev);
+	if (!is_mlo_vdev) {
+		owe_info->assoc_link_id = -1;
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_HDD_ID_OBJ_MGR);
+		return;
+	}
+
+	owe_info->assoc_link_id = wlan_vdev_get_link_id(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_HDD_ID_OBJ_MGR);
+
+	peer = wlan_objmgr_get_peer_by_mac(adapter->hdd_ctx->psoc,
+					   peer_mac, WLAN_HDD_ID_OBJ_MGR);
+	if (!peer) {
+		hdd_err("Peer not found with MAC " QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer_mac));
+		return;
+	}
+
+	peer_mld_addr = wlan_peer_mlme_get_mldaddr(peer);
+	qdf_mem_copy(&owe_info->peer_mld_addr[0], peer_mld_addr, ETH_ALEN);
+	wlan_objmgr_peer_release_ref(peer, WLAN_HDD_ID_OBJ_MGR);
+}
+#else
+static void
+hdd_ml_sap_owe_fill_ml_info(struct hdd_adapter *adapter,
+			    struct cfg80211_update_owe_info *owe_info,
+			    uint8_t *peer_mac)
+{
+}
+#endif
+
 void hdd_send_update_owe_info_event(struct hdd_adapter *adapter,
 				    uint8_t sta_addr[],
 				    uint8_t *owe_ie,
@@ -23994,6 +24204,7 @@ void hdd_send_update_owe_info_event(struct hdd_adapter *adapter,
 
 	qdf_mem_zero(&owe_info, sizeof(owe_info));
 	qdf_mem_copy(owe_info.peer, sta_addr, ETH_ALEN);
+	hdd_ml_sap_owe_fill_ml_info(adapter, &owe_info, sta_addr);
 	owe_info.ie = owe_ie;
 	owe_info.ie_len = owe_ie_len;
 

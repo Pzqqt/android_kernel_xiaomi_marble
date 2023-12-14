@@ -1427,6 +1427,7 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	bool extracted_flag = false;
 	uint8_t retry_int;
 	uint16_t max_retries;
+	struct element_info ie;
 
 	if (!pe_session) {
 		pe_err("pe_session is NULL");
@@ -1766,6 +1767,11 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
 	    pe_session->opmode == QDF_P2P_GO_MODE)
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
+
+	ie.ptr = frame + sizeof(tSirMacMgmtHdr) + WLAN_ASSOC_RSP_IES_OFFSET;
+	ie.len = payload - WLAN_ASSOC_RSP_IES_OFFSET;
+
+	mlme_set_peer_assoc_rsp_ie(mac_ctx->psoc, peer_addr, &ie);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 pe_session->peSessionId, mac_hdr->fc.subType));
