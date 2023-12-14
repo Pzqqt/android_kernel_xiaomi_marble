@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -205,7 +205,7 @@ struct ath_pktlog_txctl {
 struct ath_pktlog_tx_status {
 	struct ath_pktlog_hdr pl_hdr;
 	void *ds_status;
-	int32_t misc[0];        /* Can be used for HT specific or other misc info */
+	int32_t misc[];	/* Can be used for HT specific or other misc info */
 } __ATTRIB_PACK;
 
 struct ath_pktlog_msdu_info {
@@ -280,7 +280,7 @@ struct ath_pktlog_buf {
 	uint32_t msg_index;
 	/* Offset for read */
 	loff_t offset;
-	char log_data[0];
+	char log_data[];
 };
 
 #define PKTLOG_MOV_RD_IDX(_rd_offset, _log_buf, _log_size)  \

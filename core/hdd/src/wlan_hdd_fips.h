@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -38,13 +39,13 @@ struct iw_fips_test_request {
 	uint32_t key_len;
 	uint8_t  key[FIPS_KEY_LEN];
 	uint32_t data_len;
-	uint8_t  data[0];
+	uint8_t data[];
 };
 
 struct iw_fips_test_response {
 	uint32_t status;
 	uint32_t data_len;
-	uint8_t  data[0];
+	uint8_t data[];
 };
 
 
