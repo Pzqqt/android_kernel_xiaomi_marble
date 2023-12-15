@@ -29042,6 +29042,7 @@ typedef struct {
     A_UINT32 reassoc_rsp_len;
     /** the length of reassoc req */
     A_UINT32 reassoc_req_len;
+    A_INT32 bcn_probe_resp_rssi; /* RSSI units dBm */
     /**
      * TLV (tag length value) parameters follows roam_synch_event
      * The TLV's are:
@@ -40016,6 +40017,7 @@ typedef struct {
      * bit 1-31: reserved.
      */
     A_UINT32 flags;
+    wmi_mac_addr mld_addr;
 } wmi_roam_ap_info;
 
 typedef enum {
@@ -40204,6 +40206,9 @@ typedef struct {
 #define WMI_GET_TX_FAILED_REASON(frame_info_ext)         WMI_GET_BITS(frame_info_ext, 22, 4)
 #define WMI_SET_TX_FAILED_REASON(frame_info_ext, val)    WMI_SET_BITS(frame_info_ext, 22, 4, val)
 
+#define WMI_GET_MAP_ID(frame_info_ext)          WMI_GET_BITS(frame_info_ext, 26, 6)
+#define WMI_SET_MAP_ID(frame_info_ext, val)     WMI_SET_BITS(frame_info_ext, 26, 6, val)
+
 typedef struct {
     A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_frame_info_tlv_param */
     /* timestamp is the absolute time w.r.t host timer which is synchronized between the host and target */
@@ -40258,7 +40263,8 @@ typedef struct {
      *             Refer to WMI_[GET,SET]_RX_INDICATE macros.
      * Bit 22-25 : opaque tx failure reason
      *             Refer to WMI_[GET,SET]_TX_FAILED_REASON macros.
-     * Bit 26-31 : reserved for future use.
+     * Bit 26-31 : Indicate the map id, used to identify the all the
+     *             ML link info corresponding to current roaming candidate.
      */
     A_UINT32 frame_info_ext;
 } wmi_roam_frame_info;
@@ -40462,6 +40468,33 @@ typedef struct {
     /*  roam High RSSI threshold */
     A_UINT32 hi_rssi_threshold;
 } wmi_roam_trigger_hi_rssi;
+
+#define WMI_MLO_LINK_INFO_GET_MAP_ID(link_info)            WMI_GET_BITS(link_info, 0, 6)
+#define WMI_MLO_LINK_INFO_SET_MAP_ID(link_info, val)       WMI_SET_BITS(link_info, 0, 6, val)
+
+#define WMI_MLO_LINK_INFO_GET_STATUS(link_info)            WMI_GET_BITS(link_info, 6, 1)
+#define WMI_MLO_LINK_INFO_SET_STATUS(link_info, val)       WMI_SET_BITS(link_info, 6, 1, val)
+
+#define WMI_MLO_LINK_INFO_GET_BAND(link_info)              WMI_GET_BITS(link_info, 7, 3)
+#define WMI_MLO_LINK_INFO_SET_BAND(link_info, val)         WMI_SET_BITS(link_info, 7, 3, val)
+
+#define WMI_MLO_LINK_INFO_GET_IEEE_LINK_ID(link_info)      WMI_GET_BITS(link_info, 10, 4)
+#define WMI_MLO_LINK_INFO_SET_IEEE_LINK_ID(link_info, val) WMI_SET_BITS(link_info, 10, 4, val)
+
+typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mlo_link_info_tlv_param */
+    wmi_mac_addr link_addr;
+    A_UINT32 link_info;
+    /*
+     * b[0-5]   : Map Id - maps the corresponding candidate AP for which
+     *            re-assoc resp received.
+     * b[6]     : Status - link status, AP accepted/rejected this link
+     *            0 - accepted
+     *            1 - rejected
+     * b[7-9]   : Band - link band info (band value is from wmi_mlo_band_info)
+     * b[10-13] : IEEE link id - Link id associated with AP
+     */
+} wmi_mlo_link_info;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_get_scan_channel_list_cmd_fixed_param */

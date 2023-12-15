@@ -1424,6 +1424,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_vdev_get_twt_session_stats_info_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_enable_wifi_radar_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_dma_buf_release_wifi_radar_meta_data,
+    WMITLV_TAG_STRUC_wmi_mlo_link_info,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -4836,7 +4837,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_WLM_CONFIG_CMDID);
   WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_trigger_kickout, roam_trigger_kickout, WMITLV_SIZE_VAR) \
   WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_trigger_per, roam_trigger_per, WMITLV_SIZE_VAR) \
   WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_trigger_periodic, roam_trigger_periodic, WMITLV_SIZE_VAR) \
-  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_trigger_hi_rssi, roam_trigger_hi_rssi, WMITLV_SIZE_VAR)
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_trigger_hi_rssi, roam_trigger_hi_rssi, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mlo_link_info, mlo_link_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_STATS_EVENTID);
 
 /* Motion detection cmd */
