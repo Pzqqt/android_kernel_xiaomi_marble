@@ -38466,6 +38466,11 @@ typedef struct {
  */
 #define WLM_FLAGS_PS_DISABLE_MLO_PROBE_SCAN  1  /* disable MLO probe scan */
 
+/* bit 24: WLM_FLAGS_PS_DISABLE_ULL_FORCED_MLMR,
+ *     disable forced MLMR on ULL if bit is set
+ */
+#define WLM_FLAGS_PS_DISABLE_ULL_FORCED_MLMR  1 /* disable forced MLMR on ULL */
+
 #define WLM_FLAGS_SCAN_IS_SUPPRESS(flag)                  WMI_GET_BITS(flag, 0, 1)
 #define WLM_FLAGS_SCAN_SET_SUPPRESS(flag, val)            WMI_SET_BITS(flag, 0, 1, val)
 #define WLM_FLAGS_SCAN_IS_SKIP_DFS(flag)                  WMI_GET_BITS(flag, 1, 1)
@@ -38501,6 +38506,8 @@ typedef struct {
 #define WLM_FLAGS_SCAN_SET_ADAPT_SCAN_ENABLE(flag, val)   WMI_SET_BITS(flag, 22, 1, val)
 #define WLM_FLAGS_PS_IS_MLO_PROBE_SCAN_DISABLED(flag)      WMI_GET_BITS(flag, 23, 1)
 #define WLM_FLAGS_PS_SET_MLO_PROBE_SCAN_DISABLE(flag, val) WMI_SET_BITS(flag, 23, 1, val)
+#define WLM_FLAGS_PS_IS_ULL_FORCED_MLMR_DISABLED(flag)      WMI_GET_BITS(flag, 24, 1)
+#define WLM_FLAGS_PS_SET_ULL_FORCED_MLMR_DISABLE(flag, val) WMI_SET_BITS(flag, 24, 1, val)
 #define WLM_FLAGS_SET_FORCE_DEFAULT_LATENCY(flag, val)    WMI_SET_BITS(flag, 0, 1, val)
 #define WLM_FLAGS_GET_FORCE_DEFAULT_LATENCY(flag)         WMI_GET_BITS(flag, 0, 1)
 
