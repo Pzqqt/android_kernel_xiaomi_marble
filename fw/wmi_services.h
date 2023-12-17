@@ -651,6 +651,8 @@ typedef  enum  {
     WMI_SERVICE_PCIE_DATA_RATE_LED_BLINK_SUPPORT = 398, /* FW supports Data Rate based LED blinking for PCI chips */
     WMI_SERVICE_VDEV_DCS_STATS_SUPPORT = 399, /* FW supports VDEV level DCS stats reporting */
     WMI_SERVICE_WIFI_RADAR_SUPPORT = 400, /* FW supports wifi radar */
+    WMI_SERVICE_P2P_DEVICE_UPDATE_MAC_ADDR_SUPPORT = 401, /* indicate FW support dynamic update mac address for P2P device */
+
 
     WMI_MAX_EXT2_SERVICE
 
