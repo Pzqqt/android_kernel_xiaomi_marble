@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -185,8 +185,6 @@ uint8_t lim_get_max_tx_power(struct mac_context *mac,
  * lim_calculate_tpc() - Utility to get maximum tx power
  * @mac: mac handle
  * @session: PE Session Entry
- * @ap_pwr_type: Ap power type for 6G
- * @ctry_code_match: check for country IE and sta programmed ctry match
  *
  * This function is used to get the maximum possible tx power from the list
  * of tx powers mentioned in @attr.
@@ -194,9 +192,7 @@ uint8_t lim_get_max_tx_power(struct mac_context *mac,
  * Return: None
  */
 void lim_calculate_tpc(struct mac_context *mac,
-		       struct pe_session *session,
-		       uint8_t ap_pwr_type,
-		       bool ctry_code_match);
+		       struct pe_session *session);
 
 /* AID pool management functions */
 
