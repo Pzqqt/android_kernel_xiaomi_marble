@@ -9439,6 +9439,19 @@ typedef enum {
      *     default to immediate LMR feedback.
      **/
     WMI_PDEV_PARAM_ENABLE_DELAYED_LMR_FEEDBACK,
+
+    /* DFS_RADAR_MASK: Radar mask setting programmed in HW registers.
+     *     bit   | config_mode
+     * -----------------------
+     *   0  - 15 | Each bit represents a 20 MHz portion of the channel.
+     *           | 0-Unmasked 1-Masked
+     *   16 - 31 | Reserved.
+     * Bit 0 represents the highest 20 MHz portion within the channel.
+     * For example...
+     * For a 80 MHz channel, bit0 = highest 20 MHz, bit3 = lowest 20 MHz
+     * For a 320 MHz channel, bit0 = highest 20 MHz, bit15 = lowest 20 MHz
+     */
+    WMI_PDEV_PARAM_DFS_RADAR_MASK,
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
