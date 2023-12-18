@@ -3593,9 +3593,14 @@ typedef struct {
     A_UINT32 rx_aggr_ba_win_size_max;
 
     /*
-     * max link number per MLD FW supports.
+     * max link number per STA MLD FW supports.
      */
     A_UINT32 num_max_mlo_link_per_ml_bss_supp;
+
+    /*
+     * max link number per SAP MLD FW supports.
+     */
+    A_UINT32 num_max_mlo_link_per_ml_sap_supp;
 
     /* Followed by next TLVs:
      *     WMI_DMA_RING_CAPABILITIES          dma_ring_caps[];
