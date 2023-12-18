@@ -9,19 +9,25 @@ _target_chipset_map = {
 	"monaco":[
 		"wlan",
 	],
+	"pitti":[
+		"adrastea",
+	],
 }
 
 _chipset_hw_map = {
-	"wlan"   : "ADRESTEA"
+	"wlan"   : "ADRASTEA",
+	"adrastea" : "ADRASTEA"
 }
 
 _chipset_header_map = {
 	"wlan" : [
     ],
+	"adrastea" : [
+    ],
 }
 
 _hw_header_map = {
-	"ADRESTEA" : [
+	"ADRASTEA" : [
 	],
 }
 
@@ -1982,7 +1988,10 @@ def _define_module_for_target_variant_chipset(target, variant, chipset):
 
     srcs = native.glob(iglobs) + _fixed_srcs
 
-    out = "{}.ko".format(chipset.replace("-", "_"))
+    if chipset == "wlan":
+        out = "{}.ko".format(chipset.replace("-", "_"))
+    else:
+        out = "qca_cld3_{}.ko".format(chipset.replace("-", "_"))
     kconfig = "Kconfig"
     defconfig = ":configs/{}_defconfig_generate_{}".format(tvc, variant)
 
@@ -2034,6 +2043,8 @@ def define_dist(target, variant, chipsets):
             mode_overrides = {"**/*": "644"},
             log = "info",
         )
+    if target == "blair" or target == "monaco":
+        return
     copy_to_dist_dir(
         name = "{}_all_modules_dist".format(tv),
         data = dataList,
