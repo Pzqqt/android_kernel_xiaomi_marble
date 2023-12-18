@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2023 Sultan Alsawaf <sultan@kerneltoast.com>.
+ * Copyright (C) 2023-2024 Sultan Alsawaf <sultan@kerneltoast.com>.
  */
 
 /**
@@ -123,10 +123,8 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync)
 		if ((sync && cpu == smp_processor_id()) ||
 		    available_idle_cpu(cpu) || sched_idle_cpu(cpu)) {
 			/* Discard any previous non-idle candidate */
-			if (!has_idle) {
+			if (!has_idle)
 				best = curr;
-				cidx ^= 1;
-			}
 			has_idle = true;
 
 			/* Nonzero exit latency indicates this CPU is idle */
@@ -165,12 +163,13 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync)
 		/* Calculate the relative utilization for this CPU candidate */
 		curr->util = curr->util * SCHED_CAPACITY_SCALE / curr->cap;
 
-		/* If @best == @curr then there's no need to compare them */
-		if (best == curr)
-			continue;
-
-		/* Check if this CPU is better than the best CPU found */
-		if (cass_cpu_better(curr, best, prev_cpu, sync)) {
+		/*
+		 * Check if this CPU is better than the best CPU found so far.
+		 * If @best == @curr then there's no need to compare them, but
+		 * cidx still needs to be changed to the other candidate slot.
+		 */
+		if (best == curr ||
+		    cass_cpu_better(curr, best, prev_cpu, sync)) {
 			best = curr;
 			cidx ^= 1;
 		}
