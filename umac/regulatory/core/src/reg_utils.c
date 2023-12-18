@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -378,12 +378,10 @@ QDF_STATUS reg_get_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
 #ifdef CONFIG_REG_CLIENT
 #ifdef CONFIG_BAND_6GHZ
 QDF_STATUS
-reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
-			       struct wlan_objmgr_pdev *pdev,
-			       uint8_t *ap_ctry, uint8_t *sta_ctry,
-			       enum reg_6g_ap_type *pwr_type_6g,
-			       bool *ctry_code_match,
-			       enum reg_6g_ap_type ap_pwr_type)
+reg_get_best_6g_power_type(struct wlan_objmgr_psoc *psoc,
+			   struct wlan_objmgr_pdev *pdev,
+			   enum reg_6g_ap_type *pwr_type_6g,
+			   enum reg_6g_ap_type ap_pwr_type)
 {
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
 
@@ -394,65 +392,42 @@ reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	reg_debug("STA country: %c%c, AP country: %c%c, AP power type: %d",
-		  sta_ctry[0], sta_ctry[1], ap_ctry[0], ap_ctry[1],
-		  ap_pwr_type);
-
-	if (!qdf_mem_cmp(ap_ctry, sta_ctry, REG_ALPHA2_LEN)) {
-		*ctry_code_match = true;
-		if (ap_pwr_type == REG_VERY_LOW_POWER_AP) {
-			if (!pdev_priv_obj->reg_rules.num_of_6g_client_reg_rules[ap_pwr_type]) {
-				reg_err("VLP not supported, can't connect");
-				return QDF_STATUS_E_NOSUPPORT;
-			}
-		}
+	if (pdev_priv_obj->reg_rules.num_of_6g_client_reg_rules[ap_pwr_type]) {
+		reg_debug("AP power type: %d , is supported by client",
+			  ap_pwr_type);
 		return QDF_STATUS_SUCCESS;
 	}
 
-	*ctry_code_match = false;
-	/*
-	 * If reg_info=0 not included, STA should operate in VLP mode.
-	 * If STA country doesn't support VLP, do not return if Wi-Fi
-	 * safe mode or RF test mode or enable relaxed connection policy,
-	 * rather STA should operate in LPI mode.
-	 * wlan_cm_get_check_6ghz_security API returns true if
-	 * neither Safe mode nor RF test mode are enabled.
-	 * wlan_cm_get_relaxed_6ghz_conn_policy API returns true if
-	 * enabled.
-	 */
-	if (ap_pwr_type != REG_INDOOR_AP) {
-		if (wlan_reg_ctry_support_vlp(sta_ctry) &&
-		    wlan_reg_ctry_support_vlp(ap_ctry)) {
-			reg_debug("STA ctry doesn't match with AP ctry, switch to VLP");
-			*pwr_type_6g = REG_VERY_LOW_POWER_AP;
-		} else {
-			reg_debug("AP or STA doesn't support VLP");
-			*pwr_type_6g = REG_INDOOR_AP;
-		}
-
-		if (!wlan_reg_ctry_support_vlp(sta_ctry) &&
-		    wlan_cm_get_check_6ghz_security(psoc) &&
-		    !wlan_cm_get_relaxed_6ghz_conn_policy(psoc)) {
-			reg_err("VLP not supported, can't connect");
-			return QDF_STATUS_E_NOSUPPORT;
-		}
-	}
-
 	if (ap_pwr_type == REG_INDOOR_AP) {
-		reg_debug("Indoor AP, allow STA IN LPI");
-		*pwr_type_6g = REG_INDOOR_AP;
+		if (pdev_priv_obj->reg_rules.num_of_6g_client_reg_rules[REG_VERY_LOW_POWER_AP]) {
+			*pwr_type_6g = REG_VERY_LOW_POWER_AP;
+			reg_debug("AP power type = %d, selected power type = %d",
+				  ap_pwr_type, *pwr_type_6g);
+			return QDF_STATUS_SUCCESS;
+		} else {
+			goto no_support;
+		}
+	} else if (ap_pwr_type == REG_STANDARD_POWER_AP) {
+		if (pdev_priv_obj->reg_rules.num_of_6g_client_reg_rules[REG_VERY_LOW_POWER_AP]) {
+			*pwr_type_6g = REG_VERY_LOW_POWER_AP;
+			reg_debug("AP power type = %d, selected power type = %d",
+				  ap_pwr_type, *pwr_type_6g);
+			return QDF_STATUS_SUCCESS;
+		} else {
+			goto no_support;
+		}
 	}
 
-	return QDF_STATUS_SUCCESS;
+no_support:
+	reg_err("AP power type = %d, not supported", ap_pwr_type);
+	return QDF_STATUS_E_NOSUPPORT;
 }
 #else
 QDF_STATUS
-reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
-			       struct wlan_objmgr_pdev *pdev,
-			       uint8_t *ap_ctry, uint8_t *sta_ctry,
-			       enum reg_6g_ap_type *pwr_type_6g,
-			       bool *ctry_code_match,
-			       enum reg_6g_ap_type ap_pwr_type)
+reg_get_best_6g_power_type(struct wlan_objmgr_psoc *psoc,
+			   struct wlan_objmgr_pdev *pdev,
+			   enum reg_6g_ap_type *pwr_type_6g,
+			   enum reg_6g_ap_type ap_pwr_type)
 {
 	return QDF_STATUS_SUCCESS;
 }
