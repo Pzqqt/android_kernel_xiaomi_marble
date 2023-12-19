@@ -3039,6 +3039,16 @@ static int goodix_set_cur_value(int gtp_mode, int gtp_value)
 		queue_work(goodix_core_data->gesture_wq, &goodix_core_data->gesture_work);
 		return 0;
 	}
+	if (gtp_mode == Touch_Power_Status && goodix_core_data && gtp_value >= 0) {
+		goodix_core_data->power_status = gtp_value;
+		flush_workqueue(goodix_core_data->event_wq);
+		ts_info("set power status: %d", gtp_value);
+		if (goodix_core_data->power_status)
+			queue_work(goodix_core_data->event_wq, &goodix_core_data->resume_work);
+		else
+			queue_work(goodix_core_data->event_wq, &goodix_core_data->suspend_work);
+		return 0;
+	}
 
 	if (gtp_mode ==  Touch_Nonui_Mode && goodix_core_data && gtp_value >= 0) {
 		goodix_core_data->nonui_status = gtp_value;
