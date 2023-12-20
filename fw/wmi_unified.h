@@ -40795,8 +40795,51 @@ typedef enum {
      */
     WMI_ROAM_PARAM_ROAM_UNSUPPORTED_6GHZ_POWERTYPE = 9,
 
+    /*
+     * crypto params to allow EHT/MLO in WPA2/WPA3 security.
+     * BITMAP of wlan_crypto_roam_eht_config
+     */
+    WMI_ROAM_PARAM_CRYPTO_EHT_CONFIG = 10,
+
+
     /*=== END ROAM_PARAM_PROTOTYPE SECTION ===*/
 } WMI_ROAM_PARAM;
+
+typedef enum {
+    /*
+     * BIT 0 - WLAN_CRYPTO_WPA2_ALLOW_NON_MLO_EHT:
+     *         Connect to non-MLO/MLO WPA2 EHT APs in EHT without MLO
+     *         (PMF capable is not mandatory).
+     *
+     * BIT 1 - WLAN_CRYPTO_WPA2_ALLOW_MLO:
+     *         Connect to MLO WPA2 EHT APs in MLO
+     *         (PMF capable is not mandatory).
+     *         If set along with WLAN_CRYPTO_WPA2_ALLOW_NON_MLO_EHT (BIT 0),
+     *         this mode supercedes.
+     *
+     * BIT 2 - WLAN_CRYPTO_WPA2_ALLOW_NON_MLO_EHT_MFPC_SET:
+     *         Connect to non-MLO/MLO WPA2 EHT APs in EHT without MLO
+     *         (PMF capable is mandatory).
+     *
+     * BIT 3 - WLAN_CRYPTO_WPA2_ALLOW_MLO_MFPC_SET:
+     *         Connect to MLO WPA2 EHT APs in MLO
+     *         (PMF capable is mandatory).
+     *         If set along with WLAN_CRYPTO_WPA2_ALLOW_NON_MLO_EHT_MFPC_SET
+     *         (BIT 2), this mode supercedes.
+     *
+     * BIT 4 - 15 - reserved for future WPA2 security configs
+     *
+     * BIT 16 - WLAN_CRYPTO_WPA3_SAE_ALLOW_NON_MLO_EHT_HNP:
+     *          Connect to non-MLO/MLO WPA3-SAE without support for H2E
+     *          (or no RSNXE IE in beacon) in non-MLO EHT.
+     */
+    WLAN_CRYPTO_WPA2_ALLOW_NON_MLO_EHT          = 0x00000001,
+    WLAN_CRYPTO_WPA2_ALLOW_MLO                  = 0x00000002,
+    WLAN_CRYPTO_WPA2_ALLOW_NON_MLO_EHT_MFPC_SET = 0x00000004,
+    WLAN_CRYPTO_WPA2_ALLOW_MLO_MFPC_SET         = 0x00000008,
+
+    WLAN_CRYPTO_WPA3_SAE_ALLOW_NON_MLO_EHT_HNP  = 0x00010000,
+} wlan_crypto_roam_eht_config;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_get_big_data_cmd_fixed_param */
