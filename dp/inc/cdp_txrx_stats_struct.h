@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1967,25 +1967,25 @@ struct cdp_htt_tx_pdev_stats_cmn_tlv {
 
 struct cdp_htt_tx_pdev_stats_urrn_tlv_v {
     struct cdp_htt_tlv_hdr tlv_hdr;
-    uint32_t urrn_stats[1]; /* HTT_TX_PDEV_MAX_URRN_STATS */
+    QDF_FLEX_ARRAY(uint32_t, urrn_stats); /* HTT_TX_PDEV_MAX_URRN_STATS */
 };
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct cdp_htt_tx_pdev_stats_flush_tlv_v {
     struct cdp_htt_tlv_hdr tlv_hdr;
-    uint32_t flush_errs[1]; /* HTT_TX_PDEV_MAX_FLUSH_REASON_STATS */
+    QDF_FLEX_ARRAY(uint32_t, flush_errs); /* HTT_TX_PDEV_MAX_FLUSH_REASON_STATS */
 };
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct cdp_htt_tx_pdev_stats_sifs_tlv_v {
     struct cdp_htt_tlv_hdr tlv_hdr;
-    uint32_t sifs_status[1]; /* HTT_TX_PDEV_MAX_SIFS_BURST_STATS */
+    QDF_FLEX_ARRAY(uint32_t, sifs_status); /* HTT_TX_PDEV_MAX_SIFS_BURST_STATS */
 };
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct cdp_htt_tx_pdev_stats_phy_err_tlv_v {
     struct cdp_htt_tlv_hdr tlv_hdr;
-    uint32_t  phy_errs[1]; /* HTT_TX_PDEV_MAX_PHY_ERR_STATS */
+    QDF_FLEX_ARRAY(uint32_t, phy_errs); /* HTT_TX_PDEV_MAX_PHY_ERR_STATS */
 };
 
 /* == RX PDEV/SOC STATS == */
@@ -2007,19 +2007,19 @@ struct cdp_htt_rx_soc_fw_stats_tlv {
 struct cdp_htt_rx_soc_fw_refill_ring_num_refill_tlv_v {
     struct cdp_htt_tlv_hdr tlv_hdr;
     /* Num total buf refilled from refill ring */
-    uint32_t refill_ring_num_refill[1]; /* HTT_RX_STATS_REFILL_MAX_RING */
+    QDF_FLEX_ARRAY(uint32_t, refill_ring_num_refill); /* HTT_RX_STATS_REFILL_MAX_RING */
 };
 
 struct cdp_htt_rx_pdev_fw_ring_mpdu_err_tlv_v {
     struct cdp_htt_tlv_hdr tlv_hdr;
     /* Num error MPDU for each RxDMA error type  */
-    uint32_t fw_ring_mpdu_err[1]; /* HTT_RX_STATS_RXDMA_MAX_ERR */
+    QDF_FLEX_ARRAY(uint32_t, fw_ring_mpdu_err); /* HTT_RX_STATS_RXDMA_MAX_ERR */
 };
 
 struct cdp_htt_rx_pdev_fw_mpdu_drop_tlv_v {
     struct cdp_htt_tlv_hdr tlv_hdr;
     /* Num MPDU dropped  */
-    uint32_t fw_mpdu_drop[1]; /* HTT_RX_STATS_FW_DROP_REASON_MAX */
+    QDF_FLEX_ARRAY(uint32_t, fw_mpdu_drop); /* HTT_RX_STATS_FW_DROP_REASON_MAX */
 };
 
 #define HTT_STATS_PHY_ERR_MAX 43
@@ -2087,7 +2087,7 @@ struct cdp_htt_rx_pdev_fw_stats_phy_err_tlv {
 struct cdp_htt_rx_soc_fw_refill_ring_empty_tlv_v {
     struct cdp_htt_tlv_hdr tlv_hdr;
     /* Num ring empty encountered */
-    uint32_t refill_ring_empty_cnt[1]; /* HTT_RX_STATS_REFILL_MAX_RING */
+    QDF_FLEX_ARRAY(uint32_t, refill_ring_empty_cnt); /* HTT_RX_STATS_REFILL_MAX_RING */
 };
 
 struct cdp_htt_tx_pdev_stats {
