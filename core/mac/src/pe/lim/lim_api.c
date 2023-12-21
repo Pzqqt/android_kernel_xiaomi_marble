@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2117,6 +2117,7 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 	QDF_STATUS status;
 	uint8_t *ie = NULL;
 	struct qdf_mac_addr bssid;
+	struct cm_roam_values_copy mdie_cfg = {0};
 
 	bcn_proberesp_ptr = (uint8_t *)roam_synch_ind_ptr +
 		roam_synch_ind_ptr->beaconProbeRespOffset;
@@ -2201,11 +2202,9 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 		bss_desc_ptr->chan_freq = roam_synch_ind_ptr->chan_freq;
 	}
 
-	bss_desc_ptr->nwType = lim_get_nw_type(
-			mac,
-			bss_desc_ptr->chan_freq,
-			SIR_MAC_MGMT_FRAME,
-			parsed_frm_ptr);
+	bss_desc_ptr->nwType = lim_get_nw_type(mac, bss_desc_ptr->chan_freq,
+					       SIR_MAC_MGMT_FRAME,
+					       parsed_frm_ptr);
 
 	bss_desc_ptr->sinr = 0;
 	bss_desc_ptr->beaconInterval = parsed_frm_ptr->beaconInterval;
@@ -2229,10 +2228,17 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 		qdf_mem_copy((uint8_t *)bss_desc_ptr->mdie,
 				(uint8_t *)parsed_frm_ptr->mdie,
 				SIR_MDIE_SIZE);
+		mdie_cfg.bool_value = true;
+		mdie_cfg.uint_value =
+			(bss_desc_ptr->mdie[1] << 8) | (bss_desc_ptr->mdie[0]);
+
+		wlan_cm_roam_cfg_set_value(mac->psoc, vdev_id,
+					   MOBILITY_DOMAIN, &mdie_cfg);
 	}
-	pe_debug("chan: %d rssi: %d ie_len %d",
+	pe_debug("chan: %d rssi: %d ie_len %d mdie_present:%d mdie = %02x %02x %02x",
 		 bss_desc_ptr->chan_freq,
-		 bss_desc_ptr->rssi, ie_len);
+		 bss_desc_ptr->rssi, ie_len, bss_desc_ptr->mdiePresent,
+		 bss_desc_ptr->mdie[0], bss_desc_ptr->mdie[1], bss_desc_ptr->mdie[2]);
 
 	qdf_mem_free(parsed_frm_ptr);
 	if (ie_len) {
