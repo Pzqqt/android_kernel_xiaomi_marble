@@ -21300,6 +21300,32 @@ typedef struct wlan_dcs_awgn_info {
     A_UINT32 chan_bw_interference_bitmap;
 } wmi_dcs_awgn_int_t;
 
+typedef struct wlan_dcs_obss_info {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_dcs_obss_int_t */
+    A_UINT32 tlv_header;
+    /** Channel width (20, 40, 80, 80+80, 160, 320) enum wmi_channel_width */
+    A_UINT32 channel_width;
+    /** Primary channel frequency (MHz) */
+    A_UINT32 chan_freq;
+    /** center frequency (MHz) first segment */
+    A_UINT32 center_freq0;
+    /** center frequency (MHz) second segment */
+    A_UINT32 center_freq1;
+    /* chan_bw_interference_bitmap:
+     * Indicates which 20MHz segments contain interference
+     *  320 MHz: bits 0-15
+     *  160 MHz: bits 0-7
+     *   80 MHz: bits 0-3
+     * Within the bitmap, Bit-0 represents lowest 20Mhz, Bit-1 represents
+     * second lowest 20Mhz and so on.
+     * Each bit position will indicate 20MHz in which interference is seen.
+     * (Valid 16 bits out of 32 bit integer)
+     * Note: for 11be, the interference present 20MHz can be punctured
+     * for better channel utilization.
+     */
+    A_UINT32 chan_bw_interference_bitmap;
+} wmi_dcs_obss_int_t;
+
 /**
  *  wmi_dcs_interference_event_t
  *
@@ -21316,6 +21342,8 @@ typedef struct {
      *  ATH_CAP_DCS_CWIM   0x01
      *  ATH_CAP_DCS_WLANIM 0x02
      *  ATH_CAP_DCS_AGWNIM 0x04
+     *  reserved (AFC)     0x08
+     *  ATH_CAP_DCS_OBSSIM 0x10
      */
     A_UINT32 interference_type; /* type of interference, wlan, cw, or AWGN */
     /** pdev_id for identifying the MAC
@@ -21336,7 +21364,8 @@ typedef struct {
  *
  *       wlan_dcs_cw_int            cw_int[];   <-- cw_interference event
  *       wlan_dcs_im_tgt_stats_t   wlan_stat[]; <-- wlan im interference stats
- *       wmi_dcs_awgn_int_t        awgn_int[];  <-- Additive white Gaussian noise (awgn) interference
+ *       wmi_dcs_awgn_int_t        awgn_int[];  <-- Additive white Gaussian noise (AWGN) interference
+ *       wmi_dcs_obss_int_t        obss_int[];  <-- Overlapping Basic Service Set (OBSS) interference
  */
 } wmi_dcs_interference_event_fixed_param;
 
@@ -37699,8 +37728,8 @@ typedef struct {
  * This fixed_param TLV is followed by the following TLVs:
  *   - wmi_regulatory_rule_ext reg_rule_array[] struct TLV array.
  *     Within the reg rule ext TLV array, the 2G elements occur first,
- *     then the 5G elements, then the 6G elements (AP SG, AP LPI, AP VLP,
- *     client SP x4, client LPI x4, client vlp x4).
+ *     then the 5G elements, then the 6G elements (AP LPI, AP SP, AP VLP,
+ *     client LPI x4, client SP x4, client VLP x4).
  *   - wmi_regulatory_chan_priority_struct reg_chan_priority[]
  *   - wmi_regulatory_fcc_rule_struct reg_fcc_rule[]
  */
