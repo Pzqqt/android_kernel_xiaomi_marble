@@ -1780,6 +1780,9 @@ typedef enum {
     /* Event to get AOA phasedelta values for all gain tables from HALPHY */
     WMI_PDEV_ENHANCED_AOA_PHASEDELTA_EVENTID,
 
+    /* Event to indicate the status of WiFi Radar calibration */
+    WMI_PDEV_WIFI_RADAR_CAL_COMPLETION_STATUS_EVENTID,
+
     /* VDEV specific events */
     /** VDEV started event in response to VDEV_START request */
     WMI_VDEV_START_RESP_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_VDEV),
@@ -47712,6 +47715,54 @@ typedef struct {
     A_UINT32 capture_interval_ms;
 } wmi_pdev_enable_wifi_radar_cmd_fixed_param;
 
+#define WMI_PDEV_WIFI_RADAR_CAL_COMPLETION_STATUS_GET(cal_status_array, txchnIdx, rxchnIdx)         WMI_GET_BITS(*(cal_status_array + txchnIdx), rxchnIdx, 1)
+#define WMI_PDEV_WIFI_RADAR_CAL_COMPLETION_STATUS_SET(cal_status_array, txchnIdx, rxchnIdx, value)  WMI_SET_BITS(*(cal_status_array + txchnIdx), rxchnIdx, 1, value)
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_wifi_radar_cal_configuration
+     */
+    A_UINT32 tlv_header;
+    /* ID of pdev for which the calibration is completed */
+    A_UINT32 pdev_id;
+    /* Packet bandwidth of WiFi Radar packet used for calibration
+     *     0 = 20 MHz
+     *     1 = 40 MHz
+     *     2 = 80 MHz
+     *     3 = 160 MHz
+     *     4 = 320 MHz
+     */
+    A_UINT32 wifi_radar_pkt_bw;
+    /* Channel bandwidth
+     *     0 = 20 MHz
+     *     1 = 40 MHz
+     *     2 = 80 MHz
+     *     3 = 160 MHz
+     *     4 = 320 MHz
+     */
+    A_UINT32 channel_bw;
+    /* Channel Center frequency in MHz */
+    A_UINT32 band_center_freq;
+    /* Number of LTF configured in the WiFi Radar Tx packet during calibration */
+    A_UINT32 num_ltf_tx;
+    /* Number of LTF skipped during Rx of the calibration packet */
+    A_UINT32 num_skip_ltf_rx;
+    /* Number of LTF accumulated during Rx of the calibration packet */
+    A_UINT32 num_ltf_accumulation;
+    /* Calibration status for each chain combination
+     * Word 0: tx chain 0 cal statuses:
+     *     Bit 0: rx chain 0 cal status
+     *     Bit 1: rx chain 1 cal status
+     *     etc.
+     * Word 1: tx chain 1 cal statuses:
+     *     Bit 0: rx chain 0 cal status
+     *     Bit 1: rx chain 1 cal status
+     *     etc.
+     * etc.
+     * Cal status values: success = 1, Failure = 0
+     */
+    A_UINT32 per_chain_cal_status[WMI_MAX_CHAINS];
+} wmi_pdev_wifi_radar_cal_completion_status_event_param;
 
 
 /* ADD NEW DEFS HERE */

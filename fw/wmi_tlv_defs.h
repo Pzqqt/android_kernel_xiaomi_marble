@@ -1426,6 +1426,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_dma_buf_release_wifi_radar_meta_data,
     WMITLV_TAG_STRUC_wmi_mlo_link_info,
     WMITLV_TAG_STRUC_wmi_dcs_obss_int_t,
+    WMITLV_TAG_STRUC_wmi_pdev_wifi_radar_cal_completion_status_event_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -2290,6 +2291,7 @@ typedef enum {
     OP(WMI_VDEV_SCHED_MODE_PROBE_RESP_EVENTID) \
     OP(WMI_VDEV_OOB_CONNECTION_RESP_EVENTID) \
     OP(WMI_AUDIO_TRANSPORT_SWITCH_TYPE_EVENTID) \
+    OP(WMI_PDEV_WIFI_RADAR_CAL_COMPLETION_STATUS_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -7586,6 +7588,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SCHED_MODE_PROBE_RESP_EVENTID);
 #define WMITLV_TABLE_WMI_VDEV_OOB_CONNECTION_RESP_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_oob_connection_resp_event_fixed_param, wmi_vdev_oob_connection_resp_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_OOB_CONNECTION_RESP_EVENTID);
+
+/* WiFi Radar calibration status event */
+#define WMITLV_TABLE_WMI_PDEV_WIFI_RADAR_CAL_COMPLETION_STATUS_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_wifi_radar_cal_completion_status_event_param, wmi_pdev_wifi_radar_cal_completion_status_event_param, cal_completion_status_event_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_WIFI_RADAR_CAL_COMPLETION_STATUS_EVENTID);
 
 
 
