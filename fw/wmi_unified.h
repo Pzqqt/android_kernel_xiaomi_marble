@@ -45984,9 +45984,14 @@ typedef struct {
     /*
      * If sbs_lower_band_end_freq is set to non-zero, it indicates
      * async SBS mode is supported, and lower-band/higher band to MAC
-     * mapping is switch-able. unit: mhz. examples 5180, 5320
+     * mapping is switch-able. unit: MHz. examples 5180, 5320
+     * If sbs_mid_band_end_freq is set to non-zero, it indicates
+     * async flexible SBS mode is supported, lower/higher band cutoff frequency
+     * can be selected from sbs_lower_band_end_freq or sbs_mid_band_end_freq.
+     * unit: MHz, examples 5900.
      */
     A_UINT32 sbs_lower_band_end_freq;
+    A_UINT32 sbs_mid_band_end_freq;
 } wmi_dbs_or_sbs_cap_ext;
 
 typedef struct {
