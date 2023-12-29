@@ -36276,6 +36276,19 @@ typedef struct {
      **************************************************************************/
 } WMI_SAR_CAPABILITIES;
 
+typedef enum {
+    WMI_SAR_FLAG_NONE = 0,
+    WMI_SAR_SET_CTL_GROUPING_DISABLE,
+    WMI_SAR_DBS_WITH_BT_DISABLE,
+    WMI_SAR_FLAG_MAX,
+} wmi_sar_flags;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_sar_flags*/
+    /* sar flags in bdf */
+    A_UINT32 sar_flags; /* refer to enum wmi_sar_flags */
+} wmi_sar_flag_tlv_param;
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_scan_adaptive_dwell_parameters_tlv */
     /** global default adaptive dwell mode, used when WMI_SCAN_DWELL_MODE_DEFAULT */
