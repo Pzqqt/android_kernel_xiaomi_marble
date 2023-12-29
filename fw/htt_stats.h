@@ -992,6 +992,8 @@ typedef struct {
     /** pdev uptime in microseconds **/
     A_UINT32 pdev_up_time_us_low;
     A_UINT32 pdev_up_time_us_high;
+    /** count of ofdma sequences flushed */
+    A_UINT32 ofdma_seq_flush;
 } htt_stats_tx_pdev_cmn_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_tx_pdev_cmn_tlv htt_tx_pdev_stats_cmn_tlv;
