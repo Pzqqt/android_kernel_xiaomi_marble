@@ -160,6 +160,20 @@ static bool initargs_found;
 static char *execute_command;
 static char *ramdisk_execute_command = "/init";
 
+static unsigned int xiaomi_hwid_project = 0;
+static int __init set_xiaomi_hwid_project(char *val)
+{
+	get_option(&val, &xiaomi_hwid_project);
+	pr_info("Kernel: Xiaomi hardware project id = %d\n", xiaomi_hwid_project);
+	return 0;
+}
+__setup("hwid.project=", set_xiaomi_hwid_project);
+
+unsigned int get_xiaomi_hwid_project(void)
+{
+	return xiaomi_hwid_project;
+}
+
 /*
  * Used to generate warnings if static_key manipulation functions are used
  * before jump_label_init is called.
