@@ -1607,7 +1607,7 @@ static int goodix_ts_irq_setup(struct goodix_ts_core *core_data)
 	ret = devm_request_threaded_irq(&core_data->pdev->dev,
 				      core_data->irq, NULL,
 				      goodix_ts_threadirq_func,
-				      ts_bdata->irq_flags | IRQF_ONESHOT | IRQF_NOBALANCING,
+				      ts_bdata->irq_flags | IRQF_ONESHOT,
 				      GOODIX_CORE_DRIVER_NAME,
 				      core_data);
 	if (ret < 0)
