@@ -821,6 +821,12 @@ config MI_WIRELESS
 	tristate "mi wirless config"
 	help
 	  Say Y here to enable mi wireless
+
+config MI_PEN_WIRELESS
+	tristate "mi pen wirless config"
+	help
+	  Say Y here to enable mi wireless
+
 config BQ_FUEL_GAUGE
 	tristate "BQ fuel gauge config"
 	help
@@ -851,6 +857,21 @@ config CHARGER_BQ256XX
 	  BQ256XX family of devices are highly-integrated, switch-mode battery
 	  charge management and system power path management devices for single
 	  cell Li-ion and Li-polymer batteries.
+
+config MI_DTPT
+	tristate "mi dtpt config"
+        help
+          Say Y here to enable mi dtpt
+
+config MI_CHARGE_PROPERTY
+	tristate "mask charge property config"
+        help
+          Say Y here to mask some properties
+
+config ANTI_BURN_DETECT
+	tristate "anti burn detect config"
+	help
+	  Say Y or M here to enable anti burn detect config
 
 source "drivers/power/supply/qcom/Kconfig"
 
