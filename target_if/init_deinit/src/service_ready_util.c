@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -236,6 +237,22 @@ static int get_sar_version(wmi_unified_t handle, uint8_t *evt,
 		target_if_err("failed to parse sar capability");
 		return qdf_status_to_os_return(status);
 	}
+
+	return 0;
+}
+static int get_sar_flag(wmi_unified_t handle, uint8_t *evt,
+			struct wlan_psoc_host_service_ext2_param *ext2_param)
+{
+	QDF_STATUS status;
+
+	status = wmi_extract_sar_cap_service_ready_ext2(handle,
+							evt, ext2_param);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("failed to parse sar falg");
+		return qdf_status_to_os_return(status);
+	}
+
+	target_if_debug("sar flag %d", ext2_param->sar_flag);
 
 	return 0;
 }
@@ -849,6 +866,8 @@ int init_deinit_populate_hal_reg_cap_ext2(wmi_unified_t wmi_handle,
 			return qdf_status_to_os_return(status);
 		}
 	}
+
+	status = get_sar_flag(wmi_handle, event, &info->service_ext2_param);
 
 	return 0;
 }
