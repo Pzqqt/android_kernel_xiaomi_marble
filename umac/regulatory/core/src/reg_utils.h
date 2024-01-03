@@ -259,6 +259,7 @@ QDF_STATUS reg_get_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
  * @pdev: pointer to pdev
  * @pwr_type_6g: pointer to 6G power type
  * @ap_pwr_type: AP's power type as advertised in HE ops IE
+ * @chan_freq: Connection channel frequency
  *
  * This function computes best power type for 6 GHz connection.
  * SP power type is selected only if AP advertises SP and client supports SP.
@@ -274,7 +275,8 @@ QDF_STATUS
 reg_get_best_6g_power_type(struct wlan_objmgr_psoc *psoc,
 			   struct wlan_objmgr_pdev *pdev,
 			   enum reg_6g_ap_type *pwr_type_6g,
-			   enum reg_6g_ap_type ap_pwr_type);
+			   enum reg_6g_ap_type ap_pwr_type,
+			   uint32_t chan_freq);
 #endif
 
 /**
