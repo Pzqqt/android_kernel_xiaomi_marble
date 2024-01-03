@@ -674,7 +674,8 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 
 		status = wlan_reg_get_best_6g_power_type(
 				mac_ctx->psoc, mac_ctx->pdev, &pwr_type_6g,
-				session->ap_defined_power_type_6g);
+				session->ap_defined_power_type_6g,
+				bcn->chan_freq);
 		if (QDF_IS_STATUS_ERROR(status))
 			return;
 		session->best_6g_power_type = pwr_type_6g;
