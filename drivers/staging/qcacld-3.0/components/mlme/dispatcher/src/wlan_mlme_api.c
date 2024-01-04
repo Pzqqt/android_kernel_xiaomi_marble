@@ -2625,6 +2625,30 @@ QDF_STATUS wlan_mlme_set_primary_interface(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS wlan_mlme_peer_get_assoc_rsp_ies(struct wlan_objmgr_peer *peer,
+					    const uint8_t **ie_buf,
+					    size_t *ie_len)
+{
+	struct peer_mlme_priv_obj *peer_priv;
+
+	if (!peer || !ie_buf || !ie_len)
+		return QDF_STATUS_E_INVAL;
+
+	*ie_buf = NULL;
+	*ie_len = 0;
+
+	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
+							  WLAN_UMAC_COMP_MLME);
+
+	if (!peer_priv || peer_priv->assoc_rsp.len == 0)
+		return QDF_STATUS_SUCCESS;
+
+	*ie_buf = peer_priv->assoc_rsp.ptr;
+	*ie_len = peer_priv->assoc_rsp.len;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 int wlan_mlme_get_mcc_duty_cycle_percentage(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;

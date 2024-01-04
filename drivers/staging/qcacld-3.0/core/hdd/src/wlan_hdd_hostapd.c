@@ -1899,6 +1899,105 @@ static QDF_STATUS hdd_hostapd_chan_change(struct hdd_adapter *adapter,
 				      chan_change, legacy_phymode);
 }
 
+#ifdef WLAN_MLD_AP_STA_CONNECT_SUPPORT
+static void
+hdd_hostapd_sap_fill_peer_ml_info(struct hdd_adapter *adapter,
+				  struct station_info *sta_info,
+				  uint8_t *peer_mac)
+{
+	bool is_mlo_vdev;
+	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_peer *sta_peer;
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
+	if (!vdev) {
+		hdd_err("Failed to get link id, VDEV NULL");
+		return;
+	}
+
+	is_mlo_vdev = wlan_vdev_mlme_is_mlo_vdev(vdev);
+	if (is_mlo_vdev)
+		sta_info->link_id = wlan_vdev_get_link_id(vdev);
+	else
+		sta_info->link_id = -1;
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
+
+	if (!is_mlo_vdev)
+		return;
+
+	sta_peer = wlan_objmgr_get_peer_by_mac(adapter->hdd_ctx->psoc,
+					       peer_mac, WLAN_OSIF_ID);
+
+	if (!sta_peer) {
+		hdd_err("Peer not found with MAC " QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer_mac));
+		return;
+	}
+	qdf_mem_copy(sta_info->mld_addr, wlan_peer_mlme_get_mldaddr(sta_peer),
+		     ETH_ALEN);
+
+	status = ucfg_mlme_peer_get_assoc_rsp_ies(
+					sta_peer,
+					&sta_info->assoc_resp_ies,
+					&sta_info->assoc_resp_ies_len);
+	wlan_objmgr_peer_release_ref(sta_peer, WLAN_OSIF_ID);
+}
+#elif defined(CFG80211_MLD_AP_STA_CONNECT_UPSTREAM_SUPPORT)
+static void
+hdd_hostapd_sap_fill_peer_ml_info(struct hdd_adapter *adapter,
+				  struct station_info *sta_info,
+				  uint8_t *peer_mac)
+{
+	bool is_mlo_vdev;
+	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_peer *sta_peer;
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter,
+					   WLAN_HDD_ID_OBJ_MGR);
+	if (!vdev) {
+		hdd_err("Failed to get link id, VDEV NULL");
+		return;
+	}
+
+	is_mlo_vdev = wlan_vdev_mlme_is_mlo_vdev(vdev);
+	if (!is_mlo_vdev) {
+		sta_info->assoc_link_id = -1;
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_HDD_ID_OBJ_MGR);
+		return;
+	}
+
+	sta_info->assoc_link_id = wlan_vdev_get_link_id(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_HDD_ID_OBJ_MGR);
+
+	sta_peer = wlan_objmgr_get_peer_by_mac(adapter->hdd_ctx->psoc,
+					       peer_mac, WLAN_HDD_ID_OBJ_MGR);
+
+	if (!sta_peer) {
+		hdd_err("Peer not found with MAC " QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer_mac));
+		return;
+	}
+	qdf_mem_copy(sta_info->mld_addr, wlan_peer_mlme_get_mldaddr(sta_peer),
+		     ETH_ALEN);
+
+	status = ucfg_mlme_peer_get_assoc_rsp_ies(
+					sta_peer,
+					&sta_info->assoc_resp_ies,
+					&sta_info->assoc_resp_ies_len);
+	wlan_objmgr_peer_release_ref(sta_peer, WLAN_HDD_ID_OBJ_MGR);
+	sta_info->mlo_params_valid = true;
+}
+#else
+static void
+hdd_hostapd_sap_fill_peer_ml_info(struct hdd_adapter *adapter,
+				  struct station_info *sta_info,
+				  uint8_t *peer_mac)
+{
+}
+#endif
+
 QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				    void *context)
 {
@@ -1940,6 +2039,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	uint8_t *mld;
 #endif
 	bool notify_new_sta = true;
+	struct qdf_mac_addr sta_addr = {0};
 
 	dev = context;
 	if (!dev) {
@@ -2548,6 +2648,14 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 			 */
 			sta_info->filled |= STATION_INFO_ASSOC_REQ_IES;
 #endif
+			/* For ML clients need to fill assoc resp IEs
+			 * and MLD address.
+			 * For Legacy clients MLD address will be
+			 * NULL MAC address.
+			 */
+			hdd_hostapd_sap_fill_peer_ml_info(adapter, sta_info,
+							  event->staMac.bytes);
+
 			if (notify_new_sta)
 				cfg80211_new_sta(dev,
 						 (const u8 *)&event->
@@ -2637,7 +2745,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 			return QDF_STATUS_E_INVAL;
 		}
 
-		if (wlan_vdev_mlme_is_mlo_vdev(adapter->vdev)) {
+		if (wlan_vdev_mlme_is_mlo_vdev(adapter->vdev) &&
+		    !qdf_is_macaddr_zero(&stainfo->mld_addr)) {
 			mld_sta_info = hdd_get_sta_info_by_mac(
 						&adapter->sta_info_list,
 						stainfo->mld_addr.bytes,
@@ -2650,7 +2759,13 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				hdd_put_sta_info_ref(&adapter->sta_info_list,
 						&mld_sta_info, true,
 						STA_INFO_HOSTAPD_SAP_EVENT_CB);
+				qdf_copy_macaddr(&sta_addr, &stainfo->mld_addr);
 			}
+		} else {
+			/* Copy legacy MAC address on
+			 * non-ML type client disassoc.
+			 */
+			qdf_copy_macaddr(&sta_addr, &disassoc_comp->staMac);
 		}
 
 		/* Send DHCP STOP indication to FW */
@@ -2707,9 +2822,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		if ((adapter->device_mode != QDF_P2P_GO_MODE) ||
 		     (!cds_is_driver_recovering())) {
 			cfg80211_del_sta(dev,
-					 (const u8 *)&sap_event->sapevt.
-					 sapStationDisassocCompleteEvent.staMac.
-					 bytes[0], GFP_KERNEL);
+					 (const u8 *)&sta_addr.bytes[0],
+					 GFP_KERNEL);
 			hdd_debug("indicate sta deletion event");
 		}
 
