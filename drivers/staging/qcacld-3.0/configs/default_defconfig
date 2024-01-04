@@ -341,7 +341,9 @@ endif
 	CONFIG_DP_PKT_ADD_TIMESTAMP := y
 endif
 
-CONFIG_WLAN_POWER_DEBUG := y
+ifeq ($(CONFIG_CNSS2_DEBUG), y)
+	CONFIG_WLAN_POWER_DEBUG := y
+endif
 
 #Disable Beacon Reception Stats
 CONFIG_FEATURE_BECN_STATS := n
