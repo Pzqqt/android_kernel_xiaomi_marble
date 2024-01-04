@@ -1058,6 +1058,12 @@ int mi_dsi_panel_set_doze_brightness(struct dsi_panel *panel,
 
 	mi_cfg = &panel->mi_cfg;
 
+	if (!panel->panel_initialized) {
+		DISP_ERROR("panel is not initialized!\n");
+		mutex_unlock(&panel->panel_lock);
+		return -EINVAL;
+	}
+
 	if (is_hbm_fod_on(panel)) {
 		mi_cfg->doze_brightness = doze_brightness;
 		DISP_INFO("Skip! [%s] set doze brightness %d due to FOD_HBM_ON\n",
