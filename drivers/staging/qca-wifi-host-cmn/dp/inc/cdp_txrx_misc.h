@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -960,4 +960,38 @@ cdp_get_tx_rings_grp_bitmap(ol_txrx_soc_handle soc)
 
 	return 0;
 }
+
+#ifdef WLAN_FEATURE_PEER_TXQ_FLUSH_CONF
+/**
+ * cdp_set_peer_txq_flush_config() - Set the peer txq flush configuration
+ * @soc: Opaque handle to the DP soc object
+ * @vdev_id: VDEV identifier
+ * @mac: MAC address of the peer
+ * @ac: access category mask
+ * @tid: TID mask
+ * @policy: Flush policy
+ *
+ * Return: 0 on success, errno on failure
+ */
+static inline int
+cdp_set_peer_txq_flush_config(ol_txrx_soc_handle soc, uint8_t vdev_id,
+			      uint8_t *mac, uint8_t ac, uint32_t tid,
+			      enum cdp_peer_txq_flush_policy policy)
+{
+	if (!soc || !soc->ops || !soc->ops->misc_ops || !mac) {
+		dp_cdp_debug("Invalid parameters");
+		return 0;
+	}
+
+	if (soc->ops->misc_ops->set_peer_txq_flush_config) {
+		return soc->ops->misc_ops->set_peer_txq_flush_config(soc,
+								     vdev_id,
+								     mac, ac,
+								     tid,
+								     policy);
+	}
+
+	return 0;
+}
+#endif /* WLAN_FEATURE_PEER_TXQ_FLUSH_CONF */
 #endif /* _CDP_TXRX_MISC_H_ */

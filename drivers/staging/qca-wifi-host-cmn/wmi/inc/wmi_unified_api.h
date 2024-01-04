@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -934,6 +934,18 @@ QDF_STATUS
 wmi_unified_peer_flush_tids_send(wmi_unified_t wmi_handle,
 				 uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
 				 struct peer_flush_params *param);
+#ifdef WLAN_FEATURE_PEER_TXQ_FLUSH_CONF
+/**
+ * wmi_unified_peer_txq_flush_config_send() - peer txq flush policy config in fw
+ * @wmi_handle: wmi handle
+ * @pr: peer txq flush config parameters
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_peer_txq_flush_config_send(wmi_unified_t wmi_handle,
+				       struct peer_txq_flush_config_params *pr);
+#endif
 
 /**
  * wmi_unified_peer_delete_all_send() - send PEER delete all command to fw
