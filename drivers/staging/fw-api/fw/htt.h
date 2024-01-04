@@ -255,9 +255,10 @@
  * 3.127 Add transmit_count fields in htt_tx_wbm_completion_vX structs.
  * 3.128 Add H2T TX_LATENCY_STATS_CFG + T2H TX_LATENCY_STATS_PERIODIC_IND
  *       msg defs
+ * 3.129 Add HTT_TX_FW2WBM_REINJECT_REASON_SAWF_SVC_CLASS_ID_ABSENT def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 128
+#define HTT_CURRENT_VERSION_MINOR 129
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -813,6 +814,7 @@ typedef enum {
     HTT_STATS_CODEL_MSDUQ_TAG                      = 189, /* htt_codel_msduq_stats_tlv */
     HTT_STATS_MLO_SCHED_STATS_TAG                  = 190, /* htt_mlo_sched_stats_tlv */
     HTT_STATS_PDEV_MLO_IPC_STATS_TAG               = 191, /* htt_pdev_mlo_ipc_stats_tlv */
+    HTT_STATS_WHAL_WSI_TAG                         = 192, /* htt_stats_whal_wsi_tlv */
 
 
     HTT_STATS_MAX_TAG,
@@ -2767,6 +2769,7 @@ typedef enum {
    HTT_TX_FW2WBM_REINJECT_REASON_DHCP,
    HTT_TX_FW2WBM_REINJECT_REASON_FLOW_CONTROL,
    HTT_TX_FW2WBM_REINJECT_REASON_MLO_MCAST,
+   HTT_TX_FW2WBM_REINJECT_REASON_SAWF_SVC_CLASS_ID_ABSENT,
 
    HTT_TX_FW2WBM_REINJECT_REASON_MAX,
 } htt_tx_fw2wbm_reinject_reason_t;
@@ -3224,13 +3227,72 @@ PREPACK struct htt_tx_wbm_transmit_status {
  *  used only if tx_status is HTT_TX_FW2WBM_TX_STATUS_REINJECT.
  */
 PREPACK struct htt_tx_wbm_reinject_status {
+    A_UINT32
+        sw_peer_id  : 16,
+        data_length : 16;
+    A_UINT32
+        tid         : 5,
+        msduq_idx   : 4,
+        reserved1   : 23;
    A_UINT32
-       reserved0:       32;
-   A_UINT32
-       reserved1:       32;
-   A_UINT32
-       reserved2:       32;
+       reserved2: 32;
 } POSTPACK;
+
+#define HTT_TX_WBM_REINJECT_SW_PEER_ID_M    0x0000ffff
+#define HTT_TX_WBM_REINJECT_SW_PEER_ID_S    0
+#define HTT_TX_WBM_REINJECT_DATA_LEN_M      0xffff0000
+#define HTT_TX_WBM_REINJECT_DATA_LEN_S      16
+
+#define HTT_TX_WBM_REINJECT_TID_M           0x0000001f
+#define HTT_TX_WBM_REINJECT_TID_S           0
+#define HTT_TX_WBM_REINJECT_MSDUQ_ID_M      0x000001e0
+#define HTT_TX_WBM_REINJECT_MSDUQ_ID_S      5
+
+#define HTT_TX_WBM_REINJECT_SW_PEER_ID_GET(_var)\
+    (((_var) & HTT_TX_WBM_REINJECT_SW_PEER_ID_M) >>\
+         HTT_TX_WBM_REINJECT_SW_PEER_ID_S)\
+
+#define HTT_TX_WBM_REINJECT_SW_PEER_ID_SET(_var, _val)\
+    do {\
+        HTT_CHECK_SET_VAL(HTT_TX_WBM_REINJECT_SW_PEER_ID, _val); \
+        ((_var) |= ((_val) << HTT_TX_WBM_REINJECT_SW_PEER_ID_S));\
+    } while(0)
+
+#define HTT_TX_WBM_REINJECT_DATA_LEN_GET(_var)\
+    (((_var) & HTT_TX_WBM_REINJECT_DATA_LEN_M) >>\
+         HTT_TX_WBM_REINJECT_DATA_LEN_S)\
+
+#define HTT_TX_WBM_REINJECT_DATA_LEN_SET(_var, _val)\
+    do {\
+        HTT_CHECK_SET_VAL(HTT_TX_WBM_REINJECT_DATA_LEN, _val); \
+        ((_var) |= ((_val) << HTT_TX_WBM_REINJECT_DATA_LEN_S));\
+    } while(0)
+
+#define HTT_TX_WBM_REINJECT_TID_GET(_var)\
+    (((_var) & HTT_TX_WBM_REINJECT_TID_M) >>\
+         HTT_TX_WBM_REINJECT_TID_S)\
+
+#define HTT_TX_WBM_REINJECT_TID_SET(_var, _val)\
+    do {\
+        HTT_CHECK_SET_VAL(HTT_TX_WBM_REINJECT_TID, _val); \
+        ((_var) |= ((_val) << HTT_TX_WBM_REINJECT_TID_S));\
+    } while(0)
+
+#define HTT_TX_WBM_REINJECT_MSDUQ_ID_GET(_var)\
+    (((_var) & HTT_TX_WBM_REINJECT_MSDUQ_ID_M) >>\
+         HTT_TX_WBM_REINJECT_MSDUQ_ID_S)\
+
+#define HTT_TX_WBM_REINJECT_MSDUQ_ID_SET(_var, _val)\
+    do {\
+        HTT_CHECK_SET_VAL(HTT_TX_WBM_REINJECT_MSDUQ_ID, _val); \
+        ((_var) |= ((_val) << HTT_TX_WBM_REINJECT_MSDUQ_ID_S));\
+    } while(0)
+
+
+
+
+
+
 
 /**
  * @brief HTT TX WBM multicast echo check notification from firmware to host

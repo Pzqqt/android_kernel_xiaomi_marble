@@ -516,6 +516,11 @@ typedef enum {
     WMI_PDEV_SET_RF_PATH_CMDID,
     /** WSI stats info WMI command */
     WMI_PDEV_WSI_STATS_INFO_CMDID,
+    /*
+     * WMI cmd to Enable LED blink based on Tx+Rx Data Rate
+     * and download LED ON/OFF Rate table
+     */
+    WMI_PDEV_ENABLE_LED_BLINK_DOWNLOAD_TABLE_CMDID,
 
 
     /* VDEV (virtual device) specific commands */
@@ -760,6 +765,9 @@ typedef enum {
 
     /* Group SET cmd for PEERS */
     WMI_PEER_BULK_SET_CMDID,
+
+    /* WMI command to setup reorder queue for multiple TIDs */
+    WMI_PEER_MULTIPLE_REORDER_QUEUE_SETUP_CMDID,
 
     /* beacon/management specific commands */
 
@@ -1376,6 +1384,7 @@ typedef enum {
     WMI_COEX_DBAM_CMDID,
     WMI_TAS_POWER_HISTORY_CMDID,
     WMI_ESL_EGID_CMDID,
+    WMI_COEX_MULTIPLE_CONFIG_CMDID,
 
     /**
      *  OBSS scan offload enable/disable commands
@@ -4623,7 +4632,12 @@ typedef struct {
      *      Refer to the below definitions of the
      *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_RADAR_FLAGS_FULL_BW_NOL_GET
      *      and _SET macros.
-     *  Bits 31:15 - Reserved
+     *  Bit 15
+     *      This bit will be set if the host has qms_dlkm support enabled.
+     *      Refer to the below definitions of the
+     *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_QMS_DLKM_SUPPORT_GET
+     *      and _SET macros.
+     *  Bits 31:16 - Reserved
      */
     A_UINT32 host_service_flags;
 
@@ -5070,6 +5084,11 @@ typedef struct {
     WMI_GET_BITS(host_service_flags, 14, 1)
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_RADAR_FLAGS_FULL_BW_NOL_SET(host_service_flags, val) \
     WMI_SET_BITS(host_service_flags, 14, 1, val)
+
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_QMS_DLKM_SUPPORT_GET(host_service_flags) \
+    WMI_GET_BITS(host_service_flags, 15, 1)
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_QMS_DLKM_SUPPORT_SET(host_service_flags, val) \
+    WMI_SET_BITS(host_service_flags, 15, 1, val)
 
 
 #define WMI_RSRC_CFG_CARRIER_CFG_CHARTER_ENABLE_GET(carrier_config) \
@@ -5923,6 +5942,7 @@ typedef enum {
 #define WMI_SCAN_FLAG_EXT_RELIABLE_SCAN       0x00010000
 #define WMI_SCAN_FLAG_EXT_FAST_SCAN           0x00020000
 #define WMI_SCAN_FLAG_EXT_LOW_POWER_SCAN      0x00040000
+#define WMI_SCAN_FLAG_EXT_STOP_IF_BSSID_FOUND 0x00080000
 
 
 /**
@@ -9334,6 +9354,21 @@ typedef enum {
 
     /** Parameter to enable/disable tid0 and tid3 mapping to work 3 Link MLO */
     WMI_PDEV_PARAM_TID_MAPPING_3LINK_MLO,
+
+    /** Parameter to enable/disable small OFDMA M-RUs **/
+    WMI_PDEV_PARAM_ENABLE_SMALL_MRU,
+
+    /** Parameter to enable/disable large OFDMA M-RUs **/
+    WMI_PDEV_PARAM_ENABLE_LARGE_MRU,
+
+    /** Parameter to enable/disable delayed LMR feedback.
+     * Note: Delayed LMR feedback is supported only up to two ranging peers to
+     * enable Location certification
+     * 0 - Immediate LMR feedback is enabled for all ranging peers.
+     * 1 (non zero) - delayed LMR feedback is enabled. Third peer onward will
+     *     default to immediate LMR feedback.
+     **/
+    WMI_PDEV_PARAM_ENABLE_DELAYED_LMR_FEEDBACK,
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
@@ -10079,6 +10114,12 @@ typedef struct {
     /** idnore power , only use flags , mode and freq */
     wmi_channel chan;
 } wmi_pdev_set_channel_cmd;
+
+typedef struct {
+    A_UINT32 tlv_header;
+    /* DBW puncture bitmap */
+    A_UINT32 dbw_puncture_20mhz_bitmap;
+} wmi_dbw_chan_info;
 
 typedef enum {
     WMI_PKTLOG_EVENT_RX =  0x00000001,
@@ -16971,6 +17012,10 @@ typedef struct {
  *     wmi_partner_link_info link_info[]; <-- partner link info
  *         optional TLV, only present for MLO vdevs,
  *         If the vdev is non-MLO the array length should be 0.
+ *     wmi_channel dbw_chan; <-- WMI channel
+ *         optional TLV for dbw_chan
+ *     wmi_dbw_chan_info dbw_chan_info
+ *         optional TLV used for dbw_chan_info
  */
 } wmi_vdev_start_request_cmd_fixed_param;
 
@@ -23390,6 +23435,8 @@ typedef enum wake_reason_e {
     WOW_REASON_VDEV_REPURPOSE,
     /* STX High duty cycle event */
     WOW_REASON_STX_WOW_HIGH_DUTY_CYCLE,
+    /* WoW exit reason MCC lite */
+    WOW_REASON_MCC_LITE,
 
     /* add new WOW_REASON_ defs before this line */
     WOW_REASON_MAX,
@@ -31259,7 +31306,15 @@ typedef enum {
     TSF_TSTAMP_QTIMER_CAPTURE_REQ = 4,
     TSF_TSTAMP_AUTO_REPORT_ENABLE = 5,
     TSF_TSTAMP_AUTO_REPORT_DISABLE = 6,
+    TSF_TSTAMP_PERIODIC_REPORT_REQ = 5,
 } wmi_tsf_tstamp_action;
+
+typedef enum {
+    TSF_TSTAMP_REPORT_TTIMER = 0x1, /* bit 0: TSF Timer */
+    TSF_TSTAMP_REPORT_QTIMER = 0x2, /* bit 1: H/T common Timer */
+} wmi_tsf_tstamp_report_flags;
+
+#define TSF_TSTAMP_REPORT_PERIOD_MIN   1000    /* ms units */
 
 typedef struct {
     /** TLV tag and len; tag equals
@@ -31269,6 +31324,12 @@ typedef struct {
     A_UINT32 vdev_id;
     /* action type, refer to wmi_tsf_tstamp_action */
     A_UINT32 tsf_action;
+    /*
+     * The below fields are valid only when tsf_action is
+     * TSF_TSTAMP_PERIODIC_REPORT_REQ.
+     */
+    A_UINT32 period; /* the period of report timestamp, ms units */
+    A_UINT32 flags;  /* wmi_tsf_tstamp_report_flags */
 } wmi_vdev_tsf_tstamp_action_cmd_fixed_param;
 
 typedef struct {
@@ -31737,6 +31798,39 @@ typedef struct {
                               * Host sends the message when BA session is
                               * established or terminated for the TID. */
 } wmi_peer_reorder_queue_setup_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_per_reorder_q_setup_params_t */
+    A_UINT32 tid; /* 0 to 15 = QoS TIDs, 16 = non-qos TID */
+    A_UINT32 queue_ptr_lo; /* lower 32 bits of queue desc address */
+    A_UINT32 queue_ptr_hi; /* upper 32 bits of queue desc address */
+    A_UINT32 queue_no; /* 16-bit number assigned by host for queue,
+                        * stored in bits 15:0 of queue_no field */
+    A_UINT32 ba_window_size_valid; /* Is ba_window_size valid?
+                                    * 0 = Invalid, 1 = Valid */
+    A_UINT32 ba_window_size; /* Valid values: 0 to 256
+                              * Host sends the message when BA session is
+                              * established or terminated for the TID. */
+} wmi_peer_per_reorder_q_setup_params_t;
+
+/**
+ * This command is sent from WLAN host driver to firmware for
+ * plugging in reorder queue desc to hw for multiple TIDs in one shot.
+ *
+ * Example: plug-in queue desc
+ *    host->target: WMI_PEER_MULTIPLE_REORDER_QUEUE_SETUP_CMDID,
+ *                  (vdev_id = PEER vdev id,
+ *                   peer_macaddr = PEER mac addr)
+ */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_multiple_reorder_queue_setup_cmd_fixed_param */
+    A_UINT32 vdev_id;
+    wmi_mac_addr peer_macaddr; /* peer mac address */
+/*
+ * This struct is followed by other TLVs:
+ *   wmi_peer_per_reorder_q_setup_params_t q_setup_params[num_queues];
+ */
+} wmi_peer_multiple_reorder_queue_setup_cmd_fixed_param;
 
 /**
  * This command is sent from WLAN host driver to firmware for
@@ -34647,7 +34741,7 @@ typedef enum wmi_coex_config_type {
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
-    A_UINT32 tlv_header;
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_COEX_CONFIG_CMD_fixed_param */
     A_UINT32 vdev_id;
     A_UINT32 config_type; /* wmi_coex_config_type enum */
     A_UINT32 config_arg1;
@@ -34657,6 +34751,14 @@ typedef struct {
     A_UINT32 config_arg5;
     A_UINT32 config_arg6;
 } WMI_COEX_CONFIG_CMD_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_coex_multiple_config_cmd_fixed_param */
+    /*
+     * This struct is followed by other TLVs:
+     *   WMI_COEX_CONFIG_CMD_fixed_param config_list[num_config];
+     */
+} wmi_coex_multiple_config_cmd_fixed_param;
 
 typedef enum wmi_coex_dbam_mode_type {
     WMI_COEX_DBAM_DISABLE = 0,
@@ -37006,6 +37108,9 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_SCHED_MODE_PROBE_REQ_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_OOB_CONNECTION_REQ_CMDID);
         WMI_RETURN_STRING(WMI_AUDIO_TRANSPORT_SWITCH_RESP_STATUS_CMDID);
+        WMI_RETURN_STRING(WMI_PEER_MULTIPLE_REORDER_QUEUE_SETUP_CMDID);
+        WMI_RETURN_STRING(WMI_COEX_MULTIPLE_CONFIG_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_ENABLE_LED_BLINK_DOWNLOAD_TABLE_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -37901,6 +38006,10 @@ typedef struct {
      *    with vdev ID as index.
      * A_UINT32 preferred_rx_streams[]; <-- Array of preferred_rx_streams
      *    with vdev ID as index.
+     * wmi_channel dbw_chan; <-- WMI channel
+     *     optional TLV for dbw_chan
+     * wmi_dbw_chan_info dbw_chan_info
+     *     optional TLV used for dbw_chan_info
      */
 } wmi_pdev_multiple_vdev_restart_request_cmd_fixed_param;
 
@@ -40268,6 +40377,14 @@ typedef struct {
     A_UINT32 scoring_capability_bitmap;
 } wmi_roam_capability_report_event_fixed_param;
 
+/*
+ * Definition of disallow connection modes.
+ */
+typedef enum {
+    /* Bit 0: roam to 5GL+5GH MLSR is not allowed if the bit is set. */
+    WMI_ROAM_MLO_CONNECTION_MODE_5GL_5GH_MLSR = 0x1,
+} WMI_ROAM_MLO_CONNECTION_MODES;
+
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_mlo_config_cmd_fixed_param */
     wmi_mac_addr partner_link_addr; /* Assigned link address which can be used as self link addr when vdev is not created */
@@ -40287,6 +40404,13 @@ typedef struct {
      */
     A_UINT32 support_link_band; /* Configure the band bitmap of mlo connection supports. */
     A_UINT32 max_active_links; /* Max active links supported for STA */
+
+    /*
+     * Disallow the specified connection mode(s) when roaming to MLD AP.
+     * Refer to the WMI_ROAM_MLO_CONNECTION_MODES enum for the connection mode
+     * each bit represents.
+     */
+    A_UINT32 disallow_connect_modes;
 } wmi_roam_mlo_config_cmd_fixed_param;
 
 typedef struct {
@@ -43776,6 +43900,7 @@ enum wmi_oem_data_evt_cause {
     WMI_OEM_DATA_EVT_CAUSE_UNSPECIFIED = 0,
     WMI_OEM_DATA_EVT_CAUSE_CMD_REQ = 1,
     WMI_OEM_DATA_EVT_CAUSE_ASYNC = 2,
+    WMI_OEM_DATA_EVT_CAUSE_QMS = 3,
 };
 
 typedef struct {
@@ -44603,6 +44728,7 @@ typedef enum {
     WMI_MLO_LINK_FORCE_INACTIVE_LINK_NUM      = 4, /* Force inactive a number of links, firmware to decide which links to inactive */
     WMI_MLO_LINK_NO_FORCE                     = 5, /* Cancel the force operation of specific links, allow firmware to decide */
     WMI_MLO_LINK_FORCE_ACTIVE_INACTIVE        = 6, /* combination of force specific links active & force specific links inactive */
+    WMI_MLO_LINK_NON_FORCE_UPDATE             = 7, /* Used when host wants to update other fields like disallow_mlo_mode_bmap */
 } WMI_MLO_LINK_FORCE_MODE;
 
 typedef enum {
@@ -44696,6 +44822,8 @@ typedef struct wmi_mlo_link_set_active_cmd
  *     For force mode WMI_MLO_LINK_FORCE_ACTIVE_INACTIVE ieee_link_id_bitmap2[]
  *     carry the inactive linkid bitmap.
  *     In other cases the length of the array should be 0.
+ *---
+ * wmi_disallowed_mlo_mode_bitmap_param_t disallow_mlo_mode_bmap[];
  */
 } wmi_mlo_link_set_active_cmd_fixed_param;
 
@@ -44716,6 +44844,77 @@ typedef struct wmi_mlo_set_active_link_number_param
     A_UINT32 home_freq;
 
 } wmi_mlo_set_active_link_number_param;
+
+#define WMI_MLO_MODE_MLMR  0x1;
+#define WMI_MLO_MODE_EMLSR 0x2;
+
+
+#define WMI_MLO_IEEE_LINK_ID_COMB_GET_LINK_ID1(ieee_link_id_comb) WMI_GET_BITS(ieee_link_id_comb, 0, 8)
+#define WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID1(ieee_link_id_comb, value) WMI_SET_BITS(ieee_link_id_comb, 0, 8, value)
+
+#define WMI_MLO_IEEE_LINK_ID_COMB_GET_LINK_ID2(ieee_link_id_comb) WMI_GET_BITS(ieee_link_id_comb, 8, 8)
+#define WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID2(ieee_link_id_comb, value) WMI_SET_BITS(ieee_link_id_comb, 8, 8, value)
+
+#define WMI_MLO_IEEE_LINK_ID_COMB_GET_LINK_ID3(ieee_link_id_comb) WMI_GET_BITS(ieee_link_id_comb, 16, 8)
+#define WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID3(ieee_link_id_comb, value) WMI_SET_BITS(ieee_link_id_comb, 16, 8, value)
+
+#define WMI_MLO_IEEE_LINK_ID_COMB_GET_LINK_ID4(ieee_link_id_comb) WMI_GET_BITS(ieee_link_id_comb, 24, 8)
+#define WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID4(ieee_link_id_comb, value) WMI_SET_BITS(ieee_link_id_comb, 24, 8, value)
+
+
+typedef struct wmi_disallowed_mlo_mode_bitmap_param
+{
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_disallowed_mlo_mode_bitmap_param */
+    A_UINT32 tlv_header;
+    /** disallowed_mode_bitmap:
+     * Bitmap of MLO Modes like MLMR, eMLSR which are not allowed.
+     * Refer to WMI_MLO_MODE_*
+     * disallowed_mode_bitmap          Meaning
+     * ======================          =================
+     *   0x0                           No restriction
+     *   0x1                           MLMR is not allowed
+     *   0x2                           EMLSR is not allowed
+     *   0x3                           MLMR and EMLSR are not allowed
+     */
+    A_UINT32 disallowed_mode_bitmap;
+
+    /** ieee_link_id_comb:
+     * Give combination of IEEE link IDs for which above disallowed_mode_bitmap
+     * is applicable.
+     * Each 8-bits in ieee_link_id_comb represents one link ID.
+     * Use WMI_MLO_IEEE_LINK_ID_COMB_GET_LINK_ID* and _SET_LINK_ID* to get/set
+     * link IDs in this field.
+     */
+    A_UINT32 ieee_link_id_comb;
+
+
+    /** Example:
+     * Say there are 3 MLO links with ieee link IDs as 1,2 and 32.
+     * Say host wants to disallow MLMR between links with IDs 1 and 2,
+     *                   disallow eMLSR between links with IDs 1 and 32,
+     *                   disallow MLMR and eMLSR for links with IDs 2 and 32.
+     * There will be 3 TLVs of type wmi_disallowed_mlo_mode_bitmap_param
+     * like below.
+     *
+     *  wmi_disallowed_mlo_mode_bitmap_param[0]:
+     *       disallowed_mode_bitmap = 0x1,
+     *       ieee_link_id_comb = 0x00000201
+     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID1(ieee_link_id_comb, 0x1)
+     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID2(ieee_link_id_comb, 0x2)
+     *
+     *  wmi_disallowed_mlo_mode_bitmap_param[1]
+     *       disallowed_mode_bitmap = 0x2,
+     *       ieee_link_id_comb = 0x00002001
+     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID1(ieee_link_id_comb, 0x1)
+     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID2(ieee_link_id_comb, 0x20)
+     *
+     *  wmi_disallowed_mlo_mode_bitmap_param[2]
+     *       disallowed_mode_bitmap = 0x3,
+     *       ieee_link_id_comb = 0x00002002
+     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID1(ieee_link_id_comb, 0x2)
+     *          WMI_MLO_IEEE_LINK_ID_COMB_SET_LINK_ID2(ieee_link_id_comb, 0x20)
+     */
+} wmi_disallowed_mlo_mode_bitmap_param;
 
 typedef enum {
     WMI_MLO_LINK_SET_ACTIVE_STATUS_SUCCESS     = 0,
@@ -47062,6 +47261,39 @@ typedef struct {
     A_UINT32 tlv_header;
     A_UINT32 pdev_id;
 } wmi_pdev_utf_event_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_led_blink_rate_table */
+    A_UINT32 tlv_header;
+
+    A_UINT32 on_time;  /* units = milliseconds */
+    A_UINT32 off_time; /* units = milliseconds */
+} wmi_led_blink_rate_table;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_enable_led_blink_download_rate_table_fixed_param */
+    A_UINT32 tlv_header;
+    /* Pdev Id 0 or 1 based on split phy */
+    A_UINT32 pdev_id;
+    /* Feature enable or disable flag 0-disable 1-enable  */
+    A_UINT32 blink_enable_flag;
+    /* Bandwidth (Mbps) of each index in the blink rate table.
+     * This quantum specification tells the FW which of the blink rate table
+     * elements to use; the FW will divide the data rate by this bw_per_index
+     * and round down, to obtain the index into the rate table for the blink
+     * rate corresponding to the data rate.
+     */
+    A_UINT32 bw_per_index;
+
+    /**
+     * Following this fixed_param TLV are the following additional TLVs:
+     *   - wmi_led_blink_rate_table led_blink_rate_table[]
+     *     The led_blink_rate_table[] elements need to be ordered by
+     *     increasing data rate, so that by dividing the data rate by
+     *     bw_per_index, the FW can find which index/element of the
+     *     led_blink_rate_table[] array to use.
+     */
+} wmi_enable_led_blink_download_rate_table_fixed_param;
 
 typedef enum {
     /* Used when peer attempts connection with vdev */

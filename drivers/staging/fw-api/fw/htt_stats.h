@@ -1355,6 +1355,17 @@ typedef htt_stats_whal_tx_tlv htt_hw_stats_whal_tx_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
+
+    A_UINT32 wsib_event_watchdog_timeout;
+    A_UINT32 wsib_event_slave_tlv_length_error;
+    A_UINT32 wsib_event_slave_parity_error;
+    A_UINT32 wsib_event_slave_direct_message;
+    A_UINT32 wsib_event_slave_backpressure_error;
+    A_UINT32 wsib_event_master_tlv_length_error;
+} htt_stats_whal_wsi_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
     /**
      * BIT [ 7 :  0]   :- mac_id
      * BIT [31 :  8]   :- reserved
@@ -3371,6 +3382,10 @@ typedef struct {
     A_UINT32 be_bsr_trigger_partial_resp;
     /** 11BE EHT MU BAR Trigger frame completed with partial user response */
     A_UINT32 be_mu_bar_trigger_partial_resp;
+    /** 11BE EHT MU RTS Trigger frame blocked due to partner link TX/RX(eMLSR) */
+    A_UINT32 be_mu_rts_trigger_blocked;
+    /** 11BE EHT MU BSR Trigger frame blocked due to partner link TX/RX(eMLSR) */
+    A_UINT32 be_bsr_trigger_blocked;
 } htt_stats_tx_selfgen_be_err_stats_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_tx_selfgen_be_err_stats_tlv htt_tx_selfgen_be_err_stats_tlv;
@@ -5387,6 +5402,8 @@ typedef struct {
     A_UINT32 trigger_type_11be[HTT_TX_PDEV_STATS_NUM_11BE_TRIGGER_TYPES];
     /** Stats for Extra EHT LTF */
     A_UINT32 extra_eht_ltf;
+    /** Counter for Extra EHT LTFs in OFDMA sequences */
+    A_UINT32 extra_eht_ltf_ofdma;
 } htt_stats_tx_pdev_rate_stats_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_tx_pdev_rate_stats_tlv htt_tx_pdev_rate_stats_tlv;
@@ -5482,7 +5499,10 @@ typedef htt_stats_tx_pdev_rate_stats_be_ofdma_tlv
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    /** Tx PPDU duration histogram **/
+    /** tx_ppdu_dur_hist:
+     * Tx PPDU duration histogram, which holds the tx duration of PPDUs
+     * under histogram bins of interval 250us
+     */
     A_UINT32 tx_ppdu_dur_hist[HTT_PDEV_STATS_PPDU_DUR_HIST_BINS];
     A_UINT32 tx_success_time_us_low;
     A_UINT32 tx_success_time_us_high;
@@ -5490,6 +5510,11 @@ typedef struct {
     A_UINT32 tx_fail_time_us_high;
     A_UINT32 pdev_up_time_us_low;
     A_UINT32 pdev_up_time_us_high;
+    /** tx_ofdma_ppdu_dur_hist:
+     * Tx OFDMA PPDU duration histogram, which holds the tx duration of
+     * OFDMA PPDUs under histogram bins of interval 250us
+     */
+    A_UINT32 tx_ofdma_ppdu_dur_hist[HTT_PDEV_STATS_PPDU_DUR_HIST_BINS];
 } htt_stats_tx_pdev_ppdu_dur_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_tx_pdev_ppdu_dur_tlv htt_tx_pdev_ppdu_dur_stats_tlv;
@@ -8179,6 +8204,41 @@ typedef struct {
     A_UINT32 fw_run_time;
     /** per chain runtime noise floor values in dBm */
     A_INT32 runTime_nf_chain[HTT_STATS_MAX_CHAINS];
+
+    /** DFS SW based progressive stats - start **/
+
+    /* current AP operating bandwidth (refer to WLAN_PHY_MODE) */
+    A_UINT32 current_OBW;
+    /* current AP device bandwidth (refer to WLAN_PHY_MODE) */
+    A_UINT32 current_DBW;
+    /* last_radar_type: last detected radar type
+     * This last_radar_type field contains a value whose meaning is not
+     * exposed to the host; this field is only provided for debug purposes.
+     */
+    A_UINT32 last_radar_type;
+    /* dfs_reg_domain: curent DFS regulatory domain
+     * This dfs_reg_domain field contains a value whose meaning is not
+     * exposed to the host; this field is only provided for debug purposes.
+     */
+    A_UINT32 dfs_reg_domain;
+    /* radar_mask_bit: Radar mask setting programmed in HW registers.
+     * Each bit represents a 20 MHz portion of the channel.
+     * Bit 0 represents the highest 20 MHz portion within the channel.
+     * For example...
+     * For a 80 MHz channel, bit0 = highest 20 MHz, bit3 = lowest 20 MHz
+     * For a 320 MHz channel, bit0 = highest 20 MHz, bit15 = lowest 20 MHz
+     */
+    A_UINT32 radar_mask_bit;
+    /* DFS radar rssi threshold (units = dBm) */
+    A_INT32 radar_rssi;
+    /* DFS global flags (refer to IEEE80211_CHAN_* defines) */
+    A_UINT32 radar_dfs_flags;
+    /* band center frequency of operating bandwidth (units = MHz) */
+    A_UINT32 band_center_frequency_OBW;
+    /* band center frequency of device bandwidth (units = MHz) */
+    A_UINT32 band_center_frequency_DBW;
+
+    /** DFS SW based progressive stats - end **/
 } htt_stats_phy_stats_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_phy_stats_tlv htt_phy_stats_tlv;
@@ -8993,14 +9053,19 @@ typedef htt_stats_ml_link_info_details_tlv htt_ml_link_info_tlv;
 #define HTT_ML_PEER_DETAILS_LINK_INIT_COUNT_S               19
 #define HTT_ML_PEER_DETAILS_NON_STR_M                       0x00400000
 #define HTT_ML_PEER_DETAILS_NON_STR_S                       22
-#define HTT_ML_PEER_DETAILS_EMLSR_M                         0x00800000
-#define HTT_ML_PEER_DETAILS_EMLSR_S                         23
+#define HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE_M               0x00800000
+#define HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE_S               23
+  /* for backwards compatibility, retain the old EMLSR name of the bitfield */
+  #define HTT_ML_PEER_DETAILS_EMLSR_M HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE_M
+  #define HTT_ML_PEER_DETAILS_EMLSR_S HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE_S
 #define HTT_ML_PEER_DETAILS_IS_STA_KO_M                     0x01000000
 #define HTT_ML_PEER_DETAILS_IS_STA_KO_S                     24
 #define HTT_ML_PEER_DETAILS_NUM_LOCAL_LINKS_M               0x06000000
 #define HTT_ML_PEER_DETAILS_NUM_LOCAL_LINKS_S               25
 #define HTT_ML_PEER_DETAILS_ALLOCATED_M                     0x08000000
 #define HTT_ML_PEER_DETAILS_ALLOCATED_S                     27
+#define HTT_ML_PEER_DETAILS_EMLSR_SUPPORT_M                 0x10000000
+#define HTT_ML_PEER_DETAILS_EMLSR_SUPPORT_S                 28
 
 #define HTT_ML_PEER_DETAILS_PARTICIPATING_CHIPS_BITMAP_M    0x000000ff
 #define HTT_ML_PEER_DETAILS_PARTICIPATING_CHIPS_BITMAP_S    0
@@ -9071,16 +9136,31 @@ typedef htt_stats_ml_link_info_details_tlv htt_ml_link_info_tlv;
         ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_NON_STR_S)); \
     } while (0)
 
-#define HTT_ML_PEER_DETAILS_EMLSR_GET(_var) \
-    (((_var) & HTT_ML_PEER_DETAILS_EMLSR_M) >> \
-     HTT_ML_PEER_DETAILS_EMLSR_S)
+#define HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE_GET(_var) \
+    (((_var) & HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE_M) >> \
+     HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE_S)
 
-#define HTT_ML_PEER_DETAILS_EMLSR_SET(_var, _val) \
+#define HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE_SET(_var, _val) \
     do { \
-        HTT_CHECK_SET_VAL(HTT_ML_PEER_DETAILS_EMLSR, _val); \
-        ((_var) &= ~(HTT_ML_PEER_DETAILS_EMLSR_M)); \
-        ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_EMLSR_S)); \
+        HTT_CHECK_SET_VAL(HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE, _val); \
+        ((_var) &= ~(HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE_M)); \
+        ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_IS_EMLSR_ACTIVE_S)); \
     } while (0)
+
+    /* start deprecated:
+     * For backwards compatibility, retain a macro definition that uses
+     * the old EMLSR name of the bitfield
+     */
+    #define HTT_ML_PEER_DETAILS_EMLSR_GET(_var) \
+        (((_var) & HTT_ML_PEER_DETAILS_EMLSR_M) >> \
+         HTT_ML_PEER_DETAILS_EMLSR_S)
+    #define HTT_ML_PEER_DETAILS_EMLSR_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_ML_PEER_DETAILS_EMLSR, _val); \
+            ((_var) &= ~(HTT_ML_PEER_DETAILS_EMLSR_M)); \
+            ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_EMLSR_S)); \
+        } while (0)
+    /* end deprecated */
 
 #define HTT_ML_PEER_DETAILS_IS_STA_KO_GET(_var) \
     (((_var) & HTT_ML_PEER_DETAILS_IS_STA_KO_M) >> \
@@ -9115,6 +9195,18 @@ typedef htt_stats_ml_link_info_details_tlv htt_ml_link_info_tlv;
         ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_ALLOCATED_S)); \
     } while (0)
 
+#define HTT_ML_PEER_DETAILS_EMLSR_SUPPORT_GET(_var) \
+    (((_var) & HTT_ML_PEER_DETAILS_EMLSR_SUPPORT_M) >> \
+     HTT_ML_PEER_DETAILS_EMLSR_SUPPORT_S)
+
+#define HTT_ML_PEER_DETAILS_EMLSR_SUPPORT_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_PEER_DETAILS_EMLSR_SUPPORT, _val); \
+        ((_var) &= ~(HTT_ML_PEER_DETAILS_EMLSR_SUPPORT_M)); \
+        ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_EMLSR_SUPPORT_S)); \
+    } while (0)
+
+
 #define HTT_ML_PEER_DETAILS_PARTICIPATING_CHIPS_BITMAP_GET(_var) \
     (((_var) & HTT_ML_PEER_DETAILS_PARTICIPATING_CHIPS_BITMAP_M) >> \
      HTT_ML_PEER_DETAILS_PARTICIPATING_CHIPS_BITMAP_S)
@@ -9137,11 +9229,21 @@ typedef struct {
                      primary_chip_id   : 2,
                      link_init_count   : 3,
                      non_str           : 1,
-                     emlsr             : 1,
+                     is_emlsr_active   : 1,
                      is_sta_ko         : 1,
                      num_local_links   : 2,
                      allocated         : 1,
-                     reserved          : 4;
+                     emlsr_support     : 1,
+                     reserved          : 3;
+        };
+        struct {
+            /*
+             * For backwards compatibility, use a dummy union element to
+             * retain the old "emlsr" name for the "is_emlsr_active" bitfield.
+             */
+            A_UINT32 dummy1 : 23,
+                     emlsr  : 1,
+                     dummy2 : 8;
         };
         A_UINT32 msg_dword_1;
     };
@@ -9350,6 +9452,8 @@ typedef enum {
     HTT_STATS_SCHED_OFDMA_TXBF_INELIGIBILITY_MAX,
 } htt_stats_sched_ofdma_txbf_ineligibility_t;
 
+#define HTT_MAX_NUM_CHAN_ACC_LAT_INTR 9
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /**
@@ -9393,6 +9497,19 @@ typedef struct {
     /** Num of instances where dl ofdma is disabled because there are consecutive mpdu failure */
     A_UINT32 dlofdma_disabled_consec_no_mpdus_success[HTT_NUM_AC_WMM];
     A_UINT32 txbf_ofdma_ineligibility_stat[HTT_STATS_SCHED_OFDMA_TXBF_INELIGIBILITY_MAX];
+    /** Average channel access latency histogram stats
+     *
+     *  avg_chan_acc_lat_hist[0]: channel access latency is < 100 us
+     *  avg_chan_acc_lat_hist[1]: 100 us <= channel access latency < 200 us
+     *  avg_chan_acc_lat_hist[2]: 200 us <= channel access latency < 300 us
+     *  avg_chan_acc_lat_hist[3]: 300 us <= channel access latency < 400 us
+     *  avg_chan_acc_lat_hist[4]: 400 us <= channel access latency < 500 us
+     *  avg_chan_acc_lat_hist[5]: 500 us <= channel access latency < 1000 us
+     *  avg_chan_acc_lat_hist[6]: 1000 us <= channel access latency < 1500 us
+     *  avg_chan_acc_lat_hist[7]: 1500 us <= channel access latency < 2000 us
+     *  avg_chan_acc_lat_hist[8]: channel access latency is >= 2000 us
+    */
+    A_UINT32 avg_chan_acc_lat_hist[HTT_MAX_NUM_CHAN_ACC_LAT_INTR];
 } htt_stats_pdev_sched_algo_ofdma_stats_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_pdev_sched_algo_ofdma_stats_tlv
