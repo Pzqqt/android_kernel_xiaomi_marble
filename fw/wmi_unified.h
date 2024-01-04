@@ -37316,6 +37316,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_COEX_MULTIPLE_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_ENABLE_LED_BLINK_DOWNLOAD_TABLE_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_ENABLE_WIFI_RADAR_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_GET_TWT_SESSION_STATS_INFO_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -40854,30 +40855,28 @@ typedef enum {
 typedef enum {
     /*
      * BIT 0 - WLAN_CRYPTO_WPA2_ALLOW_NON_MLO_EHT:
-     *         Connect to non-MLO/MLO WPA2 EHT APs in EHT without MLO
-     *         (PMF capable is not mandatory).
+     *         Connect to non-MLO/MLO WPA2 EHT APs in EHT without PMF support.
      *
      * BIT 1 - WLAN_CRYPTO_WPA2_ALLOW_MLO:
-     *         Connect to MLO WPA2 EHT APs in MLO
-     *         (PMF capable is not mandatory).
-     *         If set along with WLAN_CRYPTO_WPA2_ALLOW_NON_MLO_EHT (BIT 0),
-     *         this mode supercedes.
+     *         Connect to MLO WPA2 EHT APs in MLO without PMF support.
      *
      * BIT 2 - WLAN_CRYPTO_WPA2_ALLOW_NON_MLO_EHT_MFPC_SET:
-     *         Connect to non-MLO/MLO WPA2 EHT APs in EHT without MLO
+     *         Connect to non-MLO/MLO WPA2 EHT APs in EHT.
      *         (PMF capable is mandatory).
      *
      * BIT 3 - WLAN_CRYPTO_WPA2_ALLOW_MLO_MFPC_SET:
      *         Connect to MLO WPA2 EHT APs in MLO
      *         (PMF capable is mandatory).
-     *         If set along with WLAN_CRYPTO_WPA2_ALLOW_NON_MLO_EHT_MFPC_SET
-     *         (BIT 2), this mode supercedes.
      *
      * BIT 4 - 15 - reserved for future WPA2 security configs
      *
      * BIT 16 - WLAN_CRYPTO_WPA3_SAE_ALLOW_NON_MLO_EHT_HNP:
      *          Connect to non-MLO/MLO WPA3-SAE without support for H2E
      *          (or no RSNXE IE in beacon) in non-MLO EHT.
+     *
+     * BIT 17 - WLAN_CRYPTO_WPA3_SAE_ALLOW_MLO_HNP:
+     *          Connect to MLO WPA3-SAE without support for H2E
+     *          (or no RSNXE IE in beacon).
      */
     WLAN_CRYPTO_WPA2_ALLOW_NON_MLO_EHT          = 0x00000001,
     WLAN_CRYPTO_WPA2_ALLOW_MLO                  = 0x00000002,
@@ -40885,6 +40884,7 @@ typedef enum {
     WLAN_CRYPTO_WPA2_ALLOW_MLO_MFPC_SET         = 0x00000008,
 
     WLAN_CRYPTO_WPA3_SAE_ALLOW_NON_MLO_EHT_HNP  = 0x00010000,
+    WLAN_CRYPTO_WPA3_SAE_ALLOW_MLO_HNP          = 0x00020000,
 } wlan_crypto_roam_eht_config;
 
 typedef struct {
