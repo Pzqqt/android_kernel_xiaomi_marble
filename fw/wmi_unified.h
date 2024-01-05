@@ -41078,13 +41078,22 @@ typedef struct {
 typedef struct {
     A_UINT32 tlv_header;
     A_UINT32 chan_cfreq; /* Channel center frequency (MHz) of all BSS Sub-channel */
-    A_INT32 psd_power;   /* Unit: dBm/MHz, OOBE PSD power of sub-channel */
+    /* psd_power:
+     * Unit: 0.25dBm/MHz, OOBE PSD power of sub-channel
+     * Example: a power spectral density of 1 dBm / MHz will be reported
+     * as the value 4.
+     */
+    A_INT32 psd_power;
 } wmi_vdev_ch_power_psd_info;
 
 typedef struct {
     A_UINT32 tlv_header;
     A_UINT32 chan_cfreq; /* Channel center frequency (MHz) for all BWs (<= current channel BSS BW) */
-    A_INT32 eirp_power;   /* Unit: dBm, EIRP power for all BWs (<= current channel BSS BW) */
+    /* eirp_power:
+     * Unit: 0.25dBm, EIRP power for all BWs (<= current channel BSS BW)
+     * Example: a power of 1 dBm will be reported as the value 4.
+     */
+    A_INT32 eirp_power;
  } wmi_vdev_ch_power_eirp_info;
 
 typedef struct {
