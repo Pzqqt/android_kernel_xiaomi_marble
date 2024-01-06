@@ -33,20 +33,41 @@ struct cass_cpu_cand {
 };
 
 static __always_inline
-unsigned long cass_cpu_util(int cpu, bool sync)
+void cass_cpu_util(struct cass_cpu_cand *c, bool sync)
 {
-	struct cfs_rq *cfs_rq = &cpu_rq(cpu)->cfs;
-	unsigned long util = READ_ONCE(cfs_rq->avg.util_avg);
+	struct rq *rq = cpu_rq(c->cpu);
+	struct cfs_rq *cfs_rq = &rq->cfs;
+	unsigned long est;
 
-	/* Deduct @current's util from this CPU if this is a sync wake */
-	if (sync && cpu == smp_processor_id())
-		lsub_positive(&util, task_util(current));
+	/* Get this CPU's utilization from CFS tasks */
+	c->util = READ_ONCE(cfs_rq->avg.util_avg);
+	if (sched_feat(UTIL_EST)) {
+		est = READ_ONCE(cfs_rq->avg.util_est.enqueued);
+		if (est > c->util) {
+			/* Don't deduct @current's util from estimated util */
+			sync = false;
+			c->util = est;
+		}
+	}
 
-	if (sched_feat(UTIL_EST))
-		util = max_t(unsigned long, util,
-			     READ_ONCE(cfs_rq->avg.util_est.enqueued));
+	/* Get the capacity of this CPU adjusted for thermal pressure */
+	c->cap = arch_scale_cpu_capacity(c->cpu) - thermal_load_avg(rq);
 
-	return util;
+	/*
+	 * Account for lost capacity due to time spent in RT/DL tasks and IRQs.
+	 * Capacity is considered lost to RT tasks even when @p is an RT task in
+	 * order to produce consistently balanced task placement results between
+	 * CFS and RT tasks when CASS selects a CPU for them.
+	 */
+	c->cap -= min(cpu_util_rt(rq) + cpu_util_dl(rq) + cpu_util_irq(rq),
+		      c->cap - 1);
+
+	/*
+	 * Deduct @current's util from this CPU if this is a sync wake, unless
+	 * @current is an RT task; RT tasks don't have per-entity load tracking.
+	 */
+	if (sync && c->cpu == smp_processor_id() && !rt_task(current))
+		c->util -= min(c->util, task_util(current));
 }
 
 /* Returns true if @a is a better CPU than @b */
@@ -91,7 +112,7 @@ done:
 	return res > 0;
 }
 
-static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync)
+static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync, bool rt)
 {
 	/* Initialize @best such that @best always has a valid CPU at the end */
 	struct cass_cpu_cand cands[2], *best = cands;
@@ -99,8 +120,11 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync)
 	unsigned long p_util;
 	int cidx = 0, cpu;
 
-	/* Get the utilization for this task */
-	p_util = clamp(task_util_est(p),
+	/*
+	 * Get the utilization for this task. Note that RT tasks don't have
+	 * per-entity load tracking.
+	 */
+	p_util = clamp(rt ? 0 : task_util_est(p),
 		       uclamp_eff_value(p, UCLAMP_MIN),
 		       uclamp_eff_value(p, UCLAMP_MAX));
 
@@ -147,22 +171,17 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync)
 			curr->exit_lat = 0;
 		}
 
-		/* Get this CPU's utilization, possibly without @current */
-		curr->util = cass_cpu_util(cpu, sync);
+		/* Get this CPU's capacity and utilization */
+		curr->cpu = cpu;
+		cass_cpu_util(curr, sync);
 
 		/*
 		 * Add @p's utilization to this CPU if it's not @p's CPU, to
-		 * find what this CPU's relative utilization would look like
-		 * if @p were on it.
+		 * find what this CPU's relative utilization would look like if
+		 * @p were on it.
 		 */
 		if (cpu != task_cpu(p))
 			curr->util += p_util;
-
-		/*
-		 * Get the current capacity of this CPU adjusted for thermal
-		 * pressure as well as IRQ and RT-task time.
-		 */
-		curr->cap = capacity_of(cpu);
 
 		/* Calculate the relative utilization for this CPU candidate */
 		curr->util = curr->util * SCHED_CAPACITY_SCALE / curr->cap;
@@ -172,7 +191,6 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync)
 		 * If @best == @curr then there's no need to compare them, but
 		 * cidx still needs to be changed to the other candidate slot.
 		 */
-		curr->cpu = cpu;
 		if (best == curr ||
 		    cass_cpu_better(curr, best, prev_cpu, sync)) {
 			best = curr;
@@ -183,8 +201,8 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync)
 	return best->cpu;
 }
 
-static int cass_select_task_rq_fair(struct task_struct *p, int prev_cpu,
-				    int sd_flag, int wake_flags)
+static int cass_select_task_rq(struct task_struct *p, int prev_cpu, int sd_flag,
+			       int wake_flags, bool rt)
 {
 	bool sync;
 
@@ -200,10 +218,22 @@ static int cass_select_task_rq_fair(struct task_struct *p, int prev_cpu,
 	if (unlikely(!cpumask_intersects(p->cpus_ptr, cpu_active_mask)))
 		return cpumask_first(p->cpus_ptr);
 
-	/* cass_best_cpu() needs the task's utilization, so sync it up */
-	if (!(sd_flag & SD_BALANCE_FORK))
+	/* cass_best_cpu() needs the CFS task's utilization, so sync it up */
+	if (!rt && !(sd_flag & SD_BALANCE_FORK))
 		sync_entity_load_avg(&p->se);
 
 	sync = (wake_flags & WF_SYNC) && !(current->flags & PF_EXITING);
-	return cass_best_cpu(p, prev_cpu, sync);
+	return cass_best_cpu(p, prev_cpu, sync, rt);
+}
+
+static int cass_select_task_rq_fair(struct task_struct *p, int prev_cpu,
+				    int sd_flag, int wake_flags)
+{
+	return cass_select_task_rq(p, prev_cpu, sd_flag, wake_flags, false);
+}
+
+int cass_select_task_rq_rt(struct task_struct *p, int prev_cpu, int sd_flag,
+			   int wake_flags)
+{
+	return cass_select_task_rq(p, prev_cpu, sd_flag, wake_flags, true);
 }
