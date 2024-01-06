@@ -2329,6 +2329,7 @@ static void hdd_sar_target_config(struct hdd_context *hdd_ctx,
 				  struct wma_tgt_cfg *cfg)
 {
 	hdd_ctx->sar_version = cfg->sar_version;
+	hdd_ctx->sar_flag    = cfg->sar_flag;
 }
 
 static void hdd_update_vhtcap_2g(struct hdd_context *hdd_ctx)
