@@ -77,6 +77,40 @@ extern "C" {
  */
 #include <wmi_unified_vendor.h>
 
+/* WMI_VAR_LEN_ARRAY1:
+ * This macro is for converting the definition of existing variable-length
+ * arrays within TLV structs of the form "type name[1];" to use the form
+ * "type name[];" while ensuring that the length of the TLV struct is
+ * unmodified by the conversion.
+ * In general, any new variable-length structs should simply use
+ * "type name[];" directly, rather than using WMI_VAR_LEN_ARRAY1.
+ * However, if there's a legitimate reason to make the new variable-length
+ * struct appear to not have a variable length, WMI_VAR_LEN_ARRAY1 can be
+ * used for this purpose.
+ */
+#if !defined(__KERNEL__)
+    #define WMI_DUMMY_ZERO_LEN_FIELD A_UINT32 dummy_zero_len_field[0]
+#else
+    /*
+     * Certain build settings of the Linux kernel don't allow zero-element
+     * arrays, and C++ doesn't allow zero-length empty structs.
+     * Confirm that there's no build that combines kernel with C++.
+     */
+    #ifdef __cplusplus
+    #error unsupported combination of kernel and C plus plus
+    #endif
+    #define WMI_DUMMY_ZERO_LEN_FIELD struct {} dummy_zero_len_field
+#endif
+
+#define WMI_VAR_LEN_ARRAY1(type, name) \
+    union { \
+        type name ## __first_elem; \
+        struct { \
+            WMI_DUMMY_ZERO_LEN_FIELD; \
+            type name[]; \
+        }; \
+    }
+
 #define ATH_MAC_LEN             6               /**< length of MAC in bytes */
 #define WMI_EVENT_STATUS_SUCCESS 0 /* Success return status to host */
 #define WMI_EVENT_STATUS_FAILURE 1 /* Failure return status to host */
@@ -3701,7 +3735,7 @@ typedef struct {
     /* bad channel range count, multi range is allowed, 0 means all channel clear */
     A_UINT32 num_freq_ranges;
     /* multi range with num_freq_ranges, LTE advance multi carrier, CDMA,etc */
-    avoid_freq_range_desc avd_freq_range[0];
+    avoid_freq_range_desc avd_freq_range[];
 } wmi_wlan_avoid_freq_ranges_event;
 #endif
 
@@ -5541,7 +5575,7 @@ typedef struct {
     /** # of channels to scan */
     A_UINT32 num_chan;
     /** channels in Mhz */
-    A_UINT32 channel_list[1];
+    WMI_VAR_LEN_ARRAY1(A_UINT32, channel_list);
 } wmi_chan_list;
 
 /**
@@ -5553,7 +5587,7 @@ typedef struct {
     /** number of bssids   */
     A_UINT32 num_bssid;
     /** bssid list         */
-    wmi_mac_addr bssid_list[1];
+    WMI_VAR_LEN_ARRAY1(wmi_mac_addr, bssid_list);
 } wmi_bssid_list;
 
 /**
@@ -5565,7 +5599,7 @@ typedef struct {
     /** number of bytes in ie data   */
     A_UINT32 ie_len;
     /** ie data array  (ie_len adjusted to  number of words  (ie_len + 4)/4)  */
-    A_UINT32 ie_data[1];
+    WMI_VAR_LEN_ARRAY1(A_UINT32, ie_data);
 } wmi_ie_data;
 
 /**
@@ -5629,7 +5663,7 @@ typedef struct {
     /** WMI_SSID_LIST_TAG */
     A_UINT32 tag;
     A_UINT32 num_ssids;
-    wmi_ssid ssids[1];
+    WMI_VAR_LEN_ARRAY1(wmi_ssid, ssids);
 } wmi_ssid_list;
 
 typedef struct {
@@ -5638,7 +5672,7 @@ typedef struct {
     /** Number of start TSF offsets */
     A_UINT32     num_offset;
     /** Array of start TSF offsets provided in milliseconds */
-    A_UINT32     start_tsf_offset[1];
+    WMI_VAR_LEN_ARRAY1(A_UINT32, start_tsf_offset);
 } wmi_scan_start_offset;
 
 /**
@@ -7046,7 +7080,7 @@ typedef struct {
     /** Phy error event header */
     wmi_single_phyerr_rx_hdr hdr;
     /** frame buffer */
-    A_UINT8 bufp[1];
+    WMI_VAR_LEN_ARRAY1(A_UINT8, bufp);
 } wmi_single_phyerr_rx_event;
 
 /* PHY ERROR MASK 0 */
@@ -22329,7 +22363,7 @@ typedef struct wmi_bcn_send_from_host {
 /* cmd to support bcn snd for all vaps at once */
 typedef struct wmi_pdev_send_bcn {
     A_UINT32 num_vdevs;
-    wmi_bcn_send_from_host_cmd_fixed_param bcn_cmd[1];
+    WMI_VAR_LEN_ARRAY1(wmi_bcn_send_from_host_cmd_fixed_param, bcn_cmd);
 } wmi_pdev_send_bcn_cmd_t;
 
 typedef struct wmi_fd_send_from_host {
