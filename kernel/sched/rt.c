@@ -2546,6 +2546,7 @@ static unsigned int get_rr_interval_rt(struct rq *rq, struct task_struct *task)
 		return 0;
 }
 
+#include "cass_rt.h"
 const struct sched_class rt_sched_class
 	__section("__rt_sched_class") = {
 	.enqueue_task		= enqueue_task_rt,
