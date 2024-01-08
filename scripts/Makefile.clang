@@ -29,7 +29,11 @@ CLANG_FLAGS	+= --prefix=$(GCC_TOOLCHAIN_DIR)$(notdir $(CROSS_COMPILE))
 else
 CLANG_FLAGS	+= -fintegrated-as
 endif
+ifeq ($(shell $(CC) --version | grep -qi 'snapdragon'; echo $$?),0)
+CLANG_FLAGS	+= -Wno-unknown-warning-option
+else
 CLANG_FLAGS	+= -Werror=unknown-warning-option
+endif
 KBUILD_CFLAGS	+= $(CLANG_FLAGS)
 KBUILD_AFLAGS	+= $(CLANG_FLAGS)
 export CLANG_FLAGS
