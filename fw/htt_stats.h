@@ -599,6 +599,26 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_PDEV_MLO_IPC_STATS = 64,
 
+    /** HTT_DBG_EXT_PDEV_RTT_RESP_STATS
+     * PARAMS:
+     *    - No Params
+     * RESP MSG:
+     *    -  htt_stats_pdev_rtt_resp_stats_tlv
+     *    -  htt_stats_pdev_rtt_hw_stats_tlv
+     *    -  htt_stats_pdev_rtt_tbr_selfgen_queued_stats_tlv
+     *    -  htt_stats_pdev_rtt_tbr_cmd_result_stats_tlv
+     */
+    HTT_DBG_EXT_PDEV_RTT_RESP_STATS = 65,
+
+    /** HTT_DBG_EXT_PDEV_RTT_INITIATOR_STATS
+     * PARAMS:
+     *    - No Params
+     * RESP MSG:
+     *    -  htt_stats_pdev_rtt_init_stats_tlv
+     *    -  htt_stats_pdev_rtt_hw_stats_tlv
+     */
+    HTT_DBG_EXT_PDEV_RTT_INITIATOR_STATS = 66,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -7841,6 +7861,521 @@ typedef htt_stats_vdev_rtt_init_stats_tlv htt_vdev_rtt_init_stats_tlv;
 typedef struct {
     htt_stats_vdev_rtt_init_stats_tlv vdev_rtt_init_stats;
 } htt_vdev_rtt_init_stats_t;
+
+
+#define HTT_STATS_MAX_SCH_CMD_RESULT 25
+
+/* TXSEND self generated frames */
+typedef enum {
+    HTT_TXSEND_FTYPE_SGEN_TF_POLL,
+    HTT_TXSEND_FTYPE_SGEN_TF_SOUND,
+    HTT_TXSEND_FTYPE_SGEN_TBR_NDPA,
+    HTT_TXSEND_FTYPE_SGEN_TBR_NDP,
+    HTT_TXSEND_FTYPE_SGEN_TBR_LMR,
+    HTT_TXSEND_FTYPE_SGEN_TF_REPORT,
+
+    HTT_TXSEND_FTYPE_MAX
+}
+htt_stats_txsend_ftype_t;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* 11AZ TBR SU Stats */
+    A_UINT32 tbr_su_ftype_queued[HTT_TXSEND_FTYPE_MAX];
+    /* 11AZ TBR MU Stats */
+    A_UINT32 tbr_mu_ftype_queued[HTT_TXSEND_FTYPE_MAX];
+} htt_stats_pdev_rtt_tbr_selfgen_queued_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /** tbr_num_sch_cmd_result_buckets:
+     * Number of sch cmd results buckets in use per chip
+     * Each bucket contains the counter of the number of times that bucket
+     * index was seen in the sch_cmd_result. The last bucket will capture
+     * the count of sch_cmd_result matching the last bucket index and the
+     * count of all the sch_cmd_results that exceeded the last bucket index
+     * value.
+     * tbr_num_sch_cmd_result_buckets must be <= HTT_STATS_MAX_SCH_CMD_RESULT
+     */
+    A_UINT32 tbr_num_sch_cmd_result_buckets;
+    /* cmd result status for SU frames in case of TB ranging */
+    A_UINT32 opaque_tbr_su_ftype_cmd_result[HTT_TXSEND_FTYPE_MAX][HTT_STATS_MAX_SCH_CMD_RESULT];
+    /* cmd result status for MU frames in case of TB ranging */
+    A_UINT32 opaque_tbr_mu_ftype_cmd_result[HTT_TXSEND_FTYPE_MAX][HTT_STATS_MAX_SCH_CMD_RESULT];
+} htt_stats_pdev_rtt_tbr_cmd_result_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /** ista_ranging_ndpa_cnt:
+     * Indicates the number of Ranging NDPA sent successfully.
+     */
+    A_UINT32 ista_ranging_ndpa_cnt;
+    /** ista_ranging_ndp_cnt:
+     * Indicates the number of Ranging NDP sent successfully.
+     */
+    A_UINT32 ista_ranging_ndp_cnt;
+    /** ista_ranging_i2r_lmr_cnt:
+     * Indicates the number of Ranging I2R LMR sent successfully.
+     */
+    A_UINT32 ista_ranging_i2r_lmr_cnt;
+    /** rtsa_ranging_resp_cnt
+     * Indicates the number of times RXPCU initiates a Ranging response
+     * as a RSTA.
+     */
+    A_UINT32 rtsa_ranging_resp_cnt;
+    /** rtsa_ranging_ndp_cnt:
+     * Indicates the number of Ranging NDP response sent successfully.
+     */
+    A_UINT32 rtsa_ranging_ndp_cnt;
+    /** rsta_ranging_lmr_cnt:
+     * Indicates the number of Ranging R2I LMR response sent successfully.
+     */
+    A_UINT32 rsta_ranging_lmr_cnt;
+    /** tb_ranging_cts2s_rcvd_cnt:
+     * Indicates the number of expected CTS2S response received for TF Poll
+     * sent.
+     */
+    A_UINT32 tb_ranging_cts2s_rcvd_cnt;
+    /** tb_ranging_ndp_rcvd_cnt:
+     * Indicates the number of expected NDP response received for TF Sound
+     * or Secure Sound sent.
+     */
+    A_UINT32 tb_ranging_ndp_rcvd_cnt;
+    /** tb_ranging_lmr_rcvd_cnt:
+     * Indicates the number of expected LMR response received for TF Report
+     * sent.
+     */
+    A_UINT32 tb_ranging_lmr_rcvd_cnt;
+    /** tb_ranging_tf_poll_resp_sent_cnt:
+     * Indicates the number of successful responses sent for TF Poll
+     * received.
+     */
+    A_UINT32 tb_ranging_tf_poll_resp_sent_cnt;
+    /** tb_ranging_tf_sound_resp_sent_cnt:
+     * Indicates the number of successful responses sent for TF Sound
+     * (or Secure) received.
+     */
+    A_UINT32 tb_ranging_tf_sound_resp_sent_cnt;
+    /** tb_ranging_tf_report_resp_sent_cnt:
+     * Indicates the number of successful responses sent for TF Report
+     * received.
+     */
+    A_UINT32 tb_ranging_tf_report_resp_sent_cnt;
+} htt_stats_pdev_rtt_hw_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 pdev_id;
+    /** tx_11mc_ftm_suc:
+     * Number of 11mc Fine Timing Measurement frames transmitted successfully.
+     */
+    A_UINT32 tx_11mc_ftm_suc;
+    /** tx_11mc_ftm_suc_retry:
+     * Number of Fine Timing Measurement frames transmitted successfully
+     * after retrying.
+     */
+    A_UINT32 tx_11mc_ftm_suc_retry;
+    /** tx_11mc_ftm_fail:
+     * Number of Fine Timing Measurement frames not transmitted successfully.
+     */
+    A_UINT32 tx_11mc_ftm_fail;
+    /** rx_11mc_ftmr_cnt:
+     * Number of FTMR frames received, including initial, non-initial,
+     * and duplicates.
+     */
+    A_UINT32 rx_11mc_ftmr_cnt;
+    /** rx_11mc_ftmr_dup_cnt:
+     * Number of duplicate Fine Timing Measurement Request frames received,
+     * including both initial and non-initial.
+     */
+    A_UINT32 rx_11mc_ftmr_dup_cnt;
+    /** rx_11mc_iftmr_cnt:
+     * Number of initial Fine Timing Measurement Request frames received.
+     */
+    A_UINT32 rx_11mc_iftmr_cnt;
+    /** rx_11mc_iftmr_dup_cnt:
+     * Number of duplicate initial Fine Timing Measurement Request frames
+     * received.
+     */
+    A_UINT32 rx_11mc_iftmr_dup_cnt;
+    /** ftmr_drop_11mc_resp_role_not_enabled_cnt:
+     * Number of FTMR frames dropped as 11mc is not supported for this VAP.
+     */
+    A_UINT32 ftmr_drop_11mc_resp_role_not_enabled_cnt;
+    /** initiator_active_responder_rejected_cnt:
+     * Number of responder sessions rejected when initiator was active.
+     */
+    A_UINT32 initiator_active_responder_rejected_cnt;
+    /** responder_terminate_cnt:
+     * Number of times Responder session got terminated.
+     */
+    A_UINT32 responder_terminate_cnt;
+    /** active_rsta_open:
+     * Number of active responder contexts in open mode.
+     */
+    A_UINT32 active_rsta_open;
+    /** active_rsta_mac:
+     * Number of active responder contexts in mac security mode.
+     */
+    A_UINT32 active_rsta_mac;
+    /** active_rsta_mac_phy:
+     * Number of active responder contexts in mac_phy security mode.
+     */
+    A_UINT32 active_rsta_mac_phy;
+    /** num_assoc_ranging_peers:
+     * Number of active associated ISTA ranging peers.
+     */
+    A_UINT32 num_assoc_ranging_peers;
+    /** num_unassoc_ranging_peers:
+     * Number of active un-associated ISTA ranging peers.
+     */
+    A_UINT32 num_unassoc_ranging_peers;
+    /** responder_alloc_cnt:
+     * Number of responder contexts allocated.
+     */
+    A_UINT32 responder_alloc_cnt;
+    /** responder_alloc_failure:
+     * Number of times responder context failed to be allocated.
+     */
+    A_UINT32 responder_alloc_failure;
+    /** pn_check_failure_cnt:
+     * Number of times PN check failed.
+     */
+    A_UINT32 pn_check_failure_cnt;
+    /** pasn_m1_auth_recv_cnt:
+     * Num of M1 auth frames received for PASN over the air from iSTA.
+     */
+    A_UINT32 pasn_m1_auth_recv_cnt;
+    /** pasn_m1_auth_drop_cnt:
+     * Number of M1 auth frames received for PASN over the air from iSTA
+     * but dropped in FW due to any reason (such as unavailability of
+     * responder ctxt or any other check).
+     */
+    A_UINT32 pasn_m1_auth_drop_cnt;
+    /** pasn_m2_auth_recv_cnt:
+     * Number of M2 auth frames received in FW for PASN from Host driver.
+     */
+    A_UINT32 pasn_m2_auth_recv_cnt;
+    /** pasn_m2_auth_tx_fail_cnt:
+     * Number of M2 auth frames received in FW but Tx failed.
+     */
+    A_UINT32 pasn_m2_auth_tx_fail_cnt;
+    /** pasn_m3_auth_recv_cnt:
+     * Number of M3 auth frames received for PASN.
+     */
+    A_UINT32 pasn_m3_auth_recv_cnt;
+    /** pasn_m3_auth_drop_cnt:
+     * Number of M3 auth frames received for PASN over the air from iSTA but
+     * dropped in FW due to any reason.
+     */
+    A_UINT32 pasn_m3_auth_drop_cnt;
+    /** pasn_peer_create_request_cnt:
+     * Number of times FW requested PASN peer create request to Host.
+     */
+    A_UINT32 pasn_peer_create_request_cnt;
+    /** pasn_peer_create_timeout_cnt:
+     * Number of times PASN peer was not created within timeout period.
+     */
+    A_UINT32 pasn_peer_create_timeout_cnt;
+    /** pasn_peer_created_cnt:
+     * Number of times Host sent PASN peer create request to FW.
+     */
+    A_UINT32 pasn_peer_created_cnt;
+    /** sec_ranging_not_supported_mfp_not_setup:
+     * management frame protection not setup, drop secure ranging request.
+     */
+    A_UINT32 sec_ranging_not_supported_mfp_not_setup;
+    /** non_sec_ranging_discarded_for_assoc_peer_with_mfpr_set:
+     * Non secured ranging request discarded for Assoc peer with MFPR set.
+     */
+    A_UINT32 non_sec_ranging_discarded_for_assoc_peer_with_mfpr_set;
+    /** open_ranging_discarded_with_URNM_MFPR_set_for_pasn_peer:
+     * Failure in case non-secured frame is received for PASN peer and
+     * URNM_MFPR is set.
+     */
+    A_UINT32 open_ranging_discarded_with_URNM_MFPR_set_for_pasn_peer;
+    /** unassoc_non_pasn_ranging_not_supported_with_URNM_MFPR:
+     * Failure in case non-assoc/non-PASN sta is sending open FTMR and
+     * RSTA does not support un-secured ranging.
+     */
+    A_UINT32 unassoc_non_pasn_ranging_not_supported_with_URNM_MFPR;
+    /** num_req_bw_20_MHz:
+     * Number of requests with BW 20 MHz.
+     */
+    A_UINT32 num_req_bw_20_MHz;
+    /** num_req_bw_40_MHz:
+     * Number of requests with BW 40 MHz.
+     */
+    A_UINT32 num_req_bw_40_MHz;
+    /** num_req_bw_80_MHz:
+     * Number of requests with BW 80 MHz.
+     */
+    A_UINT32 num_req_bw_80_MHz;
+    /** num_req_bw_160_MHz:
+     * Number of requests with BW 160 MHz.
+     */
+    A_UINT32 num_req_bw_160_MHz;
+    /** tx_11az_ftm_successful:
+     * Number of 11AZ FTM frames transmitted successfully.
+     */
+    A_UINT32 tx_11az_ftm_successful;
+    /** tx_11az_ftm_failed:
+     * Number of 11AZ FTM frames for which Tx failed.
+     */
+    A_UINT32 tx_11az_ftm_failed;
+    /** rx_11az_ftmr_cnt:
+     * Number of 11AZ FTM frames received.
+     */
+    A_UINT32 rx_11az_ftmr_cnt;
+    /** rx_11az_ftmr_dup_cnt:
+     * Number of duplicate 11az ftmr frames dropped.
+     */
+    A_UINT32 rx_11az_ftmr_dup_cnt;
+    /** rx_11az_iftmr_dup_cnt:
+     * Number of duplicate 11az iftmr frames dropped.
+     */
+    A_UINT32 rx_11az_iftmr_dup_cnt;
+    /** malformed_ftmr:
+     * Number of malformed FTMR frames received from client leading to
+     * frame parse error.
+     */
+    A_UINT32 malformed_ftmr;
+    /** ftmr_drop_ntb_resp_role_not_enabled_cnt:
+     * Number of FTMR frames dropped as NTB is not supported for this VAP.
+     */
+    A_UINT32 ftmr_drop_ntb_resp_role_not_enabled_cnt;
+    /** ftmr_drop_tb_resp_role_not_enabled_cnt:
+     * Number of FTMR frames dropped as TB is not supported for this VAP.
+     */
+    A_UINT32 ftmr_drop_tb_resp_role_not_enabled_cnt;
+    /** invalid_ftm_request_params:
+     * Number of FTMR frames received with invalid params.
+     */
+    A_UINT32 invalid_ftm_request_params;
+    /** requested_bw_format_not_supported:
+     * FTMR rejected as requested format is lower or higher than AP's
+     * capability, or unknown.
+     */
+    A_UINT32 requested_bw_format_not_supported;
+    /** ntb_unsec_unassoc_mode_ranging_peer_alloc_failed:
+     * AST entry creation failed for NTB unsecured mode.
+     */
+    A_UINT32 ntb_unsec_unassoc_mode_ranging_peer_alloc_failed;
+    /** tb_unassoc_unsec_mode_pasn_peer_creation_failed:
+     * PASN peer creation failed for unsecured mode TBR.
+     */
+    A_UINT32 tb_unassoc_unsec_mode_pasn_peer_creation_failed;
+    /** num_ranging_sequences_processed:
+     * Number of ranging sequences processed for NTB and TB.
+     */
+    A_UINT32 num_ranging_sequences_processed;
+    /** Number of NDPs transmitted for NTBR */
+    A_UINT32 ntb_tx_ndp;
+    A_UINT32 ndp_rx_cnt;
+    /** Number of NDPAs received for 11AZ NTB ranging */
+    A_UINT32 num_ntb_ranging_NDPAs_recv;
+    /** Number of LMR frames received */
+    A_UINT32 recv_lmr;
+    /** invalid_ftmr_cnt:
+     * Number of invalid FTMR frames received
+     * iftmr with null ie element is invalid
+     * The Frame is valid if any of the following combination is present:
+     * a. LCI sub ie + parameter ie
+     * b. LCR sub ie + parameter ie
+     * c. parameter ie
+     * d. LCI sub ie + LCR sub ie + parameter ie
+     */
+    A_UINT32 invalid_ftmr_cnt;
+    /** Number of times the 'max time b/w measurement' timer got expired */
+    A_UINT32 max_time_bw_meas_exp_cnt;
+} htt_stats_pdev_rtt_resp_stats_tlv;
+
+/* STATS_TYPE: HTT_DBG_EXT_PDEV_RTT_RESP_STATS
+ * TLV_TAGS:
+ *  HTT_STATS_PDEV_RTT_RESP_STATS_TAG
+ *  HTT_STATS_PDEV_RTT_HW_STATS_TAG
+ *  HTT_STATS_PDEV_RTT_TBR_SELFGEN_QUEUED_STATS_TAG
+ *  HTT_STATS_PDEV_RTT_TBR_CMD_RESULT_STATS_TAG
+ */
+typedef struct {
+    htt_stats_pdev_rtt_resp_stats_tlv pdev_rtt_resp_stats;
+    htt_stats_pdev_rtt_hw_stats_tlv pdev_rtt_hw_stats;
+    htt_stats_pdev_rtt_tbr_selfgen_queued_stats_tlv pdev_rtt_tbr_selfgen_queued_stats;
+    htt_stats_pdev_rtt_tbr_cmd_result_stats_tlv pdev_rtt_tbr_cmd_result_stats;
+} htt_pdev_rtt_resp_stats_t;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 pdev_id;
+    /** tx_11mc_ftmr_cnt:
+     * Number of 11mc Fine Timing Measurement request frames transmitted
+     * successfully.
+     */
+    A_UINT32 tx_11mc_ftmr_cnt;
+    /** tx_11mc_ftmr_fail:
+     * Number of 11mc Fine Timing Measurement request frames not transmitted
+     * successfully.
+     */
+    A_UINT32 tx_11mc_ftmr_fail;
+    /** tx_11mc_ftmr_suc_retry:
+     * Number of 11mc Fine Timing Measurement request frames transmitted
+     * successfully after retrying.
+     */
+    A_UINT32 tx_11mc_ftmr_suc_retry;
+    /** rx_11mc_ftm_cnt:
+     * Number of 11mc Fine Timing Measurement frames received, including
+     * initial, non-initial, and duplicates.
+     */
+    A_UINT32 rx_11mc_ftm_cnt;
+    /** Count of Ranging Measurement requests received from host */
+    A_UINT32 tx_meas_req_count;
+    /** Initiator role not supported on the vdev */
+    A_UINT32 init_role_not_enabled;
+    /** Number of times Initiator context got terminated */
+    A_UINT32 initiator_terminate_cnt;
+    /** Number of times Tx of FTMR failed */
+    A_UINT32 tx_11az_ftmr_fail;
+    /** tx_11az_ftmr_start:
+     * Number of Fine Timing Measurement start requests transmitted
+     * successfully.
+     */
+    A_UINT32 tx_11az_ftmr_start;
+    /** tx_11az_ftmr_stop:
+     * Number of Fine Timing Measurement stop requests transmitted
+     * successfully.
+     */
+    A_UINT32 tx_11az_ftmr_stop;
+    /** Number of FTM frames received successfully */
+    A_UINT32 rx_11az_ftm_cnt;
+    /** Number of active ISTA sessions */
+    A_UINT32 active_ista;
+    /** HE preamble not enabled on Initiator side */
+    A_UINT32 invalid_preamble;
+    /** Initiator invalid channel bw format */
+    A_UINT32 invalid_chan_bw_format;
+    /* mgmt_buff_alloc_fail_cnt Management Buffer allocation failure count */
+    A_UINT32 mgmt_buff_alloc_fail_cnt;
+    /** ftm_parse_failure:
+     * Count of FTM frame IE parse failure or RSTA sending measurement
+     * negotiation failure.
+     */
+    A_UINT32 ftm_parse_failure;
+    /** Count of NTB/TB ranging negotiation completed successfully */
+    A_UINT32 ranging_negotiation_successful_cnt;
+    /** incompatible_ftm_params:
+     * Number of occurrences of failure due to incompatible parameters
+     * suggested by rSTA during negotiation.
+     */
+    A_UINT32 incompatible_ftm_params;
+    /** sec_ranging_req_in_open_mode:
+     * Number of occurrences of failure if BSS peer exists in open mode and
+     * secured mode RTT ranging is requested.
+     */
+    A_UINT32 sec_ranging_req_in_open_mode;
+    /** ftmr_tx_failed_null_11az_peer:
+     * Number of occurrences where FTMR was not transmitted as there was
+     * no 11AZ peer.
+     */
+    A_UINT32 ftmr_tx_failed_null_11az_peer;
+    /** Number of times ftmr retry timed out */
+    A_UINT32 ftmr_retry_timeout;
+    /** Number of times the 'max time b/w measurement' timer got expired */
+    A_UINT32 max_time_bw_meas_exp_cnt;
+    /** tb_meas_duration_expiry_cnt:
+     * Number of times TBR measurement duration expired.
+     */
+    A_UINT32 tb_meas_duration_expiry_cnt;
+    /** num_tb_ranging_requests:
+     * Number of TB ranging requests ready for negotiation.
+     */
+    A_UINT32 num_tb_ranging_requests;
+    /** Number of times NTB ranging was triggered successfully */
+    A_UINT32 ntbr_triggered_successfully;
+    /** Number of times NTB ranging failed to be triggered */
+    A_UINT32 ntbr_trigger_failed;
+    /** No valid index found for programming vreg settings */
+    A_UINT32 invalid_or_no_vreg_idx;
+    /** Number of times VREG setting failed */
+    A_UINT32 set_vreg_params_failed;
+    /** Number of occurrences of SAC mismatch */
+    A_UINT32 sac_mismatch;
+    /** pasn_m1_auth_recv_cnt:
+     * Number of M1 auth frames received for PASN from Host.
+     */
+    A_UINT32 pasn_m1_auth_recv_cnt;
+    /** pasn_m1_auth_tx_fail_cnt:
+     * Number of M1 auth frames received in FW but Tx failed.
+     */
+    A_UINT32 pasn_m1_auth_tx_fail_cnt;
+    /** pasn_m2_auth_recv_cnt:
+     * Number of M2 auth frames received in FW for PASN over the air from rSTA.
+     */
+    A_UINT32 pasn_m2_auth_recv_cnt;
+    /** pasn_m2_auth_drop_cnt:
+     * Number of M2 auth frames received in FW but dropped due to any reason.
+     */
+    A_UINT32 pasn_m2_auth_drop_cnt;
+    /** pasn_m3_auth_recv_cnt:
+     * Number of M3 auth frames received for PASN from Host.
+     */
+    A_UINT32 pasn_m3_auth_recv_cnt;
+    /** pasn_m3_auth_tx_fail_cnt:
+     * Number of M3 auth frames received in FW but Tx failed.
+     */
+    A_UINT32 pasn_m3_auth_tx_fail_cnt;
+    /** pasn_peer_create_request_cnt:
+     * Number of times FW requested PASN peer create request to Host.
+     */
+    A_UINT32 pasn_peer_create_request_cnt;
+    /** pasn_peer_create_timeout_cnt:
+     * Number of times PASN peer was not created within timeout period.
+     */
+    A_UINT32 pasn_peer_create_timeout_cnt;
+    /** pasn_peer_created_cnt:
+     * Number of times Host sent PASN peer create request to FW.
+     */
+    A_UINT32 pasn_peer_created_cnt;
+    /** Number of occurrences of Tx of NDPA failing */
+    A_UINT32 ntbr_ndpa_failed;
+    /** ntbr_sequence_successful:
+     * The NDPA, NDP and LMR exchanges are successful and sched cmd status
+     * is 0.
+     */
+    A_UINT32 ntbr_sequence_successful;
+    /** ntbr_ndp_failed:
+     * Number of occurrences of NDPA being transmitted successfully
+     * but NDP failing for NTB ranging.
+     */
+    A_UINT32 ntbr_ndp_failed;
+    /** sch_cmd_status_cnts:
+     * Elements 0-7 count the number of times the sch_cmd_status was equal to
+     * the corresponding value of the index of the array sch_cmd_status_cnts[],
+     * and element 8 counts the numbers of times the status was some other
+     * value >=8.
+     */
+    A_UINT32 sch_cmd_status_cnts[9];
+    /** Number of times LMR reception timed out */
+    A_UINT32 lmr_timeout;
+    /** Number of LMR frames received */
+    A_UINT32 lmr_recv;
+    /** Number of trigger frames received */
+    A_UINT32 num_trigger_frames_received;
+    /** Number of NDPAs received for TBR */
+    A_UINT32 num_tb_ranging_NDPAs_recv;
+    /** Number of ranging NDPs received for NTBR/TB */
+    A_UINT32 ndp_rx_cnt;
+} htt_stats_pdev_rtt_init_stats_tlv;
+
+/* STATS_TYPE: HTT_DBG_EXT_PDEV_RTT_INITIATOR_STATS
+ * TLV_TAGS:
+ *  HTT_STATS_PDEV_RTT_INIT_STATS_TAG
+ *  HTT_STATS_PDEV_RTT_HW_STATS_TAG
+ */
+typedef struct {
+    htt_stats_pdev_rtt_init_stats_tlv pdev_rtt_init_stats;
+    htt_stats_pdev_rtt_hw_stats_tlv pdev_rtt_hw_stats;
+} htt_pdev_rtt_init_stats_t;
+
 
 /* STATS_TYPE : HTT_DBG_EXT_PKTLOG_AND_HTT_RING_STATS
  * TLV_TAGS:

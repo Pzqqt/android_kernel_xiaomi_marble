@@ -816,6 +816,11 @@ typedef enum {
     HTT_STATS_PDEV_MLO_IPC_STATS_TAG               = 191, /* htt_pdev_mlo_ipc_stats_tlv */
     HTT_STATS_WHAL_WSI_TAG                         = 192, /* htt_stats_whal_wsi_tlv */
     HTT_STATS_LATENCY_PROF_CAL_DATA_TAG            = 193, /* htt_stats_latency_prof_cal_data_tlv */
+    HTT_STATS_PDEV_RTT_RESP_STATS_TAG              = 194, /* htt_stats_pdev_rtt_resp_stats_tlv */
+    HTT_STATS_PDEV_RTT_INIT_STATS_TAG              = 195, /* htt_stats_pdev_rtt_init_stats_tlv */
+    HTT_STATS_PDEV_RTT_HW_STATS_TAG                 = 196, /* htt_stats_pdev_rtt_hw_stats_tlv */
+    HTT_STATS_PDEV_RTT_TBR_SELFGEN_QUEUED_STATS_TAG = 197, /* htt_stats_pdev_rtt_tbr_selfgen_queued_stats_tlv */
+    HTT_STATS_PDEV_RTT_TBR_CMD_RESULT_STATS_TAG     = 198, /* htt_stats_pdev_rtt_tbr_cmd_result_stats_tlv */
 
 
     HTT_STATS_MAX_TAG,
