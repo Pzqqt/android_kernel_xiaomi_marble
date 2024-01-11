@@ -45182,8 +45182,8 @@ typedef struct wmi_mlo_set_active_link_number_param
 
 } wmi_mlo_set_active_link_number_param;
 
-#define WMI_MLO_MODE_MLMR  0x1;
-#define WMI_MLO_MODE_EMLSR 0x2;
+#define WMI_MLO_MODE_MLMR  0x1
+#define WMI_MLO_MODE_EMLSR 0x2
 
 #define WMI_MLO_IEEE_LINK_ID_INVALID 0xFF
 
