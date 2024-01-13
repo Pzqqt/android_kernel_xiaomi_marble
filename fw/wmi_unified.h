@@ -2489,6 +2489,8 @@ typedef enum {
     WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_EVENTID,
     /** WMI Event to spcify reason for link state switch */
     WMI_MLO_LINK_STATE_SWITCH_EVENTID,
+    /** WMI Event to sync link info to host */
+    WMI_MLO_LINK_INFO_SYNC_EVENTID,
 
     /* WMI event specific to Quiet handling */
     WMI_QUIET_HANDLING_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_QUIET_OFL),
