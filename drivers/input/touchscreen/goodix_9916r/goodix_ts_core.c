@@ -2258,6 +2258,11 @@ out:
 	hw_ops->irq_enable(core_data, true);
 	/* open esd */
 	goodix_ts_blocking_notify(NOTIFY_RESUME, NULL);
+	/* Re-enable high sampling rate */
+	if (core_data->report_rate != 240) {
+		ts_info("Re-enable high sampling rate");
+		hw_ops->switch_report_rate(goodix_core_data, true);
+	}
 	ts_info("Resume end");
 	return 0;
 }
