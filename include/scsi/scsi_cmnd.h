@@ -66,12 +66,6 @@ struct scsi_pointer {
 #define SCMD_STATE_COMPLETE	0
 #define SCMD_STATE_INFLIGHT	1
 
-enum scsi_cmnd_submitter {
-	SUBMITTED_BY_BLOCK_LAYER = 0,
-	SUBMITTED_BY_SCSI_ERROR_HANDLER = 1,
-	SUBMITTED_BY_SCSI_RESET_IOCTL = 2,
-} __packed;
-
 struct scsi_cmnd {
 	struct scsi_request req;
 	struct scsi_device *device;
@@ -150,7 +144,7 @@ struct scsi_cmnd {
 	unsigned char tag;	/* SCSI-II queued command tag */
 	unsigned int extra_len;	/* length of alignment and padding */
 
-	ANDROID_KABI_USE(1, enum scsi_cmnd_submitter submitter);
+	ANDROID_KABI_RESERVE(1);
 	ANDROID_KABI_RESERVE(2);
 	ANDROID_KABI_RESERVE(3);
 	ANDROID_KABI_RESERVE(4);
@@ -174,9 +168,7 @@ static inline void *scsi_cmd_priv(struct scsi_cmnd *cmd)
 /* make sure not to use it with passthrough commands */
 static inline struct scsi_driver *scsi_cmd_to_driver(struct scsi_cmnd *cmd)
 {
-	struct request *rq = scsi_cmd_to_rq(cmd);
-
-	return *(struct scsi_driver **)rq->rq_disk->private_data;
+	return *(struct scsi_driver **)cmd->request->rq_disk->private_data;
 }
 
 extern void scsi_finish_command(struct scsi_cmnd *cmd);
@@ -236,18 +228,6 @@ static inline int scsi_sg_copy_to_buffer(struct scsi_cmnd *cmd,
 {
 	return sg_copy_to_buffer(scsi_sglist(cmd), scsi_sg_count(cmd),
 				 buf, buflen);
-}
-
-static inline sector_t scsi_get_sector(struct scsi_cmnd *scmd)
-{
-	return blk_rq_pos(scsi_cmd_to_rq(scmd));
-}
-
-static inline sector_t scsi_get_lba(struct scsi_cmnd *scmd)
-{
-	unsigned int shift = ilog2(scmd->device->sector_size) - SECTOR_SHIFT;
-
-	return blk_rq_pos(scsi_cmd_to_rq(scmd)) >> shift;
 }
 
 /*
@@ -312,11 +292,9 @@ static inline unsigned char scsi_get_prot_type(struct scsi_cmnd *scmd)
 	return scmd->prot_type;
 }
 
-static inline u32 scsi_prot_ref_tag(struct scsi_cmnd *scmd)
+static inline sector_t scsi_get_lba(struct scsi_cmnd *scmd)
 {
-	struct request *rq = blk_mq_rq_from_pdu(scmd);
-
-	return t10_pi_ref_tag(rq);
+	return blk_rq_pos(scmd->request);
 }
 
 static inline unsigned int scsi_prot_interval(struct scsi_cmnd *scmd)
