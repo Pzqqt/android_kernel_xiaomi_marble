@@ -2561,6 +2561,7 @@ struct ipa3_context {
 	struct mutex recycle_stats_collection_lock;
 	struct mutex ssr_lock;
 	bool gfp_no_retry;
+	u32 ipa_smem_size;
 };
 
 struct ipa3_plat_drv_res {
