@@ -4486,6 +4486,8 @@ typedef struct {
      * multicast/broadcast packets received on STA side.
      */
     A_UINT32 mec_notify;
+    A_UINT32 arp_response;
+    A_UINT32 arp_request;
 } htt_stats_tx_de_classify_stats_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_tx_de_classify_stats_tlv htt_tx_de_classify_stats_tlv;
