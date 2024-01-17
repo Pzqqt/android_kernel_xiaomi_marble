@@ -1192,8 +1192,6 @@ typedef struct {
      */
     A_UINT32 sw_rts_prot_dur_us;
 
-    /* Data fields related to Transmit power */
-
     /* tx_pwr_multiplier:
      * Hawkeye now supports power accuracy in 0.25 dBm steps,
      * so all powers are x4.
@@ -1216,7 +1214,8 @@ typedef struct {
     A_UINT32 tx_pwr_multiplier          :  8,
              chain_enable_bits          :  8,
              is_smart_ulofdma_basic_trig:  1,
-             reserved2                  : 15;
+             is_primary_link_peer       :  1,
+             reserved2                  : 14;
 
     /*
      * Transmit powers (signed values packed into unsigned bitfields)
