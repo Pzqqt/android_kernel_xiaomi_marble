@@ -18466,6 +18466,9 @@ typedef enum {
     /* DCS stats enable configuration at VDEV level */
     WMI_VDEV_PARAM_DCS,                                   /* 0xC2 */
 
+    /* VDEV parameter to configure Telescopic DTIM count */
+    WMI_VDEV_PARAM_TELESDTIM_CNT,                         /* 0xC3 */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
@@ -23704,6 +23707,12 @@ enum {
     WMI_WOW_FLAG_FORCED_DTIM_ON_SYS_SUSPEND = 0x00000080,
     /* Flag to force DPD lock. */
     WMI_WOW_FLAG_FORCED_DPD_LOCK            = 0x00000100,
+    /*
+     * Feature flag for INI 'enable_teles_dtim_on_system_suspend'
+     * This flag/bit will be set if INI 'enable_teles_dtim_on_system_suspend'
+     * is enabled.
+     */
+    WMI_WOW_FLAG_TELES_DTIM_ON_SYS_SUSPEND  = 0x00000200,
 };
 
 typedef struct {
