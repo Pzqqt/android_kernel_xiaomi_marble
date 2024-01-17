@@ -5521,3 +5521,36 @@ int wma_get_ani_level_evt_handler(void *handle, uint8_t *event_buf,
 }
 #endif
 
+#ifdef WLAN_FEATURE_PEER_TXQ_FLUSH_CONF
+/**
+ * wma_peer_txq_flush_config_send() - Flush peer txq
+ * @params: peer_txq_flush_config_params params
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wma_peer_txq_flush_config_send(struct peer_txq_flush_config_params *params)
+{
+	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	struct wmi_unified *wmi_handle = wma_handle->wmi_handle;
+
+	return wmi_unified_peer_txq_flush_config_send(wmi_handle, params);
+}
+
+/**
+ * wma_peer_flush_tids_send() - Flush peer txq
+ * @peer_addr: peer address
+ * @param: peer flush params
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wma_peer_flush_tids_send(uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
+			 struct peer_flush_params *param)
+{
+	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	struct wmi_unified *wmi_handle = wma_handle->wmi_handle;
+
+	return wmi_unified_peer_flush_tids_send(wmi_handle, peer_addr, param);
+}
+#endif

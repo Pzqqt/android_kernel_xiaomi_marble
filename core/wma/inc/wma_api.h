@@ -867,4 +867,13 @@ void wma_enable_dbs_service_ut(void);
 #else
 static inline void wma_enable_dbs_service_ut(void) {}
 #endif
+
+#ifdef WLAN_FEATURE_PEER_TXQ_FLUSH_CONF
+QDF_STATUS
+wma_peer_txq_flush_config_send(struct peer_txq_flush_config_params *params);
+
+QDF_STATUS
+wma_peer_flush_tids_send(uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
+			 struct peer_flush_params *param);
+#endif
 #endif /* WMA_API_H */

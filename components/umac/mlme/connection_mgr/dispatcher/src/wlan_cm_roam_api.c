@@ -1829,14 +1829,6 @@ void wlan_cm_fill_crypto_filter_from_vdev(struct wlan_objmgr_vdev *vdev,
 {
 	struct rso_config *rso_cfg;
 
-	filter->authmodeset =
-		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_AUTH_MODE);
-	filter->mcastcipherset =
-		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_MCAST_CIPHER);
-	filter->ucastcipherset =
-		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-	filter->key_mgmt =
-		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
 	filter->mgmtcipherset =
 		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_MGMT_CIPHER);
 
@@ -1850,6 +1842,11 @@ void wlan_cm_fill_crypto_filter_from_vdev(struct wlan_objmgr_vdev *vdev,
 	else if (rso_cfg->orig_sec_info.rsn_caps &
 		 WLAN_CRYPTO_RSN_CAP_MFP_ENABLED)
 		filter->pmf_cap = WLAN_PMF_CAPABLE;
+
+	filter->authmodeset = rso_cfg->orig_sec_info.authmodeset;
+	filter->mcastcipherset = rso_cfg->orig_sec_info.mcastcipherset;
+	filter->ucastcipherset = rso_cfg->orig_sec_info.ucastcipherset;
+	filter->key_mgmt = rso_cfg->orig_sec_info.key_mgmt;
 }
 
 static void cm_dump_occupied_chan_list(struct wlan_chan_list *occupied_ch)
