@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2024, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -459,17 +460,7 @@ extern void busywait(uint32 pause_time_us);
 
 #define __outp(port, val)   (*((volatile uint8 *) ((uint32)(port))) = ((uint8) (val)))
 #define __outpw(port, val)  (*((volatile uint16 *) ((uint32)(port))) = ((uint16) (val)))
-#ifdef MAC_ADDRESS_POWER_CHECK
-static inline void __outpdw(uint32 port ,uint32 val){
-    whal_pwr_debug_register_address_check(port, TRUE);
-    (*((volatile uint32 *) (port)) = ((uint32) (val)));
-}
-#else
-static inline void __outpdw(uint32 port ,uint32 val){
-    (*((volatile uint32 *) (port)) = ((uint32) (val)));
-     busywait(1);
-}
-#endif
+#define __outpdw(port, val) (*((volatile uint32 *) ((uint32)(port))) = ((uint32) (val)))
 
 #define registerRead(port) (*((volatile uint32 *) ((uint32)(port) )))
 #define registerWrite(port, val) (*((volatile uint32 *) ((uint32)(port) )) = ((uint32) (val)))
