@@ -177,7 +177,7 @@ static int ipa_get_generic_stats(unsigned long arg)
 	int i, j;
 	struct ipa_lnx_generic_stats *generic_stats;
 	struct ipa_drop_stats_all *out;
-	int alloc_size;
+	uint64_t alloc_size;
 	int reg_idx;
 	struct ipa_uc_holb_client_info *holb_client;
 	struct holb_discard_stats *holb_disc_stats_ptr;
@@ -279,47 +279,51 @@ static int ipa_get_generic_stats(unsigned long arg)
 		return res;
 	}
 
-	/* HOLB Discard stats */
-	holb_disc_stats_ptr = &generic_stats->holb_stats.holb_disc_stats[0];
-	for (i = 0; i < IPA_CLIENT_MAX; i++) {
-		int ep_idx = ipa3_get_ep_mapping(i);
+	if(ipa_lnx_agent_ctx.alloc_info.num_holb_drop_stats_clients != 0 ) {
+		/* HOLB Discard stats */
+		holb_disc_stats_ptr = &generic_stats->holb_stats.holb_disc_stats[0];
+		for (i = 0; i < IPA_CLIENT_MAX; i++) {
+			int ep_idx = ipa_get_ep_mapping(i);
 
-		if ((ep_idx == -1) || (!IPA_CLIENT_IS_CONS(i)) ||
-			(IPA_CLIENT_IS_TEST(i)))
-			continue;
+			if ((ep_idx == -1) || (!IPA_CLIENT_IS_CONS(i)) ||
+				(IPA_CLIENT_IS_TEST(i)))
+				continue;
 
-		reg_idx = ipahal_get_ep_reg_idx(ep_idx);
-		if (!(ipa3_ctx->hw_stats &&
-			(ipa3_ctx->hw_stats->drop.init.enabled_bitmask[reg_idx] &
-			ipahal_get_ep_bit(ep_idx))))
-			continue;
+			reg_idx = ipahal_get_ep_reg_idx(ep_idx);
+			if (!(ipa3_ctx->hw_stats &&
+				(ipa3_ctx->hw_stats->drop.init.enabled_bitmask[reg_idx] &
+				ipahal_get_ep_bit(ep_idx))))
+				continue;
 
-		holb_disc_stats_ptr->client_type = i;
-		holb_disc_stats_ptr->num_drp_cnt = out->client[i].drop_packet_cnt;
-		holb_disc_stats_ptr->num_drp_bytes = out->client[i].drop_byte_cnt;
-		holb_disc_stats_ptr = (struct holb_discard_stats *)((
-			uint64_t)holb_disc_stats_ptr + sizeof(struct holb_discard_stats));
+			holb_disc_stats_ptr->client_type = i;
+			holb_disc_stats_ptr->num_drp_cnt = out->client[i].drop_packet_cnt;
+			holb_disc_stats_ptr->num_drp_bytes = out->client[i].drop_byte_cnt;
+			holb_disc_stats_ptr = (struct holb_discard_stats *)((
+				uint64_t)holb_disc_stats_ptr + sizeof(struct holb_discard_stats));
+		}
 	}
 
-	/* HOLB Monitor stats */
-	holb_mon_stats_ptr = (struct holb_monitor_stats *)(
-		(uint64_t)&generic_stats->holb_stats.holb_disc_stats[0] +
-		(ipa_lnx_agent_ctx.alloc_info.num_holb_drop_stats_clients *
-		sizeof(struct holb_discard_stats)));
-	for (i = 0; i < generic_stats->holb_stats.num_holb_mon_clients; i++) {
-		holb_client = &(ipa3_ctx->uc_ctx.holb_monitor.client[i]);
-		/* Get the client type from gsi_hdl */
-		for (j = 0; j < IPA5_MAX_NUM_PIPES; j++) {
-			if (ipa3_ctx->ep[j].gsi_chan_hdl == holb_client->gsi_chan_hdl) {
-				holb_mon_stats_ptr->client_type = ipa3_ctx->ep[j].client;
-				break;
+	if(ipa_lnx_agent_ctx.alloc_info.num_holb_mon_stats_clients != 0 ) {
+		/* HOLB Monitor stats */
+		holb_mon_stats_ptr = (struct holb_monitor_stats *)(
+			(uint64_t)&generic_stats->holb_stats.holb_disc_stats[0] +
+			(ipa_lnx_agent_ctx.alloc_info.num_holb_drop_stats_clients *
+			sizeof(struct holb_discard_stats)));
+		for (i = 0; i < generic_stats->holb_stats.num_holb_mon_clients; i++) {
+			holb_client = &(ipa3_ctx->uc_ctx.holb_monitor.client[i]);
+			/* Get the client type from gsi_hdl */
+			for (j = 0; j < IPA5_MAX_NUM_PIPES; j++) {
+				if (ipa3_ctx->ep[j].gsi_chan_hdl == holb_client->gsi_chan_hdl) {
+					holb_mon_stats_ptr->client_type = ipa3_ctx->ep[j].client;
+					break;
+				}
 			}
+			holb_mon_stats_ptr->curr_index = holb_client->current_idx;
+			holb_mon_stats_ptr->num_en_cnt = holb_client->enable_cnt;
+			holb_mon_stats_ptr->num_dis_cnt = holb_client->disable_cnt;
+			holb_mon_stats_ptr = (struct holb_monitor_stats *)((
+				uint64_t)holb_mon_stats_ptr + sizeof(struct holb_monitor_stats));
 		}
-		holb_mon_stats_ptr->curr_index = holb_client->current_idx;
-		holb_mon_stats_ptr->num_en_cnt = holb_client->enable_cnt;
-		holb_mon_stats_ptr->num_dis_cnt = holb_client->disable_cnt;
-		holb_mon_stats_ptr = (struct holb_monitor_stats *)((
-			uint64_t)holb_mon_stats_ptr + sizeof(struct holb_monitor_stats));
 	}
 
 	if(copy_to_user((void __user *)arg,
