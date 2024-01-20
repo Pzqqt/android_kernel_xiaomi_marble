@@ -2348,12 +2348,16 @@ static void aw_cali_parse_dt(struct aw_device *aw_dev)
 	aw_dev_info(aw_dev->dev, "cali check :%s",
 			(desc->cali_check_st) ? "enable" : "disable");
 
+#ifdef CONFIG_MACH_XIAOMI_MARBLE
+	cali_mode_str = "none";
+#else
 	ret = of_property_read_string(np, "aw-cali-mode", &cali_mode_str);
 	if (ret < 0) {
 		desc->mode = AW_CALI_MODE_ALL;
 		aw_dev_info(aw_dev->dev, "cali function in use");
 		return;
 	}
+#endif
 
 	if (!strcmp(cali_mode_str, "none"))
 		desc->mode = AW_CALI_MODE_NONE;
