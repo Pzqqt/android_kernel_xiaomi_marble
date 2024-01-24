@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -80,7 +80,7 @@ do {                                                           \
 #define MAX_CDP_SEC_TYPE 12
 
 /* number of dwords for htt_tx_msdu_desc_ext2_t */
-#define DP_TX_MSDU_INFO_META_DATA_DWORDS 7
+#define DP_TX_MSDU_INFO_META_DATA_DWORDS 9
 
 #define dp_tx_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_DP_TX, params)
 #define dp_tx_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_DP_TX, params)
