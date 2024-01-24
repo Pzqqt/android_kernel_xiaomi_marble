@@ -3590,7 +3590,9 @@ static char *custom_module_blacklist_marble[] = {
     "coresight_hwevent", "coresight_remote_etm", "coresight_replicator", "coresight_stm",
     "coresight_tgu", "coresight_tmc", "coresight_tpda", "coresight_tpdm",
     /* STM (System Trace Module devices) */
-    "stm_console", "stm_core", "stm_ftrace", "stm_p_basic", "stm_p_ost"
+    "stm_console", "stm_core", "stm_ftrace", "stm_p_basic", "stm_p_ost",
+    /* EDAC */
+    "qcom_edac", "kryo_arm64_edac"
 };
 
 static bool blacklisted(const char *module_name)
