@@ -9495,6 +9495,13 @@ typedef enum {
      * For a 320 MHz channel, bit0 = highest 20 MHz, bit15 = lowest 20 MHz
      */
     WMI_PDEV_PARAM_DFS_RADAR_MASK,
+
+    /** PWR_REDUCTION_IN_DBM:
+     * Reduce final Tx power (derived after all considerations)
+     * by specified value in units of 0.25 dB.
+     * E.g. a value of 4 will result in a 1.0 dB tx power reduction.
+     */
+    WMI_PDEV_PARAM_PWR_REDUCTION_IN_DBM,
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
