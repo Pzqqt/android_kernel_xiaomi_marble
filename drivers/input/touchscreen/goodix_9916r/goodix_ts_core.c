@@ -1394,6 +1394,7 @@ static void goodix_ts_report_finger(struct input_dev *dev,
 	int report_y;
 
 	mutex_lock(&dev->mutex);
+#ifdef GOODIX_FOD_AREA_REPORT
 	if ((goodix_core_data->eventsdata & 0x08) && (goodix_core_data->fod_status != 0 && goodix_core_data->fod_status != -1) && (!goodix_core_data->fod_finger)) {
 		ts_info("fod down");
 		goodix_core_data->fod_finger = true;
@@ -1414,6 +1415,7 @@ static void goodix_ts_report_finger(struct input_dev *dev,
 		goto finger_pos;
 	}
 finger_pos:
+#endif
 	for (i = 0; i < GOODIX_MAX_TOUCH; i++) {
 		if (touch_data->coords[i].status == TS_TOUCH) {
 			ts_debug("report: id %d, x %d, y %d, w %d", i,
@@ -1639,7 +1641,11 @@ static int goodix_ts_power_init(struct goodix_ts_core *core_data)
 			core_data->avdd = NULL;
 			return ret;
 		}
+#ifdef CONFIG_MACH_XIAOMI_MARBLE
+		ret = regulator_set_voltage(core_data->avdd, 3224000, 3224000);
+#else
 		ret = regulator_set_voltage(core_data->avdd, 2800000, 3300000);
+#endif
 		if (ret < 0) {
 			ts_err("set avdd voltage failed");
 			return ret;

@@ -80,6 +80,10 @@
 #define PANEL_ORIENTATION_DEGREE_180	2	/* anticlockwise 180 degrees */
 #define PANEL_ORIENTATION_DEGREE_270	3	/* anticlockwise 270 degrees */
 
+#ifndef CONFIG_MACH_XIAOMI_MARBLE
+#define GOODIX_FOD_AREA_REPORT	/*support fod function*/
+#endif
+
 #define GAME_ARRAY_LEN    4
 #define GAME_ARRAY_SIZE   3
 
