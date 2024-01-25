@@ -1346,6 +1346,7 @@ static void goodix_ts_report_finger(struct input_dev *dev,
 	int report_y;
 
 	mutex_lock(&dev->mutex);
+#ifdef GOODIX_FOD_AREA_REPORT
 	if ((goodix_core_data->eventsdata & 0x08) && (goodix_core_data->fod_status != 0 && goodix_core_data->fod_status != -1) && (!goodix_core_data->fod_finger)) {
 		ts_info("fod down");
 		goodix_core_data->fod_finger = true;
@@ -1366,6 +1367,7 @@ static void goodix_ts_report_finger(struct input_dev *dev,
 		goto finger_pos;
 	}
 finger_pos:
+#endif
 	for (i = 0; i < GOODIX_MAX_TOUCH; i++) {
 		if (touch_data->coords[i].status == TS_TOUCH) {
 			ts_debug("report: id %d, x %d, y %d, w %d", i,

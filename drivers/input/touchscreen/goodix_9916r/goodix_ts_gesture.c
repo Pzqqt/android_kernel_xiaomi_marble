@@ -236,8 +236,10 @@ static int gsx_gesture_ist(struct goodix_ts_core *cd,
 	struct goodix_ts_event gs_event = {0};
 	int ret;
 	int key_value;
+#ifdef GOODIX_FOD_AREA_REPORT
 	unsigned int fodx, fody, fod_id;
 	unsigned int overlay_area;
+#endif
 	u8 gesture_data[32];
 
 	if (atomic_read(&cd->suspended) == 0)
@@ -260,7 +262,7 @@ static int gsx_gesture_ist(struct goodix_ts_core *cd,
 	memcpy(gesture_data, gs_event.touch_data.tmp_data, 32*sizeof(u8));
 	if ((gesture_data[0] & 0x08)  != 0)
 		FP_Event_Gesture = 1;
-
+#ifdef GOODIX_FOD_AREA_REPORT
 	fod_id = gesture_data[17];
 	if (cd->fod_status && (FP_Event_Gesture == 1) &&
 		(gs_event.gesture_type == 0x46) &&
@@ -312,6 +314,7 @@ static int gsx_gesture_ist(struct goodix_ts_core *cd,
 		}
 		goto re_send_ges_cmd;
 	}
+#endif
 	if (QUERYBIT(gsx_gesture->gesture_type, gs_event.gesture_type)) {
 		gsx_gesture->gesture_data = gs_event.gesture_type;
 		/* do resume routine */
