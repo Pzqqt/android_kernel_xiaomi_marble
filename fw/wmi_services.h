@@ -654,6 +654,7 @@ typedef  enum  {
     WMI_SERVICE_P2P_DEVICE_UPDATE_MAC_ADDR_SUPPORT = 401, /* indicate FW support dynamic update mac address for P2P device */
     WMI_SERVICE_DCS_OBSS_INT_SUPPORT = 402, /* Indicates FW supports OBSS Interference detection */
     WMI_SERVICE_DYNAMIC_WSI_REMAP_SUPPORT = 403, /* WSI bypass remap is supported by Firmware */
+    WMI_SERVICE_QMS_DLKM_SUPPORT = 404, /* FW code has qms_dlkm support enabled */
 
 
     WMI_MAX_EXT2_SERVICE
