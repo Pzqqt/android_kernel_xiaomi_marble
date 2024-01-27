@@ -3574,7 +3574,13 @@ static char *custom_module_blacklist[] = {
     "zram",
 #endif
 #if IS_BUILTIN(CONFIG_ZSMALLOC)
-    "zsmalloc"
+    "zsmalloc",
+#endif
+#if IS_ENABLED(CONFIG_CORESIGHT_PLACEHOLDER) || IS_ENABLED(CONFIG_CORESIGHT_AMBA_PLACEHOLDER)
+    /* Coresight */
+    "coresight", "coresight_csr", "coresight_cti", "coresight_dummy", "coresight_funnel",
+    "coresight_hwevent", "coresight_remote_etm", "coresight_replicator", "coresight_stm",
+    "coresight_tgu", "coresight_tmc", "coresight_tpda", "coresight_tpdm"
 #endif
 };
 static char *custom_module_blacklist_marble[] = {
@@ -3585,10 +3591,6 @@ static char *custom_module_blacklist_marble[] = {
     /* Debug */
     "qcom_cpufreq_hw_debug", "qcom_iommu_debug", "qti_battery_debug", "rdbg", "spmi_glink_debug", "spmi_pmic_arb_debug",
     "debug_ext", "ehset", "lvstest",
-    /* Coresight */
-    "coresight", "coresight_csr", "coresight_cti", "coresight_dummy", "coresight_funnel",
-    "coresight_hwevent", "coresight_remote_etm", "coresight_replicator", "coresight_stm",
-    "coresight_tgu", "coresight_tmc", "coresight_tpda", "coresight_tpdm",
     /* STM (System Trace Module devices) */
     "stm_console", "stm_core", "stm_ftrace", "stm_p_basic", "stm_p_ost",
     /* EDAC */
