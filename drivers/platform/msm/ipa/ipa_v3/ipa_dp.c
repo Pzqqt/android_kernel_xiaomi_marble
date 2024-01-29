@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/delay.h>
@@ -1689,28 +1689,40 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 			sys_in->client == IPA_CLIENT_APPS_WAN_CONS &&
 			coal_ep_id != IPA_EP_NOT_ALLOCATED &&
 			ipa3_ctx->ep[coal_ep_id].valid == 1)) {
-			ep->sys->page_recycle_repl = kzalloc(
-				sizeof(*ep->sys->page_recycle_repl), GFP_KERNEL);
+			/* Allocate page recycling pool only once. */
 			if (!ep->sys->page_recycle_repl) {
-				IPAERR("failed to alloc repl for client %d\n",
-						sys_in->client);
-				result = -ENOMEM;
-				goto fail_napi;
+				ep->sys->page_recycle_repl = kzalloc(
+					sizeof(*ep->sys->page_recycle_repl), GFP_KERNEL);
+				if (!ep->sys->page_recycle_repl) {
+					IPAERR("failed to alloc repl for client %d\n",
+							sys_in->client);
+					result = -ENOMEM;
+					goto fail_napi;
+				}
+				atomic_set(&ep->sys->page_recycle_repl->pending, 0);
+				/* For common page pool double the pool size. */
+				if (ipa3_ctx->wan_common_page_pool &&
+					sys_in->client == IPA_CLIENT_APPS_WAN_COAL_CONS)
+					ep->sys->page_recycle_repl->capacity =
+							(ep->sys->rx_pool_sz + 1) *
+							IPA_GENERIC_RX_CMN_PAGE_POOL_SZ_FACTOR;
+				else
+					ep->sys->page_recycle_repl->capacity =
+							(ep->sys->rx_pool_sz + 1) *
+							IPA_GENERIC_RX_PAGE_POOL_SZ_FACTOR;
+				IPADBG("Page repl capacity for client:%d, value:%d\n",
+						   sys_in->client, ep->sys->page_recycle_repl->capacity);
+				INIT_LIST_HEAD(&ep->sys->page_recycle_repl->page_repl_head);
+				INIT_DELAYED_WORK(&ep->sys->freepage_work, ipa3_schd_freepage_work);
+				tasklet_init(&ep->sys->tasklet_find_freepage,
+					ipa3_tasklet_find_freepage, (unsigned long) ep->sys);
+				ipa3_replenish_rx_page_cache(ep->sys);
+			} else {
+ 				ep->sys->napi_sort_page_thrshld_cnt = 0;
+				/* Sort the pages once. */
+				ipa3_tasklet_find_freepage((unsigned long) ep->sys);
 			}
-			atomic_set(&ep->sys->page_recycle_repl->pending, 0);
-			/* For common page pool double the pool size. */
-			if (ipa3_ctx->wan_common_page_pool &&
-				sys_in->client == IPA_CLIENT_APPS_WAN_COAL_CONS)
-				ep->sys->page_recycle_repl->capacity =
-						(ep->sys->rx_pool_sz + 1) *
-						ipa3_ctx->ipa_gen_rx_cmn_page_pool_sz_factor;
-			else
-				ep->sys->page_recycle_repl->capacity =
-						(ep->sys->rx_pool_sz + 1) *
-						IPA_GENERIC_RX_PAGE_POOL_SZ_FACTOR;
-			IPADBG("Page repl capacity for client:%d, value:%d\n",
-					   sys_in->client, ep->sys->page_recycle_repl->capacity);
-			INIT_LIST_HEAD(&ep->sys->page_recycle_repl->page_repl_head);
+
 			ep->sys->repl = kzalloc(sizeof(*ep->sys->repl), GFP_KERNEL);
 			if (!ep->sys->repl) {
 				IPAERR("failed to alloc repl for client %d\n",
@@ -1733,11 +1745,6 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 			atomic_set(&ep->sys->repl->head_idx, 0);
 			atomic_set(&ep->sys->repl->tail_idx, 0);
 
-			tasklet_init(&ep->sys->tasklet_find_freepage,
-					ipa3_tasklet_find_freepage, (unsigned long) ep->sys);
-			INIT_DELAYED_WORK(&ep->sys->freepage_work, ipa3_schd_freepage_work);
-			ep->sys->napi_sort_page_thrshld_cnt = 0;
-			ipa3_replenish_rx_page_cache(ep->sys);
 			ipa3_wq_page_repl(&ep->sys->repl_work);
 		} else {
 			/* Use pool same as coal pipe when common page pool is used. */
@@ -3589,11 +3596,17 @@ static void free_rx_page(void *chan_user_data, void *xfer_user_data)
 	if (!rx_pkt->page_data.is_tmp_alloc) {
 		list_del_init(&rx_pkt->link);
 		page_ref_dec(rx_pkt->page_data.page);
+		spin_lock_bh(&rx_pkt->sys->common_sys->spinlock);
+		/* Add the element to head. */
+		list_add(&rx_pkt->link,
+			&rx_pkt->sys->page_recycle_repl->page_repl_head);
+		spin_unlock_bh(&rx_pkt->sys->common_sys->spinlock);
+	} else {
+		dma_unmap_page(ipa3_ctx->pdev, rx_pkt->page_data.dma_addr,
+			rx_pkt->len, DMA_FROM_DEVICE);
+		__free_pages(rx_pkt->page_data.page, rx_pkt->page_data.page_order);
+		kmem_cache_free(ipa3_ctx->rx_pkt_wrapper_cache, rx_pkt);
 	}
-	dma_unmap_page(ipa3_ctx->pdev, rx_pkt->page_data.dma_addr,
-		rx_pkt->len, DMA_FROM_DEVICE);
-	__free_pages(rx_pkt->page_data.page, rx_pkt->page_data.page_order);
-	kmem_cache_free(ipa3_ctx->rx_pkt_wrapper_cache, rx_pkt);
 }
 
 /**
@@ -3660,23 +3673,6 @@ static void ipa3_cleanup_rx(struct ipa3_sys_context *sys)
 		kfree(sys->repl->cache);
 		kfree(sys->repl);
 		sys->repl = NULL;
-	}
-	if (sys->page_recycle_repl) {
-		list_for_each_entry_safe(rx_pkt, r,
-		&sys->page_recycle_repl->page_repl_head, link) {
-			list_del(&rx_pkt->link);
-			dma_unmap_page(dev,
-				rx_pkt->page_data.dma_addr,
-				rx_pkt->len,
-				DMA_FROM_DEVICE);
-			__free_pages(rx_pkt->page_data.page,
-				rx_pkt->page_data.page_order);
-			kmem_cache_free(
-				ipa3_ctx->rx_pkt_wrapper_cache,
-				rx_pkt);
-		}
-		kfree(sys->page_recycle_repl);
-		sys->page_recycle_repl = NULL;
 	}
 }
 
