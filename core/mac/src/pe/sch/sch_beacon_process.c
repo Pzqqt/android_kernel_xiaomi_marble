@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -616,9 +616,7 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 	int8_t regMax = 0, maxTxPower = 0;
 	QDF_STATUS status;
 	bool skip_tpe = false;
-	uint8_t programmed_country[REG_ALPHA2_LEN + 1];
-	enum reg_6g_ap_type pwr_type_6g = REG_INDOOR_AP;
-	bool ctry_code_match = false;
+	enum reg_6g_ap_type pwr_type_6g;
 	bool is_power_constraint_abs = false;
 
 	qdf_mem_zero(&beaconParams, sizeof(tUpdateBeaconParams));
@@ -658,15 +656,29 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 			pe_err("Channel is 6G but country IE not present");
 			return;
 		}
-		wlan_reg_read_current_country(mac_ctx->psoc,
-					      programmed_country);
-		status = wlan_reg_get_6g_power_type_for_ctry(
-				mac_ctx->psoc, mac_ctx->pdev,
-				bcn->countryInfoParam.countryString,
-				programmed_country, &pwr_type_6g,
-				&ctry_code_match, REG_MAX_AP_TYPE);
+		if (bcn->he_op.oper_info_6g_present) {
+			session->ap_defined_power_type_6g =
+				bcn->he_op.oper_info_6g.info.reg_info;
+			if (session->ap_defined_power_type_6g < REG_INDOOR_AP ||
+			    session->ap_defined_power_type_6g >
+			    REG_MAX_SUPP_AP_TYPE) {
+				session->ap_defined_power_type_6g =
+							REG_VERY_LOW_POWER_AP;
+				pe_debug("AP power type is invalid, defaulting to VLP");
+			}
+		} else {
+			pe_debug("AP power type is null, defaulting to VLP");
+			session->ap_defined_power_type_6g =
+						REG_VERY_LOW_POWER_AP;
+		}
+
+		status = wlan_reg_get_best_6g_power_type(
+				mac_ctx->psoc, mac_ctx->pdev, &pwr_type_6g,
+				session->ap_defined_power_type_6g,
+				bcn->chan_freq);
 		if (QDF_IS_STATUS_ERROR(status))
 			return;
+		session->best_6g_power_type = pwr_type_6g;
 	}
 
 	/*
@@ -706,8 +718,7 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 
 		if ((ap_constraint_change && local_constraint) ||
 		    (tpe_change && !skip_tpe)) {
-			lim_calculate_tpc(mac_ctx, session, pwr_type_6g,
-					  ctry_code_match);
+			lim_calculate_tpc(mac_ctx, session);
 
 			if (tx_ops->set_tpc_power)
 				tx_ops->set_tpc_power(mac_ctx->psoc,
