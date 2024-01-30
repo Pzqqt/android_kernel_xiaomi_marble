@@ -124,4 +124,6 @@ source "drivers/staging/qcacld-3.0/Kconfig"
 
 source "drivers/staging/kernelsu/Kconfig"
 
+source "drivers/staging/binder_prio/Kconfig"
+
 endif # STAGING
