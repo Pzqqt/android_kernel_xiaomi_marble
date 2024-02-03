@@ -3017,9 +3017,15 @@ static void goodix_set_game_work(struct work_struct *work)
 
 	if (xiaomi_touch_interfaces.touch_mode[Touch_Tolerance][SET_CUR_VALUE] >
 	    xiaomi_touch_interfaces.touch_mode[Touch_Tolerance][GET_DEF_VALUE]) {
-		hw_ops->switch_report_rate(goodix_core_data, true);
+		if (goodix_core_data->report_rate == 240) {
+			hw_ops->switch_report_rate(goodix_core_data, true);
+			goodix_core_data->report_rate = 480;
+		}
 	} else {
-		hw_ops->switch_report_rate(goodix_core_data, false);
+		if (goodix_core_data->report_rate == 480) {
+			hw_ops->switch_report_rate(goodix_core_data, false);
+			goodix_core_data->report_rate = 240;
+		}
 	}
 
 	mutex_unlock(&goodix_core_data->core_mutex);
