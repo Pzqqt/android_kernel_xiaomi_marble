@@ -3035,16 +3035,17 @@ static int goodix_set_cur_value(int gtp_mode, int gtp_value)
 {
 	int ret = 0;
 
-	ts_info("mode:%d, value:%d", gtp_mode, gtp_value);
 	if (!goodix_core_data || goodix_core_data->init_stage != CORE_INIT_STAGE2) {
 		ts_err("initialization not completed, return");
 		return 0;
 	}
 
 	if (gtp_mode >= Touch_Mode_NUM) {
-		ts_err("gtp mode is error:%d", gtp_mode);
+		ts_debug("gtp mode is error:%d", gtp_mode);
 		return -EINVAL;
 	}
+
+	ts_info("mode:%d, value:%d", gtp_mode, gtp_value);
 
 	if (gtp_mode == Touch_Doubletap_Mode && goodix_core_data && gtp_value >= 0) {
 		goodix_core_data->double_wakeup = gtp_value;
