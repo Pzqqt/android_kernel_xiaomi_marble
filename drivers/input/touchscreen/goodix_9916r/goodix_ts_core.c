@@ -3017,9 +3017,15 @@ static void goodix_set_game_work(struct work_struct *work)
 
 	if (xiaomi_touch_interfaces.touch_mode[Touch_Tolerance][SET_CUR_VALUE] >
 	    xiaomi_touch_interfaces.touch_mode[Touch_Tolerance][GET_DEF_VALUE]) {
-		hw_ops->switch_report_rate(goodix_core_data, true);
+		if (goodix_core_data->report_rate == 240) {
+			hw_ops->switch_report_rate(goodix_core_data, true);
+			goodix_core_data->report_rate = 480;
+		}
 	} else {
-		hw_ops->switch_report_rate(goodix_core_data, false);
+		if (goodix_core_data->report_rate == 480) {
+			hw_ops->switch_report_rate(goodix_core_data, false);
+			goodix_core_data->report_rate = 240;
+		}
 	}
 
 	mutex_unlock(&goodix_core_data->core_mutex);
@@ -3029,16 +3035,17 @@ static int goodix_set_cur_value(int gtp_mode, int gtp_value)
 {
 	int ret = 0;
 
-	ts_info("mode:%d, value:%d", gtp_mode, gtp_value);
 	if (!goodix_core_data || goodix_core_data->init_stage != CORE_INIT_STAGE2) {
 		ts_err("initialization not completed, return");
 		return 0;
 	}
 
 	if (gtp_mode >= Touch_Mode_NUM) {
-		ts_err("gtp mode is error:%d", gtp_mode);
+		ts_debug("gtp mode is error:%d", gtp_mode);
 		return -EINVAL;
 	}
+
+	ts_info("mode:%d, value:%d", gtp_mode, gtp_value);
 
 	if (gtp_mode == Touch_Doubletap_Mode && goodix_core_data && gtp_value >= 0) {
 		goodix_core_data->double_wakeup = gtp_value;
