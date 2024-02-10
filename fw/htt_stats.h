@@ -4664,6 +4664,9 @@ typedef struct {
     A_UINT32 discarded_pkts;
     A_UINT32 local_frames;
     A_UINT32 is_ext_msdu;
+    A_UINT32 mlo_invalid_routing_discard;
+    A_UINT32 mlo_invalid_routing_dup_entry_discard;
+    A_UINT32 discard_peer_unauthorized_pkts;
 } htt_stats_tx_de_enqueue_discard_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_tx_de_enqueue_discard_tlv htt_tx_de_enqueue_discard_stats_tlv;
