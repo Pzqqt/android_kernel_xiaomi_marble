@@ -7226,10 +7226,14 @@ typedef struct {
  * Bit 0: set wrong txkey
  *     There is one special WFA test case in STA or AP, setting wrong txkey
  *     in disassoc or deauth with PMF enabled to verify if peer disconnected
+ * Bit 1: set ps buffering for SA query frame
  */
 #define WMI_TX_SEND_FLAG_SET_WRONG_KEY    0x00000001
 #define WMI_TX_SEND_FLAG_SET_WRONG_KEY_GET(tx_flags) WMI_GET_BITS(tx_flags, 0, 1)
 #define WMI_TX_SEND_FLAG_SET_WRONG_KEY_SET(tx_flags, value) WMI_SET_BITS(tx_flags, 0, 1, value)
+#define WMI_TX_SEND_FLAG_SET_PS_BUFFERING_FOR_SA_QUERY    0x00000002
+#define WMI_TX_SEND_FLAG_SET_PS_BUFFERING_FOR_SA_QUERY_GET(tx_flags) WMI_GET_BITS(tx_flags, 1, 1)
+#define WMI_TX_SEND_FLAG_SET_PS_BUFFERING_FOR_SA_QUERY_SET(tx_flags, value) WMI_SET_BITS(tx_flags, 1, 1, value)
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_tx_send_params */
@@ -20941,6 +20945,15 @@ typedef struct {
     wmi_mac_addr link_macaddr;
 } wmi_pdev_mesh_rx_filter_enable_fixed_param;
 
+
+/*
+ * PEER assoc_flags for assoc complete:
+ * Bit 0: Set for peer data flush
+ */
+#define WMI_ASSOC_FLAG_FLUSH_PEER_DATA  0x00000001
+#define WMI_ASSOC_FLAG_FLUSH_PEER_DATA_GET(assoc_flags) WMI_GET_BITS(assoc_flags, 0, 1)
+#define WMI_ASSOC_FLAG_FLUSH_PEER_DATA_SET(assoc_flags, value) WMI_GET_BITS(assoc_flags, 0, 1, value)
+
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_assoc_complete_cmd_fixed_param */
     /** peer MAC address */
@@ -21072,6 +21085,7 @@ typedef struct {
     A_UINT32 peer_eht_cap_phy[WMI_MAX_EHTCAP_PHY_SIZE];
     A_UINT32 peer_eht_ops;
     wmi_ppe_threshold peer_eht_ppet;
+    A_UINT32 assoc_flags;
 
 /* Following this struct are the TLV's:
  *     A_UINT8 peer_legacy_rates[];
