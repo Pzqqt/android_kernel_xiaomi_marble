@@ -259,9 +259,10 @@
  * 3.130 Add H2T TX_LCE_SUPER_RULE_SETUP and T2H TX_LCE_SUPER_RULE_SETUP_DONE
  *       msg defs.
  * 3.131 Add H2T TYPE_MSDUQ_RECFG_REQ + T2H MSDUQ_CFG_IND msg defs.
+ * 3.132 Add flow_classification_3_tuple_field_enable in H2T 3_TUPLE_HASH_CFG.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 131
+#define HTT_CURRENT_VERSION_MINOR 132
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -9570,16 +9571,18 @@ enum htt_rx_fse_operation {
  *
  * MSG_TYPE => HTT_H2T_MSG_TYPE_3_TUPLE_HASH_CFG
  *
- *     |31            24|23              |15             8|7          2|1|0|
+ *     |31            24|23              |15             8|7        3|2|1|0|
  *     |----------------+----------------+----------------+----------------|
  *     |              reserved           |    pdev_id     |    msg_type    |
  *     |---------------------------------+----------------+----------------|
- *     |                        reserved                               |E|F|
+ *     |                        reserved                             |G|E|F|
  *     |---------------------------------+----------------+----------------|
  *     Where E = Configure the target to provide the 3-tuple hash value in
- *                      toeplitz_hash_2_or_4 field of rx_msdu_start tlv
+ *               toeplitz_hash_2_or_4 field of rx_msdu_start tlv
  *           F = Configure the target to provide the 3-tuple hash value in
- *                      flow_id_toeplitz field of rx_msdu_start tlv
+ *               flow_id_toeplitz field of rx_msdu_start tlv
+ *           G = Configure the target to provide the 3-tuple based flow
+ *               classification search
  *
  * The following field definitions describe the format of the 3 tuple hash value
  * message sent from the host to target as part of initialization sequence.
@@ -9593,7 +9596,8 @@ enum htt_rx_fse_operation {
  *           b'31:16 - reserved : Reserved for future use
  *  dword1 - b'0     - flow_id_toeplitz_field_enable
  *           b'1     - toeplitz_hash_2_or_4_field_enable
- *           b'31:2  - reserved : Reserved for future use
+ *           b'2     - flow_classification_3_tuple_field_enable
+ *           b'31:3  - reserved : Reserved for future use
  * ---------+------+----------------------------------------------------------
  *     bit1 | bit0 |   Functionality
  * ---------+------+----------------------------------------------------------
@@ -9617,7 +9621,8 @@ PREPACK struct htt_h2t_msg_rx_3_tuple_hash_cfg_t {
              reserved0                         :16;
     A_UINT32 flow_id_toeplitz_field_enable     :1,
              toeplitz_hash_2_or_4_field_enable :1,
-             reserved1                         :30;
+             flow_classification_3_tuple_field_enable :1,
+             reserved1                         :29;
 } POSTPACK;
 
 /* DWORD0 : pdev_id configuration Macros */
@@ -9633,7 +9638,7 @@ PREPACK struct htt_h2t_msg_rx_3_tuple_hash_cfg_t {
         } while (0)
 
 /* DWORD1: rx 3 tuple hash value reception field configuration Macros */
-#define HTT_H2T_FLOW_ID_TOEPLITZ_FIELD_CONFIG_M         0x1
+#define HTT_H2T_FLOW_ID_TOEPLITZ_FIELD_CONFIG_M         0x00000001
 #define HTT_H2T_FLOW_ID_TOEPLITZ_FIELD_CONFIG_S         0
 #define HTT_FLOW_ID_TOEPLITZ_FIELD_CONFIG_GET(_var)    \
     (((_var) & HTT_H2T_FLOW_ID_TOEPLITZ_FIELD_CONFIG_M) >> \
@@ -9644,7 +9649,7 @@ PREPACK struct htt_h2t_msg_rx_3_tuple_hash_cfg_t {
         ((_var) |= ((_val) << HTT_H2T_FLOW_ID_TOEPLITZ_FIELD_CONFIG_S)); \
     } while (0)
 
-#define HTT_H2T_TOEPLITZ_2_OR_4_FIELD_CONFIG_M         0x2
+#define HTT_H2T_TOEPLITZ_2_OR_4_FIELD_CONFIG_M         0x00000002
 #define HTT_H2T_TOEPLITZ_2_OR_4_FIELD_CONFIG_S         1
 #define HTT_TOEPLITZ_2_OR_4_FIELD_CONFIG_GET(_var)    \
     (((_var) & HTT_H2T_TOEPLITZ_2_OR_4_FIELD_CONFIG_M) >> \
@@ -9654,6 +9659,18 @@ PREPACK struct htt_h2t_msg_rx_3_tuple_hash_cfg_t {
         HTT_CHECK_SET_VAL(HTT_H2T_TOEPLITZ_2_OR_4_FIELD_CONFIG, _val); \
         ((_var) |= ((_val) << HTT_H2T_TOEPLITZ_2_OR_4_FIELD_CONFIG_S)); \
     } while (0)
+
+#define HTT_H2T_FLOW_CLASSIFY_3_TUPLE_FIELD_ENABLE_M   0x00000004
+#define HTT_H2T_FLOW_CLASSIFY_3_TUPLE_FIELD_ENABLE_S   2
+#define HTT_FLOW_CLASSIFY_3_TUPLE_FIELD_ENABLE_GET(_var)    \
+    (((_var) & HTT_H2T_FLOW_CLASSIFY_3_TUPLE_FIELD_ENABLE_M) >> \
+        HTT_H2T_FLOW_CLASSIFY_3_TUPLE_FIELD_ENABLE_S)
+#define HTT_H2T_FLOW_CLASSIFY_3_TUPLE_FIELD_ENABLE_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_H2T_FLOW_CLASSIFY_3_TUPLE_FIELD_ENABLE, _val); \
+        ((_var) |= ((_val) << HTT_H2T_FLOW_CLASSIFY_3_TUPLE_FIELD_ENABLE_S)); \
+    } while (0)
+
 
 #define HTT_3_TUPLE_HASH_CFG_REQ_BYTES     8
 
