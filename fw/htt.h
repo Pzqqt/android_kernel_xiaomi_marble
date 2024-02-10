@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -254,11 +254,13 @@
  * 3.126 Add HTT_RXDATA_ERR_INVALID_PEER def.
  * 3.127 Add transmit_count fields in htt_tx_wbm_completion_vX structs.
  * 3.128 Add H2T TX_LATENCY_STATS_CFG + T2H TX_LATENCY_STATS_PERIODIC_IND
- *       msg defs
+ *       msg defs.
  * 3.129 Add HTT_TX_FW2WBM_REINJECT_REASON_SAWF_SVC_CLASS_ID_ABSENT def.
+ * 3.130 Add H2T TX_LCE_SUPER_RULE_SETUP and T2H TX_LCE_SUPER_RULE_SETUP_DONE
+ *       msg defs.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 129
+#define HTT_CURRENT_VERSION_MINOR 130
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -894,6 +896,7 @@ enum htt_h2t_msg_type {
     HTT_H2T_MSG_TYPE_RX_CCE_SUPER_RULE_SETUP = 0x23,
     HTT_H2T_MSG_TYPE_PRIMARY_LINK_PEER_MIGRATE_RESP = 0x24,
     HTT_H2T_MSG_TYPE_TX_LATENCY_STATS_CFG  = 0x25,
+    HTT_H2T_MSG_TYPE_TX_LCE_SUPER_RULE_SETUP = 0x26,
 
     /* keep this last */
     HTT_H2T_NUM_MSGS
@@ -1924,6 +1927,14 @@ typedef enum {
 #define HTT_TX_MSDU_EXT2_DESC_BW_160MHZ_M    0x00000020
 #define HTT_TX_MSDU_EXT2_DESC_BW_160MHZ_S    5
 
+/* Rx buffer addr qdata ctrl pkt */
+struct htt_h2t_rx_buffer_addr_info {
+     A_UINT32 buffer_addr_31_0           : 32; // [31:0]
+     A_UINT32 buffer_addr_39_32          :  8, // [7:0]
+              return_buffer_manager      :  4, // [11:8]
+              sw_buffer_cookie           : 20; // [31:12]
+};
+
 /**
  * @brief HTT tx MSDU extension descriptor v2
  * @details
@@ -2063,8 +2074,11 @@ PREPACK struct htt_tx_msdu_desc_ext2_t {
     A_UINT32 host_opaque_cookie  : 16, /* see is_host_opaque_valid */
              rsvd1               : 16;
 
+    /* DWORD 7-8 : Rx buffer addr for qdata frames */
+    struct htt_h2t_rx_buffer_addr_info rx_buffer_addr;
+
     /*
-     * This structure can be expanded further up to 40 bytes
+     * This structure can be expanded further up to 32 bytes
      * by adding further DWORDs as needed.
      */
 } POSTPACK;
@@ -2443,6 +2457,51 @@ PREPACK struct htt_tx_msdu_desc_ext2_t {
         ((_var) |= ((_val) << HTT_TX_MSDU_EXT2_DESC_HOST_OPAQUE_COOKIE_S)); \
     } while (0)
 
+/* DWORD 7 */
+#define HTT_RX_BUFFER_ADDR_INFO_ADDR_31_0_M  0xFFFFFFFF
+#define HTT_RX_BUFFER_ADDR_INFO_ADDR_31_0_S  0
+
+#define HTT_RX_BUFFER_ADDR_INFO_ADDR_31_0_SET(word, value) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_RX_BUFFER_ADDR_INFO_ADDR_31_0, value); \
+        (word) |= (value)  << HTT_RX_BUFFER_ADDR_INFO_ADDR_31_0_S; \
+    } while (0)
+#define HTT_RX_BUFFER_ADDR_INFO_ADDR_31_0_GET(word) \
+    (((word) & HTT_RX_BUFFER_ADDR_INFO_ADDR_31_0_M) >> HTT_RX_BUFFER_ADDR_INFO_ADDR_31_0_S)
+
+/* DWORD 8 */
+#define HTT_RX_BUFFER_ADDR_INFO_ADDR_39_32_M  0x000000FF
+#define HTT_RX_BUFFER_ADDR_INFO_ADDR_39_32_S  0
+
+#define HTT_RX_BUFFER_ADDR_INFO_ADDR_39_32_SET(word, value)      \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_RX_BUFFER_ADDR_INFO_ADDR_39_32, value); \
+        (word) |= (value)  << HTT_RX_BUFFER_ADDR_INFO_ADDR_39_32_S; \
+    } while (0)
+#define HTT_RX_BUFFER_ADDR_INFO_ADDR_39_32_GET(word) \
+    (((word) & HTT_RX_BUFFER_ADDR_INFO_ADDR_39_32_M) >> HTT_RX_BUFFER_ADDR_INFO_ADDR_39_32_S)
+
+#define HTT_RX_BUFFER_ADDR_INFO_RETURN_BUFFER_MANAGER_M  0x00000F00
+#define HTT_RX_BUFFER_ADDR_INFO_RETURN_BUFFER_MANAGER_S  8
+
+#define HTT_RX_BUFFER_ADDR_INFO_RETURN_BUFFER_MANAGER_SET(word, value) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_RX_BUFFER_ADDR_INFO_RETURN_BUFFER_MANAGER, value); \
+        (word) |= (value)  << HTT_RX_BUFFER_ADDR_INFO_RETURN_BUFFER_MANAGER_S; \
+    } while (0)
+#define HTT_RX_BUFFER_ADDR_INFO_RETURN_BUFFER_MANAGER_GET(word) \
+    (((word) & HTT_RX_BUFFER_ADDR_INFO_RETURN_BUFFER_MANAGER_M) >> HTT_RX_BUFFER_ADDR_INFO_RETURN_BUFFER_MANAGER_S)
+
+#define HTT_RX_BUFFER_ADDR_INFO_SW_BUFFER_COOKIE_M  0xFFFFF000
+#define HTT_RX_BUFFER_ADDR_INFO_SW_BUFFER_COOKIE_S  12
+
+#define HTT_RX_BUFFER_ADDR_INFO_SW_BUFFER_COOKIE_SET(word, value) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_RX_BUFFER_ADDR_INFO_SW_BUFFER_COOKIE, value); \
+        (word) |= (value)  << HTT_RX_BUFFER_ADDR_INFO_SW_BUFFER_COOKIE_S; \
+    } while (0)
+#define HTT_RX_BUFFER_ADDR_INFO_SW_BUFFER_COOKIE_GET(word) \
+    (((word) & HTT_RX_BUFFER_ADDR_INFO_SW_BUFFER_COOKIE_M) >> HTT_RX_BUFFER_ADDR_INFO_SW_BUFFER_COOKIE_S)
 
 typedef enum {
     HTT_TCL_METADATA_TYPE_PEER_BASED = 0,
@@ -2473,7 +2532,8 @@ typedef struct {
         vdev_id:       8,
         pdev_id:       2,
         host_inspected:1,
-        rsvd:          19;
+        opt_dp_ctrl:   1, /* 1 -> qdata consent pkt */
+        rsvd:          18;
 } htt_tx_tcl_vdev_metadata;
 
 typedef struct {
@@ -2505,6 +2565,8 @@ PREPACK struct htt_tx_tcl_metadata {
 #define HTT_TX_TCL_METADATA_PDEV_ID_S             10
 #define HTT_TX_TCL_METADATA_HOST_INSPECTED_M      0x00001000
 #define HTT_TX_TCL_METADATA_HOST_INSPECTED_S      12
+#define HTT_TX_TCL_METADATA_OPT_DP_CTRL_M         0x00002000
+#define HTT_TX_TCL_METADATA_OPT_DP_CTRL_S         13
 
 /* PEER metadata */
 #define HTT_TX_TCL_METADATA_PEER_ID_M             0x0000fffc
@@ -2562,6 +2624,15 @@ PREPACK struct htt_tx_tcl_metadata {
      do { \
          HTT_CHECK_SET_VAL(HTT_TX_TCL_METADATA_PEER_ID, _val); \
          ((_var) |= ((_val) << HTT_TX_TCL_METADATA_PEER_ID_S)); \
+     } while (0)
+
+#define HTT_TX_TCL_METADATA_OPT_DP_CTRL_GET(_var) \
+    (((_var) & HTT_TX_TCL_METADATA_OPT_DP_CTRL_M) >> \
+    HTT_TX_TCL_METADATA_OPT_DP_CTRL_S)
+#define HTT_TX_TCL_METADATA_OPT_DP_CTRL_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_TCL_METADATA_OPT_DP_CTRL, _val); \
+         ((_var) |= ((_val) << HTT_TX_TCL_METADATA_OPT_DP_CTRL_S)); \
      } while (0)
 
 /*------------------------------------------------------------------
@@ -2776,6 +2847,7 @@ typedef enum {
    HTT_TX_FW2WBM_REINJECT_REASON_FLOW_CONTROL,
    HTT_TX_FW2WBM_REINJECT_REASON_MLO_MCAST,
    HTT_TX_FW2WBM_REINJECT_REASON_SAWF_SVC_CLASS_ID_ABSENT,
+   HTT_TX_FW2WBM_REINJECT_REASON_OPT_DP_CTRL, /* tx qdata packet */
 
    HTT_TX_FW2WBM_REINJECT_REASON_MAX,
 } htt_tx_fw2wbm_reinject_reason_t;
@@ -10683,6 +10755,207 @@ PREPACK struct htt_rx_cce_super_rule_setup_t {
         } while (0)
 
 
+/*
+ * @brief  host -> target HTT TX_LCE_SUPER_RULE_SETUP message
+ *
+ * MSG_TYPE => HTT_H2T_MSG_TYPE_TX_LCE_SUPER_RULE_SETUP
+ *
+ * @details
+ * Host sends TX_SUPER_RULE setup message to target, in order to request,
+ * install, or uninstall tx super rules to match certain kind of packets
+ * with specific parameters. Target sets up HW registers based on setup
+ * message and always confirms back to host (by sending a T2H
+ * TX_LCE_SUPER_RULE_SETUP_DONE message).
+ *
+ * The message would appear as follows:
+ * |31             24|23             16|15              8|7               0|
+ * |-----------------+-----------------+-----------------+-----------------|
+ * |     reserved    |    operation    |     pdev_id     |     msg_type    |
+ * |-----------------------------------------------------------------------|
+ * |                         tx_super_rule_param[0]                        |
+ * |-----------------------------------------------------------------------|
+ * |                         tx_super_rule_param[1]                        |
+ * |-----------------------------------------------------------------------|
+ * |                         tx_super_rule_param[2]                        |
+ * |-----------------------------------------------------------------------|
+ *
+ * The message is interpreted as follows:
+ * dword0  - b'0:7   - msg_type: This will be set to
+ *                     0x26 (HTT_H2T_MSG_TYPE_TX_LCE_SUPER_RULE_SETUP)
+ *           b'8:15  - pdev_id: Identify which pdev TX_SUPER_RULE is for
+ *           b'16:23 - operation: Identify operation to be taken,
+ *                     0: HTT_TX_LCE_SUPER_RULE_INSTALL
+ *                     1: HTT_TX_LCE_SUPER_RULE_RELEASE
+ *           b'24:31 - reserved
+ * dword1~10         - tx_super_rule_param[0]:
+ *                     contains parameters used to setup TX_SUPER_RULE_0
+ * dword11~20        - tx_super_rule_param[1]:
+ *                     contains parameters used to setup TX_SUPER_RULE_1
+ * dword21~30        - tx_super_rule_param[2]:
+ *                     contains parameters used to setup TX_SUPER_RULE_2
+ *
+ * Each tx_super_rule_param structure would appear as follows:
+ * |31             24|23             16|15              8|7               0|
+ * |-----------------+-----------------+-----------------+-----------------|
+ * |src_ipv6_addr[3] |src_ipv6_addr[2] |src_ipv6_addr[1] |src_ipv6_addr[0] |
+ * |/src_ipv4_addr[3]|/src_ipv4_addr[2]|/src_ipv4_addr[1]|/src_ipv4_addr[0]|
+ * |-----------------------------------------------------------------------|
+ * |src_ipv6_addr[7] |src_ipv6_addr[6] |src_ipv6_addr[5] |src_ipv6_addr[4] |
+ * |-----------------------------------------------------------------------|
+ * |src_ipv6_addr[11]|src_ipv6_addr[10]|src_ipv6_addr[9] |src_ipv6_addr[8] |
+ * |-----------------------------------------------------------------------|
+ * |src_ipv6_addr[15]|src_ipv6_addr[14]|src_ipv6_addr[13]|src_ipv6_addr[12]|
+ * |-----------------------------------------------------------------------|
+ * |dst_ipv6_addr[3] |dst_ipv6_addr[2] |dst_ipv6_addr[1] |dst_ipv6_addr[0] |
+ * |/dst_ipv4_addr[3]|/dst_ipv4_addr[2]|/dst_ipv4_addr[1]|/dst_ipv4_addr[0]|
+ * |-----------------------------------------------------------------------|
+ * |dst_ipv6_addr[7] |dst_ipv6_addr[6] |dst_ipv6_addr[5] |dst_ipv6_addr[4] |
+ * |-----------------------------------------------------------------------|
+ * |dst_ipv6_addr[11]|dst_ipv6_addr[10]|dst_ipv6_addr[9] |dst_ipv6_addr[8] |
+ * |-----------------------------------------------------------------------|
+ * |dst_ipv6_addr[15]|dst_ipv6_addr[14]|dst_ipv6_addr[13]|dst_ipv6_addr[12]|
+ * |-----------------------------------------------------------------------|
+ * |    is_valid     |     l4_type     |              l3_type              |
+ * |-----------------------------------------------------------------------|
+ * |           l4_dst_port             |            l4_src_port            |
+ * |-----------------------------------------------------------------------|
+ * Where l3_type is 802.3 EtherType, l4_type is IANA IP protocol type.
+ *
+ * The tx_super_rule_param[1] structure is similar.
+ * The tx_super_rule_param[2] structure is similar.
+ */
+#define HTT_TX_LCE_SUPER_RULE_SETUP_NUM 3
+
+enum htt_tx_lce_super_rule_setup_operation {
+    HTT_TX_LCE_SUPER_RULE_INSTALL = 0,
+    HTT_TX_LCE_SUPER_RULE_RELEASE,
+
+    /* All operation should be before this */
+    HTT_TX_LCE_SUPER_RULE_SETUP_INVALID_OPERATION,
+};
+
+typedef struct {
+    union {
+        A_UINT8 src_ipv4_addr[4];
+        A_UINT8 src_ipv6_addr[16];
+    };
+    union {
+        A_UINT8 dst_ipv4_addr[4];
+        A_UINT8 dst_ipv6_addr[16];
+    };
+    A_UINT32 l3_type:      16,
+             l4_type:       8,
+             is_valid:      8;
+    A_UINT32 l4_src_port:  16,
+             l4_dst_port:  16;
+} htt_tx_lce_super_rule_param_t;
+
+PREPACK struct htt_tx_lce_super_rule_setup_t {
+    A_UINT32 msg_type:   8,
+             pdev_id:    8,
+             operation:  8, /* htt_tx_lce_super_rule_setup_operation */
+             reserved:   8;
+    htt_tx_lce_super_rule_param_t
+        lce_super_rule_param[HTT_TX_LCE_SUPER_RULE_SETUP_NUM];
+} POSTPACK;
+
+#define HTT_TX_LCE_SUPER_RULE_SETUP_SZ (sizeof(struct htt_tx_lce_super_rule_setup_t))
+
+#define HTT_TX_LCE_SUPER_RULE_SETUP_PDEV_ID_M 0x0000ff00
+#define HTT_TX_LCE_SUPER_RULE_SETUP_PDEV_ID_S 8
+#define HTT_TX_LCE_SUPER_RULE_SETUP_PDEV_ID_GET(_var) \
+        (((_var) & HTT_TX_LCE_SUPER_RULE_SETUP_PDEV_ID_M) >> \
+        HTT_TX_LCE_SUPER_RULE_SETUP_PDEV_ID_S)
+
+#define HTT_TX_LCE_SUPER_RULE_SETUP_PDEV_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_TX_LCE_SUPER_RULE_SETUP_PDEV_ID, _val); \
+            ((_var) |= ((_val) << HTT_TX_LCE_SUPER_RULE_SETUP_PDEV_ID_S)); \
+        } while (0)
+
+#define HTT_TX_LCE_SUPER_RULE_SETUP_OPERATION_M 0x00ff0000
+#define HTT_TX_LCE_SUPER_RULE_SETUP_OPERATION_S 16
+#define HTT_TX_LCE_SUPER_RULE_SETUP_OPERATION_GET(_var) \
+        (((_var) & HTT_TX_LCE_SUPER_RULE_SETUP_OPERATION_M) >> \
+        HTT_TX_LCE_SUPER_RULE_SETUP_OPERATION_S)
+#define HTT_TX_LCE_SUPER_RULE_SETUP_OPERATION_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_TX_LCE_SUPER_RULE_SETUP_OPERATION, _val); \
+            ((_var) |= ((_val) << HTT_TX_LCE_SUPER_RULE_SETUP_OPERATION_S)); \
+        } while (0)
+#define HTT_TX_LCE_SUPER_RULE_SETUP_L3_TYPE_M 0x0000ffff
+#define HTT_TX_LCE_SUPER_RULE_SETUP_L3_TYPE_S 0
+#define HTT_TX_LCE_SUPER_RULE_SETUP_L3_TYPE_GET(_var) \
+        (((_var) & HTT_TX_LCE_SUPER_RULE_SETUP_L3_TYPE_M) >> \
+        HTT_TX_LCE_SUPER_RULE_SETUP_L3_TYPE_S)
+#define HTT_TX_LCE_SUPER_RULE_SETUP_L3_TYPE_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_TX_LCE_SUPER_RULE_SETUP_L3_TYPE, _val); \
+            ((_var) |= ((_val) << HTT_TX_LCE_SUPER_RULE_SETUP_L3_TYPE_S)); \
+        } while (0)
+
+#define HTT_TX_LCE_SUPER_RULE_SETUP_L4_TYPE_M 0x00ff0000
+#define HTT_TX_LCE_SUPER_RULE_SETUP_L4_TYPE_S 16
+#define HTT_TX_LCE_SUPER_RULE_SETUP_L4_TYPE_GET(_var) \
+        (((_var) & HTT_TX_LCE_SUPER_RULE_SETUP_L4_TYPE_M) >> \
+        HTT_TX_LCE_SUPER_RULE_SETUP_L4_TYPE_S)
+#define HTT_TX_LCE_SUPER_RULE_SETUP_L4_TYPE_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_TX_LCE_SUPER_RULE_SETUP_L4_TYPE, _val); \
+            ((_var) |= ((_val) << HTT_TX_LCE_SUPER_RULE_SETUP_L4_TYPE_S)); \
+        } while (0)
+
+#define HTT_TX_LCE_SUPER_RULE_SETUP_IS_VALID_M 0xff000000
+#define HTT_TX_LCE_SUPER_RULE_SETUP_IS_VALID_S 24
+#define HTT_TX_LCE_SUPER_RULE_SETUP_IS_VALID_GET(_var) \
+        (((_var) & HTT_TX_LCE_SUPER_RULE_SETUP_IS_VALID_M) >> \
+        HTT_TX_LCE_SUPER_RULE_SETUP_IS_VALID_S)
+#define HTT_TX_LCE_SUPER_RULE_SETUP_IS_VALID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_TX_LCE_SUPER_RULE_SETUP_IS_VALID, _val); \
+            ((_var) |= ((_val) << HTT_TX_LCE_SUPER_RULE_SETUP_IS_VALID_S)); \
+        } while (0)
+
+#define HTT_TX_LCE_SUPER_RULE_SETUP_L4_SRC_PORT_M 0x0000ffff
+#define HTT_TX_LCE_SUPER_RULE_SETUP_L4_SRC_PORT_S 0
+#define HTT_TX_LCE_SUPER_RULE_SETUP_L4_SRC_PORT_GET(_var) \
+        (((_var) & HTT_TX_LCE_SUPER_RULE_SETUP_L4_SRC_PORT_M) >> \
+        HTT_TX_LCE_SUPER_RULE_SETUP_L4_SRC_PORT_S)
+#define HTT_TX_LCE_SUPER_RULE_SETUP_L4_SRC_PORT_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_TX_LCE_SUPER_RULE_SETUP_L4_SRC_PORT, _val); \
+            ((_var) |= ((_val) << HTT_TX_LCE_SUPER_RULE_SETUP_L4_SRC_PORT_S)); \
+        } while (0)
+
+#define HTT_TX_LCE_SUPER_RULE_SETUP_L4_DST_PORT_M 0xffff0000
+#define HTT_TX_LCE_SUPER_RULE_SETUP_L4_DST_PORT_S 16
+#define HTT_TX_LCE_SUPER_RULE_SETUP_L4_DST_PORT_GET(_var) \
+        (((_var) & HTT_TX_LCE_SUPER_RULE_SETUP_L4_DST_PORT_M) >> \
+        HTT_TX_LCE_SUPER_RULE_SETUP_L4_DST_PORT_S)
+#define HTT_TX_LCE_SUPER_RULE_SETUP_L4_DST_PORT_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_TX_LCE_SUPER_RULE_SETUP_L4_DST_PORT, _val); \
+            ((_var) |= ((_val) << HTT_TX_LCE_SUPER_RULE_SETUP_L4_DST_PORT_S)); \
+        } while (0)
+
+#define HTT_TX_LCE_SUPER_RULE_SETUP_IPV4_ADDR_ARRAY_GET(_ptr, _array) \
+        do { \
+            A_MEMCPY(_array, _ptr, 4); \
+        } while (0)
+#define HTT_TX_LCE_SUPER_RULE_SETUP_IPV4_ADDR_ARRAY_SET(_ptr, _array) \
+        do { \
+            A_MEMCPY(_ptr, _array, 4); \
+        } while (0)
+#define HTT_TX_LCE_SUPER_RULE_SETUP_IPV6_ADDR_ARRAY_GET(_ptr, _array) \
+        do { \
+            A_MEMCPY(_array, _ptr, 16); \
+        } while (0)
+#define HTT_TX_LCE_SUPER_RULE_SETUP_IPV6_ADDR_ARRAY_SET(_ptr, _array) \
+        do { \
+            A_MEMCPY(_ptr, _array, 16); \
+        } while (0)
+
+
 /**
  * htt_h2t_primary_link_peer_status_type -
  * Unique number for each status or reasons
@@ -10998,6 +11271,7 @@ enum htt_t2h_msg_type {
     HTT_T2H_MSG_TYPE_PEER_AST_OVERRIDE_INDEX_IND   = 0x38,
     HTT_T2H_MSG_TYPE_PEER_EXTENDED_EVENT           = 0x39,
     HTT_T2H_MSG_TYPE_TX_LATENCY_STATS_PERIODIC_IND = 0x3a,
+    HTT_T2H_MSG_TYPE_TX_LCE_SUPER_RULE_SETUP_DONE  = 0x3b,
 
 
     HTT_T2H_MSG_TYPE_TEST,
@@ -21423,6 +21697,163 @@ PREPACK struct htt_rx_cce_super_rule_setup_done_t {
             HTT_CHECK_SET_VAL(HTT_RX_CCE_SUPER_RULE_SETUP_DONE_CFG_RESULT_1, _val); \
             ((_var) |= ((_val) << HTT_RX_CCE_SUPER_RULE_SETUP_DONE_CFG_RESULT_1_S)); \
         } while (0)
+
+
+/**
+ * @brief target -> host TX_LCE_SUPER_RULE setup done message
+ *
+ * MSG_TYPE => HTT_T2H_MSG_TYPE_TX_LCE_SUPER_RULE_SETUP_DONE
+ *
+ * @details
+ * HTT_T2H_MSG_TYPE_TX_LCE_SUPER_RULE_SETUP_DONE message is sent by the target
+ * when TX_SUPER_RULE setup is done.
+ *
+ * This message shows the configuration results after the setup operation.
+ * It will always be sent to host.
+ * The message would appear as follows:
+ *
+ * |31             24|23             16|15             8|7              0|
+ * |-----------------+-----------------+----------------+----------------|
+ * |     reserved    |  response_type  |     pdev_id    |     msg_type   |
+ * |---------------------------------------------------------------------|
+ * |                        tx_super_rule_result[0]                      |
+ * |---------------------------------------------------------------------|
+ * |                        tx_super_rule_result[1]                      |
+ * |---------------------------------------------------------------------|
+ * |                        tx_super_rule_result[2]                      |
+ * |---------------------------------------------------------------------|
+ *
+ * The message is interpreted as follows:
+ * dword0 - b'0:7   - msg_type: This will be set to 0x3b
+ *                    (HTT_T2H_MSG_TYPE_TX_LCE_SUPER_RULE_SETUP_DONE)
+ *          b'8:15  - pdev_id: Identify which pdev TX_SUPER_RULE is setup on
+ *          b'16:23 - response_type: Indicate the response type of this setup
+ *                    done msg
+ *                    0: HTT_TX_LCE_SUPER_RULE_INSTALL_RESPONSE,
+ *                       response to HTT_TX_LCE_SUPER_RULE_INSTALL
+ *                    1: HTT_TX_LCE_SUPER_RULE_RELEASE_RESPONSE,
+ *                       response to HTT_TX_LCE_SUPER_RULE_RELEASE or
+ *                       FW internal trigger on LCE rule release
+ *          b'24:31 - reserved:
+ *
+ * Each tx_super_rule_result structure would appear as follows:
+ * |31             24|23             16|15             8|7              0|
+ * |---------------------------------------------------------------------|
+ * |     is_valid    |      result     |           l4_dst_port           |
+ * |---------------------------------------------------------------------|
+ *
+ * dword0 - b'0:15   - l4_dst_port: destination port corresponding to rule
+ *                     which is added/released
+ *          b'16:23  - result: Indicate the result of the operation based on
+ *                     the message header's "response_type"
+ *                     For HTT_TX_LCE_SUPER_RULE_INSTALL_RESPONSE:
+ *                         0: HTT_TX_LCE_SUPER_RULE_INSTALL_FAIL
+ *                         1: HTT_TX_LCE_SUPER_RULE_INSTALL_SUCCESS
+ *                     For HTT_TX_LCE_SUPER_RULE_RELEASE_RESPONSE:
+ *                         0: HTT_TX_LCE_SUPER_RULE_RELEASE_FAIL
+ *                         1: HTT_TX_LCE_SUPER_RULE_RELEASE_SUCCESS
+ *                         2: HTT_TX_LCE_SUPER_RULE_RELEASE_SUCCESS_HIGH_TPUT
+ *
+ * The tx_super_rule_result[1] structure is similar.
+ * The tx_super_rule_result[2] structure is similar.
+ */
+
+enum htt_tx_lce_super_rule_setup_done_response_type {
+    /* Two LCE rules operation responses */
+    HTT_TX_LCE_SUPER_RULE_INSTALL_RESPONSE = 0,
+    HTT_TX_LCE_SUPER_RULE_RELEASE_RESPONSE,
+
+    /* All reply type should be before this */
+    HTT_TX_LCE_RULE_SETUP_INVALID_RESPONSE,
+};
+
+enum htt_tx_super_rule_install_response_result {
+     HTT_TX_LCE_SUPER_RULE_INSTALL_FAIL = 0,
+     HTT_TX_LCE_SUPER_RULE_INSTALL_SUCCESS,
+};
+
+enum htt_tx_super_rule_release_response_result{
+    HTT_TX_LCE_SUPER_RULE_RELEASE_FAIL = 0,
+    HTT_TX_LCE_SUPER_RULE_RELEASE_SUCCESS,
+    HTT_TX_LCE_SUPER_RULE_RELEASE_SUCCESS_HIGH_TPUT,
+};
+
+typedef struct {
+    A_UINT32 l4_dst_port:  16,
+             /* result:
+              * htt_tx_super_rule_install_response_result or
+              * htt_tx_super_rule_release_response_result
+              */
+             result:        8,
+             is_valid:      8;
+} htt_tx_lce_super_rule_result_t;
+
+PREPACK struct htt_tx_lce_super_rule_setup_done_t {
+    A_UINT8 msg_type;
+    A_UINT8 pdev_id;
+    A_UINT8 response_type; /* htt_tx_lce_super_rule_setup_done_response_type */
+    A_UINT8 reserved;
+    htt_tx_lce_super_rule_result_t tx_super_rule_result[HTT_TX_LCE_SUPER_RULE_SETUP_NUM];
+} POSTPACK;
+
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_SZ (sizeof(struct htt_tx_lce_super_rule_setup_done_t))
+
+
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_PDEV_ID_M 0x0000ff00
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_PDEV_ID_S 8
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_PDEV_ID_GET(_var) \
+        (((_var) & HTT_TX_LCE_SUPER_RULE_SETUP_DONE_PDEV_ID_M) >> \
+        HTT_TX_LCE_SUPER_RULE_SETUP_DONE_PDEV_ID_S)
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_PDEV_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_TX_LCE_SUPER_RULE_SETUP_DONE_PDEV_ID, _val); \
+            ((_var) |= ((_val) << HTT_TX_LCE_SUPER_RULE_SETUP_DONE_PDEV_ID_S)); \
+        } while (0)
+
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_RESPONSE_TYPE_M 0x00ff0000
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_RESPONSE_TYPE_S 16
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_RESPONSE_TYPE_GET(_var) \
+        (((_var) & HTT_TX_LCE_SUPER_RULE_SETUP_DONE_RESPONSE_TYPE_M) >> \
+        HTT_TX_LCE_SUPER_RULE_SETUP_DONE_RESPONSE_TYPE_S)
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_RESPONSE_TYPE_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_TX_LCE_SUPER_RULE_SETUP_DONE_RESPONSE_TYPE, _val); \
+            ((_var) |= ((_val) << HTT_TX_LCE_SUPER_RULE_SETUP_DONE_RESPONSE_TYPE_S)); \
+        } while (0)
+
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_L4_DST_PORT_M 0x0000ffff
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_L4_DST_PORT_S 0
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_L4_DST_PORT_GET(_var) \
+        (((_var) & HTT_TX_LCE_SUPER_RULE_SETUP_DONE_L4_DST_PORT_M) >> \
+        HTT_TX_LCE_SUPER_RULE_SETUP_DONE_L4_DST_PORT_S)
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_L4_DST_PORT_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_TX_LCE_SUPER_RULE_SETUP_DONE_L4_DST_PORT, _val); \
+            ((_var) |= ((_val) << HTT_TX_LCE_SUPER_RULE_SETUP_DONE_L4_DST_PORT_S)); \
+        } while (0)
+
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_RESULT_M 0x00ff0000
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_RESULT_S 16
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_RESULT_GET(_var) \
+        (((_var) & HTT_TX_LCE_SUPER_RULE_SETUP_DONE_RESULT_M) >> \
+        HTT_TX_LCE_SUPER_RULE_SETUP_DONE_RESULT_S)
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_RESULT_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_TX_LCE_SUPER_RULE_SETUP_DONE_RESULT, _val); \
+            ((_var) |= ((_val) << HTT_TX_LCE_SUPER_RULE_SETUP_DONE_RESULT_S)); \
+        } while (0)
+
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_IS_VALID_M 0xff000000
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_IS_VALID_S 24
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_IS_VALID_GET(_var) \
+        (((_var) & HTT_TX_LCE_SUPER_RULE_SETUP_DONE_IS_VALID_M) >> \
+        HTT_TX_LCE_SUPER_RULE_SETUP_DONE_IS_VALID_S)
+#define HTT_TX_LCE_SUPER_RULE_SETUP_DONE_IS_VALID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_TX_LCE_SUPER_RULE_SETUP_DONE_IS_VALID, _val); \
+            ((_var) |= ((_val) << HTT_TX_LCE_SUPER_RULE_SETUP_DONE_IS_VALID_S)); \
+        } while (0)
+
 
 /**
  * THE BELOW MESSAGE HAS BEEN DEPRECATED
