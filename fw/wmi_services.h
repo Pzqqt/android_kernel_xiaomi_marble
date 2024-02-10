@@ -657,6 +657,7 @@ typedef  enum  {
     WMI_SERVICE_QMS_DLKM_SUPPORT = 404, /* DEPRECATED */
     WMI_SERVICE_SMEM_MAILBOX_SUPPORT = 404, /* FW code has smem_mailbox support enabled */
     WMI_SERVICE_REG_CC_EXT2_EVENT_SUPPORT = 405, /* Indicate FW would send EXT2 REG_CC event having data which would be a continuation to EXT REG_CC event */
+    WMI_SERVICE_MLO_MODE2_RECOVERY_SUPPORTED = 406, /* Indicate FW support for MLO mode2 recovery */
 
 
     WMI_MAX_EXT2_SERVICE
