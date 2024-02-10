@@ -3446,6 +3446,13 @@ typedef struct {
 #define WMI_TARGET_CAP_MULTIPASS_SAP_SUPPORT_SET(target_cap_flags, value) \
     WMI_SET_BITS(target_cap_flags, 13, 1, value)
 
+/* ML FULL monitor mode */
+#define WMI_TARGET_CAP_ML_MONITOR_MODE_SUPPORT_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 14, 1)
+#define WMI_TARGET_CAP_ML_MONITOR_MODE_SUPPORT_SET(target_cap_flags, value) \
+    WMI_SET_BITS(target_cap_flags, 14, 1, value)
+
+
 /*
  * wmi_htt_msdu_idx_to_htt_msdu_qtype GET/SET APIs
  */
@@ -3589,7 +3596,8 @@ typedef struct {
      *      Bit11 - [ML-STA + SL-STA]  0: not supported; 1:supported
      *      Bit12 - [ML-STA + SL-SAP]  0: not supported; 1:supported
      * Bit 13 - Support for multipass SAP
-     * Bits 31:14 - Reserved
+     * Bit 14 - Support for ML monitor mode
+     * Bits 31:15 - Reserved
      */
     A_UINT32 target_cap_flags;
 
@@ -4698,7 +4706,13 @@ typedef struct {
      *      Refer to the below definitions of the
      *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_SMEM_MAILBOX_SUPPORT_GET
      *      and _SET macros.
-     *  Bits 31:16 - Reserved
+     *  Bit 16
+     *      ML FULL monitor mode
+     *      This bit will be set by host to enable ML_FULL_MONITOR_MODE
+     *      Refer to the below definitions of the
+     *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_ML_FULL_MONITOR_MODE_SUPPORT_GET
+     *      and _SET macros
+     *  Bits 31:17 - Reserved
      */
     A_UINT32 host_service_flags;
 
@@ -5158,6 +5172,12 @@ typedef struct {
     WMI_RSRC_CFG_HOST_SERVICE_FLAG_SMEM_MAILBOX_SUPPORT_GET(host_service_flags)
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_QMS_DLKM_SUPPORT_SET(host_service_flags, val) /* DEPRECATED */ \
     WMI_RSRC_CFG_HOST_SERVICE_FLAG_SMEM_MAILBOX_SUPPORT_SET(host_service_flags, val)
+
+/* ML FULL monitor mode */
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_ML_FULL_MONITOR_MODE_SUPPORT_GET(host_service_flags) \
+        WMI_GET_BITS(host_service_flags, 16, 1)
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_ML_FULL_MONITOR_MODE_SUPPORT_SET(host_service_flags, val) \
+        WMI_SET_BITS(host_service_flags, 16, 1, val)
 
 
 #define WMI_RSRC_CFG_CARRIER_CFG_CHARTER_ENABLE_GET(carrier_config) \
