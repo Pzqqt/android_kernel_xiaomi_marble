@@ -2429,6 +2429,7 @@ typedef enum {
     WMI_11D_NEW_COUNTRY_EVENTID,
     WMI_REG_CHAN_LIST_CC_EXT_EVENTID,
     WMI_AFC_EVENTID,
+    WMI_REG_CHAN_LIST_CC_EXT2_EVENTID,
 
     /** Events for TWT(Target Wake Time) of STA and AP  */
     WMI_TWT_ENABLE_COMPLETE_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_TWT),
@@ -37866,6 +37867,24 @@ typedef struct {
  *   - wmi_regulatory_fcc_rule_struct reg_fcc_rule[]
  */
 } wmi_reg_chan_list_cc_event_ext_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_reg_chan_list_cc_event_ext2_fixed_param */
+    A_UINT32 is_c2c_supported;
+    A_UINT32 domain_code_6ghz_c2c_lpi;
+    A_UINT32 domain_code_6ghz_c2c_sp;
+    A_UINT32 min_bw_6ghz_c2c_lpi;
+    A_UINT32 max_bw_6ghz_c2c_lpi;
+    A_UINT32 min_bw_6ghz_c2c_sp;
+    A_UINT32 max_bw_6ghz_c2c_sp;
+    A_UINT32 num_6ghz_reg_rules_c2c_lpi;
+    A_UINT32 num_6ghz_reg_rules_c2c_sp;
+
+/*
+ * This fixed_param TLV is followed by the following TLVs:
+ *   - wmi_regulatory_rule_ext reg_rule_array[] struct TLV array.
+ */
+} wmi_reg_chan_list_cc_event_ext2_fixed_param;
 
 /* WFA AFC Version */
 #define WMI_AFC_WFA_MINOR_VERSION_GET(afc_wfa_version)             WMI_GET_BITS(afc_wfa_version, 0, 16)
