@@ -561,6 +561,8 @@ typedef enum {
     WMI_PDEV_ENABLE_LED_BLINK_DOWNLOAD_TABLE_CMDID,
     /** WMI Command to enable wifi radar */
     WMI_PDEV_ENABLE_WIFI_RADAR_CMDID,
+    /* WMI Command to enable xLNA */
+    WMI_PDEV_ENABLE_XLNA_CMDID,
 
 
     /* VDEV (virtual device) specific commands */
@@ -1820,6 +1822,9 @@ typedef enum {
 
     /* Event to indicate the status of WiFi Radar calibration */
     WMI_PDEV_WIFI_RADAR_CAL_COMPLETION_STATUS_EVENTID,
+
+    /* Event to indicate xLNA is enabled */
+    WMI_PDEV_ENABLE_XLNA_EVENTID,
 
     /* VDEV specific events */
     /** VDEV started event in response to VDEV_START request */
@@ -37425,6 +37430,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_ENABLE_LED_BLINK_DOWNLOAD_TABLE_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_ENABLE_WIFI_RADAR_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_GET_TWT_SESSION_STATS_INFO_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_ENABLE_XLNA_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -47903,6 +47909,24 @@ typedef struct {
      */
     A_UINT32 per_chain_cal_status[WMI_MAX_CHAINS];
 } wmi_pdev_wifi_radar_cal_completion_status_event_param;
+
+typedef struct {
+    /* WMITLV_TAG_STRUC_wmi_pdev_enable_xlna_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /* ID of pdev for which the xLNA needs to be configured */
+    A_UINT32 pdev_id;
+    /* 1 - Enable, 0 - Disable */
+    A_UINT32 xLNA_enable;
+} wmi_pdev_enable_xlna_cmd_fixed_param;
+
+typedef struct {
+    /* WMITLV_TAG_STRUC_wmi_pdev_enable_xlna_event_fixed_param */
+    A_UINT32 tlv_header;
+    /* to identify for which pdev the response is received */
+    A_UINT32 pdev_id;
+    /* Return status: 0 - Success, else - Failure */
+    A_UINT32 status;
+} wmi_pdev_enable_xlna_event_fixed_param;
 
 
 /* ADD NEW DEFS HERE */
