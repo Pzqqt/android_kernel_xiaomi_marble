@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -6263,6 +6263,11 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 	qdf_copy_macaddr(&filter->bssid_list[0], &rsp->connect_rsp.bssid);
 	filter->ignore_auth_enc_type = true;
 
+	status = wlan_vdev_mlme_get_ssid(vdev, filter->ssid_list[0].ssid,
+					 &filter->ssid_list[0].length);
+	if (QDF_IS_STATUS_SUCCESS(status))
+		filter->num_of_ssid = 1;
+
 	list = wlan_scan_get_result(mac_ctx->pdev, filter);
 	qdf_mem_free(filter);
 	if (!list || (list && !qdf_list_size(list)))
@@ -6282,6 +6287,10 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 		goto purge_list;
 
 	wlan_fill_bss_desc_from_scan_entry(mac_ctx, bss_desc, cur_node->entry);
+	pe_debug("Dump scan entry frm:");
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			   cur_node->entry->raw_frame.ptr,
+			   cur_node->entry->raw_frame.len);
 
 	src_cfg.uint_value = bss_desc->mbo_oce_enabled_ap;
 	wlan_cm_roam_cfg_set_value(mac_ctx->psoc, vdev_id, MBO_OCE_ENABLED_AP,
@@ -6297,17 +6306,6 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 
 	csr_update_beacon_in_connect_rsp(cur_node->entry,
 					 &rsp->connect_rsp.connect_ies);
-
-	if (bss_desc->mdiePresent) {
-		src_cfg.bool_value = true;
-		src_cfg.uint_value =
-			(bss_desc->mdie[1] << 8) | (bss_desc->mdie[0]);
-	} else {
-		src_cfg.bool_value = false;
-		src_cfg.uint_value = 0;
-	}
-	wlan_cm_roam_cfg_set_value(mac_ctx->psoc, vdev_id,
-				   MOBILITY_DOMAIN, &src_cfg);
 
 	assoc_info.bss_desc = bss_desc;
 	if (rsp->connect_rsp.is_reassoc) {

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -10253,7 +10253,7 @@ lim_set_tpc_power(struct mac_context *mac_ctx, struct pe_session *session)
 	    session->opmode == QDF_P2P_GO_MODE)
 		mlme_obj->reg_tpc_obj.num_pwr_levels = 0;
 
-	lim_calculate_tpc(mac_ctx, session, 0, false);
+	lim_calculate_tpc(mac_ctx, session);
 
 	tx_ops->set_tpc_power(mac_ctx->psoc, session->vdev_id,
 			      &mlme_obj->reg_tpc_obj);
@@ -10390,7 +10390,7 @@ lim_is_power_change_required_for_sta(struct mac_context *mac_ctx,
 
 	wlan_reg_get_cur_6g_ap_pwr_type(mac_ctx->pdev, &ap_power_type_6g);
 
-	if (sta_session->ap_power_type_6g == REG_INDOOR_AP &&
+	if (sta_session->best_6g_power_type == REG_INDOOR_AP &&
 	    !wlan_reg_is_freq_indoor(mac_ctx->pdev,
 				     sap_session->curr_op_freq) &&
 	    ap_power_type_6g == REG_VERY_LOW_POWER_AP) {

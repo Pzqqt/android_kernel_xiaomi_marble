@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -279,7 +279,7 @@ rrm_process_link_measurement_request(struct mac_context *mac,
 				pLinkReq->MaxTxPower.maxTxPower;
 		/* Set is_power_constraint_abs to true to calculate tpc power */
 		mlme_obj->reg_tpc_obj.is_power_constraint_abs = true;
-		lim_calculate_tpc(mac, pe_session, 0, false);
+		lim_calculate_tpc(mac, pe_session);
 
 		LinkReport.txPower =
 			mlme_obj->reg_tpc_obj.chan_power_info[0].tx_power;
