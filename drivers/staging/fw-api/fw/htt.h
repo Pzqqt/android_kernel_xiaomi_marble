@@ -790,7 +790,7 @@ typedef enum {
     HTT_STATS_PDEV_SCHED_ALGO_OFDMA_STATS_TAG      = 165, /* htt_pdev_sched_algo_ofdma_stats_tlv, PUBLISH_FUNC=create_json_response_for_htt_pdev_sched_algo_ofdma_stats */
     HTT_DBG_ODD_MANDATORY_MUMIMO_TAG               = 166, /* htt_odd_mandatory_mumimo_pdev_stats_tlv */
     HTT_DBG_ODD_MANDATORY_MUOFDMA_TAG              = 167, /* htt_odd_mandatory_muofdma_pdev_stats_tlv */
-    HTT_STATS_LATENCY_PROF_CAL_STATS_TAG           = 168, /* htt_latency_prof_cal_stats_tlv */
+    HTT_STATS_LATENCY_PROF_CAL_STATS_TAG           = 168, /* htt_latency_prof_cal_stats_tlv - DEPRECATED */
     HTT_STATS_TX_PDEV_MUEDCA_PARAMS_STATS_TAG      = 169, /* htt_tx_pdev_muedca_params_stats_tlv_v - DEPRECATED */
     HTT_STATS_PDEV_BW_MGR_STATS_TAG                = 170, /* htt_pdev_bw_mgr_stats_tlv */
     HTT_STATS_TX_PDEV_AP_EDCA_PARAMS_STATS_TAG     = 171, /* htt_tx_pdev_ap_edca_params_stats_tlv_v, TOPIC=advanced */
@@ -815,6 +815,12 @@ typedef enum {
     HTT_STATS_MLO_SCHED_STATS_TAG                  = 190, /* htt_mlo_sched_stats_tlv */
     HTT_STATS_PDEV_MLO_IPC_STATS_TAG               = 191, /* htt_pdev_mlo_ipc_stats_tlv */
     HTT_STATS_WHAL_WSI_TAG                         = 192, /* htt_stats_whal_wsi_tlv */
+    HTT_STATS_LATENCY_PROF_CAL_DATA_TAG            = 193, /* htt_stats_latency_prof_cal_data_tlv */
+    HTT_STATS_PDEV_RTT_RESP_STATS_TAG              = 194, /* htt_stats_pdev_rtt_resp_stats_tlv */
+    HTT_STATS_PDEV_RTT_INIT_STATS_TAG              = 195, /* htt_stats_pdev_rtt_init_stats_tlv */
+    HTT_STATS_PDEV_RTT_HW_STATS_TAG                 = 196, /* htt_stats_pdev_rtt_hw_stats_tlv */
+    HTT_STATS_PDEV_RTT_TBR_SELFGEN_QUEUED_STATS_TAG = 197, /* htt_stats_pdev_rtt_tbr_selfgen_queued_stats_tlv */
+    HTT_STATS_PDEV_RTT_TBR_CMD_RESULT_STATS_TAG     = 198, /* htt_stats_pdev_rtt_tbr_cmd_result_stats_tlv */
 
 
     HTT_STATS_MAX_TAG,

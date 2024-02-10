@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2010-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -76,6 +76,44 @@ extern "C" {
  * if there are no actual vendor-specific message defs).
  */
 #include <wmi_unified_vendor.h>
+
+/* WMI_VAR_LEN_ARRAY1:
+ * This macro is for converting the definition of existing variable-length
+ * arrays within TLV structs of the form "type name[1];" to use the form
+ * "type name[];" while ensuring that the length of the TLV struct is
+ * unmodified by the conversion.
+ * In general, any new variable-length structs should simply use
+ * "type name[];" directly, rather than using WMI_VAR_LEN_ARRAY1.
+ * However, if there's a legitimate reason to make the new variable-length
+ * struct appear to not have a variable length, WMI_VAR_LEN_ARRAY1 can be
+ * used for this purpose.
+ */
+#if !defined(__KERNEL__)
+    #define WMI_DUMMY_ZERO_LEN_FIELD A_UINT32 dummy_zero_len_field[0]
+#else
+    /*
+     * Certain build settings of the Linux kernel don't allow zero-element
+     * arrays, and C++ doesn't allow zero-length empty structs.
+     * Confirm that there's no build that combines kernel with C++.
+     */
+    #ifdef __cplusplus
+    #error unsupported combination of kernel and C plus plus
+    #endif
+    #define WMI_DUMMY_ZERO_LEN_FIELD struct {} dummy_zero_len_field
+#endif
+
+#if defined(__WINDOWS__)
+    #define WMI_VAR_LEN_ARRAY1(type, name) type name[1]
+#else
+    #define WMI_VAR_LEN_ARRAY1(type, name) \
+        union { \
+            type name ## __first_elem; \
+            struct { \
+                WMI_DUMMY_ZERO_LEN_FIELD; \
+                type name[]; \
+            }; \
+        }
+#endif
 
 #define ATH_MAC_LEN             6               /**< length of MAC in bytes */
 #define WMI_EVENT_STATUS_SUCCESS 0 /* Success return status to host */
@@ -1780,6 +1818,9 @@ typedef enum {
     /* Event to get AOA phasedelta values for all gain tables from HALPHY */
     WMI_PDEV_ENHANCED_AOA_PHASEDELTA_EVENTID,
 
+    /* Event to indicate the status of WiFi Radar calibration */
+    WMI_PDEV_WIFI_RADAR_CAL_COMPLETION_STATUS_EVENTID,
+
     /* VDEV specific events */
     /** VDEV started event in response to VDEV_START request */
     WMI_VDEV_START_RESP_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_VDEV),
@@ -2448,6 +2489,8 @@ typedef enum {
     WMI_MLO_PRIMARY_LINK_PEER_MIGRATION_EVENTID,
     /** WMI Event to spcify reason for link state switch */
     WMI_MLO_LINK_STATE_SWITCH_EVENTID,
+    /** WMI Event to sync link info to host */
+    WMI_MLO_LINK_INFO_SYNC_EVENTID,
 
     /* WMI event specific to Quiet handling */
     WMI_QUIET_HANDLING_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_QUIET_OFL),
@@ -3698,7 +3741,7 @@ typedef struct {
     /* bad channel range count, multi range is allowed, 0 means all channel clear */
     A_UINT32 num_freq_ranges;
     /* multi range with num_freq_ranges, LTE advance multi carrier, CDMA,etc */
-    avoid_freq_range_desc avd_freq_range[0];
+    avoid_freq_range_desc avd_freq_range[];
 } wmi_wlan_avoid_freq_ranges_event;
 #endif
 
@@ -5538,7 +5581,7 @@ typedef struct {
     /** # of channels to scan */
     A_UINT32 num_chan;
     /** channels in Mhz */
-    A_UINT32 channel_list[1];
+    WMI_VAR_LEN_ARRAY1(A_UINT32, channel_list);
 } wmi_chan_list;
 
 /**
@@ -5550,7 +5593,7 @@ typedef struct {
     /** number of bssids   */
     A_UINT32 num_bssid;
     /** bssid list         */
-    wmi_mac_addr bssid_list[1];
+    WMI_VAR_LEN_ARRAY1(wmi_mac_addr, bssid_list);
 } wmi_bssid_list;
 
 /**
@@ -5562,7 +5605,7 @@ typedef struct {
     /** number of bytes in ie data   */
     A_UINT32 ie_len;
     /** ie data array  (ie_len adjusted to  number of words  (ie_len + 4)/4)  */
-    A_UINT32 ie_data[1];
+    WMI_VAR_LEN_ARRAY1(A_UINT32, ie_data);
 } wmi_ie_data;
 
 /**
@@ -5626,7 +5669,7 @@ typedef struct {
     /** WMI_SSID_LIST_TAG */
     A_UINT32 tag;
     A_UINT32 num_ssids;
-    wmi_ssid ssids[1];
+    WMI_VAR_LEN_ARRAY1(wmi_ssid, ssids);
 } wmi_ssid_list;
 
 typedef struct {
@@ -5635,7 +5678,7 @@ typedef struct {
     /** Number of start TSF offsets */
     A_UINT32     num_offset;
     /** Array of start TSF offsets provided in milliseconds */
-    A_UINT32     start_tsf_offset[1];
+    WMI_VAR_LEN_ARRAY1(A_UINT32, start_tsf_offset);
 } wmi_scan_start_offset;
 
 /**
@@ -7043,7 +7086,7 @@ typedef struct {
     /** Phy error event header */
     wmi_single_phyerr_rx_hdr hdr;
     /** frame buffer */
-    A_UINT8 bufp[1];
+    WMI_VAR_LEN_ARRAY1(A_UINT8, bufp);
 } wmi_single_phyerr_rx_event;
 
 /* PHY ERROR MASK 0 */
@@ -13180,13 +13223,63 @@ typedef struct {
     A_UINT32 awgn_cca_ack_reset_cnt;
     /*
      * AWGN int BW cnt used to store interference occurred at 20/40/80/160MHz
-     * bw_cnt[0] counts interference detections in 20 MHz BW,
-     * bw_cnt[1] counts interference detections in 40 MHz BW,
-     * bw_cnt[2] counts interference detections in 80 MHz BW,
-     * bw_cnt[3] counts interference detections in 160 MHz BW,
-     * bw_cnt[4] and bw_cnt[6] are reserved for 240 MHz and 320 MHz.
+     * awgn_int_bw_cnt[0] counts interference detections in 20 MHz BW,
+     * awgn_int_bw_cnt[1] counts interference detections in 40 MHz BW,
+     * awgn_int_bw_cnt[2] counts interference detections in 80 MHz BW,
+     * awgn_int_bw_cnt[3] counts interference detections in 160 MHz BW,
+     * awgn_int_bw_cnt[4] is reserved for 240 MHz BW,
+     * awgn_int_bw_cnt[5] counts interference detections in 320 MHz BW.
      */
     A_UINT32 awgn_int_bw_cnt[WMI_AWGN_MAX_BW];
+
+    /* Number of OBSS interference occurred */
+    A_UINT32 obss_int_cnt;
+
+    /* Number of OBSS interference Sent to host */
+    A_UINT32 obss_int_evt_sent_host_cnt;
+
+    /* Number of OBSS interference skiped due to AWGN as high priority */
+    A_UINT32 obss_int_evt_skip_awgn_cnt;
+
+    /* Number of OBSS interference skiped due to duplicate OBSS interference */
+    A_UINT32 obss_int_evt_skip_dup_cnt;
+
+    /* Current OBSS interference segment details
+     * chan_bw_interference_bitmap:
+     * Indicates which 20MHz segments contain interference
+     *  320 MHz: bits 0-15
+     *  160 MHz: bits 0-7
+     *   80 MHz: bits 0-3
+     * Within the bitmap, Bit-0 represents lowest 20Mhz, Bit-1 represents
+     * second lowest 20Mhz and so on.
+     * Each bit position will indicate 20MHz in which interference is seen.
+     * (Valid 16 bits out of 32 bit integer)
+     */
+    A_UINT32 obss_int_cur_int_seg;
+
+    /* Previous OBSS Int Segment details
+     * chan_bw_interference_bitmap:
+     * Indicates which 20MHz segments contain interference
+     *  320 MHz: bits 0-15
+     *  160 MHz: bits 0-7
+     *   80 MHz: bits 0-3
+     * Within the bitmap, Bit-0 represents lowest 20Mhz, Bit-1 represents
+     * second lowest 20Mhz and so on.
+     * Each bit position will indicate 20MHz in which interference is seen.
+     * (Valid 16 bits out of 32 bit integer)
+     */
+    A_UINT32 obss_int_prv_int_seg;
+
+    /*
+     * OBSS int BW cnt used to store interference occurred at 20/40/80/160MHz
+     * obss_int_bw_cnt[0] counts interference detections in 20 MHz BW,
+     * obss_int_bw_cnt[1] counts interference detections in 40 MHz BW,
+     * obss_int_bw_cnt[2] counts interference detections in 80 MHz BW,
+     * obss_int_bw_cnt[3] counts interference detections in 160 MHz BW,
+     * obss_int_bw_cnt[4] counts interference detections in 240 MHz BW,
+     * obss_int_bw_cnt[5] counts interference detections in 320 MHz BW,
+     */
+    A_UINT32 obss_int_bw_cnt[WMI_AWGN_MAX_BW];
 } wmi_ctrl_path_awgn_stats_struct;
 
 typedef struct {
@@ -16235,7 +16328,8 @@ typedef struct {
                       */
                      nstr_bitmap_size:1,
                      mlo_link_switch: 1, /* indicate the command is a part of link switch procedure */
-                     unused: 18;
+                     mlo_bridge_link:1, /* indicate link is bridge link */
+                     unused: 17;
         };
         A_UINT32 mlo_flags;
     };
@@ -18371,6 +18465,9 @@ typedef enum {
 
     /* DCS stats enable configuration at VDEV level */
     WMI_VDEV_PARAM_DCS,                                   /* 0xC2 */
+
+    /* VDEV parameter to configure Telescopic DTIM count */
+    WMI_VDEV_PARAM_TELESDTIM_CNT,                         /* 0xC3 */
 
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
@@ -21300,6 +21397,32 @@ typedef struct wlan_dcs_awgn_info {
     A_UINT32 chan_bw_interference_bitmap;
 } wmi_dcs_awgn_int_t;
 
+typedef struct wlan_dcs_obss_info {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_dcs_obss_int_t */
+    A_UINT32 tlv_header;
+    /** Channel width (20, 40, 80, 80+80, 160, 320) enum wmi_channel_width */
+    A_UINT32 channel_width;
+    /** Primary channel frequency (MHz) */
+    A_UINT32 chan_freq;
+    /** center frequency (MHz) first segment */
+    A_UINT32 center_freq0;
+    /** center frequency (MHz) second segment */
+    A_UINT32 center_freq1;
+    /* chan_bw_interference_bitmap:
+     * Indicates which 20MHz segments contain interference
+     *  320 MHz: bits 0-15
+     *  160 MHz: bits 0-7
+     *   80 MHz: bits 0-3
+     * Within the bitmap, Bit-0 represents lowest 20Mhz, Bit-1 represents
+     * second lowest 20Mhz and so on.
+     * Each bit position will indicate 20MHz in which interference is seen.
+     * (Valid 16 bits out of 32 bit integer)
+     * Note: for 11be, the interference present 20MHz can be punctured
+     * for better channel utilization.
+     */
+    A_UINT32 chan_bw_interference_bitmap;
+} wmi_dcs_obss_int_t;
+
 /**
  *  wmi_dcs_interference_event_t
  *
@@ -21316,6 +21439,8 @@ typedef struct {
      *  ATH_CAP_DCS_CWIM   0x01
      *  ATH_CAP_DCS_WLANIM 0x02
      *  ATH_CAP_DCS_AGWNIM 0x04
+     *  reserved (AFC)     0x08
+     *  ATH_CAP_DCS_OBSSIM 0x10
      */
     A_UINT32 interference_type; /* type of interference, wlan, cw, or AWGN */
     /** pdev_id for identifying the MAC
@@ -21336,7 +21461,8 @@ typedef struct {
  *
  *       wlan_dcs_cw_int            cw_int[];   <-- cw_interference event
  *       wlan_dcs_im_tgt_stats_t   wlan_stat[]; <-- wlan im interference stats
- *       wmi_dcs_awgn_int_t        awgn_int[];  <-- Additive white Gaussian noise (awgn) interference
+ *       wmi_dcs_awgn_int_t        awgn_int[];  <-- Additive white Gaussian noise (AWGN) interference
+ *       wmi_dcs_obss_int_t        obss_int[];  <-- Overlapping Basic Service Set (OBSS) interference
  */
 } wmi_dcs_interference_event_fixed_param;
 
@@ -22296,7 +22422,7 @@ typedef struct wmi_bcn_send_from_host {
 /* cmd to support bcn snd for all vaps at once */
 typedef struct wmi_pdev_send_bcn {
     A_UINT32 num_vdevs;
-    wmi_bcn_send_from_host_cmd_fixed_param bcn_cmd[1];
+    WMI_VAR_LEN_ARRAY1(wmi_bcn_send_from_host_cmd_fixed_param, bcn_cmd);
 } wmi_pdev_send_bcn_cmd_t;
 
 typedef struct wmi_fd_send_from_host {
@@ -23581,6 +23707,12 @@ enum {
     WMI_WOW_FLAG_FORCED_DTIM_ON_SYS_SUSPEND = 0x00000080,
     /* Flag to force DPD lock. */
     WMI_WOW_FLAG_FORCED_DPD_LOCK            = 0x00000100,
+    /*
+     * Feature flag for INI 'enable_teles_dtim_on_system_suspend'
+     * This flag/bit will be set if INI 'enable_teles_dtim_on_system_suspend'
+     * is enabled.
+     */
+    WMI_WOW_FLAG_TELES_DTIM_ON_SYS_SUSPEND  = 0x00000200,
 };
 
 typedef struct {
@@ -36244,6 +36376,19 @@ typedef struct {
      **************************************************************************/
 } WMI_SAR_CAPABILITIES;
 
+typedef enum {
+    WMI_SAR_FLAG_NONE = 0,
+    WMI_SAR_SET_CTL_GROUPING_DISABLE,
+    WMI_SAR_DBS_WITH_BT_DISABLE,
+    WMI_SAR_FLAG_MAX,
+} wmi_sar_flags;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_sar_flags*/
+    /* sar flags in bdf */
+    A_UINT32 sar_flags; /* refer to enum wmi_sar_flags */
+} wmi_sar_flag_tlv_param;
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_scan_adaptive_dwell_parameters_tlv */
     /** global default adaptive dwell mode, used when WMI_SCAN_DWELL_MODE_DEFAULT */
@@ -37270,6 +37415,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_COEX_MULTIPLE_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_ENABLE_LED_BLINK_DOWNLOAD_TABLE_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_ENABLE_WIFI_RADAR_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_GET_TWT_SESSION_STATS_INFO_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -37699,8 +37845,8 @@ typedef struct {
  * This fixed_param TLV is followed by the following TLVs:
  *   - wmi_regulatory_rule_ext reg_rule_array[] struct TLV array.
  *     Within the reg rule ext TLV array, the 2G elements occur first,
- *     then the 5G elements, then the 6G elements (AP SG, AP LPI, AP VLP,
- *     client SP x4, client LPI x4, client vlp x4).
+ *     then the 5G elements, then the 6G elements (AP LPI, AP SP, AP VLP,
+ *     client LPI x4, client SP x4, client VLP x4).
  *   - wmi_regulatory_chan_priority_struct reg_chan_priority[]
  *   - wmi_regulatory_fcc_rule_struct reg_fcc_rule[]
  */
@@ -40795,8 +40941,50 @@ typedef enum {
      */
     WMI_ROAM_PARAM_ROAM_UNSUPPORTED_6GHZ_POWERTYPE = 9,
 
+    /*
+     * crypto params to allow EHT/MLO in WPA2/WPA3 security.
+     * BITMAP of wlan_crypto_roam_eht_config
+     */
+    WMI_ROAM_PARAM_CRYPTO_EHT_CONFIG = 10,
+
+
     /*=== END ROAM_PARAM_PROTOTYPE SECTION ===*/
 } WMI_ROAM_PARAM;
+
+typedef enum {
+    /*
+     * BIT 0 - WLAN_CRYPTO_WPA2_ALLOW_NON_MLO_EHT:
+     *         Connect to non-MLO/MLO WPA2 EHT APs in EHT without PMF support.
+     *
+     * BIT 1 - WLAN_CRYPTO_WPA2_ALLOW_MLO:
+     *         Connect to MLO WPA2 EHT APs in MLO without PMF support.
+     *
+     * BIT 2 - WLAN_CRYPTO_WPA2_ALLOW_NON_MLO_EHT_MFPC_SET:
+     *         Connect to non-MLO/MLO WPA2 EHT APs in EHT.
+     *         (PMF capable is mandatory).
+     *
+     * BIT 3 - WLAN_CRYPTO_WPA2_ALLOW_MLO_MFPC_SET:
+     *         Connect to MLO WPA2 EHT APs in MLO
+     *         (PMF capable is mandatory).
+     *
+     * BIT 4 - 15 - reserved for future WPA2 security configs
+     *
+     * BIT 16 - WLAN_CRYPTO_WPA3_SAE_ALLOW_NON_MLO_EHT_HNP:
+     *          Connect to non-MLO/MLO WPA3-SAE without support for H2E
+     *          (or no RSNXE IE in beacon) in non-MLO EHT.
+     *
+     * BIT 17 - WLAN_CRYPTO_WPA3_SAE_ALLOW_MLO_HNP:
+     *          Connect to MLO WPA3-SAE without support for H2E
+     *          (or no RSNXE IE in beacon).
+     */
+    WLAN_CRYPTO_WPA2_ALLOW_NON_MLO_EHT          = 0x00000001,
+    WLAN_CRYPTO_WPA2_ALLOW_MLO                  = 0x00000002,
+    WLAN_CRYPTO_WPA2_ALLOW_NON_MLO_EHT_MFPC_SET = 0x00000004,
+    WLAN_CRYPTO_WPA2_ALLOW_MLO_MFPC_SET         = 0x00000008,
+
+    WLAN_CRYPTO_WPA3_SAE_ALLOW_NON_MLO_EHT_HNP  = 0x00010000,
+    WLAN_CRYPTO_WPA3_SAE_ALLOW_MLO_HNP          = 0x00020000,
+} wlan_crypto_roam_eht_config;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_get_big_data_cmd_fixed_param */
@@ -40989,13 +41177,22 @@ typedef struct {
 typedef struct {
     A_UINT32 tlv_header;
     A_UINT32 chan_cfreq; /* Channel center frequency (MHz) of all BSS Sub-channel */
-    A_INT32 psd_power;   /* Unit: dBm/MHz, OOBE PSD power of sub-channel */
+    /* psd_power:
+     * Unit: 0.25dBm/MHz, OOBE PSD power of sub-channel
+     * Example: a power spectral density of 1 dBm / MHz will be reported
+     * as the value 4.
+     */
+    A_INT32 psd_power;
 } wmi_vdev_ch_power_psd_info;
 
 typedef struct {
     A_UINT32 tlv_header;
     A_UINT32 chan_cfreq; /* Channel center frequency (MHz) for all BWs (<= current channel BSS BW) */
-    A_INT32 eirp_power;   /* Unit: dBm, EIRP power for all BWs (<= current channel BSS BW) */
+    /* eirp_power:
+     * Unit: 0.25dBm, EIRP power for all BWs (<= current channel BSS BW)
+     * Example: a power of 1 dBm will be reported as the value 4.
+     */
+    A_INT32 eirp_power;
  } wmi_vdev_ch_power_eirp_info;
 
 typedef struct {
@@ -45050,8 +45247,8 @@ typedef struct wmi_mlo_set_active_link_number_param
 
 } wmi_mlo_set_active_link_number_param;
 
-#define WMI_MLO_MODE_MLMR  0x1;
-#define WMI_MLO_MODE_EMLSR 0x2;
+#define WMI_MLO_MODE_MLMR  0x1
+#define WMI_MLO_MODE_EMLSR 0x2
 
 #define WMI_MLO_IEEE_LINK_ID_INVALID 0xFF
 
@@ -45909,9 +46106,14 @@ typedef struct {
     /*
      * If sbs_lower_band_end_freq is set to non-zero, it indicates
      * async SBS mode is supported, and lower-band/higher band to MAC
-     * mapping is switch-able. unit: mhz. examples 5180, 5320
+     * mapping is switch-able. unit: MHz. examples 5180, 5320
+     * If sbs_mid_band_end_freq is set to non-zero, it indicates
+     * async flexible SBS mode is supported, lower/higher band cutoff frequency
+     * can be selected from sbs_lower_band_end_freq or sbs_mid_band_end_freq.
+     * unit: MHz, examples 5900.
      */
     A_UINT32 sbs_lower_band_end_freq;
+    A_UINT32 sbs_mid_band_end_freq;
 } wmi_dbs_or_sbs_cap_ext;
 
 typedef struct {
@@ -47640,6 +47842,54 @@ typedef struct {
     A_UINT32 capture_interval_ms;
 } wmi_pdev_enable_wifi_radar_cmd_fixed_param;
 
+#define WMI_PDEV_WIFI_RADAR_CAL_COMPLETION_STATUS_GET(cal_status_array, txchnIdx, rxchnIdx)         WMI_GET_BITS(*(cal_status_array + txchnIdx), rxchnIdx, 1)
+#define WMI_PDEV_WIFI_RADAR_CAL_COMPLETION_STATUS_SET(cal_status_array, txchnIdx, rxchnIdx, value)  WMI_SET_BITS(*(cal_status_array + txchnIdx), rxchnIdx, 1, value)
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_wifi_radar_cal_configuration
+     */
+    A_UINT32 tlv_header;
+    /* ID of pdev for which the calibration is completed */
+    A_UINT32 pdev_id;
+    /* Packet bandwidth of WiFi Radar packet used for calibration
+     *     0 = 20 MHz
+     *     1 = 40 MHz
+     *     2 = 80 MHz
+     *     3 = 160 MHz
+     *     4 = 320 MHz
+     */
+    A_UINT32 wifi_radar_pkt_bw;
+    /* Channel bandwidth
+     *     0 = 20 MHz
+     *     1 = 40 MHz
+     *     2 = 80 MHz
+     *     3 = 160 MHz
+     *     4 = 320 MHz
+     */
+    A_UINT32 channel_bw;
+    /* Channel Center frequency in MHz */
+    A_UINT32 band_center_freq;
+    /* Number of LTF configured in the WiFi Radar Tx packet during calibration */
+    A_UINT32 num_ltf_tx;
+    /* Number of LTF skipped during Rx of the calibration packet */
+    A_UINT32 num_skip_ltf_rx;
+    /* Number of LTF accumulated during Rx of the calibration packet */
+    A_UINT32 num_ltf_accumulation;
+    /* Calibration status for each chain combination
+     * Word 0: tx chain 0 cal statuses:
+     *     Bit 0: rx chain 0 cal status
+     *     Bit 1: rx chain 1 cal status
+     *     etc.
+     * Word 1: tx chain 1 cal statuses:
+     *     Bit 0: rx chain 0 cal status
+     *     Bit 1: rx chain 1 cal status
+     *     etc.
+     * etc.
+     * Cal status values: success = 1, Failure = 0
+     */
+    A_UINT32 per_chain_cal_status[WMI_MAX_CHAINS];
+} wmi_pdev_wifi_radar_cal_completion_status_event_param;
 
 
 /* ADD NEW DEFS HERE */
