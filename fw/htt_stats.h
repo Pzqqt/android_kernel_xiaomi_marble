@@ -9286,6 +9286,10 @@ typedef struct {
         };
         A_UINT32 ctl_args;
     };
+    /** max_reg_only_allowed_power:
+     * units = 0.25dBm
+     */
+    A_INT32 max_reg_only_allowed_power[HTT_STATS_MAX_CHAINS];
 } htt_stats_phy_tpc_stats_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_phy_tpc_stats_tlv htt_phy_tpc_stats_tlv;
