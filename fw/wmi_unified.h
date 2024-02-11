@@ -47979,6 +47979,15 @@ typedef struct {
     A_UINT32 switch_type;  /* see definition of WMI_AUDIO_TRANSPORT_SWITCH_TYPE */
 } wmi_audio_transport_switch_resp_status_cmd_fixed_param;
 
+enum wmi_wifi_radar_cmd {
+    wmi_wifi_radar_capture_disable,
+    wmi_wifi_radar_capture_enable,
+    wmi_wifi_radar_rx_cal,
+    wmi_wifi_radar_tx_cal,
+
+    wmi_wifi_radar_cmd_max = 0xff
+};
+
 typedef struct {
     /** TLV tag and len; tag equals
      * WMITLV_TAG_STRUC_wmi_pdev_enable_wifi_radar_cmd_fixed_param
@@ -48007,7 +48016,7 @@ typedef struct {
      *     4 = 320 MHz
      */
     A_UINT32 bw;
-    /* 0 to stop capture, 1 to start periodic capture, 2 to do calibration */
+    /* enum wmi_wifi_radar_cmd */
     A_UINT32 capture_calibrate;
     /* periodicity of capture in milliseconds */
     A_UINT32 capture_interval_ms;
