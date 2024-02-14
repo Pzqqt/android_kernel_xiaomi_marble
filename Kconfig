@@ -1378,4 +1378,19 @@ config INTERFACE_MGR
 config ENABLE_LOW_POWER_MODE
 	bool "Enable ENABLE_LOW_POWER_MODE"
 	default n
+
+config CNSS_ADRASTEA
+	bool "Enable CONFIG_CNSS_ADRASTEA"
+	default n
+
+menu "Optional Configs"
+
+if CNSS_ADRASTEA
+
+config MULTI_IF_NAME
+	string "Enable CONFIG_MULTI_IF_NAME"
+	default adrastea
+
+endif
+endmenu
 endif # QCA_CLD_WLAN
