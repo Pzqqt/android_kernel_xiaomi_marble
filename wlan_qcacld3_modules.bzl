@@ -12,6 +12,9 @@ _target_chipset_map = {
 	"pitti":[
 		"adrastea",
 	],
+	"pitti_32go":[
+                "adrastea",
+        ],
 }
 
 _chipset_hw_map = {
