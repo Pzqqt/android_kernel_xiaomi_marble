@@ -9,19 +9,25 @@ _target_chipset_map = {
 	"monaco":[
 		"wlan",
 	],
+	"pitti":[
+		"adrastea",
+	],
 }
 
 _chipset_hw_map = {
-	"wlan"   : "ADRESTEA"
+	"wlan"   : "ADRASTEA",
+	"adrastea" : "ADRASTEA"
 }
 
 _chipset_header_map = {
 	"wlan" : [
     ],
+	"adrastea" : [
+    ],
 }
 
 _hw_header_map = {
-	"ADRESTEA" : [
+	"ADRASTEA" : [
 	],
 }
 
@@ -1982,7 +1988,10 @@ def _define_module_for_target_variant_chipset(target, variant, chipset):
 
     srcs = native.glob(iglobs) + _fixed_srcs
 
-    out = "{}.ko".format(chipset.replace("-", "_"))
+    if chipset == "wlan":
+        out = "{}.ko".format(chipset.replace("-", "_"))
+    else:
+        out = "qca_cld3_{}.ko".format(chipset.replace("-", "_"))
     kconfig = "Kconfig"
     defconfig = ":configs/{}_defconfig_generate_{}".format(tvc, variant)
 
@@ -2017,9 +2026,28 @@ def _define_module_for_target_variant_chipset(target, variant, chipset):
         ],
     )
 
+def define_dist(target, variant, chipsets):
+    tv = "{}_{}".format(target, variant)
+    dataList = []
+    for c in chipsets:
+        tvc = "{}_{}_{}".format(target, variant, c)
+        name = "{}_qca_cld_{}".format(tv, c)
+        dataList.append(":{}".format(name))
+        copy_to_dist_dir(
+            name = "{}_modules_dist".format(tvc),
+            data =  [":{}".format(name)],
+            dist_dir = "out/target/product/{}/dlkm/lib/modules/".format(target),
+            flat = True,
+            wipe_dist_dir = False,
+            allow_duplicate_filenames = False,
+            mode_overrides = {"**/*": "644"},
+            log = "info",
+        )
+    if target == "blair" or target == "monaco":
+        return
     copy_to_dist_dir(
-        name = "{}_modules_dist".format(tvc),
-        data = [":{}".format(name)],
+        name = "{}_all_modules_dist".format(tv),
+        data = dataList,
         dist_dir = "out/target/product/{}/dlkm/lib/modules/".format(target),
         flat = True,
         wipe_dist_dir = False,
@@ -2034,3 +2062,4 @@ def define_modules():
         if chipsets:
             for c in chipsets:
                 _define_module_for_target_variant_chipset(t, v, c)
+            define_dist(t, v, chipsets)
