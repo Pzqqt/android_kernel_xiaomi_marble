@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024, Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -645,6 +645,7 @@ static int __tzbsp_set_video_state(enum tzbsp_video_state state)
 	return 0;
 }
 
+#ifdef CONFIG_MSM_MMRM
 int __set_clk_rate(struct msm_vidc_core *core,
 		struct clock_info *cl, u64 rate)
 {
@@ -662,7 +663,6 @@ int __set_clk_rate(struct msm_vidc_core *core,
 		d_vpr_e("%s: invalid mmrm client\n", __func__);
 		return -EINVAL;
 	}
-
 	/*
 	 * This conversion is necessary since we are scaling clock values based on
 	 * the branch clock. However, mmrm driver expects source clock to be registered
@@ -701,6 +701,44 @@ int __set_clk_rate(struct msm_vidc_core *core,
 	cl->prev = rate;
 	return rc;
 }
+#else
+int __set_clk_rate(struct msm_vidc_core *core,
+		struct clock_info *cl, u64 rate)
+{
+	int rc = 0, src_clk_scale_ratio = 1;
+	/* not registered */
+	if (!core || !cl || !core->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	/*
+	 * This conversion is necessary since we are scaling clock values based on
+	 * the branch clock. However, mmrm driver expects source clock to be registered
+	 * and used for scaling.
+	 * TODO: Remove this scaling if using source clock instead of branch clock.
+	 */
+	src_clk_scale_ratio = msm_vidc_get_src_clk_scaling_ratio(core);
+	rate = rate * src_clk_scale_ratio;
+
+	/* bail early if requested clk rate is not changed */
+	if (rate == cl->prev)
+		return 0;
+
+	d_vpr_p("Scaling clock %s to %llu, prev %llu\n", cl->name, rate, cl->prev);
+
+	/* set clock rate to clock driver */
+	rc = clk_set_rate(cl->clk, rate);
+	if (rc) {
+		d_vpr_e("%s: Failed to set clock rate %llu %s: %d\n",
+			__func__, rate, cl->name, rc);
+		return rc;
+	}
+
+	cl->prev = rate;
+	return rc;
+}
+#endif
 
 int __set_clocks(struct msm_vidc_core *core, u32 freq)
 {
@@ -1429,6 +1467,7 @@ err_clk_get:
 	return rc;
 }
 
+#ifdef CONFIG_MSM_MMRM
 static void __deregister_mmrm(struct msm_vidc_core *core)
 {
 	struct clock_info *cl;
@@ -1525,6 +1564,16 @@ err_register_mmrm:
 	__deregister_mmrm(core);
 	return rc;
 }
+#else
+static void __deregister_mmrm(struct msm_vidc_core *core)
+{
+	// No operation needed
+}
+static int __register_mmrm(struct msm_vidc_core *core)
+{
+	return 0;
+}
+#endif
 
 static int __handle_reset_clk(struct msm_vidc_core *core,
 			int reset_index, enum reset_state state)

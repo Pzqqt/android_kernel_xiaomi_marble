@@ -199,6 +199,7 @@ static int msm_vidc_register_video_device(struct msm_vidc_core *core,
 	return 0;
 }
 
+#ifdef CONFIG_MSM_MMRM
 static int msm_vidc_check_mmrm_support(struct msm_vidc_core *core)
 {
 	int rc = 0;
@@ -220,6 +221,12 @@ exit:
 	d_vpr_h("%s: %d\n", __func__, core->capabilities[MMRM].value);
 	return rc;
 }
+#else
+static int msm_vidc_check_mmrm_support(struct msm_vidc_core *core)
+{
+	return 0;
+}
+#endif
 
 static int msm_vidc_deinitialize_core(struct msm_vidc_core *core)
 {
