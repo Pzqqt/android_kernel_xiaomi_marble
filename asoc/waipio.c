@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/clk.h>
@@ -1399,6 +1399,9 @@ static int msm_snd_card_late_probe(struct snd_soc_card *card)
 		return -EINVAL;
 	}
 
+	if (pdata->wcd_disabled)
+		return 0;
+
 	if (pdata->wsa_hac_enabled)
 		return 0;
 
@@ -1920,8 +1923,11 @@ static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
 	lpass_cdc_info_create_codec_entry(pdata->codec_root, lpass_cdc_component);
 	lpass_cdc_register_wake_irq(lpass_cdc_component, false);
 
-	if (pdata->wcd_disabled)
+	if (pdata->wcd_disabled) {
+		lpass_cdc_set_port_map(lpass_cdc_component,
+			ARRAY_SIZE(sm_port_map_tx_plus_wsa), sm_port_map_tx_plus_wsa);
 		goto done;
+	}
 
 	component = snd_soc_rtdcom_lookup(rtd, WCD938X_DRV_NAME);
 	if (!component) {
@@ -1960,26 +1966,25 @@ static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
 		wcd937x_info_create_codec_entry(pdata->codec_root, component);
 		codec_variant = wcd937x_get_codec_variant(component);
 		dev_dbg(component->dev, "%s: variant %d\n",__func__, codec_variant);
-		lpass_cdc_set_port_map(lpass_cdc_component,
-			ARRAY_SIZE(sm_port_map_wcd937x), sm_port_map_wcd937x);
 	} else {
 		wcd938x_info_create_codec_entry(pdata->codec_root, component);
 		codec_variant = wcd938x_get_codec_variant(component);
 		dev_dbg(component->dev, "%s: variant %d\n", __func__, codec_variant);
-		lpass_cdc_set_port_map(lpass_cdc_component, ARRAY_SIZE(sm_port_map), sm_port_map);
 
 		/* check if the variant is wcd9385 and set RX HIFI filter capability */
 		if (codec_variant == WCD9385)
 			ret = lpass_cdc_rx_set_fir_capability(lpass_cdc_component, true);
 		else
 			ret = lpass_cdc_rx_set_fir_capability(lpass_cdc_component, false);
-	}
 
-	if (ret < 0) {
-		dev_err(component->dev, "%s: set fir capability failed: %d\n",
-			__func__, ret);
-		return ret;
+		if (ret < 0) {
+			dev_err(component->dev, "%s: set fir capability failed: %d\n",
+				__func__, ret);
+			return ret;
+		}
 	}
+	lpass_cdc_set_port_map(lpass_cdc_component, ARRAY_SIZE(sm_port_map), sm_port_map);
+
 done:
 	codec_reg_done = true;
 	msm_common_dai_link_init(rtd);
