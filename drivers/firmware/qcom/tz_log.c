@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #define pr_fmt(fmt) "%s:[%s][%d]: " fmt, KBUILD_MODNAME, __func__, __LINE__
@@ -1960,6 +1960,10 @@ static int tz_log_freeze(struct device *dev)
 	if (g_qsee_log)
 		dma_free_coherent(dev, QSEE_LOG_BUF_SIZE, (void *)g_qsee_log,
 					coh_pmem);
+
+	if (!tzdbg.is_encrypted_log_enabled)
+		qtee_shmbridge_deregister(qseelog_shmbridge_handle);
+
 	return 0;
 }
 
