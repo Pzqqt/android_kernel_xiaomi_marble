@@ -50,6 +50,18 @@ static int __set_pelt_halflife(void *data)
 		pelt_runnable_avg_yN_inv = pelt8_runnable_avg_yN_inv;
 		pr_info("PELT half life is set to %dms\n", num);
 		break;
+	case PELT12_LOAD_AVG_PERIOD:
+		pelt_load_avg_period = PELT12_LOAD_AVG_PERIOD;
+		pelt_load_avg_max = PELT12_LOAD_AVG_MAX;
+		pelt_runnable_avg_yN_inv = pelt12_runnable_avg_yN_inv;
+		pr_info("PELT half life is set to %dms\n", num);
+		break;
+	case PELT16_LOAD_AVG_PERIOD:
+		pelt_load_avg_period = PELT16_LOAD_AVG_PERIOD;
+		pelt_load_avg_max = PELT16_LOAD_AVG_MAX;
+		pelt_runnable_avg_yN_inv = pelt16_runnable_avg_yN_inv;
+		pr_info("PELT half life is set to %dms\n", num);
+		break;
 	case PELT32_LOAD_AVG_PERIOD:
 		pelt_load_avg_period = PELT32_LOAD_AVG_PERIOD;
 		pelt_load_avg_max = PELT32_LOAD_AVG_MAX;
