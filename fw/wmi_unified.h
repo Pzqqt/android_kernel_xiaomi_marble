@@ -41210,12 +41210,13 @@ typedef struct {
 } wmi_big_data_dp_stats_tlv_param;
 
 typedef enum {
-    WMI_6GHZ_REG_LPI = 0,
-    WMI_6GHZ_REG_VLP = 1,
-    WMI_6GHZ_REG_SP  = 2,
-    WMI_6GHZ_REG_SP_STA = 3,
-    WMI_6GHZ_REG_MAX = 5, /* Can't expand, b/c used as array length below */
-} WMI_6GHZ_REG_TYPE;
+    WMI_6GHZ_REG_PWRMODE_LPI = 0,
+    WMI_6GHZ_REG_PWRMODE_SP = 1,
+    WMI_6GHZ_REG_PWRMODE_VLP  = 2,
+    WMI_6GHZ_REG_PWRMODE_SP_STA = 3,
+
+    WMI_6GHZ_REG_PWRMODE_MAX = 5
+} WMI_6GHZ_REG_PWRMODE_TYPE;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_set_tpc_power_fixed_param */
