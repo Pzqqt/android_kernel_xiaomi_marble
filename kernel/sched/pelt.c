@@ -28,9 +28,23 @@
 #include "sched.h"
 #include "pelt.h"
 
+#if IS_ENABLED(CONFIG_PELT_UTIL_HALFLIFE_8)
+int pelt_load_avg_period = PELT8_LOAD_AVG_PERIOD;
+int pelt_load_avg_max = PELT8_LOAD_AVG_MAX;
+const u32 *pelt_runnable_avg_yN_inv = pelt8_runnable_avg_yN_inv;
+#elif IS_ENABLED(CONFIG_PELT_UTIL_HALFLIFE_12)
+int pelt_load_avg_period = PELT12_LOAD_AVG_PERIOD;
+int pelt_load_avg_max = PELT12_LOAD_AVG_MAX;
+const u32 *pelt_runnable_avg_yN_inv = pelt12_runnable_avg_yN_inv;
+#elif IS_ENABLED(CONFIG_PELT_UTIL_HALFLIFE_16)
+int pelt_load_avg_period = PELT16_LOAD_AVG_PERIOD;
+int pelt_load_avg_max = PELT16_LOAD_AVG_MAX;
+const u32 *pelt_runnable_avg_yN_inv = pelt16_runnable_avg_yN_inv;
+#elif IS_ENABLED(CONFIG_PELT_UTIL_HALFLIFE_DEFAULT) || IS_ENABLED(CONFIG_PELT_UTIL_HALFLIFE_32)
 int pelt_load_avg_period = PELT32_LOAD_AVG_PERIOD;
 int pelt_load_avg_max = PELT32_LOAD_AVG_MAX;
 const u32 *pelt_runnable_avg_yN_inv = pelt32_runnable_avg_yN_inv;
+#endif
 
 int get_pelt_halflife(void)
 {
@@ -83,6 +97,7 @@ int set_pelt_halflife(int num)
 }
 EXPORT_SYMBOL_GPL(set_pelt_halflife);
 
+#if IS_ENABLED(CONFIG_PELT_UTIL_HALFLIFE_DEFAULT)
 static int __init set_pelt(char *str)
 {
 	int rc, num;
@@ -98,6 +113,7 @@ static int __init set_pelt(char *str)
 }
 
 early_param("pelt", set_pelt);
+#endif
 
 /*
  * Approximate:
