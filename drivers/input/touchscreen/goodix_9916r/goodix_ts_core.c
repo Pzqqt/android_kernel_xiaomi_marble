@@ -22,6 +22,7 @@
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
 #include <linux/uaccess.h>
+#include <linux/moduleparam.h>
 
 #include <linux/soc/qcom/panel_event_notifier.h>
 #include <linux/backlight.h>
@@ -42,9 +43,12 @@
 #define DISP_ID_DET 420
 #define DISP_ID1_DET 418
 
+static bool force_high_report_rate = false;
+module_param(force_high_report_rate, bool, S_IRUGO);
+
 #ifdef CONFIG_TOUCH_BOOST
 extern void touch_irq_boost(void);
-bool __read_mostly touch_boost_flag = true;
+static bool __read_mostly touch_boost_flag = true;
 #endif
 extern struct device *global_spi_parent_device;
 struct goodix_module goodix_modules;
@@ -60,7 +64,7 @@ static void goodix_set_gesture_work(struct work_struct *work);
 static struct proc_dir_entry *touch_debug;
 static int goodix_get_charging_status(void);
 #ifdef CONFIG_MACH_XIAOMI_MARBLE
-int mi_panel_type;
+static int mi_panel_type;
 #endif
 
 /**
@@ -889,6 +893,9 @@ static ssize_t goodix_ts_report_rate_store(struct device *dev,
 					const char *buf, size_t count)
 {
 	struct goodix_ts_core *core_data = dev_get_drvdata(dev);
+
+	if (force_high_report_rate)
+		return count;
 
 	if (!buf || count <= 0)
 		return -EINVAL;
@@ -2641,6 +2648,12 @@ static int goodix_later_init_thread(void *data)
 		ts_err("stage2 init failed");
 		goto uninit_fw;
 	}
+
+	if (force_high_report_rate) {
+		ts_info("%s: Enable high sampling rate", __func__);
+		hw_ops->switch_report_rate(cd, true);
+	}
+
 	cd->init_stage = CORE_INIT_STAGE2;
 
 	return 0;
@@ -3015,16 +3028,18 @@ static void goodix_set_game_work(struct work_struct *work)
 	if (ret < 0)
 		ts_err("send game mode fail");
 
-	if (xiaomi_touch_interfaces.touch_mode[Touch_Tolerance][SET_CUR_VALUE] >
-	    xiaomi_touch_interfaces.touch_mode[Touch_Tolerance][GET_DEF_VALUE]) {
-		if (goodix_core_data->report_rate == 240) {
-			hw_ops->switch_report_rate(goodix_core_data, true);
-			goodix_core_data->report_rate = 480;
-		}
-	} else {
-		if (goodix_core_data->report_rate == 480) {
-			hw_ops->switch_report_rate(goodix_core_data, false);
-			goodix_core_data->report_rate = 240;
+	if (!force_high_report_rate) {
+		if (xiaomi_touch_interfaces.touch_mode[Touch_Tolerance][SET_CUR_VALUE] >
+		    xiaomi_touch_interfaces.touch_mode[Touch_Tolerance][GET_DEF_VALUE]) {
+			if (goodix_core_data->report_rate == 240) {
+				hw_ops->switch_report_rate(goodix_core_data, true);
+				goodix_core_data->report_rate = 480;
+			}
+		} else {
+			if (goodix_core_data->report_rate == 480) {
+				hw_ops->switch_report_rate(goodix_core_data, false);
+				goodix_core_data->report_rate = 240;
+			}
 		}
 	}
 
@@ -3659,7 +3674,7 @@ static int goodix_ts_probe(struct platform_device *pdev)
 	device_init_wakeup(&pdev->dev, 1);
 	core_data->init_stage = CORE_INIT_STAGE1;
 	core_data->charger_status = -1;
-	core_data->report_rate = 240;
+	core_data->report_rate = force_high_report_rate ? 480 : 240;
 	goodix_modules.core_data = core_data;
 	core_module_prob_sate = CORE_MODULE_PROB_SUCCESS;
 
