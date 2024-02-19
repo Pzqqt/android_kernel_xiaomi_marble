@@ -15,7 +15,7 @@
 #include <crypto/internal/scompress.h>
 
 
-uint __read_mostly compression_level = 3;
+static uint __read_mostly compression_level = 3;
 module_param(compression_level, uint, 0644);
 
 struct zstd_ctx {
