@@ -48,7 +48,7 @@ module_param(force_high_report_rate, bool, S_IRUGO);
 
 #ifdef CONFIG_TOUCH_BOOST
 extern void touch_irq_boost(void);
-bool __read_mostly touch_boost_flag = true;
+static bool __read_mostly touch_boost_flag = true;
 #endif
 extern struct device *global_spi_parent_device;
 struct goodix_module goodix_modules;
@@ -64,7 +64,7 @@ static void goodix_set_gesture_work(struct work_struct *work);
 static struct proc_dir_entry *touch_debug;
 static int goodix_get_charging_status(void);
 #ifdef CONFIG_MACH_XIAOMI_MARBLE
-int mi_panel_type;
+static int mi_panel_type;
 #endif
 
 /**
