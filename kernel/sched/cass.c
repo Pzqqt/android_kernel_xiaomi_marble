@@ -29,6 +29,7 @@ struct cass_cpu_cand {
 	int cpu;
 	unsigned int exit_lat;
 	unsigned long cap;
+	unsigned long cap_max;
 	unsigned long util;
 };
 
@@ -50,17 +51,14 @@ void cass_cpu_util(struct cass_cpu_cand *c, bool sync)
 		}
 	}
 
-	/* Get the capacity of this CPU adjusted for thermal pressure */
-	c->cap = arch_scale_cpu_capacity(c->cpu) - thermal_load_avg(rq);
-
 	/*
 	 * Account for lost capacity due to time spent in RT/DL tasks and IRQs.
 	 * Capacity is considered lost to RT tasks even when @p is an RT task in
 	 * order to produce consistently balanced task placement results between
 	 * CFS and RT tasks when CASS selects a CPU for them.
 	 */
-	c->cap -= min(cpu_util_rt(rq) + cpu_util_dl(rq) + cpu_util_irq(rq),
-		      c->cap - 1);
+	c->cap = c->cap_max - min(cpu_util_rt(rq) + cpu_util_dl(rq) +
+				  cpu_util_irq(rq), c->cap_max - 1);
 
 	/*
 	 * Deduct @current's util from this CPU if this is a sync wake, unless
@@ -82,6 +80,10 @@ bool cass_cpu_better(const struct cass_cpu_cand *a,
 
 	/* Prefer the CPU with lower relative utilization */
 	if (cass_cmp(b->util, a->util))
+		goto done;
+
+	/* Prefer the CPU that is idle (only relevant for uclamped tasks) */
+	if (cass_cmp(!!a->exit_lat, !!b->exit_lat))
 		goto done;
 
 	/* Prefer the current CPU for sync wakes */
@@ -116,17 +118,16 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync, bool rt
 {
 	/* Initialize @best such that @best always has a valid CPU at the end */
 	struct cass_cpu_cand cands[2], *best = cands;
+	unsigned long p_util, uc_min;
 	bool has_idle = false;
-	unsigned long p_util;
 	int cidx = 0, cpu;
 
 	/*
-	 * Get the utilization for this task. Note that RT tasks don't have
-	 * per-entity load tracking.
+	 * Get the utilization and uclamp minimum threshold for this task. Note
+	 * that RT tasks don't have per-entity load tracking.
 	 */
-	p_util = clamp(rt ? 0 : task_util_est(p),
-		       uclamp_eff_value(p, UCLAMP_MIN),
-		       uclamp_eff_value(p, UCLAMP_MAX));
+	p_util = rt ? 0 : task_util_est(p);
+	uc_min = uclamp_eff_value(p, UCLAMP_MIN);
 
 	/*
 	 * Find the best CPU to wake @p on. Although idle_get_state() requires
@@ -143,6 +144,15 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync, bool rt
 		/* Use the free candidate slot for @curr */
 		struct cass_cpu_cand *curr = &cands[cidx];
 		struct cpuidle_state *idle_state;
+		struct rq *rq = cpu_rq(cpu);
+
+		/* Get the capacity of this CPU adjusted for thermal pressure */
+		curr->cap_max = arch_scale_cpu_capacity(cpu) -
+				thermal_load_avg(rq);
+
+		/* Prefer the CPU that meets the uclamp minimum requirement */
+		if (curr->cap_max < uc_min && best->cap_max >= uc_min)
+			continue;
 
 		/*
 		 * Check if this CPU is idle or only has SCHED_IDLE tasks. For
@@ -150,16 +160,22 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync, bool rt
 		 */
 		if ((sync && cpu == smp_processor_id()) ||
 		    available_idle_cpu(cpu) || sched_idle_cpu(cpu)) {
-			/* Discard any previous non-idle candidate */
-			if (!has_idle)
-				best = curr;
-			has_idle = true;
+			/*
+			 * A non-idle candidate may be better when @p is uclamp
+			 * boosted. Otherwise, always prefer idle candidates.
+			 */
+			if (!uc_min) {
+				/* Discard any previous non-idle candidate */
+				if (!has_idle)
+					best = curr;
+				has_idle = true;
+			}
 
 			/* Nonzero exit latency indicates this CPU is idle */
 			curr->exit_lat = 1;
 
 			/* Add on the actual idle exit latency, if any */
-			idle_state = idle_get_state(cpu_rq(cpu));
+			idle_state = idle_get_state(rq);
 			if (idle_state)
 				curr->exit_lat += idle_state->exit_latency;
 		} else {
@@ -182,6 +198,10 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync, bool rt
 		 */
 		if (cpu != task_cpu(p))
 			curr->util += p_util;
+
+		/* Clamp the utilization to the minimum performance threshold */
+		if (curr->util < uc_min)
+			curr->util = uc_min;
 
 		/* Calculate the relative utilization for this CPU candidate */
 		curr->util = curr->util * SCHED_CAPACITY_SCALE / curr->cap;
