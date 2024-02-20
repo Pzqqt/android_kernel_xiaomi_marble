@@ -1991,6 +1991,10 @@ int vprintk_store(int facility, int level,
 	 */
 	text_len = vscnprintf(text, sizeof(textbuf), fmt, args);
 
+	if (unlikely(strstr(text, "[mi_disp") != NULL) ||
+	    unlikely(strstr(text, "[drm") != NULL))
+		return 0;
+
 	/* mark and strip a trailing newline */
 	if (text_len && text[text_len-1] == '\n') {
 		text_len--;
@@ -2110,20 +2114,6 @@ asmlinkage __visible int printk(const char *fmt, ...)
 {
 	va_list args;
 	int r;
-
-	if (in_task())
-		// /vendor/bin/hw/vendor.qti.hardware.display.composer-service
-		// /vendor/bin/hw/vendor.xiaomi.hardware.displayfeature@1.0-service
-		// https://github.com/MiCode/vendor_opensource_display-drivers/blob/bf0d5e23be5457001a18aa9dcd68cb17994ae36a/msm/msm_drv.c#L612
-		// https://github.com/MiCode/vendor_opensource_display-drivers/blob/bf0d5e23be5457001a18aa9dcd68cb17994ae36a/msm/mi_disp/mi_disp_feature.c#L65
-		if (unlikely(
-		    !strcmp(current->group_leader->comm, "composer-servic") ||
-		    !strcmp(current->group_leader->comm, "displayfeature@") ||
-		    !strncmp(current->comm, "crtc_commit:", 12) ||
-		    !strncmp(current->comm, "disp_feature:", 13) ||
-		    (!strncmp(current->comm, "SurfaceFlinger", 14) && !strcmp(current->group_leader->comm, "surfaceflinger"))
-		))
-			return 0;
 
 	va_start(args, fmt);
 	r = vprintk_func(fmt, args);
