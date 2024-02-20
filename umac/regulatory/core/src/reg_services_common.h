@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -1789,6 +1789,16 @@ bool reg_is_lower_6g_edge_ch_supp(struct wlan_objmgr_psoc *psoc);
  * Return: true if edge channels are supported, else false
  */
 bool reg_is_upper_6g_edge_ch_disabled(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * reg_convert_enum_to_6g_idx() - Convert a channel enum between
+ * MIN_6GHZ_CHANNEL and MAX_6GHZ_CHANNEL, to an index between 0 and
+ * NUM_6GHZ_CHANNELS
+ * @ch_idx: Channel index
+ *
+ * Return: enum channel_enum
+ */
+uint16_t reg_convert_enum_to_6g_idx(enum channel_enum ch_idx);
 #endif
 
 #ifdef FEATURE_WLAN_CH_AVOID_EXT
