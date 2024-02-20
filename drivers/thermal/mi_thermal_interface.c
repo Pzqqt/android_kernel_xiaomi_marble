@@ -217,7 +217,7 @@ static int cpu_thermal_init(void)
 	return ret;
 }
 
-static void destory_thermal_cpu()
+static void destory_thermal_cpu(void)
 {
 	struct cpufreq_device *priv, *tmp;
 	list_for_each_entry_safe (priv, tmp, &cpufreq_dev_list, node) {
@@ -927,7 +927,7 @@ out:
 	return 0;
 }
 
-static void create_thermal_message_node()
+static void create_thermal_message_node(void)
 {
 	int ret = 0;
 	struct kernfs_node *sysfs_sd = NULL;
@@ -998,7 +998,7 @@ static void screen_state_check(struct work_struct *work)
 	struct device_node *node;
 	void *pvt_data = NULL;
 	int error = 0;
-	static retry_count = 10;
+	static int retry_count = 10;
 
 	node = of_find_node_by_name(NULL, "thermal-screen");
 	if (!node) {
