@@ -18,6 +18,11 @@ LOCAL_MODULE_DDK_BUILD := true
 LOCAL_MODULE_DDK_ALLOW_UNSAFE_HEADERS := true
 endif
 
+ifeq ($(TARGET_BOARD_PLATFORM), pitti)
+LOCAL_MODULE_DDK_BUILD := true
+LOCAL_MODULE_DDK_ALLOW_UNSAFE_HEADERS := true
+endif
+
 LOCAL_PATH := $(call my-dir)
 $(call wlog,LOCAL_PATH=$(LOCAL_PATH))
 BOARD_OPENSOURCE_DIR ?= vendor/qcom/opensource
@@ -76,12 +81,101 @@ endif
 ifeq ($(LOCAL_MULTI_KO), true)
 LOCAL_ANDROID_ROOT := $(shell pwd)
 LOCAL_WLAN_BLD_DIR := $(LOCAL_ANDROID_ROOT)/$(WLAN_BLD_DIR)
-$(shell find $(LOCAL_WLAN_BLD_DIR)/qcacld-3.0/ -maxdepth 1 \
-	-name '.*' ! -name '.git' -delete {} +)
+$(shell `find $(LOCAL_WLAN_BLD_DIR)/qcacld-3.0/ -maxdepth 1 -name '.*' ! -name '.git' -delete`)
 
+ifeq ($(LOCAL_MODULE_DDK_BUILD), true)
+ifeq ($(CHIPSET),)
+$(foreach chip, $(TARGET_WLAN_CHIP),\
+	$(eval CHIPSET := $(chip))\
+	$(eval include $(LOCAL_PATH)/Android.mk))
+else
+# DLKM_DIR was moved for JELLY_BEAN (PLATFORM_SDK 16)
+BAZEL_CHIPSET_NAME := $(subst _,-,$(CHIPSET))
+ifeq ($(call is-platform-sdk-version-at-least,16),true)
+        DLKM_DIR := $(TOP)/$(BOARD_COMMON_DIR)/dlkm
+else
+        DLKM_DIR := build/dlkm
+endif # platform-sdk-version
+
+include $(CLEAR_VARS)
+LOCAL_MOD_NAME := wlan
+LOCAL_MODULE              := qca_cld3_$(CHIPSET).ko
+LOCAL_MODULE_KBUILD_NAME  := qca_cld3_$(CHIPSET).ko
+LOCAL_MODULE_DEBUG_ENABLE := true
+LOCAL_MODULE_DDK_SUBTARGET_REGEX := "all.*"
+ifeq ($(PRODUCT_VENDOR_MOVE_ENABLED),true)
+    ifeq ($(WIFI_DRIVER_INSTALL_TO_KERNEL_OUT),true)
+        LOCAL_MODULE_PATH := $(KERNEL_MODULES_OUT)
+    else
+        LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/modules/$(WLAN_CHIPSET)
+    endif
+else
+    LOCAL_MODULE_PATH := $(TARGET_OUT)/lib/modules/$(WLAN_CHIPSET)
+endif
+
+
+LOCAL_DEV_NAME := $(CHIPSET)
+LOCAL_CHIP_NAME := $(LOCAL_DEV_NAME)
+TARGET_MAC_BIN_PATH := /mnt/vendor/persist/$(LOCAL_CHIP_NAME)
+TARGET_FW_DIR := firmware/wlan/qca_cld/$(LOCAL_CHIP_NAME)
+TARGET_CFG_PATH := /vendor/etc/wifi/$(LOCAL_CHIP_NAME)
+TARGET_MAC_BIN_PATH := /mnt/vendor/persist/$(LOCAL_CHIP_NAME)
+
+ifeq ($(PRODUCT_VENDOR_MOVE_ENABLED),true)
+TARGET_FW_PATH := $(TARGET_OUT_VENDOR)/$(TARGET_FW_DIR)
+else
+TARGET_FW_PATH := $(TARGET_OUT_ETC)/$(TARGET_FW_DIR)
+endif
+
+# Create wlan_mac.bin symbolic link as part of the module
+$(call symlink-file,,$(TARGET_MAC_BIN_PATH)/wlan_mac.bin,$(TARGET_FW_PATH)/wlan_mac.bin)
+LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_FW_PATH)/wlan_mac.bin
+
+# Conditionally create module symbolic link
+ifneq ($(findstring $(WLAN_CHIPSET),$(WIFI_DRIVER_DEFAULT)),)
+ifeq ($(PRODUCT_VENDOR_MOVE_ENABLED),true)
+ifneq ($(WIFI_DRIVER_INSTALL_TO_KERNEL_OUT),true)
+$(call symlink-file,,$(TARGET_COPY_OUT_VENDOR)/lib/modules/$(WLAN_CHIPSET)/$(LOCAL_MODULE),$(TARGET_OUT_VENDOR)/lib/modules/$(LOCAL_MODULE))
+LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_VENDOR)/lib/modules/$(LOCAL_MODULE)
+endif
+else
+$(call symlink-file,,/system/lib/modules/$(WLAN_CHIPSET)/$(LOCAL_MODULE),$(TARGET_OUT)/lib/modules/$(LOCAL_MODULE))
+LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT)/lib/modules/$(LOCAL_MODULE)
+endif
+endif
+
+# Conditionally create ini symbolic link
+ifeq ($(TARGET_BOARD_AUTO),true)
+$(call symlink-file,,$(TARGET_CFG_PATH)/WCNSS_qcom_cfg.ini,$(TARGET_FW_PATH)/WCNSS_qcom_cfg.ini)
+LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_FW_PATH)/WCNSS_qcom_cfg.ini
+$(call wlog,"generate soft link because TARGET_BOARD_AUTO true")
+else
+ifneq ($(GENERIC_ODM_IMAGE),true)
+$(call symlink-file,,$(TARGET_CFG_PATH)/WCNSS_qcom_cfg.ini,$(TARGET_FW_PATH)/WCNSS_qcom_cfg.ini)
+LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_FW_PATH)/WCNSS_qcom_cfg.ini
+$(call wlog,"generate soft link because GENERIC_ODM_IMAGE not true")
+endif
+endif
+
+# Set dependencies so that CNSS family drivers can be compiled ahead.
+ifneq ($(WLAN_PLATFORM_KBUILD_OPTIONS),)
+LOCAL_REQUIRED_MODULES := wlan-platform-module-symvers
+LOCAL_ADDITIONAL_DEPENDENCIES += $(call intermediates-dir-for,DLKM,wlan-platform-module-symvers)/Module.symvers
+endif
+
+$(call wlog,TARGET_USES_KERNEL_PLATFORM=$(TARGET_USES_KERNEL_PLATFORM))
+ifeq ($(TARGET_USES_KERNEL_PLATFORM),true)
+    include $(DLKM_DIR)/Build_external_kernelmodule.mk
+else
+    include $(DLKM_DIR)/AndroidKernelModule.mk
+endif
+
+endif
+else
 $(foreach chip, $(TARGET_WLAN_CHIP), \
 	$(shell ln -sf . $(LOCAL_WLAN_BLD_DIR)/qcacld-3.0/.$(chip)))
 include $(foreach chip, $(TARGET_WLAN_CHIP), $(LOCAL_PATH)/.$(chip)/Android.mk)
+endif
 
 else # Multi-ok check
 

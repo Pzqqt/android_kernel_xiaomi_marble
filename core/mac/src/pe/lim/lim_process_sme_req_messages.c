@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2909,9 +2909,7 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 	struct ps_params *ps_param =
 				&ps_global_info->ps_params[session->vdev_id];
 	uint32_t timeout;
-	uint8_t programmed_country[REG_ALPHA2_LEN + 1];
 	enum reg_6g_ap_type power_type_6g;
-	bool ctry_code_match;
 	struct cm_roam_values_copy temp;
 	uint32_t neighbor_lookup_threshold;
 	uint32_t hi_rssi_scan_rssi_delta;
@@ -3170,19 +3168,16 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 	if (wlan_reg_is_6ghz_chan_freq(bss_desc->chan_freq)) {
 		if (!ie_struct->Country.present)
 			pe_debug("Channel is 6G but country IE not present");
-		wlan_reg_read_current_country(mac_ctx->psoc,
-					      programmed_country);
-		status = wlan_reg_get_6g_power_type_for_ctry(
+		status = wlan_reg_get_best_6g_power_type(
 				mac_ctx->psoc, mac_ctx->pdev,
-				ie_struct->Country.country,
-				programmed_country, &power_type_6g,
-				&ctry_code_match, session->ap_power_type);
+				&power_type_6g,
+				session->ap_defined_power_type_6g,
+				bss_desc->chan_freq);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			status = QDF_STATUS_E_NOSUPPORT;
 			goto send;
 		}
-		session->ap_power_type_6g = power_type_6g;
-		session->same_ctry_code = ctry_code_match;
+		session->best_6g_power_type = power_type_6g;
 
 		lim_iterate_triplets(ie_struct->Country);
 
@@ -5203,9 +5198,7 @@ uint8_t lim_get_max_tx_power(struct mac_context *mac,
 }
 
 void lim_calculate_tpc(struct mac_context *mac,
-		       struct pe_session *session,
-		       uint8_t ap_pwr_type,
-		       bool ctry_code_match)
+		       struct pe_session *session)
 {
 	bool is_psd_power = false;
 	bool is_tpe_present = false, is_6ghz_freq = false;
@@ -5251,9 +5244,9 @@ void lim_calculate_tpc(struct mac_context *mac,
 		skip_tpe = wlan_mlme_skip_tpe(mac->psoc);
 	} else {
 		is_6ghz_freq = true;
-		/* Power mode calculation for 6G*/
-		ap_power_type_6g = session->ap_power_type;
+		/* Power mode calculation for 6 GHz STA*/
 		if (LIM_IS_STA_ROLE(session)) {
+			ap_power_type_6g = session->best_6g_power_type;
 			wlan_mlme_get_safe_mode_enable(mac->psoc,
 						       &safe_mode_enable);
 			wlan_mlme_is_rf_test_mode_enabled(mac->psoc,
@@ -5262,18 +5255,8 @@ void lim_calculate_tpc(struct mac_context *mac,
 			 * set LPI power if safe mode is enabled OR RF test
 			 * mode is enabled.
 			 */
-			if (rf_test_mode || safe_mode_enable) {
+			if (rf_test_mode || safe_mode_enable)
 				ap_power_type_6g = REG_INDOOR_AP;
-			} else {
-				if (!session->lim_join_req) {
-					if (!ctry_code_match)
-						ap_power_type_6g = ap_pwr_type;
-				} else {
-					if (!session->same_ctry_code)
-						ap_power_type_6g =
-						session->ap_power_type_6g;
-				}
-			}
 		}
 	}
 
