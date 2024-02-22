@@ -8,7 +8,9 @@
 
 #include <linux/platform_device.h>
 #include <linux/soc/qcom/llcc-qcom.h>
+#ifdef CONFIG_MSM_MMRM
 #include <linux/soc/qcom/msm_mmrm.h>
+#endif
 
 #include "msm_vidc_internal.h"
 
@@ -135,7 +137,9 @@ struct clock_info {
 	bool has_scaling;
 	bool has_mem_retention;
 	u64 prev;
+#ifdef CONFIG_MSM_MMRM
 	struct mmrm_client *mmrm_client;
+#endif
 };
 
 struct clock_set {
