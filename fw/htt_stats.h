@@ -333,7 +333,9 @@ enum htt_dbg_ext_stats_type {
      *  PARAMS:
      *
      *  RESP MSG:
-     *    - htt_soc_latency_prof_t
+     *    - htt_latency_prof_stats_tlv showing latency profile stats for
+     *      high-level (pdev or vdev level) events such as tx/rx suspend
+     *      or resume, or UMAC, DMAC, or PMAC reset.
      */
     HTT_DBG_EXT_STATS_LATENCY_PROF_STATS = 25,
 
@@ -655,6 +657,16 @@ enum htt_dbg_ext_stats_type {
      *    -  htt_stats_pdev_rtt_hw_stats_tlv
      */
     HTT_DBG_EXT_PDEV_RTT_INITIATOR_STATS = 66,
+
+    /** HTT_DBG_EXT_STATS_LATENCY_PROF_STATS_LO
+     *  PARAMS:
+     *
+     *  RESP MSG:
+     *    - htt_latency_prof_stats_tlv showing latency profile stats for
+     *      finer-grained events than HTT_DBG_EXT_STATS_LATENCY_PROF_STATS,
+     *      such as individual steps within a larger pdev or vdev event.
+     */
+    HTT_DBG_EXT_STATS_LATENCY_PROF_STATS_LO = 67,
 
 
     /* keep this last */
