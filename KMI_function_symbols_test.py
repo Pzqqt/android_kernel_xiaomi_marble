@@ -4,6 +4,7 @@
 import os
 import sys
 import re
+import itertools
 from typing import Final
 
 from lxml import etree
@@ -31,25 +32,29 @@ def main(abi_gki_aarch64_xml_file: str, vmlinux_symvers_file: str) -> int:
     assert os.path.isfile(vmlinux_symvers_file)
 
     with open(abi_gki_aarch64_xml_file, 'r', encoding="utf-8") as f:
-        elf_function_symbols = {
+        xml_obj = etree.XML(f.read())
+        abi_gki_aarch64_elf_symbols = {
             elf_symbol.get("name"): crc_to_int(elf_symbol.get("crc"))
-            for elf_symbol in etree.XML(f.read()).findall('.//elf-function-symbols/elf-symbol')
+            for elf_symbol in itertools.chain(
+                xml_obj.findall('.//elf-function-symbols/elf-symbol'),
+                xml_obj.findall('.//elf-variable-symbols/elf-symbol'),
+            )
         }
 
     with open(vmlinux_symvers_file, 'r', encoding="utf-8") as f:
-        module_symvers = {
+        vmlinux_symvers = {
             line.split()[1]: crc_to_int(line.split()[0]) for line in f.readlines()
         }
 
-    if missing_symbols := elf_function_symbols.keys() - module_symvers.keys():
+    if missing_symbols := abi_gki_aarch64_elf_symbols.keys() - vmlinux_symvers.keys():
         print("Warning: The kernel image is missing the following symbols:")
         for symbol in missing_symbols:
             print('-', symbol)
 
     diff_crc_items = [
-        (key, elf_function_symbols[key], module_symvers[key])
-        for key in elf_function_symbols.keys() & module_symvers.keys()
-        if elf_function_symbols[key] != module_symvers[key]
+        (key, abi_gki_aarch64_elf_symbols[key], vmlinux_symvers[key])
+        for key in abi_gki_aarch64_elf_symbols.keys() & vmlinux_symvers.keys()
+        if abi_gki_aarch64_elf_symbols[key] != vmlinux_symvers[key]
     ]
 
     if not diff_crc_items:
@@ -59,7 +64,7 @@ def main(abi_gki_aarch64_xml_file: str, vmlinux_symvers_file: str) -> int:
     rich_console = Console()
 
     rich_table = Table(show_header=True, header_style="bold magenta")
-    rich_table.add_column("Function symbol", style="dim")
+    rich_table.add_column("Function/variable symbol", style="dim")
     rich_table.add_column("Crc from abi_gki_aarch64.xml")
     rich_table.add_column("Crc from vmlinux.symvers")
     for item in diff_crc_items:
@@ -67,7 +72,7 @@ def main(abi_gki_aarch64_xml_file: str, vmlinux_symvers_file: str) -> int:
 
     rich_console.print(rich_table)
 
-    print("Found %d function symbol(s) with mismatched crc values!" % len(diff_crc_items))
+    print("Found %d function/variable symbol(s) with mismatched crc values!" % len(diff_crc_items))
     return 1
 
 if __name__ == "__main__":
