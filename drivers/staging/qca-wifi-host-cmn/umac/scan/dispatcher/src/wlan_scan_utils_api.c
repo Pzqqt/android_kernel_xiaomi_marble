@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1411,7 +1411,7 @@ static void util_scan_update_esp_data(struct wlan_esp_ie *esp_information,
 }
 
 /**
- * util_scan_scm_update_bss_with_esp_dataa: calculate estimated air time
+ * util_scan_scm_update_bss_with_esp_data: calculate estimated air time
  * fraction
  * @scan_entry: new received entry
  *
@@ -1461,7 +1461,7 @@ static void util_scan_scm_update_bss_with_esp_data(
 
 /**
  * util_scan_scm_calc_nss_supported_by_ap() - finds out nss from AP
- * @scan_entry: new received entry
+ * @scan_params: new received entry
  *
  * Return: number of nss advertised by AP
  */
@@ -1483,7 +1483,7 @@ static int util_scan_scm_calc_nss_supported_by_ap(
 
 	if (he_cap) {
 		/* Using rx mcs map related to 80MHz or lower as in some
-		 * cases higher mcs may suuport lesser NSS than that
+		 * cases higher mcs may support lesser NSS than that
 		 * of lowe mcs. Thus giving max NSS capability.
 		 */
 		end_ptr = he_cap + he_cap[1] + sizeof(struct ie_header);
@@ -1724,7 +1724,7 @@ static void util_scan_set_security(struct scan_cache_entry *scan_params)
 }
 
 #ifdef WLAN_FEATURE_11BE_MLO
-/**
+/*
  * Multi link IE field offsets
  *  ------------------------------------------------------------------------
  * | EID(1) | Len (1) | EID_EXT (1) | ML_CONTROL (2) | CMN_INFO (var) | ... |
@@ -1811,7 +1811,7 @@ static void util_scan_update_ml_info(struct scan_cache_entry *scan_entry)
 	/* TODO: update ml_info based on ML IE */
 
 	offset = ML_CMN_INFO_OFFSET;
-	/* TODO: Add proper parsing based on presense bitmap */
+	/* TODO: Add proper parsing based on presence bitmap */
 	if (multi_link_ctrl & CMN_INFO_MLD_ADDR_PRESENT_BIT) {
 		if ((ml_ie + offset + QDF_MAC_ADDR_SIZE) <= end_ptr) {
 			qdf_mem_copy(&scan_entry->ml_info.mld_mac_addr,
@@ -1921,7 +1921,7 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 	scan_entry->bcn_int = le16toh(bcn->beacon_interval);
 
 	/*
-	 * In case if the beacon dosnt have
+	 * In case if the beacon doesn't have
 	 * valid beacon interval falback to def
 	 */
 	if (!scan_entry->bcn_int)
@@ -2837,8 +2837,10 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 					   subie_len,
 					   mbssid_info.split_prof_continue,
 					   mbssid_info.prof_residue);
-				if (mbssid_info.split_prof_continue)
+				if (mbssid_info.split_prof_continue) {
 					qdf_mem_free(split_prof_start);
+					split_prof_start = NULL;
+				}
 
 				qdf_mem_free(new_ie);
 				return QDF_STATUS_E_INVAL;
@@ -2860,6 +2862,7 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 					   subelement[ID_POS],
 					   subelement[TAG_LEN_POS]);
 				qdf_mem_free(split_prof_start);
+				split_prof_start = NULL;
 				qdf_mem_free(new_ie);
 				return QDF_STATUS_E_INVAL;
 			} else if (retval == INVALID_NONTX_PROF) {
@@ -2972,14 +2975,22 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 						subie_len, new_ie,
 						mbssid_info.profile_num);
 
-			if (!new_ie_len)
+			if (!new_ie_len) {
+				if (mbssid_info.split_prof_continue) {
+					qdf_mem_free(split_prof_start);
+					split_prof_start = NULL;
+					split_prof_end = NULL;
+				}
 				continue;
+			}
 
 			new_frame_len = frame_len - ielen + new_ie_len;
 
 			if (new_frame_len < 0) {
-				if (mbssid_info.split_prof_continue)
+				if (mbssid_info.split_prof_continue) {
 					qdf_mem_free(split_prof_start);
+					split_prof_start = NULL;
+				}
 				qdf_mem_free(new_ie);
 				scm_err("Invalid frame:Stop MBSSIE parsing");
 				scm_err("Frame_len: %zu,ielen:%u,new_ie_len:%u",
@@ -2989,8 +3000,10 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 
 			new_frame = qdf_mem_malloc(new_frame_len);
 			if (!new_frame) {
-				if (mbssid_info.split_prof_continue)
+				if (mbssid_info.split_prof_continue) {
 					qdf_mem_free(split_prof_start);
+					split_prof_start = NULL;
+				}
 				qdf_mem_free(new_ie);
 				scm_err_rl("Malloc for new_frame failed");
 				scm_err_rl("split_prof_continue: %d",
@@ -3030,6 +3043,8 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 			if (QDF_IS_STATUS_ERROR(status)) {
 				if (mbssid_info.split_prof_continue) {
 					qdf_mem_free(split_prof_start);
+					split_prof_start = NULL;
+					split_prof_end = NULL;
 					qdf_mem_zero(&mbssid_info,
 						     sizeof(mbssid_info));
 				}
@@ -3040,14 +3055,20 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 				break;
 			}
 			/* scan entry makes its own copy so free the frame*/
-			if (mbssid_info.split_prof_continue)
+			if (mbssid_info.split_prof_continue) {
 				qdf_mem_free(split_prof_start);
+				split_prof_start = NULL;
+				split_prof_end = NULL;
+			}
 			qdf_mem_free(new_frame);
 		}
 
 		pos = next_elem;
 	}
 	qdf_mem_free(new_ie);
+
+	if (split_prof_start)
+		qdf_mem_free(split_prof_start);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -3093,7 +3114,8 @@ util_scan_parse_beacon_frame(struct wlan_objmgr_pdev *pdev,
 		mbssid_ie = util_scan_find_ie(WLAN_ELEMID_MULTIPLE_BSSID,
 					      (uint8_t *)&bcn->ie, ie_len);
 		if (mbssid_ie) {
-			if (mbssid_ie[TAG_LEN_POS] < VALID_ELEM_LEAST_LEN) {
+			/* some APs announce the MBSSID ie_len as 1 */
+			if (mbssid_ie[TAG_LEN_POS] < 1) {
 				scm_debug("MBSSID IE length is wrong %d",
 					  mbssid_ie[TAG_LEN_POS]);
 				return status;
