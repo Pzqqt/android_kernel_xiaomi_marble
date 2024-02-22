@@ -8360,7 +8360,7 @@ static void uclamp_set(struct cgroup_subsys_state *css)
 		{"background",          "0",  "50",  0},  // 0-50%
 		{"system-background",   "0",  "60",  0},  // 0-60%
 		{"restricted",          "0",  "20",  0},  // 0-20%
-		{"camera-daemon",       "20", "max", 1},  // 20-100%
+		{"camera-daemon",       "50", "max", 1},  // 50-100%
 	};
 
 	if (!css->cgroup->kn)
