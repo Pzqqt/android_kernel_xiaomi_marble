@@ -71,7 +71,7 @@ CONFIG_SETEND_EMULATION=y
 CONFIG_RANDOMIZE_BASE=y
 # CONFIG_RANDOMIZE_MODULE_REGION_FULL is not set
 # CONFIG_STACKPROTECTOR_PER_TASK is not set
-CONFIG_CMDLINE="stack_depot_disable=on kasan.stacktrace=off kvm-arm.mode=protected cgroup_disable=pressure cgroup.memory=nokmem dwc3_msm.ep_addr_rxdbg_mask=0 dwc3_msm.ep_addr_txdbg_mask=0 noirqdebug"
+CONFIG_CMDLINE="stack_depot_disable=on kasan.stacktrace=off kvm-arm.mode=protected cgroup_disable=pressure cgroup.memory=nokmem noirqdebug"
 CONFIG_CMDLINE_EXTEND=y
 # CONFIG_DMI is not set
 CONFIG_PM_WAKELOCKS=y
