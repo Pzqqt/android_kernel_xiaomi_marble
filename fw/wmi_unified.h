@@ -9331,7 +9331,7 @@ typedef enum {
      * To summarize:
      *     bit 19 | bit 18 | rate cap applied
      *     -------+--------+------------------
-     *        0   |    0   | cap rates for both UL and DL
+     *        0   |    0   | cap rates only for DL
      *        0   |    1   | cap rates only for DL
      *        1   |    0   | cap rates only for UL
      *        1   |    1   | cap rates for both UL and DL
@@ -41210,10 +41210,10 @@ typedef struct {
 } wmi_big_data_dp_stats_tlv_param;
 
 typedef enum {
-    WMI_6GHZ_REG_PWRMODE_LPI = 0,
-    WMI_6GHZ_REG_PWRMODE_SP = 1,
-    WMI_6GHZ_REG_PWRMODE_VLP  = 2,
-    WMI_6GHZ_REG_PWRMODE_SP_STA = 3,
+    WMI_6GHZ_REG_PWRMODE_LPI = 0, /* LPI mode for AP and client products */
+    WMI_6GHZ_REG_PWRMODE_SP = 1, /* SP mode for AP and client products */
+    WMI_6GHZ_REG_PWRMODE_VLP = 2, /* VLP mode for AP and client products */
+    WMI_6GHZ_REG_PWRMODE_SP_STA = 3, /* SP client mode for AP products */
 
     WMI_6GHZ_REG_PWRMODE_MAX = 5
 } WMI_6GHZ_REG_PWRMODE_TYPE;
