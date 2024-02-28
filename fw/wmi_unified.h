@@ -7876,7 +7876,10 @@ typedef struct {
     A_UINT32 tlv_header;
     /* vdev id indicating to which the vdev, this chainmask configuration will be applied. */
     A_UINT32 vdev_id;
-    /* number of chains to use for transmissions in 2.4 GHz band */
+    /* number of chains to use for transmissions in 2.4 GHz band
+     * If vdev is MLO vdev, below 2g params apply to all 2.4 GHz band links
+     * If vdev is MLO vdev, below 5g params apply to all 5/6 GHz band links
+     */
     A_UINT32 num_tx_chains_2g;
     /* number of chains to use for reception in 2.4 GHz band */
     A_UINT32 num_rx_chains_2g;
@@ -7906,6 +7909,10 @@ typedef struct {
     A_UINT32 disable_tx_mrc_5g;
     /* If non-zero then use only one chain for RX when connection rx_nss is 1 in 5 GHz */
     A_UINT32 disable_rx_mrc_5g;
+    /* Whether fast chain selection is needed when TX chain num is 1 */
+    A_UINT32 fast_chain_selection;
+    /* RSSI delta threshold to determine better chain, units: dB */
+    A_UINT32 better_chain_rssi_threshold;
 } wmi_vdev_chainmask_config_cmd_fixed_param;
 
 /*
