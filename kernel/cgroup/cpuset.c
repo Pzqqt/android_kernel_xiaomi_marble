@@ -209,7 +209,7 @@ struct cs_target {
 };
 #endif
 
-static inline bool task_is_booster(struct task_struct *tsk)
+bool task_is_booster(struct task_struct *tsk)
 {
 	char comm[sizeof(tsk->comm)];
 
