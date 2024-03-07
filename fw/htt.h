@@ -21374,7 +21374,7 @@ PREPACK struct htt_t2h_sawf_msduq_event {
 #define HTT_T2H_SAWF_MSDUQ_INFO_HTT_TGT_OPAQUE_ID_M              0x00FFFFFF
 #define HTT_T2H_SAWF_MSDUQ_INFO_HTT_TGT_OPAQUE_ID_S                       0
 #define HTT_T2H_SAWF_MSDUQ_INFO_HTT_TGT_OPAQUE_ID_GET(_var) \
-    (((_var) & HTT_T2H_SAWF_MSDUQ_INFO_HTT_TGT_OPAQUE_ID) >> \
+    (((_var) & HTT_T2H_SAWF_MSDUQ_INFO_HTT_TGT_OPAQUE_ID_M) >> \
      HTT_T2H_SAWF_MSDUQ_INFO_HTT_TGT_OPAQUE_ID_S)
 #define HTT_T2H_SAWF_MSDUQ_INFO_HTT_TGT_OPAQUE_ID_SET(_var, _val) \
     do { \
@@ -22983,7 +22983,7 @@ PREPACK struct htt_t2h_sdwf_msduq_cfg_ind {
 #define HTT_T2H_MSG_TYPE_SDWF_MSDUQ_CFG_IND_HLOS_TID_GET(_var) \
         (((_var) & HTT_T2H_MSG_TYPE_SDWF_MSDUQ_CFG_IND_HLOS_TID_M) >> \
                 HTT_T2H_MSG_TYPE_SDWF_MSDUQ_CFG_IND_HLOS_TID_S)
-#define HTT_T2H_MSG_TYPE_MSDUQ_CFG_IN_DHLOS_TID_SET(_var, _val) \
+#define HTT_T2H_MSG_TYPE_SDWF_MSDUQ_CFG_IND_HLOS_TID_SET(_var, _val) \
     do { \
         HTT_CHECK_SET_VAL(HTT_T2H_MSG_TYPE_SDWF_MSDUQ_CFG_IND_HLOS_TID, _val); \
         ((_var) |= ((_val) << HTT_T2H_MSG_TYPE_SDWF_MSDUQ_CFG_IND_HLOS_TID_S)); \
