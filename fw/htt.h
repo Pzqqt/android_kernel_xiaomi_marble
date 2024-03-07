@@ -825,6 +825,7 @@ typedef enum {
     HTT_STATS_PDEV_RTT_HW_STATS_TAG                 = 196, /* htt_stats_pdev_rtt_hw_stats_tlv */
     HTT_STATS_PDEV_RTT_TBR_SELFGEN_QUEUED_STATS_TAG = 197, /* htt_stats_pdev_rtt_tbr_selfgen_queued_stats_tlv */
     HTT_STATS_PDEV_RTT_TBR_CMD_RESULT_STATS_TAG     = 198, /* htt_stats_pdev_rtt_tbr_cmd_result_stats_tlv */
+    HTT_STATS_GTX_TAG                               = 199, /* htt_stats_gtx_tlv */
 
 
     HTT_STATS_MAX_TAG,

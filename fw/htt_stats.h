@@ -668,6 +668,14 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_STATS_LATENCY_PROF_STATS_LO = 67,
 
+    /** HTT_DBG_GTX_STATS
+     * PARAMS:
+     *    - No Params
+     * RESP MSG:
+     *    - htt_pdev_gtx_stats_tlv
+     */
+    HTT_DBG_GTX_STATS = 68,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -11704,5 +11712,15 @@ static INLINE A_UINT8 *htt_ctrl_path_cal_type_id_to_name(A_UINT32 cal_type_id)
 }
 #endif /* HTT_CTRL_PATH_STATS_CAL_TYPE_STRINGS */
 
+/*===================== Start GTX stats ====================*/
+#define HTT_NUM_MCS_PER_NSS 16
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 gtx_enabled; /* shows whether Green Tx feature is enabled */
+    A_INT32 mcs_tpc_min[HTT_NUM_MCS_PER_NSS]; /* shows current MCS's minimum TPC in 0.25dBm units */
+    A_INT32 mcs_tpc_max[HTT_NUM_MCS_PER_NSS]; /* shows current MCS's maximum TPC in 0.25dBm units */
+    A_UINT32 mcs_tpc_diff[HTT_NUM_MCS_PER_NSS]; /* shows current MCS's difference between maximum and minimum TPC in 0.25dB unit*/
+} htt_stats_gtx_tlv;
+/*===================== End GTX stats ====================*/
 
 #endif /* __HTT_STATS_H__ */
