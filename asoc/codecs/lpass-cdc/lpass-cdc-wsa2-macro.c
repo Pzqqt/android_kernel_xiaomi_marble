@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -31,6 +31,8 @@
 			SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_192000)
 #define LPASS_CDC_WSA2_MACRO_RX_MIX_RATES (SNDRV_PCM_RATE_48000 |\
 			SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_192000)
+#define LPASS_CDC_WSA2_MACRO_VI_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
+            SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000)
 #define LPASS_CDC_WSA2_MACRO_RX_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |\
 		SNDRV_PCM_FMTBIT_S24_LE |\
 		SNDRV_PCM_FMTBIT_S24_3LE | SNDRV_PCM_FMTBIT_S32_LE)
@@ -471,7 +473,7 @@ static struct snd_soc_dai_driver lpass_cdc_wsa2_macro_dai[] = {
 		.id = LPASS_CDC_WSA2_MACRO_AIF_VI,
 		.capture = {
 			.stream_name = "WSA2_AIF_VI Capture",
-			.rates = SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_48000,
+			.rates = LPASS_CDC_WSA2_MACRO_VI_RATES,
 			.formats = LPASS_CDC_WSA2_MACRO_RX_FORMATS,
 			.rate_max = 48000,
 			.rate_min = 8000,
