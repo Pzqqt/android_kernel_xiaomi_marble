@@ -16213,6 +16213,55 @@ typedef struct {
     A_UINT32 dot11RTSFailureCount;
 } wmi_ctrl_path_sta_rrm_stats_struct;
 
+typedef struct {
+    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ctrl_path_vdev_bcn_stats_struct */
+    A_UINT32 tlv_header;
+    A_UINT32 vdev_id;
+    A_UINT32 beacon_succ_cnt;
+    A_UINT32 beacon_outage_cnt;
+    A_UINT32 beacon_cons_miss_cnt;
+    A_UINT32 beacon_curr_miss_cnt;
+    A_UINT32 beacon_sw_abort_cnt;
+    A_UINT32 beacon_tx_filter_cnt;
+    A_UINT32 beacon_tx_xretry_cnt;
+    A_UINT32 beacon_tx_drop_cnt;
+    A_UINT32 beacon_tx_abort_cnt;
+    A_UINT32 beacon_tx_tid_del_cnt;
+    A_UINT32 beacon_tx_mig_drop_cnt;
+    A_UINT32 beacon_fail_others_cnt;
+    A_UINT32 beacon_stuck_cnt;
+    A_UINT32 beacon_tbtt_skip_cnt;
+    A_UINT32 beacon_swba_cnt;
+    A_UINT32 beacon_enque_fail;
+    A_UINT32 scan_time_exceed_cnt;
+    A_UINT32 beacon_miss_systime_gap_us;
+    A_UINT32 beacon_last_miss_time_low_us;
+    A_UINT32 beacon_last_miss_time_high_us;
+    A_UINT32 last_tbtt_time_low_us;
+    A_UINT32 last_tbtt_time_high_us;
+    A_UINT32 last_tbtt_update_low_us;
+    A_UINT32 last_tbtt_update_high_us;
+} wmi_ctrl_path_vdev_bcn_tx_stats_struct;
+
+typedef struct {
+    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ctrl_path_pdev_bcn_stats_struct */
+    A_UINT32 tlv_header;
+    A_UINT32 pdev_id;
+    A_UINT32 beacon_succ_cnt;
+    A_UINT32 beacon_outage_cnt;
+    A_UINT32 beacon_sw_abort_cnt;
+    A_UINT32 beacon_tx_filter_cnt;
+    A_UINT32 beacon_tx_xretry_cnt;
+    A_UINT32 beacon_tx_drop_cnt;
+    A_UINT32 beacon_tx_abort_cnt;
+    A_UINT32 beacon_tx_tid_del_cnt;
+    A_UINT32 beacon_tx_mig_drop_cnt;
+    A_UINT32 beacon_fail_others_cnt;
+    A_UINT32 beacon_stuck_cnt;
+    A_UINT32 beacon_swba_cnt;
+    A_UINT32 beacon_enque_fail;
+} wmi_ctrl_path_pdev_bcn_tx_stats_struct;
+
 /**
  *  peer statistics.
  */
@@ -35482,6 +35531,8 @@ typedef enum {
     WMI_REQUEST_CTRL_PATH_PEER_STAT         = 16,
     WMI_REQUEST_CTRL_PATH_VDEV_DEBUG_STAT   = 17,
     WMI_REQUEST_CTRL_STA_RRM_STAT           = 18,
+    WMI_REQUEST_CTRL_PATH_VDEV_BCN_TX_STAT  = 19,
+    WMI_REQUEST_CTRL_PATH_PDEV_BCN_TX_STAT  = 20,
 } wmi_ctrl_path_stats_id;
 
 typedef enum {
