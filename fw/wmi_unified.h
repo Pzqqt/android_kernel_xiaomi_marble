@@ -1507,6 +1507,11 @@ typedef enum {
     WMI_SOC_SET_ANTENNA_MODE_CMDID,
     /** enable/disable TQM reset (SOC level) feature */
     WMI_SOC_TQM_RESET_ENABLE_DISABLE_CMDID,
+    /*
+     * WMI Command to enable custom classification of packets in Tx path
+     * and specifiy packets of interest for classification.
+     */
+    WMI_SOC_TX_PACKET_CUSTOM_CLASSIFY_CMDID,
 
     /* packet filter commands */
     WMI_PACKET_FILTER_CONFIG_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_PKT_FILTER),
@@ -37696,6 +37701,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_SET_CUSTOM_TX_POWER_PER_MCS_CMDID);
         WMI_RETURN_STRING(WMI_PEER_ACTIVE_TRAFFIC_MAP_CMDID);
         WMI_RETURN_STRING(WMI_REQUEST_OPM_STATS_CMDID);
+        WMI_RETURN_STRING(WMI_SOC_TX_PACKET_CUSTOM_CLASSIFY_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -38692,7 +38698,33 @@ typedef enum {
     WMI_PDEV_WIFIRXCCE_USE_CCE2_E = 3,
 } wmi_pdev_dest_ring_handler_type;
 
-/* This command shall be sent only when no VDEV is up. If the command is sent after any VDEV is up, target will ignore the command */
+typedef enum {
+    WMI_SOC_TX_PACKET_TYPE_ARP   = 1,
+    WMI_SOC_TX_PACKET_TYPE_EAPOL = 2,
+    WMI_SOC_TX_PACKET_TYPE_DHCP  = 3,
+    WMI_SOC_TX_PACKET_TYPE_DNS   = 4,
+    WMI_SOC_TX_PACKET_TYPE_ICMP  = 5,
+} wmi_soc_tx_packet_type;
+
+/*
+ * This command shall be sent only when no VDEV is up.
+ * If the command is sent after any VDEV is up, target will ignore the command.
+ */
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_soc_tx_packet_custom_classify_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /** packet_bitmap:
+     * bitmap of the packets to be classified,
+     * Refer to wmi_soc_tx_packet_type for the interpretation of the bits
+     * within the bitmap.
+     */
+    A_UINT32 packet_bitmap;
+} wmi_soc_tx_packet_custom_classify_cmd_fixed_param;
+
+/*
+ * This command shall be sent only when no VDEV is up.
+ * If the command is sent after any VDEV is up, target will ignore the command.
+ */
 typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_update_pkt_routing_cmd_fixed_param */
     A_UINT32 tlv_header;
