@@ -13556,6 +13556,27 @@ typedef struct {
 #define WMI_PMLO_DL_AIRTIME_NON_AC_GET(airtime)         WMI_GET_BITS(airtime, 24, 8)
 #define WMI_PMLO_DL_AIRTIME_NON_AC_SET(airtime, value)  WMI_SET_BITS(airtime, 24, 8, value)
 
+#define WMI_PMLO_UL_DL_PAYLOAD_RATIO_GET_BE(airtime)         WMI_GET_BITS(airtime, 0, 8)
+#define WMI_PMLO_UL_DL_PAYLOAD_RATIO_SET_BE(airtime, value)  WMI_SET_BITS(airtime, 0, 8, value)
+
+#define WMI_PMLO_UL_DL_PAYLOAD_RATIO_GET_BK(airtime)         WMI_GET_BITS(airtime, 8, 8)
+#define WMI_PMLO_UL_DL_PAYLOAD_RATIO_SET_BK(airtime, value)  WMI_SET_BITS(airtime, 8, 8, value)
+
+#define WMI_PMLO_UL_DL_PAYLOAD_RATIO_GET_VI(airtime)         WMI_GET_BITS(airtime, 16, 8)
+#define WMI_PMLO_UL_DL_PAYLOAD_RATIO_SET_VI(airtime, value)  WMI_SET_BITS(airtime, 16, 8, value)
+
+#define WMI_PMLO_UL_DL_PAYLOAD_RATIO_GET_VO(airtime)         WMI_GET_BITS(airtime, 24, 8)
+#define WMI_PMLO_UL_DL_PAYLOAD_RATIO_SET_VO(airtime, value)  WMI_SET_BITS(airtime, 24, 8, value)
+
+/** Traffic condition used in estimating the available airtime value */
+typedef enum {
+    WMI_PDEV_TRAFFIC_LIGHT           = 0,
+    WMI_PDEV_TRAFFIC_MEDIUM          = 1,
+    WMI_PDEV_TRAFFIC_HEAVY           = 2,
+    WMI_PDEV_TRAFFIC_SATURATION      = 3,
+    WMI_PDEV_TRAFFIC_MEDIUM_AND_OBSS = 4,
+} wmi_pdev_traffic_condition;
+
 /*
  * The wmi_ctrl_path_pmlo_stats_struct is used to send Provisional MLO stats
  * the WMI_CTRL_PATH_STATS_EVENT message, in response to a
@@ -13657,6 +13678,112 @@ typedef struct {
         };
         A_UINT32 ul_dl_obss_free_aa_word32;
     };
+
+    /*
+     * Traffic condition used in estimating the available airtime value.
+     * Refer to enum wmi_pdev_traffic_condition
+     * traffic_condition_used_per_ac[0] : AC_VO
+     * traffic_condition_used_per_ac[1] : AC_VI
+     * traffic_condition_used_per_ac[2] : AC_BE
+     * traffic_condition_used_per_ac[3] : AC_BK
+     * Saturation Traffic condition is evaluated to true when the number
+     * of associated stations and the number of active TIDs per access
+     * category crosses a threshold.
+     * Light Traffic condition is evaluated to true when the obss_rx_airtime
+     * is less than a threshold and the free channel is greater than the sum
+     * of DL and UL airtime per client.
+     * Heavy Traffic condition is evaluated to true when the free channel is
+     * less than a particular threshold and the number of active TIDs per
+     * access category crosses a threshold.
+     * OBSS (Medium) Traffic condition is evaluated to true when the
+     * obss_rx_airtime crosses a threshold.
+     * Medium Traffic case is carried out if all the above mentioned
+     * conditions evaluate to false.
+     */
+    A_UINT32 traffic_condition_used_per_ac[WMI_AC_MAX];
+
+    /*
+     * Every PPDU has an associated txop overhead value in its PPDU duration.
+     * In order to consider only the duration taken to transfer the actual
+     * data, we estimate the payload ratio.
+     * The packet overhead is accumulated for each PPDU, where it is recorded
+     * for each access category separately.
+     * The payload_ratio_dl values indicate the percentage of actual data
+     * packets' duration in the entire TX duration by omitting the overhead
+     * (units are percentage).
+     * By estimating the payload ratio, we would be able to further measure
+     * the free channel with increased accuracy.
+     *
+     * BIT[0-7]   : AC_BE
+     * BIT[8-15]  : AC_BK
+     * BIT[16-23] : AC_VI
+     * BIT[24-31] : AC_VO
+     * Please refer to WMI_PMLO_UL_DL_PAYLOAD_RATIO_* macros
+     * to retrieve values for each access category in payload_ratio_dl_per_ac.
+     */
+    union {
+        struct {
+             A_UINT32
+                 payload_ratio_dl_ac_be: 8,
+                 payload_ratio_dl_ac_bk: 8,
+                 payload_ratio_dl_ac_vi: 8,
+                 payload_ratio_dl_ac_vo: 8;
+        };
+        A_UINT32 payload_ratio_dl_per_ac;
+    };
+
+    /*
+     * Every PPDU has an associated txop overhead value in its PPDU duration.
+     * In order to consider only the duration taken to transfer the actual
+     * data, we estimate the payload ratio.
+     * The packet overhead is accumulated for each PPDU, where it is recorded
+     * for each access category separately.
+     * The payload_ratio_ul values indicate the percentage of actual data
+     * packets' duration in the entire RX duration by omitting the overhead
+     * (Units are percentage).
+     * By estimating the payload ratio, we would be able to further measure
+     * the free channel with increased accuracy.
+     *
+     * BIT[0-7]   : AC_BE
+     * BIT[8-15]  : AC_BK
+     * BIT[16-23] : AC_VI
+     * BIT[24-31] : AC_VO
+     * Please refer to WMI_PMLO_UL_DL_PAYLOAD_RATIO_* macros
+     * to retrieve values for each access category in payload_ratio_ul_per_ac.
+     */
+    union {
+        struct {
+             A_UINT32
+                 payload_ratio_ul_ac_be: 8,
+                 payload_ratio_ul_ac_bk: 8,
+                 payload_ratio_ul_ac_vi: 8,
+                 payload_ratio_ul_ac_vo: 8;
+        };
+        A_UINT32 payload_ratio_ul_per_ac;
+    };
+
+    /*
+     * Error margin of the estimated available airtime per AC,
+     * units are percentage.
+     * error_margin_per_ac[0] : AC_VO
+     * error_margin_per_ac[1] : AC_VI
+     * error_margin_per_ac[2] : AC_BE
+     * error_margin_per_ac[3] : AC_BK
+     */
+    A_UINT32 error_margin_per_ac[WMI_AC_MAX];
+
+    /*
+     * This parameter indicates the number of clients which would be
+     * considered to estimate the available airtime value during
+     * imbalanced traffic scenarios
+     * Value 0 indicates that we do not have imbalanced traffic.
+     * num_of_ul/dl_asymmetric_clients_per_ac[0] : AC_VO
+     * num_of_ul/dl_asymmetric_clients_per_ac[1] : AC_VI
+     * num_of_ul/dl_asymmetric_clients_per_ac[2] : AC_BE
+     * num_of_ul/dl_asymmetric_clients_per_ac[3] : AC_BK
+     */
+    A_UINT32 num_of_ul_asymmetric_clients_per_ac[WMI_AC_MAX];
+    A_UINT32 num_of_dl_asymmetric_clients_per_ac[WMI_AC_MAX];
 } wmi_ctrl_path_pmlo_stats_struct;
 
 typedef struct {
