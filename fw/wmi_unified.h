@@ -1302,6 +1302,13 @@ typedef enum {
     /* WMI cmd used by host to send the switch response status to FW */
     WMI_AUDIO_TRANSPORT_SWITCH_RESP_STATUS_CMDID,
 
+    /** WMI command to set active traffic type bitmap for a peer */
+    WMI_PEER_ACTIVE_TRAFFIC_MAP_CMDID,
+
+    /** WMI command to Request Opportunistic Power Mgmt (OPM) stats */
+    WMI_REQUEST_OPM_STATS_CMDID,
+
+
     /*  Offload 11k related requests */
     WMI_11K_OFFLOAD_REPORT_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_11K_OFFLOAD),
     /* invoke neighbor report from FW */
@@ -37629,6 +37636,8 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_GET_TWT_SESSION_STATS_INFO_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_ENABLE_XLNA_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_SET_CUSTOM_TX_POWER_PER_MCS_CMDID);
+        WMI_RETURN_STRING(WMI_PEER_ACTIVE_TRAFFIC_MAP_CMDID);
+        WMI_RETURN_STRING(WMI_REQUEST_OPM_STATS_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -48239,6 +48248,53 @@ typedef struct {
     /* Return status: 0 - Success, else - Failure */
     A_UINT32 status;
 } wmi_pdev_enable_xlna_event_fixed_param;
+
+/**
+  * bits 0-15 are used for non interative traffic types like video streaming,
+  *     or ping
+  * bit 16-31 are reserved for interactive traffic types like gaming, VoIP,
+  *     or video conferencing
+  */
+#define WMI_PEER_ACTIVE_TRAFFIC_TYPE_STREAMING_M  0x00000001
+#define WMI_PEER_ACTIVE_TRAFFIC_TYPE_STREAMING_S  0
+#define WMI_PEER_ACTIVE_TRAFFIC_TYPE_PING_M       0x00000002
+#define WMI_PEER_ACTIVE_TRAFFIC_TYPE_PING_S       1
+#define WMI_PEER_ACTIVE_TRAFFIC_TYPE_BACKGROUND_M 0x00000004
+#define WMI_PEER_ACTIVE_TRAFFIC_TYPE_BACKGROUND_S 2
+/* bits 3-15 are reserved for new non-interactive traffic types */
+
+#define WMI_PEER_ACTIVE_TRAFFIC_TYPE_GAMING_M     0x00010000
+#define WMI_PEER_ACTIVE_TRAFFIC_TYPE_GAMING_S     16
+#define WMI_PEER_ACTIVE_TRAFFIC_TYPE_VOIP_M       0x00020000
+#define WMI_PEER_ACTIVE_TRAFFIC_TYPE_VOIP_S       17
+#define WMI_PEER_ACTIVE_TRAFFIC_TYPE_VIDEO_CONF_M 0x00040000
+#define WMI_PEER_ACTIVE_TRAFFIC_TYPE_VIDEO_CONF_S 18
+/* bits 19-31 are reserved for new interactive traffic types */
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_active_traffic_map_cmd_fixed_param */
+    A_UINT32 vdev_id;
+    wmi_mac_addr peer_macaddr; /* peer MAC address */
+    /* active_traffic_map:
+     * This field is a bitmap showing traffic types known to be currently
+     * present within the vdev.
+     * Refer to the WMI_PEER_ACTIVE_TRAFFIC_ definitions that specify which
+     * bits within the bitmap correspond to which traffic types.
+     */
+    A_UINT32 active_traffic_map;
+} wmi_peer_active_traffic_map_cmd_fixed_param;
+
+
+/*
+ * WMI_REQUEST_OPM_STATS_CMDID triggered by host to collect OPM stats for trafic types identified by STC
+ * in respose this FW will send OEM_respose_event_id WMI_OEM_DATA_CMD_OPM_STATS
+ *
+ */
+ typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_request_opm_stats_cmd_fixed_param */
+    A_UINT32 pdev_id; /** pdev_id for identifying the MAC */
+} wmi_request_opm_stats_cmd_fixed_param;
+
 
 
 /* ADD NEW DEFS HERE */

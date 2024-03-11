@@ -1432,6 +1432,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_pdev_enable_xlna_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_reg_chan_list_cc_event_ext2_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_set_custom_tx_power_per_mcs_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_peer_active_traffic_map_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_request_opm_stats_cmd_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -1978,6 +1980,8 @@ typedef enum {
     OP(WMI_PDEV_ENABLE_WIFI_RADAR_CMDID) \
     OP(WMI_PDEV_ENABLE_XLNA_CMDID) \
     OP(WMI_PDEV_SET_CUSTOM_TX_POWER_PER_MCS_CMDID) \
+    OP(WMI_PEER_ACTIVE_TRAFFIC_MAP_CMDID) \
+    OP(WMI_REQUEST_OPM_STATS_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -5590,6 +5594,16 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_ENABLE_XLNA_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_custom_tx_power_per_mcs_cmd_fixed_param, wmi_pdev_set_custom_tx_power_per_mcs_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, txpower_bkoff_array, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_CUSTOM_TX_POWER_PER_MCS_CMDID);
+
+/* cmd to Set active traffic type bitmap */
+#define WMITLV_TABLE_WMI_PEER_ACTIVE_TRAFFIC_MAP_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_active_traffic_map_cmd_fixed_param, wmi_peer_active_traffic_map_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_ACTIVE_TRAFFIC_MAP_CMDID);
+
+/* cmd to request Opportunistic Power Mgmt (OPM) stats */
+#define WMITLV_TABLE_WMI_REQUEST_OPM_STATS_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_request_opm_stats_cmd_fixed_param, wmi_request_opm_stats_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_OPM_STATS_CMDID);
 
 
 
