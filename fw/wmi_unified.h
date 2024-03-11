@@ -6162,8 +6162,15 @@ typedef struct {
 
 
 #define MAX_NUM_CHAN_PER_WMI_CMD     58    /* each WMI cmd can hold 58 channel entries at most */
-#define APPEND_TO_EXISTING_CHAN_LIST 1
-#define CHANNEL_MAX_BANDWIDTH_VALID  2
+#define WMI_APPEND_TO_EXISTING_CHAN_LIST    0x1
+#define WMI_CHANNEL_MAX_BANDWIDTH_VALID     0x2
+#define WMI_HONOR_HOST_6GHZ_CHANNEL_PASSIVE 0x4
+/*
+ * To preserve backwards compatibility, retain old names (without WMI_ prefix)
+ * as aliases for the corrected names (with WMI_ prefix).
+ */
+#define APPEND_TO_EXISTING_CHAN_LIST WMI_APPEND_TO_EXISTING_CHAN_LIST
+#define CHANNEL_MAX_BANDWIDTH_VALID WMI_CHANNEL_MAX_BANDWIDTH_VALID
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_scan_chan_list_cmd_fixed_param */
