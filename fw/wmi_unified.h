@@ -5262,6 +5262,7 @@ typedef enum {
     WMI_VENDOR1_REQ1_VERSION_3_30   = 3,
     WMI_VENDOR1_REQ1_VERSION_3_40   = 4,
     WMI_VENDOR1_REQ1_VERSION_4_00   = 5,
+    WMI_VENDOR1_REQ1_VERSION_4_10   = 6,
 } WMI_VENDOR1_REQ1_VERSION;
 
 typedef enum {
@@ -5612,6 +5613,11 @@ typedef enum {
         WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 158, 1)
 #define WMI_SET_STA_P2P_NAN_TDLS_SUPPORT(feature_bitmap, val)   \
         WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 158, 1, val)
+/* NAN EHT supported info */
+#define WMI_GET_NAN_EHT_SUPPORT(var, feature_bitmap) \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 159, 1)
+#define WMI_SET_NAN_EHT_SUPPORT(feature_bitmap, val) \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 159, 1, val)
 
 /*
  * Specify how many A_UINT32 words are needed to hold the feature bitmap flags.
