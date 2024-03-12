@@ -333,7 +333,9 @@ enum htt_dbg_ext_stats_type {
      *  PARAMS:
      *
      *  RESP MSG:
-     *    - htt_soc_latency_prof_t
+     *    - htt_latency_prof_stats_tlv showing latency profile stats for
+     *      high-level (pdev or vdev level) events such as tx/rx suspend
+     *      or resume, or UMAC, DMAC, or PMAC reset.
      */
     HTT_DBG_EXT_STATS_LATENCY_PROF_STATS = 25,
 
@@ -655,6 +657,16 @@ enum htt_dbg_ext_stats_type {
      *    -  htt_stats_pdev_rtt_hw_stats_tlv
      */
     HTT_DBG_EXT_PDEV_RTT_INITIATOR_STATS = 66,
+
+    /** HTT_DBG_EXT_STATS_LATENCY_PROF_STATS_LO
+     *  PARAMS:
+     *
+     *  RESP MSG:
+     *    - htt_latency_prof_stats_tlv showing latency profile stats for
+     *      finer-grained events than HTT_DBG_EXT_STATS_LATENCY_PROF_STATS,
+     *      such as individual steps within a larger pdev or vdev event.
+     */
+    HTT_DBG_EXT_STATS_LATENCY_PROF_STATS_LO = 67,
 
 
     /* keep this last */
@@ -1944,6 +1956,7 @@ typedef enum {
 
 #define HTT_TX_PEER_STATS_NUM_MCS_COUNTERS 12 /* 0-11 */
 #define HTT_TX_PEER_STATS_NUM_EXTRA_MCS_COUNTERS 2 /* 12, 13 */
+#define HTT_TX_PEER_STATS_NUM_EXTRA2_MCS_COUNTERS 2 /* 14, 15 */
 /* HTT_TX_PEER_STATS_NUM_GI_COUNTERS:
  * GI Index 0:  WHAL_GI_800
  * GI Index 1:  WHAL_GI_400
@@ -2025,12 +2038,15 @@ typedef struct _htt_tx_peer_rate_stats_tlv {
     A_UINT32 tx_gi_ext[HTT_TX_PEER_STATS_NUM_GI_COUNTERS][HTT_TX_PEER_STATS_NUM_EXTRA_MCS_COUNTERS];
     A_UINT32 reduced_tx_bw[HTT_TX_PEER_STATS_NUM_REDUCED_CHAN_TYPES][HTT_TX_PEER_STATS_NUM_BW_COUNTERS];
     A_UINT32 tx_bw_320mhz;
+    /* MCS 14,15 */
+    A_UINT32 tx_mcs_ext_2[HTT_TX_PEER_STATS_NUM_EXTRA2_MCS_COUNTERS];
 } htt_stats_peer_tx_rate_stats_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_peer_tx_rate_stats_tlv htt_tx_peer_rate_stats_tlv;
 
 #define HTT_RX_PEER_STATS_NUM_MCS_COUNTERS 12 /* 0-11 */
 #define HTT_RX_PEER_STATS_NUM_EXTRA_MCS_COUNTERS 2 /* 12, 13 */
+#define HTT_RX_PEER_STATS_NUM_EXTRA2_MCS_COUNTERS 2 /* 14, 15 */
 #define HTT_RX_PEER_STATS_NUM_GI_COUNTERS 4
 #define HTT_RX_PEER_STATS_NUM_DCM_COUNTERS 5
 #define HTT_RX_PEER_STATS_NUM_BW_COUNTERS 4
@@ -2105,6 +2121,9 @@ typedef struct _htt_rx_peer_rate_stats_tlv {
     A_UINT32 rx_gi_ext[HTT_RX_PEER_STATS_NUM_GI_COUNTERS][HTT_RX_PEER_STATS_NUM_EXTRA_MCS_COUNTERS];
     A_UINT32 reduced_rx_bw[HTT_RX_PEER_STATS_NUM_REDUCED_CHAN_TYPES][HTT_RX_PEER_STATS_NUM_BW_COUNTERS];
     A_INT8   rx_per_chain_rssi_in_dbm_ext[HTT_RX_PEER_STATS_NUM_SPATIAL_STREAMS][HTT_RX_PEER_STATS_NUM_BW_EXT_COUNTERS];
+    A_UINT32 rx_bw_320mhz;
+    /* MCS 14,15 */
+    A_UINT32 rx_mcs_ext_2[HTT_RX_PEER_STATS_NUM_EXTRA2_MCS_COUNTERS];
 } htt_stats_peer_rx_rate_stats_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_peer_rx_rate_stats_tlv htt_rx_peer_rate_stats_tlv;
@@ -4664,6 +4683,9 @@ typedef struct {
     A_UINT32 discarded_pkts;
     A_UINT32 local_frames;
     A_UINT32 is_ext_msdu;
+    A_UINT32 mlo_invalid_routing_discard;
+    A_UINT32 mlo_invalid_routing_dup_entry_discard;
+    A_UINT32 discard_peer_unauthorized_pkts;
 } htt_stats_tx_de_enqueue_discard_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_tx_de_enqueue_discard_tlv htt_tx_de_enqueue_discard_stats_tlv;
@@ -9286,6 +9308,10 @@ typedef struct {
         };
         A_UINT32 ctl_args;
     };
+    /** max_reg_only_allowed_power:
+     * units = 0.25dBm
+     */
+    A_INT32 max_reg_only_allowed_power[HTT_STATS_MAX_CHAINS];
 } htt_stats_phy_tpc_stats_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_phy_tpc_stats_tlv htt_phy_tpc_stats_tlv;
