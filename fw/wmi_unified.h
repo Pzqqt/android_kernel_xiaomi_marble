@@ -7291,6 +7291,9 @@ typedef struct {
 #define WMI_TX_SEND_FLAG_SET_PS_BUFFERING_FOR_SA_QUERY    0x00000002
 #define WMI_TX_SEND_FLAG_SET_PS_BUFFERING_FOR_SA_QUERY_GET(tx_flags) WMI_GET_BITS(tx_flags, 1, 1)
 #define WMI_TX_SEND_FLAG_SET_PS_BUFFERING_FOR_SA_QUERY_SET(tx_flags, value) WMI_SET_BITS(tx_flags, 1, 1, value)
+#define WMI_TX_SEND_FLAG_SET_IS_SA_QUERY    0x00000004
+#define WMI_TX_SEND_FLAG_SET_IS_SA_QUERY_GET(tx_flags) WMI_GET_BITS(tx_flags, 2, 1)
+#define WMI_TX_SEND_FLAG_SET_IS_SA_QUERY_SET(tx_flags, value) WMI_SET_BITS(tx_flags, 2, 1, value)
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_tx_send_params */
