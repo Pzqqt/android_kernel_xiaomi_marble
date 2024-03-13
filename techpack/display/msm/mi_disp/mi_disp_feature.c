@@ -281,6 +281,8 @@ void mi_disp_feature_event_notify(struct disp_event *event, u8 *payload)
 		if (!notify)
 			continue;
 
+		notify->offset = 0;
+
 		notify->event.base.disp_id = event->disp_id;
 		notify->event.base.type = event->type;
 		notify->event.base.length = sizeof(struct disp_event_resp) + event->length;
