@@ -8601,6 +8601,82 @@ typedef struct {
 } htt_pdev_rtt_init_stats_t;
 #endif /* ATH_TARGET */
 
+enum {
+    HTT_STATS_WIFI_RADAR_CAL_TYPE_NONE = 0,
+    HTT_STATS_WIFI_RADAR_CAL_TYPE_GAIN_BINARY_SEARCH = 1,
+    HTT_STATS_WIFI_RADAR_CAL_TYPE_TX_GAIN_BINARY_SEARCH = 2,
+    HTT_STATS_WIFI_RADAR_CAL_TYPE_RECAL_GAIN_VALIDATION = 3,
+    HTT_STATS_WIFI_RADAR_CAL_TYPE_RECAL_GAIN_BINARY_SEARCH = 4,
+    /* the value 5 is reserved for future use */
+
+    HTT_STATS_NUM_WIFI_RADAR_CAL_TYPES = 6
+};
+
+enum {
+    HTT_STATS_WIFI_RADAR_CAL_FAILURE_NONE = 0,
+    HTT_STATS_WIFI_RADAR_CAL_FAILURE_DPD_ABORT = 1,
+    HTT_STATS_WIFI_RADAR_CAL_FAILURE_CONVERGENCE = 2,
+    HTT_STATS_WIFI_RADAR_CAL_FAILURE_TX_EXCEEDS_RETRY = 3,
+    HTT_STATS_WIFI_RADAR_CAL_FAILURE_CAPTURE = 4,
+    HTT_STATS_WIFI_RADAR_CAL_FAILURE_NEW_CHANNEL_CHANGE = 5,
+    HTT_STATS_WIFI_RADAR_CAL_FAILURE_NEW_CAL_REQ = 6,
+    /* the values 7-9 are reserved for future use */
+
+    HTT_STATS_NUM_WIFI_RADAR_CAL_FAILURE_REASONS = 10
+};
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 capture_in_progress;
+    A_UINT32 calibration_in_progress;
+    /* Capture time interval, in ms */
+    A_UINT32 periodicity;
+    /* Last user request timestamp, in ms */
+    A_UINT32 latest_req_timestamp;
+    /* Last target res timestamp, in ms */
+    A_UINT32 latest_resp_timestamp;
+    /* Time taken by last calibration to end, in ms */
+    A_UINT32 latest_calibration_timing;
+    /* Time taken by last calibration to end, in ms for each chain */
+    A_UINT32 calibration_timing_per_chain[HTT_STATS_MAX_CHAINS];
+    /* To log user request count */
+    A_UINT32 wifi_radar_req_count;
+    /* Total packet success count */
+    A_UINT32 num_wifi_radar_pkt_success;
+    /* Total packet queued count */
+    A_UINT32 num_wifi_radar_pkt_queued;
+    /* Total packet success count during latest calibration alone */
+    A_UINT32 num_wifi_radar_cal_pkt_success;
+    /* Tx Gain Calibration Output - Initial Tx Gain index*/
+    A_UINT32 wifi_radar_cal_init_tx_gain;
+    /* Last Calibration Type, refer to HTT_STATS_WIFI_RADAR_CAL_TYPE_ consts */
+    A_UINT32 latest_wifi_radar_cal_type;
+    /* Calibration Type counters */
+    A_UINT32 wifi_radar_cal_type_counts[HTT_STATS_NUM_WIFI_RADAR_CAL_TYPES];
+    /*
+     * Last Calibration Fail Reason,
+     * refer to HTT_STATS_WIFI_RADAR_CAL_FAILURE_ consts
+     */
+    A_UINT32 latest_wifi_radar_cal_fail_reason;
+    /* Calibration Fail Reason counters */
+    A_UINT32 wifi_radar_cal_fail_reason_counts[HTT_STATS_NUM_WIFI_RADAR_CAL_FAILURE_REASONS];
+    /* WiFi Radar Licensed for SKU: 0 - No; 1 - Yes */
+    A_UINT32 wifi_radar_licensed;
+    /*
+     * cmd result to show failure count of CTS2SELF across MAX_CMD_RESULT
+     * reasons
+     */
+    A_UINT32 cmd_results_cts2self[HTT_STATS_MAX_SCH_CMD_RESULT];
+    /*
+     * cmd result to show failure count of wifi radar across MAX_CMD_RESULT
+     * reasons
+     */
+    A_UINT32 cmd_results_wifi_radar[HTT_STATS_MAX_SCH_CMD_RESULT];
+    /* Tx gain index from gain table obtained/used for calibration */
+    A_UINT32 wifi_radar_tx_gains[HTT_STATS_MAX_CHAINS];
+    /* Rx gain index from gain table obtained/used from calibration */
+    A_UINT32 wifi_radar_rx_gains[HTT_STATS_MAX_CHAINS][HTT_STATS_MAX_CHAINS];
+} htt_stats_tx_pdev_wifi_radar_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_PKTLOG_AND_HTT_RING_STATS
  * TLV_TAGS:
