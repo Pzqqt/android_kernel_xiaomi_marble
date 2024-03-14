@@ -660,6 +660,7 @@ typedef  enum  {
     WMI_SERVICE_MLO_MODE2_RECOVERY_SUPPORTED = 406, /* Indicate FW support for MLO mode2 recovery */
     WMI_SERVICE_MSDUQ_RECFG = 407, /* FW support the HTT MSDUQ_RECFG_REQ + MSDUQ_CFG_IND messages */
     WMI_SERVICE_TRAFFIC_CONTEXT_SUPPORT = 408, /* FW supports traffic context aware manager */
+    WMI_SERVICE_STA_SAP_NDP_CONCURRENCY_SUPPORT = 409, /* FW supports STA + SAP + NDP concurrency */
 
 
     WMI_MAX_EXT2_SERVICE
