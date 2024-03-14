@@ -10093,6 +10093,16 @@ typedef enum {
     WMI_MGMT_TX_COMP_TYPE_MAX,
 } WMI_MGMT_TX_COMP_STATUS_TYPE;
 
+#define WMI_VDEV_ID_VALID_FROM_INFO_GET(info) \
+    WMI_GET_BITS(info, 3, 1)
+#define WMI_VDEV_ID_VALID_FROM_INFO_SET(info,val) \
+    WMI_SET_BITS(info, 3, 1, val)
+
+#define WMI_VDEV_ID_FROM_INFO_GET(info) \
+    WMI_GET_BITS(info, 4, 8)
+#define WMI_VDEV_ID_FROM_INFO_SET(info) \
+    WMI_SET_BITS(info, 4, 8, val)
+
 typedef struct {
     A_UINT32    tlv_header;
     A_UINT32    desc_id; /* from tx_send_cmd */
@@ -10126,7 +10136,11 @@ typedef struct {
      *              one of the wmi_mlo_band_info_t enum constants.
      *              Macros WMI_ROAM_BTM_RESP_MLO_BAND_INFO_GET,SET
      *              can be reused for setting mlo band info.
-     * Bit[3:31]  - reserved
+     * Bit[3]     - set when vdev_id_info is populated in Bit[4:11]
+     *              macros WMI_VDEV_ID_VALID_FROM_INFO_GET,SET can be used
+     * Bit[4:11]  - vdev_id on which frame is sent,
+     *              Macros WMI_VDEV_ID_FROM_INFO_GET,SET can be used
+     * Bit[12:31] - reserved
      */
     A_UINT32 info;
 } wmi_mgmt_tx_compl_event_fixed_param;
