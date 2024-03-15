@@ -18761,6 +18761,9 @@ typedef enum {
     /* VDEV parameter to configure Telescopic DTIM count */
     WMI_VDEV_PARAM_TELESDTIM_CNT,                         /* 0xC3 */
 
+    /* Configure minimum DTIM level used by Telescopic DTIM */
+    WMI_VDEV_PARAM_MIN_TELES_DTIM_LVL,                    /* 0xC4 */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
