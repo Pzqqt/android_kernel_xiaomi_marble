@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -27,6 +27,42 @@
 #include <htt.h>
 #include <htt_stats.h>
 #include <htt_common.h> /* HTT_STATS_MAX_CHAINS */
+
+
+/* HTT_PPDU_STATS_VAR_LEN_ARRAY1:
+ * This macro is for converting the definition of existing variable-length
+ * arrays within HTT PPDU stats structs of the form "type name[1];" to use
+ * the form "type name[];" while ensuring that the length of the TLV struct
+ * is unmodified by the conversion.
+ * In general, any new variable-length structs should simply use
+ * "type name[];" directly, rather than using HTT_PPDU_STATS_VAR_LEN_ARRAY1.
+ * However, if there's a legitimate reason to make the new variable-length
+ * struct appear to not have a variable length, HTT_PPDU_STATS_VAR_LEN_ARRAY1
+ * can be used for this purpose.
+ */
+#if defined(ATH_TARGET) || defined(__WINDOWS__)
+    #define HTT_PPDU_STATS_VAR_LEN_ARRAY1(type, name) type name[1]
+#else
+    /*
+     * Certain build settings of the Linux kernel don't allow zero-element
+     * arrays, and C++ doesn't allow zero-length empty structs.
+     * Confirm that there's no build that combines kernel with C++.
+     */
+    #ifdef __cplusplus
+        #error unsupported combination of kernel and C plus plus
+    #endif
+    #define HTT_PPDU_STATS_DUMMY_ZERO_LEN_FIELD struct {} dummy_zero_len_field
+
+    #define HTT_PPDU_STATS_VAR_LEN_ARRAY1(type, name) \
+        union { \
+            type name ## __first_elem; \
+            struct { \
+                HTT_PPDU_STATS_DUMMY_ZERO_LEN_FIELD; \
+                type name[]; \
+            };  \
+        }
+#endif
+
 
 #define HTT_STATS_NUM_SUPPORTED_BW_SMART_ANTENNA 4 /* 20, 40, 80, 160 MHz */
 
@@ -298,7 +334,7 @@ typedef struct {
          * The hw portion of this struct contains a scheduler_command_status
          * struct, whose definition is different for different target HW types.
          */
-        A_UINT32 hw[1];
+        HTT_PPDU_STATS_VAR_LEN_ARRAY1(A_UINT32, hw);
     };
 } htt_ppdu_stats_sch_cmd_tlv_v;
 
@@ -2888,7 +2924,7 @@ typedef struct {
      * (in bytes) can be derived from the length in tlv parameters,
      * minus the 12 bytes of the above fields.
      */
-    A_UINT32 payload[1];
+    HTT_PPDU_STATS_VAR_LEN_ARRAY1(A_UINT32, payload);
 } htt_ppdu_stats_tx_mgmtctrl_payload_tlv;
 
 #define HTT_PPDU_STATS_RX_MGMTCTRL_TLV_FRAME_LENGTH_M     0x0000ffff
@@ -2930,7 +2966,7 @@ typedef struct {
      * (in bytes) can be derived from the length in tlv parameters,
      * minus the 12 bytes of the above fields.
      */
-    A_UINT32 payload[1];
+    HTT_PPDU_STATS_VAR_LEN_ARRAY1(A_UINT32, payload);
 } htt_ppdu_stats_rx_mgmtctrl_payload_tlv;
 
 #define HTT_PPDU_STATS_USERS_INFO_TLV_MAX_USERS_M   0x000000ff
@@ -2997,7 +3033,7 @@ typedef struct {
              win_size   : 8,
              reserved2  : 3;
     /* The number of elements in the ba_bitmap array depends on win_size. */
-    A_UINT32 ba_bitmap[1];
+    HTT_PPDU_STATS_VAR_LEN_ARRAY1(A_UINT32, ba_bitmap);
 } htt_ppdu_stats_for_smu_tlv;
 
 typedef struct {

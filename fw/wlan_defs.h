@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2016, 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1754,6 +1754,7 @@ typedef enum {
 typedef enum {
     MLO_SHMEM_RECOVERY_CRASH_PARTNER_CHIPS = 1,
     MLO_SHMEM_RECOVER_NON_MLO_MODE = 2,
+    MLO_SHMEM_RECOVER_NON_CRASH_MLO_MODE = 3,
 } MLO_SHMEM_CHIP_RECOVERY_MODE;
 
 /* glb link info structures used for scratchpad memory (crash and recovery) */
