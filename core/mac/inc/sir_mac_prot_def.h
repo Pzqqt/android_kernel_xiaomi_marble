@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1870,6 +1870,9 @@ struct he_6ghz_capability_info {
 
 #define SIR_MAC_TXSTBC                             1
 #define SIR_MAC_RXSTBC                             1
+
+#define SIR_MAC_RSNX_CAP_MIN_LEN                   1
+#define SIR_MAC_RSNX_CAP_MAX_LEN                  16
 
 #define SIR_MAC_IE_TYPE_OFFSET                     0
 #define SIR_MAC_IE_LEN_OFFSET                      1
