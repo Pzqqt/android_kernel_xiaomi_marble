@@ -18764,6 +18764,8 @@ typedef enum {
     /* Configure minimum DTIM level used by Telescopic DTIM */
     WMI_VDEV_PARAM_MIN_TELES_DTIM_LVL,                    /* 0xC4 */
 
+    /* Set HW CTS2SELF before DL OFDMA Sequence */
+    WMI_VDEV_PARAM_HWCTS2SELF_OFDMA,                      /* 0xC5 */
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
