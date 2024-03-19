@@ -39,7 +39,7 @@ TRACE_EVENT(i2c_log_info,
 
 /* This part must be outside protection */
 #undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
+#define TRACE_INCLUDE_PATH ../../drivers/i2c/busses
 #define TRACE_INCLUDE_FILE i2c-qup-trace
 #include <trace/define_trace.h>
 

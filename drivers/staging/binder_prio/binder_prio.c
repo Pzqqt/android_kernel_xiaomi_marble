@@ -4,8 +4,8 @@
 #include <uapi/linux/android/binder.h>
 #include <uapi/linux/sched/types.h>
 #include <linux/sched/prio.h>
-#include <../../android/binder_internal.h>
-#include <../../../kernel/sched/sched.h>
+#include "../../android/binder_internal.h"
+#include "../../../kernel/sched/sched.h"
 #include <linux/string.h>
 
 static const char *task_name[] = {

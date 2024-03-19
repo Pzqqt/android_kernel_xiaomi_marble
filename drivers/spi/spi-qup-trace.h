@@ -39,7 +39,7 @@ TRACE_EVENT(spi_log_info,
 
 /* This part must be outside protection */
 #undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
+#define TRACE_INCLUDE_PATH ../../drivers/spi
 #define TRACE_INCLUDE_FILE spi-qup-trace
 #include <trace/define_trace.h>
 

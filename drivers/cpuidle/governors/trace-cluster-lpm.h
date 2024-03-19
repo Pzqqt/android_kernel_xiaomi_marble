@@ -111,7 +111,7 @@ TRACE_EVENT(cluster_enter,
 #endif /* _TRACE_QCOM_LPM_H */
 
 #undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
+#define TRACE_INCLUDE_PATH ../../drivers/cpuidle/governors
 
 #undef TRACE_INCLUDE_FILE
 #define TRACE_INCLUDE_FILE trace-cluster-lpm

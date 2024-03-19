@@ -39,7 +39,7 @@ TRACE_EVENT(geni_log_info,
 
 /* This part must be outside protection */
 #undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
+#define TRACE_INCLUDE_PATH ../../drivers/platform/msm
 #define TRACE_INCLUDE_FILE qup-common-trace
 #include <trace/define_trace.h>
 

@@ -38,7 +38,7 @@ TRACE_EVENT(slimbus_dbg,
 /* this part has to be here */
 
 #undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
+#define TRACE_INCLUDE_PATH ../../drivers/slimbus
 
 #undef TRACE_INCLUDE_FILE
 #define TRACE_INCLUDE_FILE trace
