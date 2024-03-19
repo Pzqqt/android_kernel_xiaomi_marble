@@ -10100,7 +10100,7 @@ typedef enum {
 
 #define WMI_VDEV_ID_FROM_INFO_GET(info) \
     WMI_GET_BITS(info, 4, 8)
-#define WMI_VDEV_ID_FROM_INFO_SET(info) \
+#define WMI_VDEV_ID_FROM_INFO_SET(info,val) \
     WMI_SET_BITS(info, 4, 8, val)
 
 typedef struct {
@@ -38987,9 +38987,16 @@ typedef struct {
 #define WLM_FLAGS_PS_DISABLE_MLO_PROBE_SCAN  1  /* disable MLO probe scan */
 
 /* bit 24: WLM_FLAGS_PS_DISABLE_ULL_FORCED_MLMR,
- *     disable forced MLMR on ULL if bit is set
+ *     Disable forced MLMR on ULL if bit is set.
+ *     (MLMR may still happen due to other reasons.)
  */
 #define WLM_FLAGS_PS_DISABLE_ULL_FORCED_MLMR  1 /* disable forced MLMR on ULL */
+
+/* bit 25: WLM_FLAGS_PS_DISABLE_ULL_FORCED_EMLSR,
+ *     Disable forced EMLSR on ULL if bit is set.
+ *     (eMLSR may still happen due to other reasons.)
+ */
+#define WLM_FLAGS_PS_DISABLE_ULL_FORCED_EMLSR  1 /* disable forced EMLSR on ULL */
 
 #define WLM_FLAGS_SCAN_IS_SUPPRESS(flag)                  WMI_GET_BITS(flag, 0, 1)
 #define WLM_FLAGS_SCAN_SET_SUPPRESS(flag, val)            WMI_SET_BITS(flag, 0, 1, val)
@@ -39028,6 +39035,8 @@ typedef struct {
 #define WLM_FLAGS_PS_SET_MLO_PROBE_SCAN_DISABLE(flag, val) WMI_SET_BITS(flag, 23, 1, val)
 #define WLM_FLAGS_PS_IS_ULL_FORCED_MLMR_DISABLED(flag)      WMI_GET_BITS(flag, 24, 1)
 #define WLM_FLAGS_PS_SET_ULL_FORCED_MLMR_DISABLE(flag, val) WMI_SET_BITS(flag, 24, 1, val)
+#define WLM_FLAGS_PS_IS_ULL_FORCED_EMLSR_DISABLED(flag)      WMI_GET_BITS(flag, 25, 1)
+#define WLM_FLAGS_PS_SET_ULL_FORCED_EMLSR_DISABLE(flag, val) WMI_SET_BITS(flag, 25, 1, val)
 #define WLM_FLAGS_SET_FORCE_DEFAULT_LATENCY(flag, val)    WMI_SET_BITS(flag, 0, 1, val)
 #define WLM_FLAGS_GET_FORCE_DEFAULT_LATENCY(flag)         WMI_GET_BITS(flag, 0, 1)
 
