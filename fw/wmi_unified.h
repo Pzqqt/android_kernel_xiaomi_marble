@@ -4605,8 +4605,15 @@ typedef struct {
      *      WMI_SERVICE_DISABLE_WDS_PEER_MAP_UNMAP_EVENT_SUPPORT flag.
      *      Refer to WMI_RSRC_CFG_FLAGS2_DISABLE_WDS_PEER_MAP_UNMAP_EVENT_GET
      *      and _SET macros.
+     *  Bit 19 - show whether the host supports 128 or 256 service classes
+     *      This bit will be set when host supports for 256 service classes
+     *      0 -> host supports 128 service classes
+     *      1 -> host supports 255 [0-254] valid service classes,
+     *           and 255 indicates an invalid service class
+     *      Refer to WMI_RSRC_CFG_FLAGS2_SAWF_255_SVC_CLASS_SUPPORT_GET/SET
+     *      macros.
      *
-     *  Bits 31:19 - Reserved
+     *  Bits 31:20 - Reserved
      */
     A_UINT32 flags2;
     /** @brief host_service_flags - can be used by Host to indicate
@@ -5095,6 +5102,11 @@ typedef struct {
     WMI_GET_BITS(flags2, 18, 1)
 #define WMI_RSRC_CFG_FLAGS2_DISABLE_WDS_PEER_MAP_UNMAP_EVENT_SET(flags2, value) \
     WMI_SET_BITS(flags2, 18, 1, value)
+
+#define WMI_RSRC_CFG_FLAGS2_SAWF_255_SVC_CLASS_SUPPORT_GET(flags2) \
+    WMI_GET_BITS(flags2, 19, 1)
+#define WMI_RSRC_CFG_FLAGS2_SAWF_255_SVC_CLASS_SUPPORT_SET(flags2, value) \
+    WMI_SET_BITS(flags2, 19, 1, value)
 
 
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_IFACE_SUPPORT_GET(host_service_flags) \
