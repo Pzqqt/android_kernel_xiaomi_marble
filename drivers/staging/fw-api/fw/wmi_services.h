@@ -654,7 +654,11 @@ typedef  enum  {
     WMI_SERVICE_P2P_DEVICE_UPDATE_MAC_ADDR_SUPPORT = 401, /* indicate FW support dynamic update mac address for P2P device */
     WMI_SERVICE_DCS_OBSS_INT_SUPPORT = 402, /* Indicates FW supports OBSS Interference detection */
     WMI_SERVICE_DYNAMIC_WSI_REMAP_SUPPORT = 403, /* WSI bypass remap is supported by Firmware */
-    WMI_SERVICE_QMS_DLKM_SUPPORT = 404, /* FW code has qms_dlkm support enabled */
+    WMI_SERVICE_QMS_DLKM_SUPPORT = 404, /* DEPRECATED */
+    WMI_SERVICE_SMEM_MAILBOX_SUPPORT = 404, /* FW code has smem_mailbox support enabled */
+    WMI_SERVICE_REG_CC_EXT2_EVENT_SUPPORT = 405, /* Indicate FW would send EXT2 REG_CC event having data which would be a continuation to EXT REG_CC event */
+    WMI_SERVICE_MLO_MODE2_RECOVERY_SUPPORTED = 406, /* Indicate FW support for MLO mode2 recovery */
+    WMI_SERVICE_MSDUQ_RECFG = 407, /* FW support the HTT MSDUQ_RECFG_REQ + MSDUQ_CFG_IND messages */
 
 
     WMI_MAX_EXT2_SERVICE

@@ -1428,6 +1428,10 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_dcs_obss_int_t,
     WMITLV_TAG_STRUC_wmi_pdev_wifi_radar_cal_completion_status_event_param,
     WMITLV_TAG_STRUC_wmi_sar_flags,
+    WMITLV_TAG_STRUC_wmi_pdev_enable_xlna_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_enable_xlna_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_reg_chan_list_cc_event_ext2_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_set_custom_tx_power_per_mcs_cmd_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -1972,6 +1976,8 @@ typedef enum {
     OP(WMI_PDEV_ENABLE_LED_BLINK_DOWNLOAD_TABLE_CMDID) \
     OP(WMI_VDEV_GET_TWT_SESSION_STATS_INFO_CMDID) \
     OP(WMI_PDEV_ENABLE_WIFI_RADAR_CMDID) \
+    OP(WMI_PDEV_ENABLE_XLNA_CMDID) \
+    OP(WMI_PDEV_SET_CUSTOM_TX_POWER_PER_MCS_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2294,6 +2300,8 @@ typedef enum {
     OP(WMI_AUDIO_TRANSPORT_SWITCH_TYPE_EVENTID) \
     OP(WMI_PDEV_WIFI_RADAR_CAL_COMPLETION_STATUS_EVENTID) \
     OP(WMI_MLO_LINK_INFO_SYNC_EVENTID) \
+    OP(WMI_PDEV_ENABLE_XLNA_EVENTID) \
+    OP(WMI_REG_CHAN_LIST_CC_EXT2_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -5572,6 +5580,17 @@ WMITLV_CREATE_PARAM_STRUC(WMI_COEX_MULTIPLE_CONFIG_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_enable_wifi_radar_cmd_fixed_param, wmi_pdev_enable_wifi_radar_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_ENABLE_WIFI_RADAR_CMDID);
 
+/* xLNA Enable command */
+#define WMITLV_TABLE_WMI_PDEV_ENABLE_XLNA_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_enable_xlna_cmd_fixed_param, wmi_pdev_enable_xlna_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_ENABLE_XLNA_CMDID);
+
+/* WMI cmd to set custom TX power backoff value per band/chain/mcs to PHY */
+#define WMITLV_TABLE_WMI_PDEV_SET_CUSTOM_TX_POWER_PER_MCS_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_custom_tx_power_per_mcs_cmd_fixed_param, wmi_pdev_set_custom_tx_power_per_mcs_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, txpower_bkoff_array, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_CUSTOM_TX_POWER_PER_MCS_CMDID);
+
 
 
 /************************** TLV definitions of WMI events *******************************/
@@ -6767,6 +6786,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_REG_CHAN_LIST_CC_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_regulatory_fcc_rule_struct, reg_fcc_rule, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_REG_CHAN_LIST_CC_EXT_EVENTID);
 
+/* Ext2 regulatory channel list of current country code */
+#define WMITLV_TABLE_WMI_REG_CHAN_LIST_CC_EXT2_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_reg_chan_list_cc_event_ext2_fixed_param, wmi_reg_chan_list_cc_event_ext2_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_regulatory_rule_ext_struct, reg_rule_array, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_REG_CHAN_LIST_CC_EXT2_EVENTID);
+
 /* WMI AFC info event */
 #define WMITLV_TABLE_WMI_AFC_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_afc_event_fixed_param, wmi_afc_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
@@ -7607,6 +7632,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_OOB_CONNECTION_RESP_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_wifi_radar_cal_completion_status_event_param, wmi_pdev_wifi_radar_cal_completion_status_event_param, cal_completion_status_event_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_WIFI_RADAR_CAL_COMPLETION_STATUS_EVENTID);
 
+/* xLNA Enable status event */
+#define WMITLV_TABLE_WMI_PDEV_ENABLE_XLNA_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_enable_xlna_event_fixed_param, wmi_pdev_enable_xlna_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_ENABLE_XLNA_EVENTID);
 
 
 #ifdef __cplusplus
