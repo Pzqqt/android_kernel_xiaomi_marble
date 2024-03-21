@@ -4,3 +4,4 @@ include $(WLAN_ROOT)/configs/default_defconfig
 
 #Enable Constrained Application Protocol feature
 CONFIG_WLAN_FEATURE_COAP := y
+CONFIG_FEATURE_WLAN_CH_AVOID_EXT := y
