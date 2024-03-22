@@ -46,6 +46,7 @@
   __traceiter_android_vh_unuse_swap_page
   __traceiter_android_vh_waiting_for_page_migration
   __traceiter_android_vh_should_end_madvise
+  __traceiter_android_vh_exit_check
   __traceiter_android_vh_bio_free
   __traceiter_android_rvh_internal_blk_mq_alloc_request
   __traceiter_android_vh_internal_blk_mq_free_request
@@ -101,6 +102,7 @@
   __tracepoint_android_vh_unuse_swap_page
   __tracepoint_android_vh_waiting_for_page_migration
   __tracepoint_android_vh_should_end_madvise
+  __tracepoint_android_vh_exit_check
   __tracepoint_android_vh_bio_free
   __tracepoint_android_rvh_internal_blk_mq_alloc_request
   __tracepoint_android_vh_internal_blk_mq_free_request
