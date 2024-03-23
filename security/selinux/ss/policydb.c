@@ -3641,6 +3641,10 @@ int policydb_write(struct policydb *p, void *fp)
 	if (p->mls_enabled)
 		config |= POLICYDB_CONFIG_MLS;
 
+	if (p->android_netlink_route)
+		config |= POLICYDB_CONFIG_ANDROID_NETLINK_ROUTE;
+	if (p->android_netlink_getneigh)
+		config |= POLICYDB_CONFIG_ANDROID_NETLINK_GETNEIGH;
 	if (p->reject_unknown)
 		config |= REJECT_UNKNOWN;
 	if (p->allow_unknown)
