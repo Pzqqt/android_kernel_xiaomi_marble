@@ -22967,12 +22967,20 @@ typedef enum {
     WMI_BL_REASON_REASSOC_RSSI_REJECT,
     /* Reassoc resp with status code 17 - DENIED_NO_MORE_STAS */
     WMI_BL_REASON_REASSOC_NO_MORE_STAS,
+    WMI_BL_REASON_BASIC_RATES_MIS_MATCH, /* Status code 18 */
+    WMI_BL_REASON_EHT_NOT_SUPPORTED, /* Status code 135 */
+    WMI_BL_REASON_EXISTING_MLD_ASSOCIATION, /* Status code 130 */
+    WMI_BL_REASON_LINK_TRANSMITTED_NOT_ACCEPTED, /* Status code 139 */
+    WMI_BL_REASON_DENIED_OTHER_REASON,
+    WMI_BL_REASON_BTM_LOAD_BALANCE,
 } WMI_BLACKLIST_REASON_ID;
 
 typedef enum {
     WMI_BL_SOURCE_HOST = 1,
     WMI_BL_SOURCE_FW,
 } WMI_BLACKLIST_SOURCE_ID;
+
+#define WMI_MAX_FAILED_LINK_COMBO_COUNT 10
 
 typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_blacklist_with_timeout_tlv_param */
@@ -22996,11 +23004,18 @@ typedef struct {
     /* Original timeout value in milli seconds when AP added to BL */
     A_UINT32 original_timeout;
     /*
-     * If disallow_linkid_bitmap is not 0, then means current entity
-     * is for MLD AP and bssid field is standing for MLD address.
-     * If all links for MLD AP is disallow, then the value shall be 0xffffffff
+     * The disallow link ID bitmap indicates links which should not be allowed
+     * for any assoc or partner link combination.
+     * If all links for MLD AP are disallowed, then the value shall be
+     * 0xffffffff.
      */
     A_UINT32 disallow_linkid_bitmap;
+    /* MLD address of AP */
+    wmi_mac_addr mld;
+    /* List of link combinations for which association is failed */
+    A_UINT32 ml_failed_links_combo_bitmap[WMI_MAX_FAILED_LINK_COMBO_COUNT];
+    /* Failed link combo count filled in ml_failed_links_combo_bitmap[] */
+    A_UINT32 ml_failed_link_combo_count;
 } wmi_roam_blacklist_with_timeout_tlv_param;
 
 /** WMI_ROAM_BLACKLIST_EVENT: generated whenever STA needs to move AP to blacklist for a particluar time
@@ -40196,11 +40211,18 @@ typedef struct {
     /* Original timeout value in milli seconds when AP added to BL */
     A_UINT32 original_timeout;
     /*
-     * If disallow_linkid_bitmap is not 0, then means current entity
-     * is for MLD AP and bssid field is standing for MLD address.
-     * If all links for MLD AP is disallow, then the value shall be 0xffffffff
+     * The disallow link ID bitmap indicates links which should not be allowed
+     * for any assoc or partner link combination.
+     * If all links for MLD AP are disallowed, then the value shall be
+     * 0xffffffff.
      */
     A_UINT32 disallow_linkid_bitmap;
+    /* MLD address of AP */
+    wmi_mac_addr mld;
+    /* List of link combinations for which association is failed */
+    A_UINT32 ml_failed_links_combo_bitmap[WMI_MAX_FAILED_LINK_COMBO_COUNT];
+    /* Failed link combo count filled in ml_failed_links_combo_bitmap[] */
+    A_UINT32 ml_failed_link_combo_count;
 } wmi_pdev_bssid_disallow_list_config_param;
 
 typedef enum {
@@ -41140,6 +41162,13 @@ typedef struct {
      * each bit represents.
      */
     A_UINT32 disallow_connect_modes;
+
+    /*
+     * If max_link_combo_count is non-zero, STA should try to roam to next
+     * candidate once max allowed link combinations is reached with current
+     * candidate AP.
+     */
+    A_UINT32 max_link_combo_count;
 } wmi_roam_mlo_config_cmd_fixed_param;
 
 typedef struct {
