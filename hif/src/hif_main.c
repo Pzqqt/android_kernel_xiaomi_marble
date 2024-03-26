@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1186,10 +1186,11 @@ QDF_STATUS hif_try_prevent_ep_vote_access(struct hif_opaque_softc *hif_ctx)
 	return QDF_STATUS_SUCCESS;
 }
 
-void hif_set_ep_intermediate_vote_access(struct hif_opaque_softc *hif_ctx)
+QDF_STATUS hif_set_ep_intermediate_vote_access(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	uint8_t vote_access;
+	QDF_STATUS status;
 
 	vote_access = qdf_atomic_read(&scn->ep_vote_access);
 
@@ -1197,11 +1198,12 @@ void hif_set_ep_intermediate_vote_access(struct hif_opaque_softc *hif_ctx)
 		hif_info("EP vote changed from:%u to intermediate state",
 			 vote_access);
 
-	if (QDF_IS_STATUS_ERROR(hif_try_prevent_ep_vote_access(hif_ctx)))
-		QDF_BUG(0);
-
-	qdf_atomic_set(&scn->ep_vote_access,
+	status = hif_try_prevent_ep_vote_access(hif_ctx);
+	if (QDF_IS_STATUS_SUCCESS(status))
+		qdf_atomic_set(&scn->ep_vote_access,
 		       HIF_EP_VOTE_INTERMEDIATE_ACCESS);
+
+	return status;
 }
 
 void hif_allow_ep_vote_access(struct hif_opaque_softc *hif_ctx)
