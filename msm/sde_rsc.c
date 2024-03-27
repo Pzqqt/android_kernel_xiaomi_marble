@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -853,6 +853,33 @@ bool sde_rsc_client_is_state_update_complete(
 	return vsync_timestamp0 != 0;
 }
 
+static int sde_rsc_hw_init(struct sde_rsc_priv *rsc)
+{
+	int ret;
+
+	ret = regulator_enable(rsc->fs);
+	if (ret) {
+		pr_err("sde rsc: fs on failed ret:%d\n", ret);
+		goto sde_rsc_fail;
+	}
+
+	rsc->sw_fs_enabled = true;
+
+	ret = sde_rsc_resource_enable(rsc);
+	if (ret < 0) {
+		pr_err("failed to enable sde rsc power resources rc:%d\n", ret);
+		goto sde_rsc_fail;
+	}
+
+	if (sde_rsc_timer_calculate(rsc, NULL, SDE_RSC_IDLE_STATE))
+		goto sde_rsc_fail;
+
+	sde_rsc_resource_disable(rsc);
+
+sde_rsc_fail:
+	return ret;
+}
+
 /**
  * sde_rsc_client_state_update() - rsc client state update
  * Video mode, cmd mode and clk state are suppoed as modes. A client need to
@@ -902,6 +929,12 @@ int sde_rsc_client_state_update(struct sde_rsc_client *caller_client,
 	pr_debug("%pS: rsc state:%d request client:%s state:%d\n",
 		__builtin_return_address(0), rsc->current_state,
 		caller_client->name, state);
+
+	/* hw init is required after hibernation */
+	if (rsc->need_hwinit && state != SDE_RSC_IDLE_STATE) {
+		sde_rsc_hw_init(rsc);
+		rsc->need_hwinit = false;
+	}
 
 	/**
 	 * This can only happen if splash is active or qsync is enabled.
@@ -1779,24 +1812,11 @@ static int sde_rsc_probe(struct platform_device *pdev)
 		goto sde_rsc_fail;
 	}
 
-	ret = regulator_enable(rsc->fs);
+	ret = sde_rsc_hw_init(rsc);
 	if (ret) {
-		pr_err("sde rsc: fs on failed ret:%d\n", ret);
+		pr_err("sde rsc: hw init failed ret:%d\n", ret);
 		goto sde_rsc_fail;
 	}
-
-	rsc->sw_fs_enabled = true;
-
-	ret = sde_rsc_resource_enable(rsc);
-	if (ret < 0) {
-		pr_err("failed to enable sde rsc power resources rc:%d\n", ret);
-		goto sde_rsc_fail;
-	}
-
-	if (sde_rsc_timer_calculate(rsc, NULL, SDE_RSC_IDLE_STATE))
-		goto sde_rsc_fail;
-
-	sde_rsc_resource_disable(rsc);
 
 	INIT_LIST_HEAD(&rsc->client_list);
 	INIT_LIST_HEAD(&rsc->event_list);
@@ -1824,6 +1844,27 @@ sde_rsc_fail:
 rsc_alloc_fail:
 	return ret;
 }
+
+static int sde_rsc_pm_freeze_late(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct sde_rsc_priv *rsc = platform_get_drvdata(pdev);
+	int rc = 0;
+
+	rc = regulator_set_mode(rsc->fs, REGULATOR_MODE_NORMAL);
+	if (rc) {
+		pr_err("vdd reg normal mode set failed rc:%d\n", rc);
+		return rc;
+	}
+	rsc->sw_fs_enabled = true;
+	rsc->need_hwinit = true;
+
+	return 0;
+}
+
+static const struct dev_pm_ops sde_rsc_pm_ops = {
+	.freeze_late = sde_rsc_pm_freeze_late,
+};
 
 static int sde_rsc_remove(struct platform_device *pdev)
 {
@@ -1872,6 +1913,7 @@ static struct platform_driver sde_rsc_platform_driver = {
 	.driver     = {
 		.name   = "sde_rsc",
 		.of_match_table = dt_match,
+		.pm     = &sde_rsc_pm_ops,
 		.suppress_bind_attrs = true,
 	},
 };
