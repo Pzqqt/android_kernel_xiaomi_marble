@@ -36783,27 +36783,38 @@ typedef struct {
     /** TLV tag and len; tag equals
      *  WMITLV_TAG_STRUC_wmi_therm_throt_level_config_info */
     A_UINT32 tlv_header;
-    /**
-      * temperature sensor value in celsius when to exit to lower zone,
-      * this value can be lower than HWM of lower zone as zone overlapping
-      * is permitted by design to provide hysteresis
-      */
+    /** temp_lwm:
+     * temperature sensor value in celsius when to exit to lower zone,
+     * this value can be lower than HWM of lower zone as zone overlapping
+     * is permitted by design to provide hysteresis
+     */
     A_UINT32 temp_lwm;
-    /**
-      * temperature sensor value in celsius when to exit to higher zone,
-      * this value can be higher than LWM of higher zone as zone overlapping
-      * is permitted by design to provide hysteresis
-      */
+    /** temp_hwm:
+     * temperature sensor value in celsius when to exit to higher zone,
+     * this value can be higher than LWM of higher zone as zone overlapping
+     * is permitted by design to provide hysteresis
+     */
     A_UINT32 temp_hwm;
-    A_UINT32 dc_off_percent; /* duty cycle off percent 0-100. 0 means no off, 100 means no on (shutdown the phy) */
-    /** Disable only the transmit queues in firmware that have lower priority than value defined by prio
-       *    Prioritization:
-       *    0 = disable all data tx queues, No Prioritization defined
-       *    1 = disable BK tx queue
-       *    2 = disable BK+BE tx queues
-       *    3 = disable BK+BE+VI tx queues
-       */
+    /** dc_off_percent:
+     * duty cycle off percent 0-100.
+     * 0 means no off, 100 means no on (shutdown the phy).
+     */
+    A_UINT32 dc_off_percent;
+    /** prio:
+     * Disable only the transmit queues in firmware that have lower priority
+     * than value defined by prio.
+     *    Prioritization:
+     *    0 = disable all data tx queues, No Prioritization defined
+     *    1 = disable BK tx queue
+     *    2 = disable BK+BE tx queues
+     *    3 = disable BK+BE+VI tx queues
+     */
     A_UINT32 prio;
+    /**
+     * Pout power reduction in 0.25 dB units.
+     * For example, a value of 5 causes a power reduction of 1.25 dB.
+     */
+	A_UINT32 pout_reduction_25db;
 } wmi_therm_throt_level_config_info;
 
 typedef enum {
