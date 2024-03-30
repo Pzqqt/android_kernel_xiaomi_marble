@@ -4591,6 +4591,18 @@ typedef struct {
     A_UINT32 eapol_start_packets;
     A_UINT32 eapol_logoff_packets;
     A_UINT32 eapol_encap_asf_packets;
+    A_UINT32 m1_success;
+    A_UINT32 m1_compl_fail;
+    A_UINT32 m2_success;
+    A_UINT32 m2_compl_fail;
+    A_UINT32 m3_success;
+    A_UINT32 m3_compl_fail;
+    A_UINT32 m4_success;
+    A_UINT32 m4_compl_fail;
+    A_UINT32 g1_success;
+    A_UINT32 g1_compl_fail;
+    A_UINT32 g2_success;
+    A_UINT32 g2_compl_fail;
 } htt_stats_tx_de_eapol_packets_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_tx_de_eapol_packets_tlv htt_tx_de_eapol_packets_stats_tlv;
