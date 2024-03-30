@@ -3464,6 +3464,11 @@ typedef struct {
 #define WMI_TARGET_CAP_ML_MONITOR_MODE_SUPPORT_SET(target_cap_flags, value) \
     WMI_SET_BITS(target_cap_flags, 14, 1, value)
 
+#define WMI_TARGET_CAP_QDATA_TX_LCE_FILTER_SUPPORT_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 15, 1)
+#define WMI_TARGET_CAP_QDATA_TX_LCE_FILTER_SUPPORT_SET(target_cap_flags, value)\
+    WMI_SET_BITS(target_cap_flags, 15, 1, value)
+
 
 /*
  * wmi_htt_msdu_idx_to_htt_msdu_qtype GET/SET APIs
@@ -3609,7 +3614,8 @@ typedef struct {
      *      Bit12 - [ML-STA + SL-SAP]  0: not supported; 1:supported
      * Bit 13 - Support for multipass SAP
      * Bit 14 - Support for ML monitor mode
-     * Bits 31:15 - Reserved
+     * Bit 15 - Support for Qdata Tx LCE filter installation
+     * Bits 31:16 - Reserved
      */
     A_UINT32 target_cap_flags;
 
@@ -36814,7 +36820,7 @@ typedef struct {
      * Pout power reduction in 0.25 dB units.
      * For example, a value of 5 causes a power reduction of 1.25 dB.
      */
-	A_UINT32 pout_reduction_25db;
+    A_UINT32 pout_reduction_25db;
 } wmi_therm_throt_level_config_info;
 
 typedef enum {
