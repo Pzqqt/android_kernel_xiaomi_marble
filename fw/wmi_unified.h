@@ -25667,6 +25667,9 @@ typedef enum
      */
     WMI_VENDOR_OUI_ACTION_SEND_SMPS_FRAME_WITH_OMN = 12,
 
+    /* Restrict SLO if specific vendor OUI received in beacon. */
+    WMI_VENDOR_OUI_ACTION_RESTRICT_SLO = 13,
+
 
     /* Add any action before this line */
     WMI_VENDOR_OUI_ACTION_MAX_ACTION_ID
