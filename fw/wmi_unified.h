@@ -27014,7 +27014,9 @@ typedef enum {
     /** Lower threshold for beacon-RSSI. Used to increase RX chainmask. */
     WMI_STA_SMPS_PARAM_LOWER_BRSSI_THRESH = 4,
     /** Enable/Disable DTIM 1chRx feature */
-    WMI_STA_SMPS_PARAM_DTIM_1CHRX_ENABLE = 5
+    WMI_STA_SMPS_PARAM_DTIM_1CHRX_ENABLE = 5,
+    /** Enable/Disable dynamic bw feature */
+ 	WMI_STA_SMPS_PARAM_DYNAMIC_BW_SWITCH = 6,
 } wmi_sta_smps_param;
 
 typedef struct {
