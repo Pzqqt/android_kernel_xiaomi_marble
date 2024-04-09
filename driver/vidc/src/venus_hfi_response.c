@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/devcoredump.h>
@@ -14,6 +14,7 @@
 #include "msm_vdec.h"
 #include "msm_vidc_control.h"
 #include "msm_vidc_memory.h"
+#include "msm_vidc_fence.h"
 
 #define in_range(range, val) (((range.begin) < (val)) && ((range.end) > (val)))
 
@@ -859,7 +860,6 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 		if (buffer->data_size) {
 			i_vpr_e(inst, "%s: reset data size to zero for last flag buffer\n",
 				__func__);
-			buffer->data_size = 0;
 			buf->data_size = 0;
 		}
 		if (buffer->flags & HFI_BUF_FW_FLAG_READONLY) {
@@ -896,6 +896,19 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 
 	buf->flags = 0;
 	buf->flags = get_driver_buffer_flags(inst, buffer->flags);
+
+	/* fence signalling */
+	if (inst->hfi_frame_info.fence_id) {
+		if (buf->data_size) {
+			/* signal fence */
+			msm_vidc_fence_signal(inst,
+				inst->hfi_frame_info.fence_id);
+		} else {
+			/* destroy fence */
+			msm_vidc_fence_destroy(inst,
+				inst->hfi_frame_info.fence_id);
+		}
+	}
 
 	if (is_decode_session(inst)) {
 		inst->power.fw_cr = inst->hfi_frame_info.cr;
@@ -1510,6 +1523,9 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 				"%s: fw pipe mode(%d) not matching the capability value(%d)\n",
 				__func__,  payload_ptr[0], inst->capabilities->cap[PIPE].value);
 		break;
+	case HFI_PROP_FENCE:
+		inst->hfi_frame_info.fence_id = payload_ptr[0];
+		break;
 	default:
 		i_vpr_e(inst, "%s: invalid property %#x\n",
 			__func__, pkt->type);
@@ -1649,12 +1665,12 @@ static int __handle_session_response(struct msm_vidc_inst *inst,
 		}
 	}
 
-	memset(&inst->hfi_frame_info, 0, sizeof(struct msm_vidc_hfi_frame_info));
 	if (dequeue) {
 		rc = handle_dequeue_buffers(inst);
 		if (rc)
 			return rc;
 	}
+	memset(&inst->hfi_frame_info, 0, sizeof(struct msm_vidc_hfi_frame_info));
 
 	return rc;
 }

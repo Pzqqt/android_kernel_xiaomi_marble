@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0-only
+# Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
 
 ifneq ($(CONFIG_ARCH_MONACO), y)
 KBUILD_CPPFLAGS += -DCONFIG_MSM_MMRM=1
@@ -119,6 +120,7 @@ msm_video-objs += driver/vidc/src/msm_vidc_v4l2.o \
                   driver/vidc/src/msm_vidc_dt.o \
                   driver/vidc/src/msm_vidc_debug.o \
                   driver/vidc/src/msm_vidc_memory.o \
+                  driver/vidc/src/msm_vidc_fence.o \
                   driver/vidc/src/venus_hfi.o \
                   driver/vidc/src/hfi_packet.o \
                   driver/vidc/src/venus_hfi_response.o \

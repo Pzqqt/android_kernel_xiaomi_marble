@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef __V4l2_VIDC_EXTENSIONS_H__
@@ -149,6 +149,23 @@ enum v4l2_mpeg_vidc_blur_types {
 /* Encoder Disable VUI Timing Info */
 #define V4L2_CID_MPEG_VIDC_VUI_TIMING_INFO                                   \
 	(V4L2_CID_MPEG_VIDC_BASE + 0x32)
+/* Enables Output buffer fence id via input metadata */
+#define V4L2_CID_MPEG_VIDC_METADATA_OUTBUF_FENCE                       \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x38)
+/* Control to set fence id to driver in order get corresponding fence fd */
+#define V4L2_CID_MPEG_VIDC_SW_FENCE_ID                                       \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x39)
+/*
+ * Control to get fence fd from driver for the fence id
+ * set via V4L2_CID_MPEG_VIDC_SW_FENCE_ID
+ */
+#define V4L2_CID_MPEG_VIDC_SW_FENCE_FD                                       \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x3A)
+#define V4L2_CID_MPEG_VIDC_METADATA_PICTURE_TYPE                             \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x3B)
+
+#define V4L2_CID_MPEG_VIDC_CLIENT_ID                                          \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x41)
 
 /* Deprecate below controls once availble in gki and gsi bionic header */
 #ifndef V4L2_CID_MPEG_VIDEO_BASELAYER_PRIORITY_ID
@@ -268,6 +285,7 @@ enum v4l2_mpeg_vidc_metadata {
 	METADATA_TIMESTAMP                    = 0x0300015c,
 	METADATA_CONCEALED_MB_COUNT           = 0x0300015f,
 	METADATA_HISTOGRAM_INFO               = 0x03000161,
+	METADATA_PICTURE_TYPE                 = 0x03000162,
 	METADATA_SEI_MASTERING_DISPLAY_COLOUR = 0x03000163,
 	METADATA_SEI_CONTENT_LIGHT_LEVEL      = 0x03000164,
 	METADATA_HDR10PLUS                    = 0x03000165,
@@ -279,6 +297,7 @@ enum v4l2_mpeg_vidc_metadata {
 	METADATA_ROI_INFO                     = 0x03000173,
 	METADATA_DPB_TAG_LIST                 = 0x03000179,
 	METADATA_MAX_NUM_REORDER_FRAMES       = 0x03000127,
+	METADATA_FENCE                        = 0x0300018B,
 };
 enum meta_interlace_info {
 	META_INTERLACE_INFO_NONE                            = 0x00000000,
@@ -288,6 +307,16 @@ enum meta_interlace_info {
 	META_INTERLACE_FRAME_INTERLEAVE_BOTTOMFIELD_FIRST   = 0x00000008,
 	META_INTERLACE_FRAME_INTERLACE_TOPFIELD_FIRST       = 0x00000010,
 	META_INTERLACE_FRAME_INTERLACE_BOTTOMFIELD_FIRST    = 0x00000020,
+};
+
+enum meta_picture_type {
+	META_PICTURE_TYPE_IDR                            = 0x00000001,
+	META_PICTURE_TYPE_P                              = 0x00000002,
+	META_PICTURE_TYPE_B                              = 0x00000004,
+	META_PICTURE_TYPE_I                              = 0x00000008,
+	META_PICTURE_TYPE_CRA                            = 0x00000010,
+	META_PICTURE_TYPE_BLA                            = 0x00000020,
+	META_PICTURE_TYPE_NOSHOW                         = 0x00000040,
 };
 
 /* vendor controls end */
