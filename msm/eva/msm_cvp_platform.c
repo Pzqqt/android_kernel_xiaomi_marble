@@ -47,10 +47,6 @@ static struct msm_cvp_common_data sm8450_common_data[] = {
 		.value = 1,
 	},
 	{
-		.key = "qcom,pm-qos-latency-us",
-		.value = 50,
-	},
-	{
 		.key = "qcom,sw-power-collapse",
 		.value = 1,
 	},
