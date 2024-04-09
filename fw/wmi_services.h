@@ -659,6 +659,9 @@ typedef  enum  {
     WMI_SERVICE_REG_CC_EXT2_EVENT_SUPPORT = 405, /* Indicate FW would send EXT2 REG_CC event having data which would be a continuation to EXT REG_CC event */
     WMI_SERVICE_MLO_MODE2_RECOVERY_SUPPORTED = 406, /* Indicate FW support for MLO mode2 recovery */
     WMI_SERVICE_MSDUQ_RECFG = 407, /* FW support the HTT MSDUQ_RECFG_REQ + MSDUQ_CFG_IND messages */
+    WMI_SERVICE_TRAFFIC_CONTEXT_SUPPORT = 408, /* FW supports traffic context aware manager */
+    WMI_SERVICE_STA_SAP_NDP_CONCURRENCY_SUPPORT = 409, /* FW supports STA + SAP + NDP concurrency */
+    WMI_SERVICE_THERM_THROT_POUT_REDUCTION = 410, /* FW supports thermal throttling Pout reduction */
 
 
     WMI_MAX_EXT2_SERVICE
