@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -1065,6 +1065,7 @@ static int _validate_dt_entry(struct device_node *np,
 {
 	int rc = 0, i, val;
 	struct device_node *snp = NULL;
+	const u32 *arr;
 
 	if (off_count) {
 		*off_count = of_property_count_u32_elems(np,
@@ -1082,7 +1083,10 @@ static int _validate_dt_entry(struct device_node *np,
 		}
 	}
 
+	memset(prop_count, 0, sizeof(int) * prop_size);
 	for (i = 0; i < prop_size; i++) {
+		val = 0;
+		arr = NULL;
 		switch (sde_prop[i].type) {
 		case PROP_TYPE_U32:
 			rc = of_property_read_u32(np, sde_prop[i].prop_name,
@@ -1103,8 +1107,9 @@ static int _validate_dt_entry(struct device_node *np,
 				rc = prop_count[i];
 			break;
 		case PROP_TYPE_BIT_OFFSET_ARRAY:
-			of_get_property(np, sde_prop[i].prop_name, &val);
-			prop_count[i] = val / (MAX_BIT_OFFSET * sizeof(u32));
+			arr = of_get_property(np, sde_prop[i].prop_name, &val);
+			if (arr)
+				prop_count[i] = val / (MAX_BIT_OFFSET * sizeof(u32));
 			break;
 		case PROP_TYPE_NODE:
 			snp = of_get_child_by_name(np,
