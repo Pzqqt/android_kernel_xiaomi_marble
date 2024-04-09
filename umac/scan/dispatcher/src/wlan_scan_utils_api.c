@@ -2072,7 +2072,8 @@ static uint8_t
 	if (!ies)
 		return NULL;
 
-	while (len >= MIN_IE_LEN && len >= ies[TAG_LEN_POS] + MIN_IE_LEN) {
+	while ((len >= MIN_IE_LEN + 1) && len >= ies[TAG_LEN_POS] + MIN_IE_LEN)
+	{
 		if ((ies[ID_POS] == elem_id) &&
 		    (ies[ELEM_ID_EXTN_POS] ==
 		     WLAN_EXTN_ELEMID_NONINHERITANCE)) {
@@ -2457,9 +2458,11 @@ static uint32_t util_gen_new_ie(uint8_t *ie, uint32_t ielen,
 	extn_elem = util_scan_find_noninheritance_ie(WLAN_ELEMID_EXTN_ELEM,
 						     sub_copy, subie_len);
 
-	if (extn_elem && extn_elem[TAG_LEN_POS]) {
-		util_parse_noninheritance_list(extn_elem, &elem_list,
-					       &extn_elem_list, &ninh);
+	if (extn_elem && extn_elem[TAG_LEN_POS] >= VALID_ELEM_LEAST_LEN) {
+		if (((extn_elem + extn_elem[1] + MIN_IE_LEN) - sub_copy)
+		    < subie_len)
+			util_parse_noninheritance_list(extn_elem, &elem_list,
+						       &extn_elem_list, &ninh);
 	}
 
 	/* go through IEs in ie (skip SSID) and subelement,
