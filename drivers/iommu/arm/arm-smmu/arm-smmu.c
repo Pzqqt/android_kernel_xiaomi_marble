@@ -4299,6 +4299,13 @@ static int __maybe_unused arm_smmu_pm_restore_early(struct device *dev)
 		}
 		smmu_domain->pgtbl_ops = pgtbl_ops;
 		arm_smmu_init_context_bank(smmu_domain, pgtbl_cfg);
+
+		arm_smmu_secure_domain_lock(smmu_domain);
+		ret = arm_smmu_assign_table(smmu_domain);
+		arm_smmu_secure_domain_unlock(smmu_domain);
+		if (ret)
+			dev_err(smmu->dev, "Failed to hyp-assign page table memory cxt:%d dev:%s\n",
+					idx, dev_name(smmu_domain->dev));
 	}
 	arm_smmu_pm_resume(dev);
 	ret = arm_smmu_runtime_suspend(dev);
@@ -4323,6 +4330,11 @@ static int __maybe_unused arm_smmu_pm_freeze_late(struct device *dev)
 			if (smmu_domain &&
 				arm_smmu_has_secure_vmid(smmu_domain)) {
 				qcom_free_io_pgtable_ops(smmu_domain->pgtbl_ops);
+
+				arm_smmu_secure_domain_lock(smmu_domain);
+				arm_smmu_secure_pool_destroy(smmu_domain);
+				arm_smmu_unassign_table(smmu_domain);
+				arm_smmu_secure_domain_unlock(smmu_domain);
 			}
 		}
 	}
