@@ -278,11 +278,6 @@ enum lruvec_flags {
 
 struct lruvec {
 	struct list_head		lists[NR_LRU_LISTS];
-#ifndef __GENKSYMS__
-	// HACK: CRC ABI fixups
-	/* per lruvec lru_lock for memcg */
-	spinlock_t			lru_lock;
-#endif
 	/*
 	 * These track the cost of reclaiming one LRU - file or anon -
 	 * over the other. As the observed cost of reclaiming one LRU
@@ -298,6 +293,11 @@ struct lruvec {
 	unsigned long			flags;
 #ifdef CONFIG_MEMCG
 	struct pglist_data *pgdat;
+#endif
+#ifndef __GENKSYMS__
+	// HACK: CRC ABI fixups
+	/* per lruvec lru_lock for memcg */
+	spinlock_t			lru_lock;
 #endif
 };
 
@@ -806,10 +806,9 @@ typedef struct pglist_data {
 
 	/* Write-intensive fields used by page reclaim */
 	ZONE_PADDING(_pad1_)
-#ifdef __GENKSYMS__
-	// HACK: CRC ABI fixups
+
+	/* HACK: KABI preservation, DO NOT USE! */
 	spinlock_t		lru_lock;
-#endif
 
 #ifdef CONFIG_DEFERRED_STRUCT_PAGE_INIT
 	/*
