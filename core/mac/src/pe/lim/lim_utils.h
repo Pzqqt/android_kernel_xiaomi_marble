@@ -1020,7 +1020,7 @@ QDF_STATUS lim_send_ext_cap_ie(struct mac_context *mac_ctx, uint32_t session_id,
  * @mac_ctx: global mac context
  * @session: pe session. This can be NULL. In that case self cap will be sent
  * @vdev_id: vdev for which IE is targeted
- * @dot11_mode: vdev dot11 mode
+ * @dot11_mode: mlme dot11 mode
  * @device_mode: device mode
  *
  * This funciton gets ht and vht capability and send to firmware via wma
@@ -1029,7 +1029,7 @@ QDF_STATUS lim_send_ext_cap_ie(struct mac_context *mac_ctx, uint32_t session_id,
  */
 QDF_STATUS lim_send_ies_per_band(struct mac_context *mac_ctx,
 				 struct pe_session *session, uint8_t vdev_id,
-				 enum csr_cfgdot11mode dot11_mode,
+				 enum mlme_dot11_mode dot11_mode,
 				 enum QDF_OPMODE device_mode);
 
 /**
