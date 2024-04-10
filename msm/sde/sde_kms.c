@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2014-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -2301,7 +2301,8 @@ static void _sde_kms_hw_destroy(struct sde_kms *sde_kms,
 	_sde_kms_unmap_all_splash_regions(sde_kms);
 
 	if (sde_kms->catalog) {
-		for (i = 0; i < sde_kms->catalog->vbif_count; i++) {
+		for (i = 0; i < sde_kms->catalog->vbif_count &&
+			i < MAX_BLOCKS; i++) {
 			u32 vbif_idx = sde_kms->catalog->vbif[i].id;
 
 			if ((vbif_idx < VBIF_MAX) && sde_kms->hw_vbif[vbif_idx])
