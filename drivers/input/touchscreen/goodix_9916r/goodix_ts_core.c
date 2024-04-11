@@ -1285,10 +1285,17 @@ static int goodix_parse_dt(struct device_node *node,
 
 	/* get firmware file name */
 #ifdef CONFIG_MACH_XIAOMI_MARBLE
-	if (mi_panel_type == 2)
-		name_tmp = "goodix_firmware_TM_Second.bin";
+	if (mi_panel_type == 1)
+		r = of_property_read_string(node, "goodix,firmware-namea", &name_tmp);
 	else
-		r = of_property_read_string(node, "goodix,firmware-name", &name_tmp);
+		r = of_property_read_string(node, "goodix,firmware-nameb", &name_tmp);
+	if (r) {
+		if (mi_panel_type == 2) {
+			name_tmp = "goodix_firmware_TM_Second.bin";
+			r = 0;
+		} else
+			r = of_property_read_string(node, "goodix,firmware-name", &name_tmp);
+	}
 #else
 	r = of_property_read_string(node, "goodix,firmware-name", &name_tmp);
 #endif
@@ -1305,10 +1312,17 @@ static int goodix_parse_dt(struct device_node *node,
 
 	/* get config file name */
 #ifdef CONFIG_MACH_XIAOMI_MARBLE
-	if (mi_panel_type == 2)
-		name_tmp = "goodix_cfg_group_TM_Second.bin";
+	if (mi_panel_type == 1)
+		r = of_property_read_string(node, "goodix,config-namea", &name_tmp);
 	else
-		r = of_property_read_string(node, "goodix,config-name", &name_tmp);
+		r = of_property_read_string(node, "goodix,config-nameb", &name_tmp);
+	if (r) {
+		if (mi_panel_type == 2) {
+			name_tmp = "goodix_cfg_group_TM_Second.bin";
+			r = 0;
+		} else
+			r = of_property_read_string(node, "goodix,config-name", &name_tmp);
+	}
 #else
 	r = of_property_read_string(node, "goodix,config-name", &name_tmp);
 #endif
