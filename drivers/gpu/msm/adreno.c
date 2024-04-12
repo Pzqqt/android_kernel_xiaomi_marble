@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2002,2007-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 #include <linux/component.h>
 #include <linux/delay.h>
@@ -114,6 +114,20 @@ int adreno_zap_shader_load(struct adreno_device *adreno_dev,
 
 	return ret;
 }
+
+#if IS_ENABLED(CONFIG_QCOM_KGSL_HIBERNATION)
+static void adreno_zap_shader_unload(struct adreno_device *adreno_dev)
+{
+	struct kgsl_device *device = KGSL_DEVICE(adreno_dev);
+	int ret;
+
+	if (adreno_dev->zap_loaded) {
+		ret = kgsl_zap_shader_unload(&device->pdev->dev);
+		if (!ret)
+			adreno_dev->zap_loaded = false;
+	}
+}
+#endif
 
 /**
  * adreno_readreg64() - Read a 64bit register by getting its offset from the
@@ -3486,9 +3500,206 @@ static int adreno_remove(struct platform_device *pdev)
 	return 0;
 }
 
+#if IS_ENABLED(CONFIG_QCOM_KGSL_HIBERNATION)
+#if IS_ENABLED(CONFIG_QCOM_SECURE_BUFFER)
+/*
+ * Issue hyp_assign call to assign non-used internal/userspace secure
+ * buffers to kernel.
+ */
+static int adreno_secure_pt_hibernate(struct adreno_device *adreno_dev)
+{
+	struct kgsl_device *device = KGSL_DEVICE(adreno_dev);
+	struct kgsl_process_private *process;
+	struct kgsl_mem_entry *entry;
+	struct kgsl_global_memdesc *md;
+	struct kgsl_memdesc *memdesc;
+	int ret, id;
+
+	read_lock(&kgsl_driver.proclist_lock);
+	list_for_each_entry(process, &kgsl_driver.process_list, list) {
+		idr_for_each_entry(&process->mem_idr, entry, id) {
+			memdesc = &entry->memdesc;
+			if (!kgsl_memdesc_is_secured(memdesc) ||
+				(memdesc->flags & KGSL_MEMFLAGS_USERMEM_ION) ||
+				(memdesc->priv & KGSL_MEMDESC_HYPASSIGNED_HLOS))
+				continue;
+
+			read_unlock(&kgsl_driver.proclist_lock);
+
+			if (kgsl_unlock_sgt(memdesc->sgt))
+				dev_err(device->dev, "kgsl_unlock_sgt failed\n");
+
+			memdesc->priv |= KGSL_MEMDESC_HYPASSIGNED_HLOS;
+
+			read_lock(&kgsl_driver.proclist_lock);
+		}
+	}
+	read_unlock(&kgsl_driver.proclist_lock);
+
+	list_for_each_entry(md, &device->globals, node) {
+		memdesc = &md->memdesc;
+		if (kgsl_memdesc_is_secured(memdesc) &&
+			!(memdesc->priv & KGSL_MEMDESC_HYPASSIGNED_HLOS)) {
+			ret = kgsl_unlock_sgt(memdesc->sgt);
+			if (ret) {
+				dev_err(device->dev, "kgsl_unlock_sgt failed ret %d\n", ret);
+				goto fail;
+			}
+			memdesc->priv |= KGSL_MEMDESC_HYPASSIGNED_HLOS;
+		}
+	}
+
+	return 0;
+
+fail:
+	list_for_each_entry(md, &device->globals, node) {
+		memdesc = &md->memdesc;
+		if (kgsl_memdesc_is_secured(memdesc) &&
+			(memdesc->priv & KGSL_MEMDESC_HYPASSIGNED_HLOS)) {
+			kgsl_lock_sgt(memdesc->sgt, memdesc->size);
+			memdesc->priv &= ~KGSL_MEMDESC_HYPASSIGNED_HLOS;
+		}
+	}
+
+	return -EBUSY;
+}
+
+static int adreno_secure_pt_restore(struct adreno_device *adreno_dev)
+{
+	struct kgsl_device *device = KGSL_DEVICE(adreno_dev);
+	struct kgsl_process_private *process;
+	struct kgsl_mem_entry *entry;
+	struct kgsl_memdesc *memdesc;
+	struct kgsl_global_memdesc *md;
+	int ret, id;
+
+	list_for_each_entry(md, &device->globals, node) {
+		memdesc = &md->memdesc;
+		if (kgsl_memdesc_is_secured(memdesc) &&
+			(memdesc->priv & KGSL_MEMDESC_HYPASSIGNED_HLOS)) {
+			ret = kgsl_lock_sgt(memdesc->sgt, memdesc->size);
+			if (ret) {
+				dev_err(device->dev, "kgsl_lock_sgt failed ret %d\n", ret);
+				return ret;
+			}
+			memdesc->priv &= ~KGSL_MEMDESC_HYPASSIGNED_HLOS;
+		}
+	}
+
+	read_lock(&kgsl_driver.proclist_lock);
+	list_for_each_entry(process, &kgsl_driver.process_list, list) {
+		idr_for_each_entry(&process->mem_idr, entry, id) {
+			memdesc = &entry->memdesc;
+			if (!kgsl_memdesc_is_secured(memdesc) ||
+				(memdesc->flags & KGSL_MEMFLAGS_USERMEM_ION) ||
+				!(memdesc->priv & KGSL_MEMDESC_HYPASSIGNED_HLOS))
+				continue;
+
+			read_unlock(&kgsl_driver.proclist_lock);
+
+			ret = kgsl_lock_sgt(memdesc->sgt, memdesc->size);
+			if (ret) {
+				dev_err(device->dev, "kgsl_lock_sgt failed ret %d\n", ret);
+				return ret;
+			}
+			memdesc->priv &= ~KGSL_MEMDESC_HYPASSIGNED_HLOS;
+
+			read_lock(&kgsl_driver.proclist_lock);
+		}
+	}
+	read_unlock(&kgsl_driver.proclist_lock);
+
+	return 0;
+}
+#else
+static int adreno_secure_pt_hibernate(struct adreno_device *adreno_dev)
+{
+	return 0;
+}
+
+static int adreno_secure_pt_restore(struct adreno_device *adreno_dev)
+{
+	return 0;
+}
+#endif /* IS_ENABLED(CONFIG_QCOM_SECURE_BUFFER) */
+
+static int adreno_hibernation_suspend(struct device *dev)
+{
+	struct kgsl_device *device = dev_get_drvdata(dev);
+	struct adreno_device *adreno_dev = ADRENO_DEVICE(device);
+	const struct adreno_power_ops *ops = ADRENO_POWER_OPS(adreno_dev);
+	int status = -EINVAL;
+
+	if (!device)
+		return -EINVAL;
+
+	mutex_lock(&device->mutex);
+
+	status = ops->pm_suspend(adreno_dev);
+	if (status)
+		goto err;
+
+	/*
+	 * Unload zap shader during device hibernation and reload it
+	 * during resume as there is possibility that TZ driver
+	 * is not aware of the hibernation.
+	 */
+	adreno_zap_shader_unload(adreno_dev);
+	status = adreno_secure_pt_hibernate(adreno_dev);
+
+err:
+	mutex_unlock(&device->mutex);
+
+	return status;
+}
+
+static int adreno_hibernation_resume(struct device *dev)
+{
+	struct kgsl_device *device = dev_get_drvdata(dev);
+	struct kgsl_iommu *iommu = &device->mmu.iommu;
+	struct kgsl_pwrscale *pwrscale = &device->pwrscale;
+	struct adreno_device *adreno_dev = ADRENO_DEVICE(device);
+	const struct adreno_power_ops *ops = ADRENO_POWER_OPS(adreno_dev);
+	int ret = 0;
+
+	if (!device)
+		return -EINVAL;
+
+	mutex_lock(&device->mutex);
+
+	ret = adreno_secure_pt_restore(adreno_dev);
+	if (ret)
+		goto err;
+
+	ret = kgsl_set_smmu_aperture(device, &iommu->user_context);
+	if (ret)
+		goto err;
+
+	gmu_core_dev_force_first_boot(device);
+
+	msm_adreno_tz_reinit(pwrscale->devfreqptr);
+
+	ops->pm_resume(adreno_dev);
+
+err:
+	mutex_unlock(&device->mutex);
+	return ret;
+}
+
+static const struct dev_pm_ops adreno_pm_ops = {
+	.suspend  = adreno_pm_suspend,
+	.resume = adreno_pm_resume,
+	.freeze = adreno_hibernation_suspend,
+	.thaw = adreno_hibernation_resume,
+	.poweroff = adreno_hibernation_suspend,
+	.restore = adreno_hibernation_resume,
+};
+
+#else
 static const struct dev_pm_ops adreno_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(adreno_pm_suspend, adreno_pm_resume)
 };
+#endif /* IS_ENABLED(CONFIG_QCOM_KGSL_HIBERNATION) */
 
 static struct platform_driver adreno_platform_driver = {
 	.probe = adreno_probe,
