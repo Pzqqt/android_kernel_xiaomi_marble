@@ -52,6 +52,7 @@ static struct class *class;
 static dev_t device;
 
 struct ipa_lnx_stats_spearhead_ctx ipa_lnx_agent_ctx;
+static DEFINE_MUTEX(ipa_lnx_ctx_mutex);
 
 struct wlan_intf_mode_cnt {
 	u8 ap_cnt;
@@ -1797,6 +1798,7 @@ static long ipa_lnx_stats_ioctl(struct file *filp,
 		return -EPERM;
 	}
 
+	mutex_lock(&ipa_lnx_ctx_mutex);
 	switch (cmd) {
 	case IPA_LNX_IOC_GET_ALLOC_INFO:
 		retval = ipa_stats_get_alloc_info(arg);
@@ -1842,6 +1844,7 @@ static long ipa_lnx_stats_ioctl(struct file *filp,
 				const void __user *)arg, sizeof(struct ipa_lnx_consolidated_stats));
 		if (IS_ERR(consolidated_stats)) {
 			IPA_STATS_ERR("copy from user failed");
+			mutex_unlock(&ipa_lnx_ctx_mutex);
 			return -ENOMEM;
 		}
 
@@ -1900,6 +1903,7 @@ static long ipa_lnx_stats_ioctl(struct file *filp,
 	default:
 		retval = -ENOTTY;
 	}
+	mutex_unlock(&ipa_lnx_ctx_mutex);
 	return retval;
 }
 
