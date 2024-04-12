@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -342,6 +342,27 @@ void msm_vidc_buf_queue(struct vb2_buffer *vb2)
 		return;
 	}
 
+	if (!vb2->planes[0].bytesused) {
+		if (vb2->type == INPUT_MPLANE) {
+			/* Expecting non-zero filledlen on INPUT port */
+			i_vpr_e(inst,
+				"%s: zero bytesused input buffer not supported\n", __func__);
+			rc = -EINVAL;
+			goto unlock;
+		}
+		// TODO Need to check below checks are needed or not
+		if (vb2->type == OUTPUT_META_PLANE ||
+			(vb2->type == INPUT_META_PLANE)) {
+			/*
+			 * vb2 is not allowing client to pass data in output meta plane.
+			 * adjust the bytesused as client will send buffer tag metadata
+			 * in output meta plane if DPB_TAG_LIST, or OUTBUF_FENCE metadata
+			 * is enabled.
+			 */
+			vb2->planes[0].bytesused = vb2->planes[0].length;
+		}
+	}
+
 	if (is_decode_session(inst))
 		rc = msm_vdec_qbuf(inst, vb2);
 	else if (is_encode_session(inst))
@@ -349,6 +370,7 @@ void msm_vidc_buf_queue(struct vb2_buffer *vb2)
 	else
 		rc = -EINVAL;
 
+unlock:
 	if (rc) {
 		print_vb2_buffer("failed vb2-qbuf", inst, vb2);
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);

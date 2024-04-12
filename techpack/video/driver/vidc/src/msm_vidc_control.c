@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include "msm_vidc_control.h"
@@ -809,6 +809,12 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 	/* Static setting */
 	if (!inst->vb2q[OUTPUT_PORT].streaming) {
 		msm_vidc_update_cap_value(inst, cap_id, ctrl->val, __func__);
+
+		if (ctrl->id == V4L2_CID_MPEG_VIDC_CLIENT_ID) {
+			rc = msm_vidc_update_debug_str(inst);
+			if (rc)
+				return rc;
+		}
 
 		if (ctrl->id == V4L2_CID_MPEG_VIDC_SECURE) {
 			if (ctrl->val) {
@@ -2320,6 +2326,69 @@ int msm_vidc_adjust_lowlatency_mode(void *instance, struct v4l2_ctrl *ctrl)
 		adjusted_value = 1;
 
 	msm_vidc_update_cap_value(inst, LOWLATENCY_MODE,
+		adjusted_value, __func__);
+
+	return 0;
+}
+
+int msm_vidc_adjust_output_order(void *instance, struct v4l2_ctrl *ctrl)
+{
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	struct msm_vidc_inst_capability *capability;
+	s32 tn_mode = -1, display_delay = -1, display_delay_enable = -1;
+	u32 adjusted_value;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	adjusted_value = ctrl ? ctrl->val :
+		capability->cap[OUTPUT_ORDER].value;
+
+	if (msm_vidc_get_parent_value(inst, OUTPUT_ORDER, THUMBNAIL_MODE,
+			&tn_mode, __func__) ||
+		msm_vidc_get_parent_value(inst, OUTPUT_ORDER, DISPLAY_DELAY,
+			&display_delay, __func__) ||
+		msm_vidc_get_parent_value(inst, OUTPUT_ORDER, DISPLAY_DELAY_ENABLE,
+			&display_delay_enable, __func__))
+		return -EINVAL;
+
+	if (tn_mode || (display_delay_enable && !display_delay))
+		adjusted_value = 1;
+
+	msm_vidc_update_cap_value(inst, OUTPUT_ORDER,
+		adjusted_value, __func__);
+
+	return 0;
+}
+
+int msm_vidc_adjust_dec_outbuf_fence(void *instance, struct v4l2_ctrl *ctrl)
+{
+	struct msm_vidc_inst_capability *capability;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	u32 adjusted_value = 0;
+	s32 picture_order = -1;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	adjusted_value = ctrl ? ctrl->val : capability->cap[META_OUTBUF_FENCE].value;
+
+	if (msm_vidc_get_parent_value(inst, META_OUTBUF_FENCE, OUTPUT_ORDER,
+		&picture_order, __func__))
+		return -EINVAL;
+
+	if (picture_order == V4L2_MPEG_MSM_VIDC_DISABLE) {
+		/* disable outbuf fence */
+		adjusted_value = V4L2_MPEG_MSM_VIDC_DISABLE;
+	}
+
+	msm_vidc_update_cap_value(inst, META_OUTBUF_FENCE,
 		adjusted_value, __func__);
 
 	return 0;

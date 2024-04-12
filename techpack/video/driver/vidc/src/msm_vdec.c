@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <media/v4l2_vidc_extensions.h>
@@ -67,6 +67,7 @@ static const u32 msm_vdec_output_subscribe_for_properties[] = {
 	HFI_PROP_PICTURE_TYPE,
 	HFI_PROP_DPB_LIST,
 	HFI_PROP_CABAC_SESSION,
+	HFI_PROP_FENCE,
 };
 
 static const u32 msm_vdec_internal_buffer_type[] = {
@@ -1099,7 +1100,8 @@ static int msm_vdec_subscribe_property(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_U32_ARRAY,
 			&payload[0],
 			(count + 1) * sizeof(u32));
-
+	if (rc)
+		return rc;
 	return rc;
 }
 
@@ -1110,7 +1112,16 @@ static int msm_vdec_subscribe_metadata(struct msm_vidc_inst *inst,
 	u32 payload[32] = {0};
 	u32 i, count = 0;
 	struct msm_vidc_inst_capability *capability;
-	static const u32 metadata_list[] = {
+	const u32 metadata_input_list[] = {
+		META_OUTBUF_FENCE,
+		/*
+		 * when fence enabled, client needs output buffer_tag
+		 * in input metadata buffer done.
+		 */
+		META_BUF_TAG,
+		META_PICTURE_TYPE,
+	};
+	const u32 metadata_output_list[] = {
 		META_DPB_MISR,
 		META_OPB_MISR,
 		META_INTERLACE,
@@ -1120,6 +1131,9 @@ static int msm_vdec_subscribe_metadata(struct msm_vidc_inst *inst,
 		META_SEI_MASTERING_DISP,
 		META_SEI_CLL,
 		META_HDR10PLUS,
+		/*
+		 * client needs input buffer tag in output metadata buffer done.
+		 */
 		META_BUF_TAG,
 		META_DPB_TAG_LIST,
 		META_SUBFRAME_OUTPUT,
@@ -1135,14 +1149,39 @@ static int msm_vdec_subscribe_metadata(struct msm_vidc_inst *inst,
 
 	capability = inst->capabilities;
 	payload[0] = HFI_MODE_METADATA;
-	for (i = 0; i < ARRAY_SIZE(metadata_list); i++) {
-		if (capability->cap[metadata_list[i]].value &&
-			msm_vidc_allow_metadata(inst, metadata_list[i])) {
-			payload[count + 1] =
-				capability->cap[metadata_list[i]].hfi_id;
-			count++;
+	/*
+	 * TODO
+	 * Currently I/P port Meta data subscription is required only when
+	 * SW fence enable case, so suppose if any new use-case needs I/P
+	 * port Meta data subscription then need to remove below check.
+	 */
+	if (port == INPUT_PORT && !is_outbuf_fence_enabled(inst)) {
+		i_vpr_l(inst, "%s: I/P port meta-data subscription not allowed!", __func__);
+		return rc;
+	}
+
+	if (port == INPUT_PORT) {
+		for (i = 0; i < ARRAY_SIZE(metadata_input_list); i++) {
+			if (capability->cap[metadata_input_list[i]].value &&
+				msm_vidc_allow_metadata(inst, metadata_input_list[i])) {
+				payload[count + 1] =
+					capability->cap[metadata_input_list[i]].hfi_id;
+				count++;
+			}
 		}
-	};
+	} else if (port == OUTPUT_PORT) {
+		for (i = 0; i < ARRAY_SIZE(metadata_output_list); i++) {
+			if (capability->cap[metadata_output_list[i]].value &&
+				msm_vidc_allow_metadata(inst, metadata_output_list[i])) {
+				payload[count + 1] =
+					capability->cap[metadata_output_list[i]].hfi_id;
+				count++;
+			}
+		}
+	} else {
+		i_vpr_e(inst, "%s: invalid port: %d\n", __func__, port);
+		return -EINVAL;
+	}
 
 	rc = venus_hfi_session_command(inst,
 			HFI_CMD_SUBSCRIBE_MODE,
@@ -1150,7 +1189,8 @@ static int msm_vdec_subscribe_metadata(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_U32_ARRAY,
 			&payload[0],
 			(count + 1) * sizeof(u32));
-
+	if (rc)
+		return rc;
 	return rc;
 }
 
@@ -1161,10 +1201,10 @@ static int msm_vdec_set_delivery_mode_metadata(struct msm_vidc_inst *inst,
 	u32 payload[32] = {0};
 	u32 i, count = 0;
 	struct msm_vidc_inst_capability *capability;
-	static const u32 metadata_input_list[] = {
+	const u32 metadata_input_list[] = {
 		META_BUF_TAG,
 	};
-	static const u32 metadata_output_list[] = {
+	const u32 metadata_output_list[] = {
 		META_OUTPUT_BUF_TAG,
 	};
 
@@ -1205,6 +1245,61 @@ static int msm_vdec_set_delivery_mode_metadata(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_U32_ARRAY,
 			&payload[0],
 			(count + 1) * sizeof(u32));
+	if (rc)
+		return rc;
+	return rc;
+}
+
+static int msm_vdec_set_delivery_mode_property(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port)
+{
+	int rc = 0;
+	u32 payload[32] = {0};
+	u32 i, count = 0;
+	struct msm_vidc_inst_capability *capability;
+	const u32 property_output_list[] = {
+		META_OUTBUF_FENCE,
+	};
+	const u32 property_input_list[] = {};
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	i_vpr_h(inst, "%s()\n", __func__);
+
+	capability = inst->capabilities;
+	payload[0] = HFI_MODE_PROPERTY;
+
+	if (port == INPUT_PORT) {
+		for (i = 0; i < ARRAY_SIZE(property_input_list); i++) {
+			if (capability->cap[property_input_list[i]].value) {
+				payload[count + 1] =
+					capability->cap[property_input_list[i]].hfi_id;
+				count++;
+			}
+		}
+	} else if (port == OUTPUT_PORT) {
+		for (i = 0; i < ARRAY_SIZE(property_output_list); i++) {
+			if (capability->cap[property_output_list[i]].value) {
+				payload[count + 1] =
+					capability->cap[property_output_list[i]].hfi_id;
+				count++;
+			}
+		}
+	} else {
+		i_vpr_e(inst, "%s: invalid port: %d\n", __func__, port);
+		return -EINVAL;
+	}
+
+	rc = venus_hfi_session_command(inst,
+			HFI_CMD_DELIVERY_MODE,
+			port,
+			HFI_PAYLOAD_U32_ARRAY,
+			&payload[0],
+			(count + 1) * sizeof(u32));
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -1223,6 +1318,8 @@ static int msm_vdec_session_resume(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_NONE,
 			NULL,
 			0);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -1301,7 +1398,7 @@ static int msm_vdec_read_input_subcr_params(struct msm_vidc_inst *inst)
 	u32 video_signal_type_present_flag = 0;
 	u32 bit_depth;
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
@@ -1400,6 +1497,13 @@ static int msm_vdec_read_input_subcr_params(struct msm_vidc_inst *inst)
 		msm_vidc_update_cap_value(inst, CODED_FRAMES, CODED_FRAMES_PROGRESSIVE, __func__);
 	else
 		msm_vidc_update_cap_value(inst, CODED_FRAMES, CODED_FRAMES_INTERLACE, __func__);
+
+	/* disable META_OUTBUF_FENCE if session is Interlace type */
+	if (inst->capabilities->cap[CODED_FRAMES].value ==
+		CODED_FRAMES_INTERLACE) {
+		msm_vidc_update_cap_value(inst, META_OUTBUF_FENCE,
+			V4L2_MPEG_MSM_VIDC_DISABLE, __func__);
+	}
 
 	return 0;
 }
@@ -1555,6 +1659,10 @@ int msm_vdec_streamon_input(struct msm_vidc_inst *inst)
 	}
 
 	rc = msm_vdec_subscribe_property(inst, INPUT_PORT);
+	if (rc)
+		return rc;
+
+	rc = msm_vdec_subscribe_metadata(inst, INPUT_PORT);
 	if (rc)
 		return rc;
 
@@ -1854,6 +1962,10 @@ int msm_vdec_streamon_output(struct msm_vidc_inst *inst)
 	if (rc)
 		goto error;
 
+	rc = msm_vdec_set_delivery_mode_property(inst, OUTPUT_PORT);
+	if (rc)
+		return rc;
+
 	rc = msm_vdec_set_delivery_mode_metadata(inst, OUTPUT_PORT);
 	if (rc)
 		return rc;
@@ -2149,18 +2261,6 @@ int msm_vdec_qbuf(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 			rc = msm_vdec_release_nonref_buffers(inst);
 			if (rc)
 				return rc;
-		}
-	}
-
-	if (vb2->type == OUTPUT_META_PLANE) {
-		if (inst->capabilities->cap[META_DPB_TAG_LIST].value) {
-			/*
-			 * vb2 is not allowing client to pass data in output meta plane.
-			 * adjust the bytesused as client will send buffer tag metadata
-			 * in output meta plane if DPB_TAG_LIST metadata enabled.
-			 */
-			if (!vb2->planes[0].bytesused)
-				vb2->planes[0].bytesused = 1024;
 		}
 	}
 
