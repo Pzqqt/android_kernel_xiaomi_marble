@@ -1706,7 +1706,7 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 					sys_in->client == IPA_CLIENT_APPS_WAN_COAL_CONS)
 					ep->sys->page_recycle_repl->capacity =
 							(ep->sys->rx_pool_sz + 1) *
-							IPA_GENERIC_RX_CMN_PAGE_POOL_SZ_FACTOR;
+							ipa3_ctx->ipa_gen_rx_cmn_page_pool_sz_factor;
 				else
 					ep->sys->page_recycle_repl->capacity =
 							(ep->sys->rx_pool_sz + 1) *
