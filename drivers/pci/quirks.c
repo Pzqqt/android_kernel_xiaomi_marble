@@ -5853,16 +5853,6 @@ static void nvidia_ion_ahci_fixup(struct pci_dev *pdev)
 }
 DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_NVIDIA, 0x0ab8, nvidia_ion_ahci_fixup);
 
-static void rom_bar_overlap_defect(struct pci_dev *dev)
-{
-	pci_info(dev, "working around ROM BAR overlap defect\n");
-	dev->rom_bar_overlap = 1;
-}
-DECLARE_PCI_FIXUP_EARLY(PCI_VENDOR_ID_INTEL, 0x1533, rom_bar_overlap_defect);
-DECLARE_PCI_FIXUP_EARLY(PCI_VENDOR_ID_INTEL, 0x1536, rom_bar_overlap_defect);
-DECLARE_PCI_FIXUP_EARLY(PCI_VENDOR_ID_INTEL, 0x1537, rom_bar_overlap_defect);
-DECLARE_PCI_FIXUP_EARLY(PCI_VENDOR_ID_INTEL, 0x1538, rom_bar_overlap_defect);
-
 #ifdef CONFIG_PCIE_DPC
 /*
  * Intel Ice Lake, Tiger Lake and Alder Lake BIOS has a bug that clears
