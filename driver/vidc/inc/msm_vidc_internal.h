@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _MSM_VIDC_INTERNAL_H_
@@ -10,6 +10,9 @@
 #include <linux/version.h>
 #include <linux/bits.h>
 #include <linux/workqueue.h>
+#include <linux/spinlock.h>
+#include <linux/sync_file.h>
+#include <linux/dma-fence.h>
 #include <media/v4l2-dev.h>
 #include <media/v4l2-device.h>
 #include <media/v4l2-ioctl.h>
@@ -57,6 +60,8 @@
 #define MAX_SUPPORTED_MIN_QUALITY            70
 #define MIN_CHROMA_QP_OFFSET                -12
 #define MAX_CHROMA_QP_OFFSET                  0
+#define INVALID_FD                           -1
+#define INVALID_CLIENT_ID                    -1
 
 #define DCVS_WINDOW 16
 #define ENC_FPS_WINDOW 3
@@ -362,7 +367,12 @@ enum msm_vidc_inst_capability_type {
 	MB_CYCLES_LP,
 	MB_CYCLES_FW,
 	MB_CYCLES_FW_VPP,
+	CLIENT_ID,
 	SECURE_MODE,
+	META_OUTBUF_FENCE,
+	OUTPUT_ORDER,
+	FENCE_ID,
+	FENCE_FD,
 	TS_REORDER,
 	HFLIP,
 	VFLIP,
@@ -463,6 +473,7 @@ enum msm_vidc_inst_capability_type {
 	META_TIMESTAMP,
 	META_CONCEALED_MB_CNT,
 	META_HIST_INFO,
+	META_PICTURE_TYPE,
 	META_SEI_MASTERING_DISP,
 	META_SEI_CLL,
 	META_HDR10PLUS,
@@ -714,6 +725,7 @@ struct msm_vidc_hfi_frame_info {
 	u32                    cf;
 	u32                    data_corrupt;
 	u32                    overflow;
+	u32                    fence_id;
 };
 
 struct msm_vidc_decode_vpp_delay {
@@ -772,6 +784,21 @@ struct msm_vidc_power {
 	u32                    fw_cf;
 };
 
+struct msm_vidc_fence_context {
+	char                      name[MAX_NAME_LENGTH];
+	u64                       ctx_num;
+	u64                       seq_num;
+};
+
+struct msm_vidc_fence {
+	struct list_head            list;
+	struct dma_fence            dma_fence;
+	char                        name[MAX_NAME_LENGTH];
+	spinlock_t                  lock;
+	struct sync_file            *sync_file;
+	int                         fd;
+};
+
 struct msm_vidc_alloc {
 	struct list_head            list;
 	enum msm_vidc_buffer_type   type;
@@ -819,6 +846,7 @@ struct msm_vidc_buffer {
 	u32                                flags;
 	u64                                timestamp;
 	enum msm_vidc_buffer_attributes    attr;
+	u64                                fence_id;
 };
 
 struct msm_vidc_buffers {
