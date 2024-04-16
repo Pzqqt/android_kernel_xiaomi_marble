@@ -144,6 +144,7 @@ struct dsi_display_ext_bridge {
  * @is_active:        Is display active.
  * @is_cont_splash_enabled:  Is continuous splash enabled
  * @is_hibernate_splash_enabled: Is hibernation splash enabled.
+ * @is_hibernate_exit: Is hibernate exit.
  * @sw_te_using_wd:   Is software te enabled
  * @display_lock:     Mutex for dsi_display interface.
  * @disp_te_gpio:     GPIO for panel TE interrupt.
@@ -209,6 +210,7 @@ struct dsi_display {
 	struct list_head list;
 	bool is_cont_splash_enabled;
 	bool is_hibernate_splash_enabled;
+	bool is_hibernate_exit;
 	bool sw_te_using_wd;
 	struct mutex display_lock;
 	int disp_te_gpio;
