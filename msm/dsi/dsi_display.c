@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -5400,6 +5400,21 @@ int dsi_display_cont_splash_config(void *dsi_display)
 	mutex_lock(&display->display_lock);
 
 	display->is_cont_splash_enabled = true;
+
+	/*
+	 * Vote on panel regulator is added to make sure panel regulators are ON
+	 * for cont-splash enabled usecase in case of hibernate exit.
+	 */
+	if (display->is_hibernate_splash_enabled) {
+		rc = dsi_pwr_enable_regulator(&display->panel->power_info, true);
+		if (rc)
+			DSI_ERR("[%s] failed to disable vregs, rc=%d\n",
+					display->panel->name, rc);
+
+	}
+
+	if (!display->is_hibernate_splash_enabled)
+		display->is_hibernate_splash_enabled = true;
 
 	/* Update splash status for clock manager */
 	dsi_display_clk_mngr_update_splash_status(display->clk_mngr,
