@@ -27016,7 +27016,7 @@ typedef enum {
     /** Enable/Disable DTIM 1chRx feature */
     WMI_STA_SMPS_PARAM_DTIM_1CHRX_ENABLE = 5,
     /** Enable/Disable dynamic bw feature */
- 	WMI_STA_SMPS_PARAM_DYNAMIC_BW_SWITCH = 6,
+    WMI_STA_SMPS_PARAM_DYNAMIC_BW_SWITCH = 6,
 } wmi_sta_smps_param;
 
 typedef struct {
