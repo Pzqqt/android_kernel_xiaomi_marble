@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2014-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -904,7 +904,8 @@ bool sde_encoder_is_cwb_disabling(struct drm_encoder *drm_enc,
 	if (sde_enc->disp_info.intf_type != DRM_MODE_CONNECTOR_VIRTUAL)
 		return false;
 
-	for (i = 0; i < sde_enc->num_phys_encs; i++) {
+	for (i = 0; i < sde_enc->num_phys_encs &&
+		i < MAX_PHYS_ENCODERS_PER_VIRTUAL; i++) {
 		struct sde_encoder_phys *phys = sde_enc->phys_encs[i];
 
 		if (sde_encoder_phys_is_cwb_disabling(phys, crtc))

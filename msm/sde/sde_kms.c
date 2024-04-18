@@ -2303,7 +2303,8 @@ static void _sde_kms_hw_destroy(struct sde_kms *sde_kms,
 	_sde_kms_unmap_all_splash_regions(sde_kms);
 
 	if (sde_kms->catalog) {
-		for (i = 0; i < sde_kms->catalog->vbif_count; i++) {
+		for (i = 0; i < sde_kms->catalog->vbif_count &&
+			i < MAX_BLOCKS; i++) {
 			u32 vbif_idx = sde_kms->catalog->vbif[i].id;
 
 			if ((vbif_idx < VBIF_MAX) && sde_kms->hw_vbif[vbif_idx])
