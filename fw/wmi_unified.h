@@ -4618,8 +4618,12 @@ typedef struct {
      *           and 255 indicates an invalid service class
      *      Refer to WMI_RSRC_CFG_FLAGS2_SAWF_255_SVC_CLASS_SUPPORT_GET/SET
      *      macros.
+     *  Bit 20 - enable feature EPM (Enhanced Power Management)
+     *      0 -> disable the feature
+     *      1 -> enable the feature
+     *      Refer to the below WMI_RSRC_CFG_FLAGS2_EPM_GET/SET macros.
      *
-     *  Bits 31:20 - Reserved
+     *  Bits 31:21 - Reserved
      */
     A_UINT32 flags2;
     /** @brief host_service_flags - can be used by Host to indicate
@@ -5114,6 +5118,10 @@ typedef struct {
 #define WMI_RSRC_CFG_FLAGS2_SAWF_255_SVC_CLASS_SUPPORT_SET(flags2, value) \
     WMI_SET_BITS(flags2, 19, 1, value)
 
+#define WMI_RSRC_CFG_FLAGS2_EPM_GET(flags2) \
+    WMI_GET_BITS(flags2, 20, 1)
+#define WMI_RSRC_CFG_FLAGS2_EPM_SET(flags2, value) \
+    WMI_SET_BITS(flags2, 20, 1, value)
 
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_IFACE_SUPPORT_GET(host_service_flags) \
     WMI_GET_BITS(host_service_flags, 0, 1)
