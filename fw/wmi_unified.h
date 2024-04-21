@@ -25678,6 +25678,12 @@ typedef enum
     /* Restrict SLO if specific vendor OUI received in beacon. */
     WMI_VENDOR_OUI_ACTION_RESTRICT_SLO = 13,
 
+    /*
+     * Force MLSR mode if specific vendor OUI received in beacon
+     * when connect with MLO.
+     */
+    WMI_VENDOR_OUI_ACTION_FORCE_MLSR = 14,
+
 
     /* Add any action before this line */
     WMI_VENDOR_OUI_ACTION_MAX_ACTION_ID
