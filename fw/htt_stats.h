@@ -7600,6 +7600,14 @@ typedef struct {
      * bin2 contains the number of sampling windows that had > 4 interrupts
      */
     A_UINT32 interrupts_hist[HTT_INTERRUPTS_LATENCY_PROFILE_MAX_HIST];
+    /* min time in us for pcycles spent on q6 core on all HW threads */
+    A_UINT32 min_pcycles_time;
+    /* max time in us for pcycles spent on q6 core on all HW threads */
+    A_UINT32 max_pcycles_time;
+    /* total time in us for pcycles spent on q6 core on all HW threads */
+    A_UINT32 tot_pcycles_time;
+    /* avg time in us for pcycles spent on q6 core on all HW threads */
+    A_UINT32 avg_pcycles_time;
 } htt_stats_latency_prof_stats_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_latency_prof_stats_tlv htt_latency_prof_stats_tlv;
