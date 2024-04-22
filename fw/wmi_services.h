@@ -664,6 +664,7 @@ typedef  enum  {
     WMI_SERVICE_THERM_THROT_POUT_REDUCTION = 410, /* FW supports thermal throttling Pout reduction */
     WMI_SERVICE_E2E_SDWF_SUPPORT = 411, /* FW supports end-to-end SDWF features like SDWF scheduler */
     WMI_SERVICE_EPM = 412, /* FW supports enhanced power management */
+    WMI_SERVICE_CHIPSET_LOGGING_SUPPORT = 413, /* FW supports chipset logging feature */
 
 
     WMI_MAX_EXT2_SERVICE

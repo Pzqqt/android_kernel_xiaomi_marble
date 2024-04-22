@@ -9617,6 +9617,8 @@ typedef enum {
      * E.g. a value of 4 will result in a 1.0 dB tx power reduction.
      */
     WMI_PDEV_PARAM_PWR_REDUCTION_IN_QUARTER_DB,
+
+    WMI_PDEV_PARAM_ENABLE_CHIPSET_LOGGING,
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
