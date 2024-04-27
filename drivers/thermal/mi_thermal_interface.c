@@ -165,7 +165,7 @@ static int cpu_thermal_init(void)
 			       __func__, cpu);
 			return -ESRCH;
 		}
-		printk(KERN_ERR "%s cpu=%d\n", __func__, cpu);
+		pr_err("%s cpu=%d\n", __func__, cpu);
 
 		i = cpufreq_table_count_valid_entries(policy);
 		if (!i) {
@@ -823,7 +823,7 @@ screen_state_for_thermal_callback(enum panel_event_notifier_tag tag,
 				  void *client_data)
 {
 	if (!notification) {
-		printk(KERN_ERR "%s:Invalid notification\n", __func__);
+		pr_err("%s:Invalid notification\n", __func__);
 		return;
 	}
 
@@ -844,7 +844,7 @@ screen_state_for_thermal_callback(enum panel_event_notifier_tag tag,
 		default:
 			return;
 		}
-		printk(KERN_ERR "%s: %s, screen_light = %d, %s\n", __func__,
+		pr_err("%s: %s, screen_light = %d, %s\n", __func__,
 		       get_screen_state_name(notification->notif_type),
 		       screen_light, board_sensor_temp);
 	}
@@ -863,21 +863,18 @@ screen_state_for_thermal_callback(enum panel_event_notifier_tag tag,
 		default:
 			return;
 		}
-		printk(KERN_ERR "%s: %s, sencondery_screen_light = %d, %s\n",
-		       __func__,
+		pr_err("%s: %s, sencondery_screen_light = %d, %s\n", __func__,
 		       get_screen_state_name(notification->notif_type),
 		       screen_light, board_sensor_temp);
 	}
 #endif
 	if (screen_light) {
 		screen_state = 1;
-		printk(KERN_ERR
-		       "%s: screen_light = %d, so screen_state = %d, %s\n",
+		pr_err("%s: screen_light = %d, so screen_state = %d, %s\n",
 		       __func__, screen_light, screen_state, board_sensor_temp);
 	} else {
 		screen_state = 0;
-		printk(KERN_ERR
-		       "%s: screen_light = %d, so screen_state = %d, %s\n",
+		pr_err("%s: screen_light = %d, so screen_state = %d, %s\n",
 		       __func__, screen_light, screen_state, board_sensor_temp);
 	}
 	if (screen_last_status != screen_state) {
@@ -894,7 +891,7 @@ static int thermal_check_panel(struct device_node *np)
 	struct drm_panel *panel;
 
 	count = of_count_phandle_with_args(np, "panel", NULL);
-	printk(KERN_ERR "%s: count of panel in node is: %d\n", __func__, count);
+	pr_err("%s: count of panel in node is: %d\n", __func__, count);
 	if (count <= 0) {
 #if IS_ENABLED(CONFIG_HAVE_MULTI_SCREEN)
 		goto find_sec_panel;
@@ -904,8 +901,7 @@ static int thermal_check_panel(struct device_node *np)
 
 	for (i = 0; i < count; i++) {
 		node = of_parse_phandle(np, "panel", i);
-		printk(KERN_ERR "%s: try to add of node panel: %s\n", __func__,
-		       node);
+		pr_err("%s: try to add of node panel: %s\n", __func__, node);
 		panel = of_drm_find_panel(node);
 		of_node_put(node);
 		if (!IS_ERR(panel)) {
@@ -918,21 +914,18 @@ static int thermal_check_panel(struct device_node *np)
 	if (PTR_ERR(prim_panel) == -EPROBE_DEFER) {
 		pr_err("%s ERROR: Cannot fine prim_panel of node!", __func__);
 	}
-	printk(KERN_ERR
-	       "%s: count of panel in node PTR_ERR_prim_panel  is: %d\n",
+	pr_err("%s: count of panel in node PTR_ERR_prim_panel  is: %d\n",
 	       __func__, PTR_ERR(prim_panel));
 #if IS_ENABLED(CONFIG_HAVE_MULTI_SCREEN)
 find_sec_panel:
 	count = of_count_phandle_with_args(np, "panel1", NULL);
-	printk(KERN_ERR "%s: count of panel1 in node is: %d\n", __func__,
-	       count);
+	pr_err("%s: count of panel1 in node is: %d\n", __func__, count);
 	if (count <= 0) {
 		goto out;
 	}
 	for (i = 0; i < count; i++) {
 		node = of_parse_phandle(np, "panel1", i);
-		printk(KERN_ERR "%s: try to add of node panel1: %s\n", __func__,
-		       node);
+		pr_err("%s: try to add of node panel1: %s\n", __func__, node);
 		panel = of_drm_find_panel(node);
 		of_node_put(node);
 		if (!IS_ERR(panel)) {
@@ -943,8 +936,7 @@ find_sec_panel:
 	if (PTR_ERR(sec_panel) == -EPROBE_DEFER) {
 		pr_err("%s ERROR: Cannot fine sec_panel of node!", __func__);
 	}
-	printk(KERN_ERR
-	       "%s: count of panel1 in node PTR_ERR_sec_panel  is: %d\n",
+	pr_err("%s: count of panel1 in node PTR_ERR_sec_panel  is: %d\n",
 	       __func__, PTR_ERR(sec_panel));
 #endif
 out:
@@ -963,11 +955,11 @@ static void create_thermal_message_node(void)
 
 	sysfs_sd = kernel_kobj->sd->parent;
 	if (!sysfs_sd) {
-		printk(KERN_ERR "%s: sysfs_sd is NULL\n", __func__);
+		pr_err("%s: sysfs_sd is NULL\n", __func__);
 	} else {
 		class_sd = kernfs_find_and_get(sysfs_sd, "class");
 		if (!class_sd) {
-			printk(KERN_ERR "%s:can not find class_sd\n", __func__);
+			pr_err("%s:can not find class_sd\n", __func__);
 		} else {
 			thermal_sd = kernfs_find_and_get(class_sd, "thermal");
 			if (thermal_sd) {
@@ -976,12 +968,11 @@ static void create_thermal_message_node(void)
 					cp = to_subsys_private(kobj_tmp);
 					cls = cp->class;
 				} else {
-					printk(KERN_ERR
-					       "%s:can not find thermal kobj\n",
+					pr_err("%s:can not find thermal kobj\n",
 					       __func__);
 				}
 			} else {
-				printk(KERN_ERR "%s:can not find thermal_sd\n",
+				pr_err("%s:can not find thermal_sd\n",
 				       __func__);
 			}
 		}
@@ -1008,7 +999,7 @@ static void create_thermal_message_node(void)
 
 static void destroy_thermal_message_node(void)
 {
-	printk(KERN_ERR "%s:destroy_thermal_message_node", __func__);
+	pr_err("%s:destroy_thermal_message_node", __func__);
 	sysfs_remove_group(&mi_thermal_dev.dev->kobj, &mi_thermal_dev.attrs);
 	if (NULL != mi_thermal_dev.class) {
 		device_destroy(mi_thermal_dev.class, 'H');
@@ -1038,17 +1029,14 @@ static void screen_state_check(struct work_struct *work)
 				PANEL_EVENT_NOTIFIER_CLIENT_THERMAL, prim_panel,
 				screen_state_for_thermal_callback, pvt_data);
 			if (IS_ERR(cookie))
-				printk(KERN_ERR
-				       "%s:Failed to register for prim_panel events\n",
+				pr_err("%s:Failed to register for prim_panel events\n",
 				       __func__);
 			else
-				printk(KERN_ERR
-				       "%s:prim_panel_event_notifier_register register succeed\n",
+				pr_err("%s:prim_panel_event_notifier_register register succeed\n",
 				       __func__);
 		}
 	} else if (retry_count > 0) {
-		printk(KERN_ERR
-		       "%s:prim_panel is NULL Failed to register for panel events\n",
+		pr_err("%s:prim_panel is NULL Failed to register for panel events\n",
 		       __func__);
 		retry_count--;
 		queue_delayed_work(screen_state_wq, &screen_state_dw, 5 * HZ);
@@ -1062,17 +1050,14 @@ static void screen_state_check(struct work_struct *work)
 				sec_panel, screen_state_for_thermal_callback,
 				pvt_data);
 			if (IS_ERR(cookie_sec))
-				printk(KERN_ERR
-				       "%s:Failed to register for sec_panel events\n",
+				pr_err("%s:Failed to register for sec_panel events\n",
 				       __func__);
 			else
-				printk(KERN_ERR
-				       "%s:sec_panel_event_notifier_register register succeed\n",
+				pr_err("%s:sec_panel_event_notifier_register register succeed\n",
 				       __func__);
 		}
 	} else if (retry_count_sec > 0) {
-		printk(KERN_ERR
-		       "%s:sec_panel is NULL Failed to register for panel events\n",
+		pr_err("%s:sec_panel is NULL Failed to register for panel events\n",
 		       __func__);
 		retry_count_sec--;
 		queue_delayed_work(screen_state_wq, &screen_state_dw, 5 * HZ);
@@ -1096,8 +1081,7 @@ static int __init mi_thermal_interface_init(void)
 	cpu_thermal_init();
 	result = of_parse_thermal_message();
 	if (result)
-		printk(KERN_ERR
-		       "%s:Thermal: Can not parse thermal message node, return %d\n",
+		pr_err("%s:Thermal: Can not parse thermal message node, return %d\n",
 		       __func__, result);
 	create_thermal_message_node();
 
@@ -1125,15 +1109,14 @@ static void __exit mi_thermal_interface_exit(void)
 	if (prim_panel && !IS_ERR(cookie)) {
 		panel_event_notifier_unregister(cookie);
 	} else {
-		printk(KERN_ERR
-		       "%s:prim_panel_event_notifier_unregister falt\n",
+		pr_err("%s:prim_panel_event_notifier_unregister falt\n",
 		       __func__);
 	}
 #if IS_ENABLED(CONFIG_HAVE_MULTI_SCREEN)
 	if (sec_panel && !IS_ERR(cookie_sec)) {
 		panel_event_notifier_unregister(cookie_sec);
 	} else {
-		printk(KERN_ERR "%s:sec_panel_event_notifier_unregister falt\n",
+		pr_err("%s:sec_panel_event_notifier_unregister falt\n",
 		       __func__);
 	}
 #endif
