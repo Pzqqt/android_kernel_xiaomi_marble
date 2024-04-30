@@ -62,6 +62,7 @@
 #include <linux/net.h>
 #include <net/sock.h>
 #include <net/af_unix.h>
+#include <net/scm.h>
 #include <linux/anon_inodes.h>
 #include <linux/sched/mm.h>
 #include <linux/uaccess.h>
@@ -439,6 +440,10 @@ struct io_ring_ctx {
 
 	/* Keep this last, we don't need it for the fast path */
 	struct {
+		#if defined(CONFIG_UNIX)
+			/* HACK: KABI preservation, DO NOT USE! */
+			struct socket		*ring_sock;
+		#endif
 		/* hashed buffered write serialization */
 		struct io_wq_hash		*hash_map;
 
