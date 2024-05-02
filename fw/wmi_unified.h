@@ -1308,6 +1308,9 @@ typedef enum {
     /** WMI command to Request Opportunistic Power Mgmt (OPM) stats */
     WMI_REQUEST_OPM_STATS_CMDID,
 
+    /** WMI command to Request SAP suspend/resume */
+    WMI_SET_AP_SUSPEND_RESUME_CMDID,
+
 
     /*  Offload 11k related requests */
     WMI_11K_OFFLOAD_REPORT_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_11K_OFFLOAD),
@@ -37805,6 +37808,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PEER_ACTIVE_TRAFFIC_MAP_CMDID);
         WMI_RETURN_STRING(WMI_REQUEST_OPM_STATS_CMDID);
         WMI_RETURN_STRING(WMI_SOC_TX_PACKET_CUSTOM_CLASSIFY_CMDID);
+        WMI_RETURN_STRING(WMI_SET_AP_SUSPEND_RESUME_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -48510,6 +48514,17 @@ typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_request_opm_stats_cmd_fixed_param */
     A_UINT32 pdev_id; /** pdev_id for identifying the MAC */
 } wmi_request_opm_stats_cmd_fixed_param;
+
+/* wmi command to suspend SAP vdev */
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_set_ap_suspend_resume_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /* VDEV identifier */
+    A_UINT32 vdev_id; /* If 0xFF, find vdevs corresponding to MLD MAC address */
+    wmi_mac_addr mld_mac_address; /* MLD MAC address */
+    A_UINT32 is_ap_suspend; /* 1 = suspend, 0 = resume */
+} wmi_set_ap_suspend_resume_fixed_param;
 
 
 

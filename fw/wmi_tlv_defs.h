@@ -1437,6 +1437,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_ctrl_path_vdev_bcn_tx_stats_struct,
     WMITLV_TAG_STRUC_wmi_ctrl_path_pdev_bcn_tx_stats_struct,
     WMITLV_TAG_STRUC_wmi_soc_tx_packet_custom_classify_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_set_ap_suspend_resume_cmd_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -1986,6 +1987,7 @@ typedef enum {
     OP(WMI_PEER_ACTIVE_TRAFFIC_MAP_CMDID) \
     OP(WMI_REQUEST_OPM_STATS_CMDID) \
     OP(WMI_SOC_TX_PACKET_CUSTOM_CLASSIFY_CMDID) \
+    OP(WMI_SET_AP_SUSPEND_RESUME_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -5612,6 +5614,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_ACTIVE_TRAFFIC_MAP_CMDID);
 #define WMITLV_TABLE_WMI_REQUEST_OPM_STATS_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_request_opm_stats_cmd_fixed_param, wmi_request_opm_stats_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_OPM_STATS_CMDID);
+
+/* SAP suspend/resume command */
+#define WMITLV_TABLE_WMI_SET_AP_SUSPEND_RESUME_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_set_ap_suspend_resume_cmd_fixed_param, wmi_set_ap_suspend_resume_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_SET_AP_SUSPEND_RESUME_CMDID);
 
 
 
