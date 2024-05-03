@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -201,6 +201,7 @@ struct board_info {
  * @obss_detection_offloaded: obss detection offloaded to firmware
  * @obss_color_collision_offloaded: obss color collision offloaded to firmware
  * @sar_version: Version of SAR supported by firmware
+ * @sar_flag: SAR flags supported by firmware
  * @legacy_bcast_twt_support: broadcast twt support
  * @restricted_80p80_bw_supp: Restricted 80+80MHz(165MHz BW) support
  * @twt_bcast_req_support: twt bcast requestor support
@@ -245,6 +246,7 @@ struct wma_tgt_cfg {
 	uint32_t hw_bd_id;
 	struct board_info hw_bd_info;
 	enum sar_version sar_version;
+	enum sar_flag sar_flag;
 	struct nan_tgt_caps nan_caps;
 	bool legacy_bcast_twt_support;
 	bool restricted_80p80_bw_supp;

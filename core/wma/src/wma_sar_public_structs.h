@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,6 +25,22 @@ struct sar_limit_event;
 enum sar_version {
 	SAR_VERSION_1,
 	SAR_VERSION_2
+};
+
+/**
+ * enum sar_flag - This enum describes whether CTL grouping is enabled or
+ *		   disabled in the firmware.
+ *
+ * @SAR_FLAG_NONE: None/Invalid.
+ * @SAR_SET_CTL_GROUPING_DISABLE: CTL grouping is disabled in firmware.
+ * @SAR_DBS_WITH_BT_DISABLE: CTL grouping is enabled in firmware.
+ * @SAR_FLAG_MAX: SAR flag max limit.
+ */
+enum sar_flag {
+	SAR_FLAG_NONE = 0,
+	SAR_SET_CTL_GROUPING_DISABLE,
+	SAR_DBS_WITH_BT_DISABLE,
+	SAR_FLAG_MAX,
 };
 
 /**

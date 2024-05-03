@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -487,6 +487,13 @@ QDF_STATUS wlan_connectivity_log_dequeue(void);
 QDF_STATUS wlan_connectivity_log_enqueue(struct wlan_log_record *new_record);
 
 /**
+ * wlan_connectivity_logging_init() - Init connectivity logging
+ *
+ * Return: None
+ */
+void wlan_connectivity_logging_init(void);
+
+/**
  * wlan_connectivity_mgmt_event()  - Fill and enqueue a new record
  * for management frame information.
  * @mac_hdr: 802.11 management frame header
@@ -515,6 +522,9 @@ wlan_connectivity_mgmt_event(struct wlan_frame_hdr *mac_hdr,
 			     uint8_t auth_seq,
 			     enum wlan_main_tag tag);
 #else
+static inline void wlan_connectivity_logging_init(void)
+{}
+
 static inline
 void wlan_connectivity_logging_start(struct wlan_objmgr_psoc *psoc,
 				     struct wlan_cl_osif_cbks *osif_cbks,
