@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -12342,6 +12342,67 @@ static QDF_STATUS extract_sar_cap_service_ready_ext_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_SAR_LIMITS
+/**
+ * wlan_convert_sar_flag() - Convert FW enum to Host enum
+ * @wmi_sar_flag: sar flag enum
+ *
+ * Return: host equivalent sar flag
+ */
+static enum sar_flag wlan_convert_sar_flag(uint32_t wmi_sar_flag)
+{
+	switch (wmi_sar_flag) {
+	case WMI_SAR_SET_CTL_GROUPING_DISABLE:
+		return SAR_SET_CTL_GROUPING_DISABLE;
+	case WMI_SAR_DBS_WITH_BT_DISABLE:
+		return SAR_DBS_WITH_BT_DISABLE;
+	default:
+		return SAR_FLAG_NONE;
+	}
+}
+#else
+static inline
+uint32_t wlan_convert_sar_flag(uint32_t wmi_sar_flag)
+{
+	return 0;
+}
+#endif
+
+/**
+ * extract_sar_cap_service_ready_ext2_tlv() -
+ *       extract SAR cap - flag from service ready event
+ * @wmi_handle: wmi handle
+ * @event: pointer to event buffer
+ * @ext2_param: extended target info
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_sar_cap_service_ready_ext2_tlv(
+			wmi_unified_t wmi_handle,
+			uint8_t *event,
+			struct wlan_psoc_host_service_ext2_param *ext2_param)
+{
+	WMI_SERVICE_READY_EXT2_EVENTID_param_tlvs *param_buf;
+	wmi_sar_flag_tlv_param *sar_flag_tlv;
+
+	param_buf = (WMI_SERVICE_READY_EXT2_EVENTID_param_tlvs *)event;
+
+	if (!param_buf)
+		return QDF_STATUS_E_INVAL;
+
+	if (!param_buf->num_sar_flags)
+		return QDF_STATUS_E_INVAL;
+
+	sar_flag_tlv = param_buf->sar_flags;
+	if (sar_flag_tlv)
+		ext2_param->sar_flag =
+			wlan_convert_sar_flag(sar_flag_tlv->sar_flags);
+	else
+		ext2_param->sar_flag = 0;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * extract_hw_mode_cap_service_ready_ext_tlv() -
  *       extract HW mode cap from service ready event
@@ -17366,6 +17427,8 @@ struct wmi_ops tlv_ops =  {
 				extract_scan_radio_cap_service_ready_ext2_tlv,
 	.extract_sar_cap_service_ready_ext =
 				extract_sar_cap_service_ready_ext_tlv,
+	.extract_sar_cap_service_ready_ext2 =
+				extract_sar_cap_service_ready_ext2_tlv,
 	.extract_pdev_utf_event = extract_pdev_utf_event_tlv,
 	.wmi_set_htc_tx_tag = wmi_set_htc_tx_tag_tlv,
 	.extract_fips_event_data = extract_fips_event_data_tlv,
