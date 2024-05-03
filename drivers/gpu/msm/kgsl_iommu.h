@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 #ifndef __KGSL_IOMMU_H
 #define __KGSL_IOMMU_H
@@ -185,5 +185,14 @@ struct kgsl_iommu_pt {
 	struct io_pgtable_ops *pgtbl_ops;
 	struct qcom_io_pgtable_info info;
 };
+
+/**
+ * kgsl_set_smmu_aperture - set SMMU Aperture for user context
+ * @device: A GPU device handle
+ *
+ * Return: 0 on success or negative on failure.
+ */
+int kgsl_set_smmu_aperture(struct kgsl_device *device,
+		struct kgsl_iommu_context *context);
 
 #endif

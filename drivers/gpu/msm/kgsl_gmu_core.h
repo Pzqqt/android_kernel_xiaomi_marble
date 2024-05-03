@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 #ifndef __KGSL_GMU_CORE_H
 #define __KGSL_GMU_CORE_H
@@ -236,6 +236,7 @@ struct gmu_dev_ops {
 	int (*bcl_sid_set)(struct kgsl_device *device, u32 sid_id, u64 sid_val);
 	u64 (*bcl_sid_get)(struct kgsl_device *device, u32 sid_id);
 	void (*send_nmi)(struct kgsl_device *device, bool force);
+	void (*force_first_boot)(struct kgsl_device *device);
 };
 
 /**
@@ -331,5 +332,6 @@ struct iommu_domain;
  */
 int gmu_core_map_memdesc(struct iommu_domain *domain, struct kgsl_memdesc *memdesc,
 		u64 gmuaddr, int attrs);
+void gmu_core_dev_force_first_boot(struct kgsl_device *device);
 
 #endif /* __KGSL_GMU_CORE_H */

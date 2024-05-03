@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2010-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 #include <linux/errno.h>
 #include <linux/devfreq.h>
@@ -425,7 +425,7 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq)
 	return 0;
 }
 
-static int tz_start(struct devfreq *devfreq)
+static int __tz_init(struct devfreq *devfreq)
 {
 	struct devfreq_msm_adreno_tz_data *priv;
 	unsigned int tz_pwrlevels[MSM_ADRENO_MAX_PWRLEVELS + 1];
@@ -463,6 +463,17 @@ static int tz_start(struct devfreq *devfreq)
 		pr_err(TAG "tz_init failed\n");
 		return ret;
 	}
+
+	return 0;
+}
+
+static int tz_start(struct devfreq *devfreq)
+{
+	int i, ret;
+
+	ret = __tz_init(devfreq);
+	if (ret)
+		return ret;
 
 	for (i = 0; adreno_tz_attr_list[i] != NULL; i++)
 		device_create_file(&devfreq->dev, adreno_tz_attr_list[i]);
@@ -550,6 +561,11 @@ static struct devfreq_governor msm_adreno_tz = {
 	.event_handler = tz_handler,
 	.immutable = 1,
 };
+
+int msm_adreno_tz_reinit(struct devfreq *devfreq)
+{
+	return __tz_init(devfreq);
+}
 
 int msm_adreno_tz_init(void)
 {
