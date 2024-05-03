@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (C) 2014-2021 The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -3801,7 +3801,8 @@ static void _sde_plane_setup_capabilities_blob(struct sde_plane *psde,
 
 	index = (master_plane_id == 0) ? 0 : 1;
 	if (catalog->has_demura &&
-	    catalog->demura_supported[psde->pipe][index] != ~0x0)
+		psde->pipe < SSPP_MAX &&
+		catalog->demura_supported[psde->pipe][index] != ~0x0)
 		sde_kms_info_add_keyint(info, "demura_block", index);
 
 	if (psde->features & BIT(SDE_SSPP_SEC_UI_ALLOWED))

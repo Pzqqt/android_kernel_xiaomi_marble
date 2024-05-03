@@ -216,6 +216,7 @@ enum sde_prop {
 	DIM_LAYER,
 	SMART_DMA_REV,
 	IDLE_PC,
+	ENABLE_HIBERNATION,
 	DDR_TYPE,
 	WAKEUP_WITH_TOUCH,
 	DEST_SCALER,
@@ -603,6 +604,8 @@ static struct sde_prop_type sde_prop[] = {
 	{DIM_LAYER, "qcom,sde-has-dim-layer", false, PROP_TYPE_BOOL},
 	{SMART_DMA_REV, "qcom,sde-smart-dma-rev", false, PROP_TYPE_STRING},
 	{IDLE_PC, "qcom,sde-has-idle-pc", false, PROP_TYPE_BOOL},
+	{ENABLE_HIBERNATION, "qcom,sde-enable-hibernation", false,
+			PROP_TYPE_BOOL},
 	{DDR_TYPE, "qcom,sde-ddr-type", false, PROP_TYPE_U32_ARRAY},
 	{WAKEUP_WITH_TOUCH, "qcom,sde-wakeup-with-touch", false,
 			PROP_TYPE_BOOL},
@@ -4072,6 +4075,8 @@ static void _sde_top_parse_dt_helper(struct sde_mdss_cfg *cfg,
 	cfg->has_src_split = PROP_VALUE_ACCESS(props->values, SRC_SPLIT, 0);
 	cfg->has_dim_layer = PROP_VALUE_ACCESS(props->values, DIM_LAYER, 0);
 	cfg->has_idle_pc = PROP_VALUE_ACCESS(props->values, IDLE_PC, 0);
+	cfg->enable_hibernation = PROP_VALUE_ACCESS(props->values,
+			ENABLE_HIBERNATION, 0);
 	cfg->wakeup_with_touch = PROP_VALUE_ACCESS(props->values,
 			WAKEUP_WITH_TOUCH, 0);
 	cfg->pipe_order_type = PROP_VALUE_ACCESS(props->values,

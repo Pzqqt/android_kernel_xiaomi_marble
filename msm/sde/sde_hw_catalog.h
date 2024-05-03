@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -1593,6 +1593,7 @@ struct sde_perf_cfg {
  * @ubwc_bw_calc_version indicate how UBWC BW has to be calculated
  * @skip_inline_rot_thresh    Skip inline rotation threshold
  * @has_idle_pc        indicate if idle power collapse feature is supported
+ * @enable_hibernation indicate if hibernation feature is supported
  * @allowed_dsc_reservation_switch  intf to which dsc reservation switch is supported
  * @has_reduced_ob_max	indicate if DSC size is limited to 10k
  * @wakeup_with_touch  indicate early wake up display with input touch event
@@ -1691,6 +1692,7 @@ struct sde_mdss_cfg {
 	u32 ubwc_bw_calc_version;
 	bool skip_inline_rot_threshold;
 	bool has_idle_pc;
+	bool enable_hibernation;
 	u32 allowed_dsc_reservation_switch;
 	bool has_reduced_ob_max;
 	bool wakeup_with_touch;

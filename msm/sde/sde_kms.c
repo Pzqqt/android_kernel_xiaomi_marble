@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2014-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -118,6 +118,7 @@ static int _sde_kms_mmu_destroy(struct sde_kms *sde_kms);
 static int _sde_kms_mmu_init(struct sde_kms *sde_kms);
 static int _sde_kms_register_events(struct msm_kms *kms,
 		struct drm_mode_object *obj, u32 event, bool en);
+static int _sde_kms_get_splash_data(struct sde_splash_data *data);
 bool sde_is_custom_client(void)
 {
 	return sdecustom;
@@ -1244,7 +1245,8 @@ static void _sde_kms_free_splash_display_data(struct sde_kms *sde_kms,
 			!sde_kms->splash_data.num_splash_displays)
 		return;
 
-	if (sde_kms->splash_data.num_splash_regions) {
+	if (sde_kms->splash_data.num_splash_regions &&
+			!sde_kms->catalog->enable_hibernation) {
 		_sde_kms_splash_mem_put(sde_kms, splash_display->splash);
 		if (splash_display->demura)
 			_sde_kms_splash_mem_put(sde_kms,
@@ -2301,7 +2303,8 @@ static void _sde_kms_hw_destroy(struct sde_kms *sde_kms,
 	_sde_kms_unmap_all_splash_regions(sde_kms);
 
 	if (sde_kms->catalog) {
-		for (i = 0; i < sde_kms->catalog->vbif_count; i++) {
+		for (i = 0; i < sde_kms->catalog->vbif_count &&
+			i < MAX_BLOCKS; i++) {
 			u32 vbif_idx = sde_kms->catalog->vbif[i].id;
 
 			if ((vbif_idx < VBIF_MAX) && sde_kms->hw_vbif[vbif_idx])
@@ -4072,7 +4075,7 @@ static int sde_kms_pm_resume(struct device *dev)
 	SDE_EVT32(sde_kms->suspend_state != NULL);
 	/* if a display is in cont splash early exit */
 	drm_for_each_encoder(enc, ddev) {
-		if (sde_encoder_in_cont_splash(enc) && enc->crtc) {
+		if (sde_encoder_in_cont_splash(enc) && enc->crtc && !sde_kms->freeze_late) {
 			SDE_DEBUG("skip PM resume entry splash is enabled on enc:%d\n", DRMID(enc));
 			SDE_EVT32(DRMID(enc), SDE_EVTLOG_FUNC_EXIT);
 			return -EINVAL;
@@ -4122,6 +4125,87 @@ end:
 	return 0;
 }
 
+static int _sde_kms_pm_hibernate_helper(struct sde_kms *sde_kms)
+{
+	struct drm_device *dev;
+	struct msm_drm_private *priv;
+	struct sde_splash_display *handoff_display;
+	struct dsi_display *display;
+	int ret, i;
+
+	dev = sde_kms->dev;
+	priv = dev->dev_private;
+
+	ret = _sde_kms_get_splash_data(&sde_kms->splash_data);
+	if (ret)
+		SDE_DEBUG("sde splash data fetch failed: %d\n", ret);
+
+	ret = sde_rm_cont_splash_res_init(priv, &sde_kms->rm,
+		&sde_kms->splash_data, sde_kms->catalog);
+	if (ret) {
+		SDE_ERROR("invalid cont splash init, ret:%d\n", ret);
+		return ret;
+	}
+
+	for (i = 0; i < sde_kms->dsi_display_count; i++) {
+		handoff_display = &sde_kms->splash_data.splash_display[i];
+		display = (struct dsi_display *)sde_kms->dsi_displays[i];
+		if (handoff_display->cont_splash_enabled && !ret)
+			dsi_display_cont_splash_config(display);
+		_sde_kms_free_splash_display_data(sde_kms,
+			handoff_display);
+	}
+
+	return ret;
+}
+
+static int sde_kms_pm_restore(struct device *dev)
+{
+	struct drm_device *ddev;
+	struct sde_kms *sde_kms;
+	struct msm_drm_private *priv;
+	int i, ret = 0;
+
+	if (!dev)
+		return -EINVAL;
+
+	ddev = dev_get_drvdata(dev);
+	if (!ddev || !ddev_to_msm_kms(ddev))
+		return -EINVAL;
+
+	sde_kms = to_sde_kms(ddev_to_msm_kms(ddev));
+
+	if (!sde_kms->freeze_late) {
+		/*call pm_resume sequence when hibernation entry is aborted*/
+		sde_kms_pm_resume(dev);
+		return 0;
+	}
+
+	/*Handle splash handoff in hibernation exit */
+	ret = _sde_kms_pm_hibernate_helper(sde_kms);
+
+	priv = sde_kms->dev->dev_private;
+
+	/* add bus vote to splash handoff */
+	for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++)
+		sde_power_data_bus_set_quota(&priv->phandle, i,
+			SDE_POWER_HANDLE_CONT_SPLASH_BUS_AB_QUOTA,
+			SDE_POWER_HANDLE_CONT_SPLASH_BUS_IB_QUOTA);
+
+	/*Call pm_resume sequence as part of restore*/
+	sde_kms_pm_resume(dev);
+
+	/* remove the votes if all displays are done with splash */
+	for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++)
+		sde_power_data_bus_set_quota(&priv->phandle, i,
+			SDE_POWER_HANDLE_ENABLE_BUS_AB_QUOTA,
+			SDE_POWER_HANDLE_ENABLE_BUS_IB_QUOTA);
+
+	sde_kms->freeze_late = false;
+
+	return ret;
+}
+
 static const struct msm_kms_funcs kms_funcs = {
 	.hw_init         = sde_kms_hw_init,
 	.postinit        = sde_kms_postinit,
@@ -4145,6 +4229,7 @@ static const struct msm_kms_funcs kms_funcs = {
 	.display_early_wakeup = sde_kms_display_early_wakeup,
 	.pm_suspend      = sde_kms_pm_suspend,
 	.pm_resume       = sde_kms_pm_resume,
+	.pm_restore      = sde_kms_pm_restore,
 	.destroy         = sde_kms_destroy,
 	.debugfs_destroy = sde_kms_debugfs_destroy,
 	.cont_splash_config = sde_kms_cont_splash_config,
