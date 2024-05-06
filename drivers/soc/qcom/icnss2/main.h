@@ -511,6 +511,7 @@ struct icnss_priv {
 	struct timer_list recovery_timer;
 	struct timer_list wpss_ssr_timer;
 	bool wpss_self_recovery_enabled;
+	const char *wcn_hw_version;
 };
 
 struct icnss_reg_info {
