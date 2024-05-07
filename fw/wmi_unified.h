@@ -9632,6 +9632,11 @@ typedef enum {
      */
     WMI_PDEV_PARAM_SCAN_MODE,
 
+    /** configure datastall consecutive no ack interval (units = ms) */
+    WMI_PDEV_PARAM_DSTALL_CONSECUTIVE_TX_NO_ACK_INTERVAL,
+    /** configure datastall consecutive no ack threshold */
+    WMI_PDEV_PARAM_DSTALL_CONSECUTIVE_TX_NO_ACK_THRESHOLD,
+
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
