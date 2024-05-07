@@ -156,6 +156,7 @@ struct msm_watchdog_data {
 	unsigned int tot_irq_count[NR_CPUS];
 	atomic_t irq_counts_running;
 	struct timer_list user_pet_timer;
+	bool hibernate;
 };
 
 extern void qcom_wdt_trigger_bite(void);
