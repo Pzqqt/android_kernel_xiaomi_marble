@@ -404,8 +404,9 @@ static void msm_geni_enable_disable_se_clk(struct uart_port *uport, bool enable)
 {
 	struct msm_geni_serial_port *msm_port = GET_DEV_PORT(uport);
 
-	IPC_LOG_MSG(msm_port->ipc_log_misc, "%s: enable:%d ser_clk_cfg:0x%x\n",
-			__func__, enable, msm_port->ser_clk_cfg);
+	UART_LOG_DBG(msm_port->ipc_log_misc, msm_port->uport.dev,
+		     "%s: enable:%d ser_clk_cfg:0x%x\n",
+		     __func__, enable, msm_port->ser_clk_cfg);
 
 	if (enable) {
 		geni_write_reg_nolog(msm_port->ser_clk_cfg, uport->membase, GENI_SER_M_CLK_CFG);
@@ -2869,9 +2870,9 @@ static void msm_geni_serial_shutdown(struct uart_port *uport)
 				msm_port->serial_rsc.geni_pinctrl,
 				msm_port->serial_rsc.geni_gpio_shutdown);
 			if (ret)
-				IPC_LOG_MSG(msm_port->ipc_log_misc,
-				      "%s: Error %d pinctrl_select_state\n",
-					__func__, ret);
+				UART_LOG_DBG(msm_port->ipc_log_misc, msm_port->uport.dev,
+					     "%s: Error %d pinctrl_select_state\n",
+					     __func__, ret);
 		}
 
 		/* Reset UART error to default during port_close() */
@@ -3196,7 +3197,8 @@ static void msm_geni_serial_set_termios(struct uart_port *uport,
 	ret = clk_set_rate(port->serial_rsc.se_clk, clk_rate);
 	if (ret) {
 		dev_err(uport->dev, "Error setting clock rate\n");
-		IPC_LOG_MSG(port->ipc_log_misc, "%s: SE clock set_rate error:%d\n", __func__, ret);
+		UART_LOG_DBG(port->ipc_log_misc, port->uport.dev,
+			     "%s: SE clock set_rate error:%d\n", __func__, ret);
 		WARN_ON(1);
 	}
 	ser_clk_cfg |= SER_CLK_EN;
