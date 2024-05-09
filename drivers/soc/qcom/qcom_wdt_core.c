@@ -30,6 +30,8 @@
 #include <linux/irq_cpustat.h>
 #include <linux/kallsyms.h>
 #include <linux/kdebug.h>
+#include <linux/suspend.h>
+#include <linux/notifier.h>
 
 #define MASK_SIZE        32
 #define COMPARE_RET      -1
@@ -258,6 +260,20 @@ static void queue_irq_counts_work(struct work_struct *irq_counts_work) { }
 static void compute_irq_stat(struct work_struct *work) { }
 #endif
 
+static int qcom_wdt_hibernation_notifier(struct notifier_block *nb,
+				unsigned long event, void *dummy)
+{
+	if (event == PM_HIBERNATION_PREPARE)
+		wdog_data->hibernate = true;
+	else if (event == PM_POST_HIBERNATION)
+		wdog_data->hibernate = false;
+	return NOTIFY_OK;
+}
+
+static struct notifier_block qcom_wdt_notif_block = {
+	.notifier_call = qcom_wdt_hibernation_notifier,
+};
+
 #ifdef CONFIG_PM_SLEEP
 /**
  *  qcom_wdt_pet_suspend() - Suspends qcom watchdog functionality.
@@ -286,6 +302,10 @@ int qcom_wdt_pet_suspend(struct device *dev)
 	wdog_data->ops->reset_wdt(wdog_data);
 	del_timer_sync(&wdog_data->pet_timer);
 	if (wdog_data->wakeup_irq_enable) {
+		if (wdog_data->hibernate) {
+			wdog_data->ops->disable_wdt(wdog_data);
+			wdog_data->enabled = false;
+		}
 		wdog_data->last_pet = sched_clock();
 		return 0;
 	}
@@ -308,6 +328,7 @@ EXPORT_SYMBOL(qcom_wdt_pet_suspend);
  */
 int qcom_wdt_pet_resume(struct device *dev)
 {
+	uint32_t val;
 	struct msm_watchdog_data *wdog_data =
 			(struct msm_watchdog_data *)dev_get_drvdata(dev);
 	unsigned long delay_time = 0;
@@ -315,6 +336,7 @@ int qcom_wdt_pet_resume(struct device *dev)
 	if (!wdog_data)
 		return 0;
 
+	val = BIT(EN);
 	if (wdog_data->user_pet_enabled) {
 		delay_time = msecs_to_jiffies(wdog_data->bark_time + 3 * 1000);
 		wdog_data->user_pet_timer.expires = jiffies + delay_time;
@@ -328,12 +350,17 @@ int qcom_wdt_pet_resume(struct device *dev)
 	wdog_data->freeze_in_progress = false;
 	spin_unlock(&wdog_data->freeze_lock);
 	if (wdog_data->wakeup_irq_enable) {
+		if (wdog_data->hibernate) {
+			val |= BIT(UNMASKED_INT_EN);
+			wdog_data->ops->enable_wdt(val, wdog_data);
+			wdog_data->enabled = true;
+		}
 		wdog_data->ops->reset_wdt(wdog_data);
 		wdog_data->last_pet = sched_clock();
 		return 0;
 	}
 
-	wdog_data->ops->enable_wdt(1, wdog_data);
+	wdog_data->ops->enable_wdt(val, wdog_data);
 	wdog_data->ops->reset_wdt(wdog_data);
 	wdog_data->enabled = true;
 	wdog_data->last_pet = sched_clock();
@@ -862,6 +889,12 @@ static int qcom_wdt_init(struct msm_watchdog_data *wdog_dd,
 			return -EINVAL;
 		}
 	}
+
+	wdog_data->hibernate = false;
+	ret = register_pm_notifier(&qcom_wdt_notif_block);
+	if (ret)
+		return ret;
+
 	INIT_WORK(&wdog_dd->irq_counts_work, compute_irq_stat);
 	atomic_set(&wdog_dd->irq_counts_running, 0);
 	delay_time = msecs_to_jiffies(wdog_dd->pet_time);

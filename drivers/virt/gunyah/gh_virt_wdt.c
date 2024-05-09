@@ -266,6 +266,8 @@ static const struct dev_pm_ops gh_wdt_dev_pm_ops = {
 	.suspend_late = qcom_wdt_pet_suspend,
 	.resume_early = qcom_wdt_pet_resume,
 #endif
+	.freeze_late = qcom_wdt_pet_suspend,
+	.restore_early = qcom_wdt_pet_resume,
 };
 
 static const struct of_device_id gh_wdt_match_table[] = {
