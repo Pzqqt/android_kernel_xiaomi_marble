@@ -386,14 +386,17 @@ static ssize_t thermal_board_sensor_temp_show(struct device *dev,
 					      struct device_attribute *attr,
 					      char *buf)
 {
-	return snprintf(buf, PAGE_SIZE, board_sensor_temp);
+	return snprintf(buf, PAGE_SIZE, "%s\n", board_sensor_temp);
 }
 
 static ssize_t thermal_board_sensor_temp_store(struct device *dev,
 					       struct device_attribute *attr,
 					       const char *buf, size_t len)
 {
-	snprintf(board_sensor_temp, BOARD__BUFFER_SIZE, buf);
+	int ret = sscanf(buf, "%s", board_sensor_temp);
+
+	if (ret != 1)
+		return -EINVAL;
 
 	return len;
 }
