@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -302,16 +302,16 @@ bool csr_is_conn_state_wds(struct mac_context *mac, uint32_t sessionId)
 	       csr_is_conn_state_disconnected_wds(mac, sessionId);
 }
 
-enum csr_cfgdot11mode
+enum mlme_dot11_mode
 csr_get_vdev_dot11_mode(struct mac_context *mac,
 			enum QDF_OPMODE device_mode,
-			enum csr_cfgdot11mode curr_dot11_mode)
+			enum mlme_dot11_mode curr_dot11_mode)
 {
 	enum mlme_vdev_dot11_mode vdev_dot11_mode;
 	uint8_t dot11_mode_indx;
-	enum csr_cfgdot11mode dot11_mode = curr_dot11_mode;
 	uint32_t vdev_type_dot11_mode =
 				mac->mlme_cfg->dot11_mode.vdev_type_dot11_mode;
+	enum mlme_dot11_mode dot11_mode = curr_dot11_mode;
 
 	sme_debug("curr_dot11_mode %d, vdev_dot11 %08X, dev_mode %d",
 		  curr_dot11_mode, vdev_type_dot11_mode, device_mode);
@@ -344,21 +344,21 @@ csr_get_vdev_dot11_mode(struct mac_context *mac,
 	if (vdev_dot11_mode == MLME_VDEV_DOT11_MODE_AUTO)
 		dot11_mode = curr_dot11_mode;
 
-	if (CSR_IS_DOT11_MODE_11N(curr_dot11_mode) &&
+	if (IS_DOT11_MODE_HT(curr_dot11_mode) &&
 	    vdev_dot11_mode == MLME_VDEV_DOT11_MODE_11N)
-		dot11_mode = eCSR_CFG_DOT11_MODE_11N;
+		dot11_mode = MLME_DOT11_MODE_11N;
 
-	if (CSR_IS_DOT11_MODE_11AC(curr_dot11_mode) &&
+	if (IS_DOT11_MODE_VHT(curr_dot11_mode) &&
 	    vdev_dot11_mode == MLME_VDEV_DOT11_MODE_11AC)
-		dot11_mode = eCSR_CFG_DOT11_MODE_11AC;
+		dot11_mode = MLME_DOT11_MODE_11AC;
 
-	if (CSR_IS_DOT11_MODE_11AX(curr_dot11_mode) &&
+	if (IS_DOT11_MODE_HE(curr_dot11_mode) &&
 	    vdev_dot11_mode == MLME_VDEV_DOT11_MODE_11AX)
-		dot11_mode = eCSR_CFG_DOT11_MODE_11AX;
+		dot11_mode = MLME_DOT11_MODE_11AX;
 #ifdef WLAN_FEATURE_11BE
-	if (CSR_IS_DOT11_MODE_11BE(curr_dot11_mode) &&
+	if (IS_DOT11_MODE_EHT(curr_dot11_mode) &&
 	    vdev_dot11_mode == MLME_VDEV_DOT11_MODE_11BE)
-		dot11_mode = eCSR_CFG_DOT11_MODE_11BE;
+		dot11_mode = MLME_DOT11_MODE_11BE;
 #endif
 	sme_debug("INI vdev_dot11_mode %d new dot11_mode %d",
 		  vdev_dot11_mode, dot11_mode);

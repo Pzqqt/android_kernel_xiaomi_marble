@@ -16832,6 +16832,11 @@ static int __wlan_hdd_cfg80211_get_usable_channel(struct wiphy *wiphy,
 	if (0 != ret)
 		return ret;
 
+	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
+		hdd_err("Driver Modules are closed");
+		return -EINVAL;
+	}
+
 	res_msg = qdf_mem_malloc(NUM_CHANNELS *
 				 sizeof(*res_msg));
 

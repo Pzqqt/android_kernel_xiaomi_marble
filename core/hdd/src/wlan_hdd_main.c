@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2329,6 +2329,7 @@ static void hdd_sar_target_config(struct hdd_context *hdd_ctx,
 				  struct wma_tgt_cfg *cfg)
 {
 	hdd_ctx->sar_version = cfg->sar_version;
+	hdd_ctx->sar_flag    = cfg->sar_flag;
 }
 
 static void hdd_update_vhtcap_2g(struct hdd_context *hdd_ctx)
@@ -4836,6 +4837,7 @@ cds_txrx_free:
 	cds_dp_close(hdd_ctx->psoc);
 
 close:
+	dispatcher_disable();
 	hdd_ctx->driver_status = DRIVER_MODULES_CLOSED;
 	hdd_info("Wlan transition aborted (now CLOSED)");
 
@@ -9090,13 +9092,23 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 		case QDF_P2P_DEVICE_MODE:
 		case QDF_NAN_DISC_MODE:
 
-			hdd_start_station_adapter(adapter);
-
+			ret = hdd_start_station_adapter(adapter);
+			if (ret) {
+				hdd_err("[SSR] Failed to start station adapter: %d",
+					ret);
+				hdd_adapter_dev_put_debug(adapter, dbgid);
+				continue;
+			}
 			if (adapter->device_mode == QDF_STA_MODE) {
 				ret = hdd_start_link_adapter(adapter);
-				if (ret)
-					hdd_err("[SSR] Failed to start link adapter:%d",
+				if (ret) {
+					hdd_err("[SSR] Failed to start link adapter: %d",
 						ret);
+					hdd_stop_adapter(hdd_ctx, adapter);
+					hdd_adapter_dev_put_debug(adapter,
+								  dbgid);
+					continue;
+				}
 			}
 
 			/* Open the gates for HDD to receive Wext commands */
@@ -17622,6 +17634,7 @@ int hdd_init(void)
 	wlan_init_bug_report_lock();
 
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
+	wlan_connectivity_logging_init();
 	wlan_logging_sock_init_svc();
 #endif
 

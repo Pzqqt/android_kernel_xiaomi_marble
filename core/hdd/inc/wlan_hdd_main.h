@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1997,6 +1997,7 @@ struct hdd_rtpm_tput_policy_context {
  * @bus_bw_work: work for periodically computing DDR bus bandwidth requirements
  * @g_event_flags: a bitmap of hdd_driver_flags
  * @psoc_idle_timeout_work: delayed work for psoc idle shutdown
+ * @sar_flag: SAR flags supported by firmware
  * @dynamic_nss_chains_support: Per vdev dynamic nss chains update capability
  * @sar_cmd_params: SAR command params to be configured to the FW
  * @country_change_work: work for updating vdev when country changes
@@ -2314,6 +2315,7 @@ struct hdd_context {
 	qdf_mutex_t cache_channel_lock;
 #endif
 	enum sar_version sar_version;
+	enum sar_flag sar_flag;
 	struct hdd_dynamic_mac dynamic_mac_list[QDF_MAX_CONCURRENCY_PERSONA];
 	bool dynamic_nss_chains_support;
 	struct qdf_mac_addr hw_macaddr;

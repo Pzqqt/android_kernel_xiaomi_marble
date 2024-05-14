@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -976,35 +976,16 @@ static QDF_STATUS nan_handle_schedule_update(
 }
 
 /**
- * nan_handle_host_update() - Updates Host about NAN Datapath status
+ * nan_handle_host_update() - extract the vdev from host event
  * @evt: Event data received from firmware
  * @vdev: pointer to vdev
  *
- * Return: status of operation
+ * Return: none
  */
-static QDF_STATUS nan_handle_host_update(struct nan_datapath_host_event *evt,
+static void nan_handle_host_update(struct nan_datapath_host_event *evt,
 					 struct wlan_objmgr_vdev **vdev)
 {
-	struct wlan_objmgr_psoc *psoc;
-	struct nan_psoc_priv_obj *psoc_nan_obj;
-
 	*vdev = evt->vdev;
-	psoc = wlan_vdev_get_psoc(evt->vdev);
-	if (!psoc) {
-		nan_err("psoc is NULL");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
-	if (!psoc_nan_obj) {
-		nan_err("psoc_nan_obj is NULL");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	psoc_nan_obj->cb_obj.os_if_ndp_event_handler(psoc, evt->vdev,
-						     NDP_HOST_UPDATE, evt);
-
-	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS nan_discovery_event_handler(struct scheduler_msg *msg)
