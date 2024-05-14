@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -438,6 +438,7 @@ struct wlan_psoc_host_service_ext_param {
  * @max_users_ul_mumimo: Max number of users per-PPDU for Uplink MU-MIMO
  * @twt_ack_support_cap: TWT ack capability support
  * @target_cap_flags: Rx peer metadata version number used by target
+ * @sar_flag: SAR flag info
  */
 struct wlan_psoc_host_service_ext2_param {
 	uint8_t reg_db_version_major;
@@ -455,6 +456,7 @@ struct wlan_psoc_host_service_ext2_param {
 	uint16_t max_users_ul_mumimo;
 	uint32_t twt_ack_support_cap:1;
 	uint32_t target_cap_flags;
+	uint32_t sar_flag;
 };
 
 #endif /* _SERVICE_READY_PARAM_H_*/

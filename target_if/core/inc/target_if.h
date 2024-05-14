@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1379,6 +1379,24 @@ static inline struct wlan_psoc_host_service_ext_param
 		return NULL;
 
 	return &psoc_info->info.service_ext_param;
+}
+
+/**
+ * target_psoc_get_service_ext2_param() - get service_ext2_param
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get service_ext2_param
+ *
+ * Return: Structure pointer to wlan_psoc_host_service_ext2_param
+ */
+static inline struct wlan_psoc_host_service_ext2_param
+		*target_psoc_get_service_ext2_param
+		(struct target_psoc_info *psoc_info)
+{
+	if (!psoc_info)
+		return NULL;
+
+	return &psoc_info->info.service_ext2_param;
 }
 
 /**
