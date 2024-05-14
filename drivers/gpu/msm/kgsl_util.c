@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 
@@ -166,6 +166,17 @@ out:
 
 	release_firmware(fw);
 	kfree(fwname);
+	return ret;
+}
+
+int kgsl_zap_shader_unload(struct device *dev)
+{
+	int ret;
+
+	ret = qcom_scm_pas_shutdown_retry(GPU_PASID);
+	if (ret)
+		dev_err(dev, "Error %d while PAS shutdown\n", ret);
+
 	return ret;
 }
 

@@ -243,6 +243,8 @@ struct kgsl_memdesc_ops {
 #define KGSL_MEMDESC_SKIP_RECLAIM BIT(12)
 /* The memdesc is mapped as iomem */
 #define KGSL_MEMDESC_IOMEM BIT(13)
+/* The memdesc is hypassigned to HLOS*/
+#define KGSL_MEMDESC_HYPASSIGNED_HLOS BIT(14)
 
 /**
  * struct kgsl_memdesc - GPU memory object descriptor

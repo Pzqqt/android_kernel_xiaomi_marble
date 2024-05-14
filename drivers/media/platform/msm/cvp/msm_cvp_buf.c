@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include "msm_cvp_common.h"
@@ -639,9 +640,10 @@ int msm_cvp_mark_user_persist(struct msm_cvp_inst *inst,
 		list_for_each_entry_safe(pbuf, dummy, &inst->persistbufs.list,
 				list) {
 			if (pbuf->ownership == CLIENT) {
-				if (pbuf->fd == buf->fd &&
-					pbuf->size == buf->size)
+				if (pbuf->fd == buf->fd && pbuf->size == buf->size) {
 					buf->fd = pbuf->smem->device_addr;
+					pbuf->ktid = ktid;
+				}
 				rc = 1;
 				break;
 			}

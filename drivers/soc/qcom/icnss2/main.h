@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2017-2020, 2021, The Linux Foundation.
  * All rights reserved.
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef __MAIN_H__
@@ -471,6 +471,7 @@ struct icnss_priv {
 	struct kobject *icnss_kobject;
 	struct rproc *rproc;
 	atomic_t is_shutdown;
+	atomic_t is_idle_shutdown;
 	u32 qdss_mem_seg_len;
 	struct icnss_fw_mem qdss_mem[QMI_WLFW_MAX_NUM_MEM_SEG_V01];
 	void *get_info_cb_ctx;
@@ -510,6 +511,7 @@ struct icnss_priv {
 	struct timer_list recovery_timer;
 	struct timer_list wpss_ssr_timer;
 	bool wpss_self_recovery_enabled;
+	const char *wcn_hw_version;
 };
 
 struct icnss_reg_info {
