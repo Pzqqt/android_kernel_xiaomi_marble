@@ -6141,6 +6141,7 @@ typedef enum {
 #define WMI_SCAN_FLAG_EXT_FAST_SCAN           0x00020000
 #define WMI_SCAN_FLAG_EXT_LOW_POWER_SCAN      0x00040000
 #define WMI_SCAN_FLAG_EXT_STOP_IF_BSSID_FOUND 0x00080000
+#define WMI_SCAN_FLAG_EXT_P2P_SCAN            0x00100000
 
 
 /**
@@ -6346,6 +6347,11 @@ enum wmi_scan_completion_reason {
     WMI_SCAN_REASON_MAX,
 };
 
+#define WMI_SCAN_EVT_IS_SCAN_TYPE_P2P_FLAG_SET(flag, value) \
+    WMI_SET_BITS(flag, 0, 1, value)
+#define WMI_SCAN_EVT_IS_SCAN_TYPE_P2P_FLAG_GET(flag) \
+    WMI_GET_BITS(flag, 0, 1)
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_scan_event_fixed_param */
     /** scan event (wmi_scan_event_type) */
@@ -6366,6 +6372,11 @@ typedef struct {
      * In case of STA not connected it will be the free running HW timer
      */
     A_UINT32 tsf_timestamp;
+    /** flags:
+     * Bit[0]    - indicate if scan type is for p2p
+     * Bit[1:31] - reserved
+     */
+    A_UINT32 flags;
 } wmi_scan_event_fixed_param;
 
 /* WMI Diag event */
