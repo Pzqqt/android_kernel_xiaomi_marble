@@ -534,6 +534,7 @@ struct dwc3_msm {
 	bool			use_pwr_event_for_wakeup;
 	bool			host_poweroff_in_pm_suspend;
 	bool			disable_host_ssphy_powerdown;
+	bool			hibernate_skip_thaw;
 	unsigned long		lpm_flags;
 	unsigned int		vbus_draw;
 #define MDWC3_SS_PHY_SUSPEND		BIT(0)
@@ -5185,6 +5186,8 @@ static int dwc3_msm_core_init(struct dwc3_msm *mdwc)
 		goto depopulate;
 
 	dwc3_msm_override_pm_ops(dwc->dev, mdwc->dwc3_pm_ops, false);
+	if (mdwc->hibernate_skip_thaw)
+		dev_pm_syscore_device(dwc->dev, true);
 
 	mdwc->xhci_pm_ops = kzalloc(sizeof(struct dev_pm_ops), GFP_ATOMIC);
 	if (!mdwc->xhci_pm_ops)
@@ -5578,6 +5581,9 @@ static int dwc3_msm_probe(struct platform_device *pdev)
 
 	mdwc->disable_host_ssphy_powerdown = of_property_read_bool(node,
 				"qcom,disable-host-ssphy-powerdown");
+
+	mdwc->hibernate_skip_thaw = of_property_read_bool(node,
+				"qcom,hibernate-skip-thaw");
 
 	mdwc->use_eusb2_phy = of_property_read_bool(node, "qcom,use-eusb2-phy");
 
