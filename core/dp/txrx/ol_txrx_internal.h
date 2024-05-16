@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -93,6 +93,8 @@
 	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_TXRX, params)
 #define txrx_nofl_dbg(params...) \
 	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_TXRX, params)
+#define txrx_nofl_info_high(params...) \
+	__QDF_TRACE_NO_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_TXRX, ## params)
 
 #define ol_txrx_err_rl(params...) \
 	QDF_TRACE_ERROR_RL(QDF_MODULE_ID_TXRX, params)

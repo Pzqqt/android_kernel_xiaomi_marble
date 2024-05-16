@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4577,33 +4577,35 @@ void ol_txrx_stats_display(ol_txrx_pdev_handle pdev,
 		  + pdev->stats.pub.tx.dropped.others.pkts;
 
 	if (level == QDF_STATS_VERBOSITY_LEVEL_LOW) {
-		txrx_nofl_dbg("STATS |%u %u|TX: %lld tso %lld ok %lld drops(%u-%lld %u-%lld %u-%lld %u-%lld ?-%lld hR-%lld)|RX: %lld drops(E %lld PI %lld ME %lld) fwd(S %d F %d SF %d)|",
-			      pdev->tx_desc.num_free,
-			      pdev->tx_desc.pool_size,
-			      pdev->stats.pub.tx.from_stack.pkts,
-			      pdev->stats.pub.tx.tso.tso_pkts.pkts,
-			      pdev->stats.pub.tx.delivered.pkts,
-			      htt_tx_status_download_fail,
-			      pdev->stats.pub.tx.dropped.download_fail.pkts,
-			      htt_tx_status_discard,
-			      pdev->stats.pub.tx.dropped.
-					target_discard.pkts,
-			      htt_tx_status_no_ack,
-			      pdev->stats.pub.tx.dropped.no_ack.pkts,
-			      htt_tx_status_drop,
-			      pdev->stats.pub.tx.dropped.target_drop.pkts,
-			      pdev->stats.pub.tx.dropped.others.pkts,
-			      pdev->stats.pub.tx.dropped.host_reject.pkts,
-			      pdev->stats.pub.rx.delivered.pkts,
-			      pdev->stats.pub.rx.dropped_err.pkts,
-			      pdev->stats.pub.rx.dropped_peer_invalid.pkts,
-			      pdev->stats.pub.rx.dropped_mic_err.pkts,
-			      pdev->stats.pub.rx.intra_bss_fwd.
-					packets_stack,
-			      pdev->stats.pub.rx.intra_bss_fwd.
-					packets_fwd,
-			      pdev->stats.pub.rx.intra_bss_fwd.
-					packets_stack_n_fwd);
+		txrx_nofl_info_high("STATS |%u %u|TX: %lld tso %lld ok %lld drops(%u-%lld %u-%lld %u-%lld %u-%lld ?-%lld hR-%lld)|RX: %lld drops(E %lld PI %lld ME %lld) fwd(S %d F %d SF %d)|",
+				    pdev->tx_desc.num_free,
+				    pdev->tx_desc.pool_size,
+				    pdev->stats.pub.tx.from_stack.pkts,
+				    pdev->stats.pub.tx.tso.tso_pkts.pkts,
+				    pdev->stats.pub.tx.delivered.pkts,
+				    htt_tx_status_download_fail,
+				    pdev->stats.pub.tx.dropped.
+				    download_fail.pkts,
+				    htt_tx_status_discard,
+				    pdev->stats.pub.tx.dropped.
+				    target_discard.pkts,
+				    htt_tx_status_no_ack,
+				    pdev->stats.pub.tx.dropped.no_ack.pkts,
+				    htt_tx_status_drop,
+				    pdev->stats.pub.tx.dropped.target_drop.pkts,
+				    pdev->stats.pub.tx.dropped.others.pkts,
+				    pdev->stats.pub.tx.dropped.host_reject.pkts,
+				    pdev->stats.pub.rx.delivered.pkts,
+				    pdev->stats.pub.rx.dropped_err.pkts,
+				    pdev->stats.pub.rx.
+					    dropped_peer_invalid.pkts,
+				    pdev->stats.pub.rx.dropped_mic_err.pkts,
+				    pdev->stats.pub.rx.intra_bss_fwd.
+					    packets_stack,
+				    pdev->stats.pub.rx.intra_bss_fwd.
+					    packets_fwd,
+				    pdev->stats.pub.rx.intra_bss_fwd.
+					    packets_stack_n_fwd);
 		return;
 	}
 

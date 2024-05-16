@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1968,6 +1968,33 @@ static void os_if_new_peer_ind_handler(struct wlan_objmgr_vdev *vdev,
 }
 
 /**
+ * os_if_ndp_end_all_handler: Handler for NDP_END_ALL request cmd
+ * @vdev: pointer to vdev object
+ *
+ * Return: None
+ */
+static void os_if_ndp_end_all_handler(struct wlan_objmgr_vdev *vdev)
+{
+	struct nan_vdev_priv_obj *vdev_nan_obj;
+	struct osif_request *request;
+
+	vdev_nan_obj = nan_get_vdev_priv_obj(vdev);
+	if (!vdev_nan_obj) {
+		osif_err("vdev_nan_obj is NULL");
+		return;
+	}
+
+	request = osif_request_get(vdev_nan_obj->disable_context);
+	if (!request) {
+		osif_debug("Obsolete request");
+		return;
+	}
+
+	osif_request_complete(request);
+	osif_request_put(request);
+}
+
+/**
  * os_if_peer_departed_ind_handler() - Handle NDP peer departed indication
  * @adapter: pointer to adapter context
  * @ind_params: indication parameters
@@ -2000,6 +2027,10 @@ static void os_if_peer_departed_ind_handler(struct wlan_objmgr_vdev *vdev,
 	cb_obj.peer_departed_ind(vdev_id, peer_ind->sta_id,
 				&peer_ind->peer_mac_addr,
 				(active_peers == 0 ? true : false));
+
+	/* if no peer left, stop wait timer for NDP_END_ALL` */
+	if (!active_peers)
+		os_if_ndp_end_all_handler(vdev);
 }
 
 static inline uint32_t osif_ndp_get_ndi_create_rsp_len(void)
@@ -2334,39 +2365,6 @@ ndp_sch_ind_nla_failed:
 	kfree_skb(vendor_event);
 }
 
-/**
- * os_if_ndp_host_update_handler() - NDP Host update handler
- * @vdev: vdev object pointer
- * @evt: pointer to host update event
- *
- * Return: none
- */
-static void os_if_ndp_host_update_handler(struct wlan_objmgr_vdev *vdev,
-					  void *evt)
-{
-	struct nan_vdev_priv_obj *vdev_nan_obj;
-	struct nan_datapath_host_event *event;
-	struct osif_request *request;
-
-	vdev_nan_obj = nan_get_vdev_priv_obj(vdev);
-	if (!vdev_nan_obj) {
-		osif_err("vdev_nan_obj is NULL");
-		return;
-	}
-
-	request = osif_request_get(vdev_nan_obj->disable_context);
-	if (!request) {
-		osif_debug("Obsolete request");
-		return;
-	}
-
-	event = osif_request_priv(request);
-	qdf_mem_copy(event, evt, sizeof(*event));
-
-	osif_request_complete(request);
-	osif_request_put(request);
-}
-
 static void os_if_nan_datapath_event_handler(struct wlan_objmgr_psoc *psoc,
 					     struct wlan_objmgr_vdev *vdev,
 					     uint32_t type, void *msg)
@@ -2404,9 +2402,6 @@ static void os_if_nan_datapath_event_handler(struct wlan_objmgr_psoc *psoc,
 		break;
 	case NDP_SCHEDULE_UPDATE:
 		os_if_ndp_sch_update_ind_handler(vdev, msg);
-		break;
-	case NDP_HOST_UPDATE:
-		os_if_ndp_host_update_handler(vdev, msg);
 		break;
 	default:
 		break;
