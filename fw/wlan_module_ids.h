@@ -155,6 +155,7 @@ typedef enum {
   WLAN_MODULE_BRIDGE_PEER,              /* 0x72 */
   WLAN_MODULE_AUX_MAC_MGR,              /* 0x73 */
   WLAN_MODULE_TCAM,                     /* 0x74 */
+  WLAN_MODULE_P2P_R2,                   /* 0x75 */
 
   WLAN_MODULE_ID_MAX,
   WLAN_MODULE_ID_INVALID = WLAN_MODULE_ID_MAX,
