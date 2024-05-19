@@ -17787,6 +17787,7 @@ typedef enum {
 
 /** NAN vdev config Feature flags */
 #define WMI_VDEV_NAN_ALLOW_DW_CONFIG_CHANGE_IN_SYNC_ROLE                0x1
+#define WMI_VDEV_NAN_FORCE_CONGIG_WOW_DB_INTERVAL                       0x2
 
 
 /** the definition of different VDEV parameters */
