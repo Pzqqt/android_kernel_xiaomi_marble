@@ -618,6 +618,10 @@ config SMMU_S1_UNMAP
 	bool "Enable SMMU S1 unmap"
 	default n
 
+config ENABLE_SMMU_S1_TRANSLATION
+	bool "Enable SMMU S1 transaltion"
+	default n
+
 config PKTLOG_LEGACY
 	bool "Enable legacy packet log support"
 	default n

@@ -272,6 +272,7 @@ _fixed_ipaths = [
 	"core/mac/src/pe/lim",
 	"cmn/os_if/linux/ftm/inc",
 	"components/ipa/core/inc",
+	"components/target_if/ipa/inc",
 	"cmn/os_if/linux/crypto/inc",
 	"cmn/utils/fwlog",
 	"cmn/os_if/linux/gpio/inc",
@@ -952,6 +953,14 @@ _conditional_srcs = {
             "core/hdd/src/wlan_hdd_ipa.c",
             # TODO: need a separate flag for sysfs
             "core/hdd/src/wlan_hdd_sysfs_ipa.c",
+            "components/ipa/dispatcher/src/wlan_ipa_ucfg_api.c",
+            "components/ipa/dispatcher/src/wlan_ipa_obj_mgmt_api.c",
+            "components/ipa/dispatcher/src/wlan_ipa_tgt_api.c",
+            "components/ipa/core/src/wlan_ipa_main.c",
+            "components/ipa/core/src/wlan_ipa_core.c",
+            "components/ipa/core/src/wlan_ipa_stats.c",
+            "components/ipa/core/src/wlan_ipa_rm.c",
+            "components/target_if/ipa/src/target_if_ipa.c",
         ],
     },
     "CONFIG_IPCIE_FW_SIM": {
@@ -2026,6 +2035,8 @@ def _define_module_for_target_variant_chipset(target, variant, chipset):
             "//vendor/qcom/opensource/wlan/platform:{}_cnss_nl".format(tv),
             "//msm-kernel:all_headers",
             "//vendor/qcom/opensource/wlan/platform:wlan-platform-headers",
+            "//vendor/qcom/opensource/dataipa:include_headers",
+            "//vendor/qcom/opensource/dataipa:{}_{}_ipam".format(target, variant),
         ],
     )
 
