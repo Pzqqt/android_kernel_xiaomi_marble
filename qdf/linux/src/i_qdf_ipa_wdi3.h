@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -379,6 +380,7 @@ static inline int __qdf_ipa_wdi_set_perf_profile(
 	return ipa_wdi_set_perf_profile(profile);
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 15))
 /**
  * __qdf_ipa_wdi_create_smmu_mapping() - Client should call this function to
  *		create smmu mapping
@@ -391,7 +393,7 @@ static inline int __qdf_ipa_wdi_set_perf_profile(
 static inline int __qdf_ipa_wdi_create_smmu_mapping(u32 num_buffers,
 		struct ipa_wdi_buffer_info *info)
 {
-	return ipa_wdi_create_smmu_mapping(num_buffers, info);
+	return ipa_wdi_create_smmu_mapping_per_inst(0, num_buffers, info);
 }
 
 /**
@@ -406,8 +408,22 @@ static inline int __qdf_ipa_wdi_create_smmu_mapping(u32 num_buffers,
 static inline int __qdf_ipa_wdi_release_smmu_mapping(u32 num_buffers,
 		struct ipa_wdi_buffer_info *info)
 {
+	return ipa_wdi_release_smmu_mapping_per_inst(0, num_buffers, info);
+}
+#else
+
+static inline int __qdf_ipa_wdi_create_smmu_mapping(u32 num_buffers,
+		struct ipa_wdi_buffer_info *info)
+{
+	return ipa_wdi_create_smmu_mapping(num_buffers, info);
+}
+
+static inline int __qdf_ipa_wdi_release_smmu_mapping(u32 num_buffers,
+		struct ipa_wdi_buffer_info *info)
+{
 	return ipa_wdi_release_smmu_mapping(num_buffers, info);
 }
+#endif
 
 #ifdef WDI3_STATS_UPDATE
 /**
