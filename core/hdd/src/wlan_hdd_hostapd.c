@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2196,7 +2196,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 					adapter->device_mode,
 					adapter->vdev_id,
 					WLAN_IPA_AP_CONNECT,
-					adapter->dev->dev_addr,
+					(uint8_t *)adapter->dev->dev_addr,
 					WLAN_REG_IS_24GHZ_CH_FREQ(
 						ap_ctx->operating_chan_freq));
 			if (status)
