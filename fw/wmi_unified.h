@@ -18852,6 +18852,10 @@ typedef enum {
     /* Set HW CTS2SELF before DL OFDMA Sequence */
     WMI_VDEV_PARAM_HWCTS2SELF_OFDMA,                      /* 0xC5 */
 
+    /* Update TWT_UNAVAIL_MODE */
+    WMI_VDEV_PARAM_TWT_UNAVAIL_MODE,                      /* 0xC6 */
+
+
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
      * prone to change.
