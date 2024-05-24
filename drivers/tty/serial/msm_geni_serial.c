@@ -2313,6 +2313,11 @@ static int msm_geni_serial_handle_dma_rx(struct uart_port *uport, bool drop_rx)
 	 * change to idenetify such scenario.
 	 */
 	memset(msm_port->rx_buf, 0, rx_bytes);
+	if (msm_port->uart_error == UART_ERROR_RX_PARITY_ERROR ||
+		msm_port->uart_error == UART_ERROR_RX_BREAK_ERROR ||
+		msm_port->uart_error == UART_ERROR_RX_FRAMING_ERR)
+		msm_geni_update_uart_error_code(msm_port, UART_ERROR_DEFAULT);
+
 	return ret;
 }
 
