@@ -17,6 +17,7 @@
 #include <linux/soc/qcom/fsa4480-i2c.h>
 #include <linux/pm_qos.h>
 #include <linux/nvmem-consumer.h>
+#include <linux/moduleparam.h>
 #include <sound/control.h>
 #include <sound/core.h>
 #include <sound/soc.h>
@@ -70,6 +71,9 @@
 	total_links += ARRAY_SIZE(link_arr); \
 }
 #define MAX_NAME_LEN	40
+
+static bool waipio_wired_btn_altmode = false;
+module_param(waipio_wired_btn_altmode, bool, S_IRUGO);
 
 struct msm_asoc_mach_data {
 	struct snd_info_entry *codec_root;
@@ -1459,6 +1463,11 @@ static int msm_snd_card_late_probe(struct snd_soc_card *card)
 	if (!mbhc_calibration)
 		return -ENOMEM;
 	wcd_mbhc_cfg.calibration = mbhc_calibration;
+
+	if (waipio_wired_btn_altmode) {
+		wcd_mbhc_cfg.key_code[1] = KEY_VOLUMEUP;
+		wcd_mbhc_cfg.key_code[2] = KEY_VOLUMEDOWN;
+	}
 
 	if (!is_wcd937x)
 		ret = wcd938x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
