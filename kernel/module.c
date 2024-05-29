@@ -3565,13 +3565,43 @@ int __weak module_frob_arch_sections(Elf_Ehdr *hdr,
 
 /* module_blacklist is a comma-separated list of module names */
 static char *module_blacklist;
+static char *custom_module_blacklist[] = {
+#if IS_BUILTIN(CONFIG_CRYPTO_LZO)
+    "lzo", "lzo_rle",
+#endif
+#if IS_BUILTIN(CONFIG_ZRAM)
+    "zram",
+#endif
+#if IS_BUILTIN(CONFIG_ZSMALLOC)
+    "zsmalloc",
+#endif
+#ifdef CONFIG_MACH_XIAOMI_MARBLE
+    /* Not required */
+    "qca6750", "icnss2", "cs35l41_dlkm", "cs35l43_dlkm", "atmel_mxt_ts", "focaltech_fts", "nt36xxx_i2c", "nt36xxx_spi", "synaptics_dsx",
+    /* Useless logs */
+    "cameralog", "f_fs_ipc_log",
+    /* Debug */
+    "qcom_cpufreq_hw_debug", "qcom_iommu_debug", "qti_battery_debug", "rdbg", "spmi_glink_debug", "spmi_pmic_arb_debug",
+    "debug_ext", "ehset", "lvstest",
+    /* Coresight */
+    "coresight", "coresight_csr", "coresight_cti", "coresight_dummy", "coresight_funnel",
+    "coresight_hwevent", "coresight_remote_etm", "coresight_replicator", "coresight_stm",
+    "coresight_tgu", "coresight_tmc", "coresight_tpda", "coresight_tpdm",
+    /* STM (System Trace Module devices) */
+    "stm_console", "stm_core", "stm_ftrace", "stm_p_basic", "stm_p_ost",
+    /* EDAC */
+    "qcom_edac", "kryo_arm64_edac"
+#endif
+};
+
 static bool blacklisted(const char *module_name)
 {
 	const char *p;
 	size_t len;
+	int i;
 
 	if (!module_blacklist)
-		return false;
+		goto custom_blacklist;
 
 	for (p = module_blacklist; *p; p += len) {
 		len = strcspn(p, ",");
@@ -3580,6 +3610,12 @@ static bool blacklisted(const char *module_name)
 		if (p[len] == ',')
 			len++;
 	}
+
+custom_blacklist:
+	for (i = 0; i < ARRAY_SIZE(custom_module_blacklist); i++)
+		if (!strcmp(module_name, custom_module_blacklist[i]))
+			return true;
+
 	return false;
 }
 core_param(module_blacklist, module_blacklist, charp, 0400);
