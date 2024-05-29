@@ -459,6 +459,24 @@ source "drivers/s390/char/Kconfig"
 
 source "drivers/char/xillybus/Kconfig"
 
+config MSM_ADSPRPC
+	tristate "QTI FastRPC driver"
+	select QCOM_PDR_HELPERS
+	depends on RPMSG && QCOM_SECURE_BUFFER && PM_SLEEP && HAS_DMA && CMA && MMU
+	help
+		Provides a communication mechanism that allows clients to
+		make remote method invocations across processor boundary to
+		applications/compute DSP processor.
+		Say M if you want to enable this module.
+
+config MSM_RDBG
+	tristate "QTI Remote debug driver"
+	help
+	  Implements a shared memory based transport mechanism that allows
+	  for a debugger running on a host PC to communicate with a remote
+	  stub running on peripheral subsystems such as the ADSP, MODEM etc.
+		Say M if you want to enable this module.
+
 config ADI
 	tristate "SPARC Privileged ADI driver"
 	depends on SPARC64

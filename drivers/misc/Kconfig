@@ -471,6 +471,25 @@ config PVPANIC
 	  a paravirtualized device provided by QEMU; it lets a virtual machine
 	  (guest) communicate panic events to the host.
 
+config QSEECOM
+        tristate "QTI Secure Execution Communicator driver"
+        help
+          Provides a communication interface between userspace and
+          QTI Secure Execution Environment (QSEE) using Secure Channel
+          Manager (SCM) interface. It exposes APIs for both userspace and
+          kernel clients.
+
+config WIGIG_SENSING_SPI
+	tristate "Sensing over 60GHz using wil6210 / SPI bus"
+	depends on SPI && WIL6210
+	default n
+	help
+	  This module adds support for various sensing use cases, like gesture
+	  detection, face recognition, proximity detection and more. The sensor
+	  operates over 60GHz frequency band, using low power SPI interface.
+	  The output of the driver is CIRs (Channel Impulse Response) which
+	  must be processed in user space in order to get meaningful results.
+
 config HISI_HIKEY_USB
 	tristate "USB GPIO Hub on HiSilicon Hikey 960/970 Platform"
 	depends on (OF && GPIOLIB) || COMPILE_TEST
@@ -481,6 +500,16 @@ config HISI_HIKEY_USB
 	  switching between the dual-role USB-C port and the USB-A host ports
 	  using only one USB controller.
 
+config KINECTICS_XR_NORDIC
+	tristate "Nordic Misc driver support in XR Reference devices"
+	help
+	   This driver supports Nordic Chip in XR Reference devices.
+	   This driver interfaces with SoC to Nordic chip over SPI and contains
+	   code to power up the Nordic chip and initializes SPI interface. Also,
+	   this also parses the gpios and interrupts from device tree and sets
+	   the gpios and interrupt handler for handling the interrupt.
+
+source "drivers/misc/rtimd-i2c/Kconfig"
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"
 source "drivers/misc/cb710/Kconfig"
@@ -495,5 +524,7 @@ source "drivers/misc/cxl/Kconfig"
 source "drivers/misc/ocxl/Kconfig"
 source "drivers/misc/cardreader/Kconfig"
 source "drivers/misc/habanalabs/Kconfig"
+source "drivers/misc/isl97900_led/Kconfig"
 source "drivers/misc/uacce/Kconfig"
+source "drivers/misc/hdcp/Kconfig"
 endmenu

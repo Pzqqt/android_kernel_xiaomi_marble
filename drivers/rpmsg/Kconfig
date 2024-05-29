@@ -48,6 +48,27 @@ config RPMSG_QCOM_GLINK_SMEM
 	  which provides support for using the GLINK communication protocol
 	  over SMEM.
 
+config RPMSG_QCOM_GLINK_SPSS
+	tristate "QTI SPSS Glink driver"
+	select RPMSG_QCOM_GLINK_NATIVE
+	depends on MAILBOX
+	depends on QCOM_SMEM
+	help
+	  Say y here to enable support for the GLINK SPSS communication driver,
+	  which provides support for using the GLINK communication protocol
+	  over SMEM. This protocol maps the smem and then shares the mapped
+	  region with the remote proc by writing the smem descriptor location
+	  and size into shared registers.
+
+config RPMSG_QCOM_GLINK_HELIOSCOM
+	tristate "Qualcomm Technologies, Inc. HELIOSCOM Glink driver"
+	help
+		Say y here to enable support for the GLINK HELIOSCOM driver,
+		which provides support for using the GLINK communication protocol
+		over HELIOSCOM. This transport performs marshaling of GLINK commands and
+		data to the appropriate HELIOSCOM format and allows for GLINK
+		communication with remote subsystems that are external to the SoC.
+
 config RPMSG_QCOM_SMD
 	tristate "Qualcomm Shared Memory Driver (SMD)"
 	depends on MAILBOX
@@ -63,5 +84,25 @@ config RPMSG_VIRTIO
 	depends on HAS_DMA
 	select RPMSG
 	select VIRTIO
+
+config RPMSG_GLINK_HELIOSCOM_WAKEUP_MS
+	int "GLINK Helioscom Wakeup timeout"
+	default 0
+	help
+	  This option is used to configure the wakesource timeout that GLINK
+	  helioscom should take when a packet is received. The glink driver can
+	  guarantee that the packet gets queued to glinkpkt driver but cannot
+	  guarantee the client process will get time to run if auto sleep is
+	  enabled. This config will help mitigate missed packets on systems
+	  where auto sleep is aggressive.
+
+config MSM_RPM_SMD
+	tristate "RPM driver using SMD protocol"
+	help
+	  RPM is the dedicated hardware engine for managing shared SoC
+	  resources. This config adds driver support for using SMD as a
+	  transport layer communication with RPM hardware. It also selects
+	  the MSM_MPM config that programs the MPM module to monitor interrupts
+	  during sleep modes.
 
 endmenu

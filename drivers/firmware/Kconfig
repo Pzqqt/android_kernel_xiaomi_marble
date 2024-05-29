@@ -27,6 +27,83 @@ config ARM_SCMI_PROTOCOL
 	  This protocol library provides interface for all the client drivers
 	  making use of the features offered by the SCMI.
 
+config QTI_SCMI_PMU_PROTOCOL
+        tristate "Qualcomm Technologies, Inc. SCMI PMU vendor Protocol"
+        depends on ARM || ARM64 || COMPILE_TEST
+        depends on ARM_SCMI_PROTOCOL && QCOM_RIMPS
+        help
+          System Control and Management Interface (SCMI) pmu vendor protocol.
+          This protocol provides interface to communicate with micro controller
+          which maintains the PMU configuration for multiple clients.
+
+          This driver defines the comands or message ID's used for this
+          communication and also exposes the ops used by clients.
+
+config QTI_SCMI_C1DCVS_PROTOCOL
+        tristate "Qualcomm Technologies, Inc. SCMI C1DCVS vendor Protocol"
+        depends on ARM || ARM64 || COMPILE_TEST
+        depends on ARM_SCMI_PROTOCOL && QCOM_RIMPS
+        help
+          System Control and Management Interface (SCMI) c1dcvs vendor protocol.
+          This protocol provides interface to communicate with micro controller
+          which maintains the c1dcvs algorithm.
+
+          This driver defines the comands or message ID's used for this
+          communication and also exposes the ops used by clients.
+
+config QTI_SCMI_PLH_PROTOCOL
+	tristate "Qualcomm Technologies, Inc. SCMI PLH vendor Protocol"
+	depends on ARM_SCMI_PROTOCOL && QCOM_RIMPS
+	help
+	  System Control and Management Interface (SCMI) plh vendor protocol
+	  this protocol provides interface to communicate with micro controller
+	  which is executing the plh algorithm
+
+	  This driver defines the comands or message ID's used for this
+	  communication and also exposes the ops used by clients.
+
+config QTI_SCMI_MEMLAT_PROTOCOL
+	tristate "Qualcomm Technologies, Inc. SCMI MEMLAT vendor Protocol"
+	depends on ARM || ARM64 || COMPILE_TEST
+	depends on ARM_SCMI_PROTOCOL && QCOM_RIMPS
+	help
+	  System Control and Management Interface (SCMI) memlat vendor protocol
+	  this protocol provides interface to communicate with micro controller
+	  which is executing the hw memlat governor
+
+config QTI_SCMI_GPLAF_PROTOCOL
+	tristate "Qualcomm Technologies, Inc. SCMI GPLAF vendor Protocol"
+	depends on ARM_SCMI_PROTOCOL && QCOM_RIMPS
+	help
+	  System Control and Management Interface (SCMI) gplaf vendor protocol
+	  this protocol provides interface to communicate with micro controller
+	  which is executing the gplaf algorithm
+
+	  This driver defines the commands or message ID's used for this
+	  communication and also exposes the ops used by clients.
+
+config QTI_SCMI_CPUFREQ_STATS_PROTOCOL
+        tristate "Qualcomm Technologies, Inc. CPUFREQ STATS vendor Protocol"
+        depends on ARM || ARM64
+        depends on ARM_SCMI_PROTOCOL && QCOM_RIMPS
+        help
+          System Control and Management Interface (SCMI) SCMI CPUFREQ STATS vendor protocol.
+          This protocol provides interface to communicate with micro controller
+          which maintains the CPU FREQ stats.
+
+          This driver defines the comands or message ID's used for this
+          communication and also exposes the ops used by clients.
+
+config QTI_SCMI_SHARED_RAIL_PROTOCOL
+	tristate "Qualcomm Technologies, Inc. SCMI SHARED RAIL vendor Protocol"
+	depends on ARM_SCMI_PROTOCOL
+	help
+	  System Control and Management Interface (SCMI) shared rail vendor protocol
+	  this protocol provides interface to communicate with micro controller.
+
+	  This driver defines the commands or message ID's used for this
+	  communication and also exposes the ops used by clients.
+
 config ARM_SCMI_POWER_DOMAIN
 	tristate "SCMI power domain driver"
 	depends on ARM_SCMI_PROTOCOL || (COMPILE_TEST && OF)
@@ -236,21 +313,26 @@ config INTEL_STRATIX10_RSU
 	  Say Y here if you want Intel RSU support.
 
 config QCOM_SCM
-	tristate "Qcom SCM driver"
+	tristate "Qualcomm Technologies, Inc. SCM Interface"
 	depends on ARM || ARM64
 	depends on HAVE_ARM_SMCCC
 	select RESET_CONTROLLER
-
-config QCOM_SCM_DOWNLOAD_MODE_DEFAULT
-	bool "Qualcomm download mode enabled by default"
-	depends on QCOM_SCM
 	help
-	  A device with "download mode" enabled will upon an unexpected
-	  warm-restart enter a special debug mode that allows the user to
-	  "download" memory content over USB for offline postmortem analysis.
-	  The feature can be enabled/disabled on the kernel command line.
+	  This option enables support for communicating with
+	  Qualcomm Technologies, Inc. secure worlds using
+	  Qualcomm Technologies, Inc. "Secure Channel Manager"
+	  interface.
 
-	  Say Y here to enable "download mode" by default.
+config QTEE_SHM_BRIDGE
+	bool "QTI TEE shared memory bridge"
+	depends on QCOM_SCM
+	default y if QCOM_SCM
+	help
+	  QTEE shared memory bridge driver provides kernel APIs to share
+	  memory between trustzone & other VMs through shared memory bridge.
+	  It allows kernel clients to create bridge, delete bridge, and do
+	  memory sub-allocation and free from the default kernel bridge
+	  created by bridge driver.
 
 config TI_SCI_PROTOCOL
 	tristate "TI System Control Interface (TISCI) Message Protocol"
@@ -306,5 +388,6 @@ source "drivers/firmware/psci/Kconfig"
 source "drivers/firmware/smccc/Kconfig"
 source "drivers/firmware/tegra/Kconfig"
 source "drivers/firmware/xilinx/Kconfig"
+source "drivers/firmware/qcom/Kconfig"
 
 endmenu

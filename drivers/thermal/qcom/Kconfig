@@ -20,3 +20,210 @@ config QCOM_SPMI_TEMP_ALARM
 	  trip points. The temperature reported by the thermal sensor reflects the
 	  real time die temperature if an ADC is present or an estimate of the
 	  temperature based upon the over temperature stage value.
+
+config QTI_ADC_TM
+	tristate "Qualcomm Technologies Inc. Thermal Monitor ADC Driver"
+	depends on SPMI && THERMAL
+	depends on QCOM_SPMI_ADC5
+	help
+	  This enables the thermal Sysfs driver for the ADC thermal monitoring
+	  device. It shows up in Sysfs as a thermal zone with multiple trip points.
+	  Thermal client sets threshold temperature for both warm and cool
+	  and gets updated when a threshold is reached.
+
+config QTI_QMI_SENSOR
+	tristate "QTI QMI sensor driver"
+	depends on QCOM_QMI_HELPERS && THERMAL
+	help
+	   This enables to list the QTI remote subsystem temperature sensors.
+	   This driver can read the temperature of the remote sensor.
+	   These sensors can take thresholds and notify the thermal
+	   framework when the threshold is reached.
+
+config QTI_QMI_SENSOR_V2
+	tristate "QTI QMI TS V2 sensor driver"
+	depends on QCOM_QMI_HELPERS && THERMAL_OF
+	depends on !QTI_QMI_SENSOR
+	help
+	   This enables to list the QTI remote subsystem temperature sensors
+	   with QMI TS V2 interface. This driver can read the temperature of
+	   the remote sensor. These sensors can take thresholds and notify the
+	   thermal framework when the threshold is reached.
+
+config QTI_BCL_PMIC5
+	tristate "BCL driver for BCL peripherals in PMIC5"
+	depends on SPMI && THERMAL
+	help
+	  This driver provides routines to configure and monitor the BCL
+	  PMIC peripheral. This driver registers the battery current and
+	  voltage sensors with the thermal core framework and can take
+	  threshold input and notify the thermal core when the threshold is
+	  reached.
+
+config QTI_BCL_SOC_DRIVER
+	tristate "QTI Battery state of charge sensor driver"
+	depends on THERMAL && POWER_SUPPLY
+	help
+	  This driver registers battery state of charge as a sensor with
+	  thermal framework. This sensor can monitor for state of charge
+	  thresholds and notify the thermal framework when the thresholds
+	  are reached and cleared. This will help to monitor and apply any
+	  mitigation when state of charge goes below a certain threshold.
+
+config QTI_QMI_COOLING_DEVICE
+	tristate "QTI QMI cooling devices"
+	depends on QCOM_QMI_HELPERS && THERMAL
+	help
+	   This enables the QTI remote subsystem cooling devices. These cooling
+	   devices will be used by QTI chipset to place various remote
+	   subsystem mitigations like remote processor passive mitigation,
+	   remote subsystem voltage restriction at low temperatures etc.
+	   The QMI cooling device will interface with remote subsystem
+	   using QTI QMI interface.
+
+config QTI_CPU_PAUSE_COOLING_DEVICE
+	tristate "QTI CPU Pause cooling devices"
+	depends on THERMAL_OF && HOTPLUG_CPU
+	depends on ARCH_QCOM || COMPILE_TEST
+	help
+	   This enables the QTI CPU Pause cooling device. These cooling
+	   devices will be used by QTI chipset to pause a CPU from being
+	   scheduled and hence will let the CPU to power collapse.  Pausing
+	   a CPU will be used when the CPU frequency mitigation
+	   is not good enough to achieve the necessary cooling.
+
+config QTI_THERMAL_LIMITS_DCVS
+	tristate "QTI LMH DCVS Driver"
+	depends on THERMAL && CPU_THERMAL
+	help
+	  This enables the driver for Limits Management Hardware - DCVS block
+	  for the application processors. The h/w block that is available for
+	  each cluster can be used to perform quick thermal mitigations by
+	  tracking temperatures of the CPUs and taking thermal action in the
+	  hardware without s/w intervention.
+
+config QTI_CPU_VOLTAGE_COOLING_DEVICE
+	tristate "QTI CPU VOLTAGE cooling devices"
+	depends on CPU_FREQ && THERMAL
+	help
+	    This enables the QTI CPU Voltage cooling devices. This cooling
+	    device will allow the CPUs with different frequency plan in a
+	    cluster to be mitigated together based on the voltages. This will
+	    decrease or increase the voltages in a cluster based on thermal
+	    conditions.
+
+config QTI_POLICY_ENGINE_SENSOR
+	tristate "QTI Policy Engine Sensor device"
+	depends on THERMAL
+	help
+	    This enables the QTI Policy Engine sensor device. This driver will
+	    register the policy engine recommendation with thermal framework as
+	    a sensor. This will enable to provide configuration to mitigate
+	    cooling devices when a recommendation is sent from hardware.
+
+config QTI_SDPM_CLOCK_MONITOR
+	tristate "QTI SDPM Clock Monitor"
+	depends on COMMON_CLK && CPU_FREQ
+	help
+	    This enables the QTI SDPM Clock Monitor. This driver can register
+	    for different clock rate change notifications and write the clock
+	    rate into the SDPM CSR register. This driver will receive the clock
+	    list and the CSR details from devicetree.
+
+config REGULATOR_COOLING_DEVICE
+	tristate "Regulator voltage floor cooling device"
+	depends on REGULATOR && THERMAL_OF
+	help
+	  This implements a mitigation device to place a minimum voltage floor
+	  on a particular regulator. This mitigation device will be used by low
+	  temperature reliability rules to mitigate a regulator at nominal
+	  voltage.
+
+config QTI_RPM_SMD_COOLING_DEVICE
+	tristate "Qualcomm Technologies Inc. RPM SMD cooling device driver"
+	depends on MSM_RPM_SMD && THERMAL_OF
+	help
+	  This implements a mitigation device to send temperature band
+	  level to RPM hardware via SMD protocol. This mitigation device
+	  will be used by temperature reliability rules to restrict a
+	  railway at predefined voltage corner using RPM hardware.
+
+config QTI_LIMITS_ISENSE_CDSP
+        tristate "QTI CDSP Limits Isense Driver"
+        depends on QCOM_SMEM
+        help
+          This enables driver to read cdsp isense calibration data from
+          shared memory and enable sysfs file support to access this data. This
+          driver is required for the chipsets where isense hardware is present
+          as part of cdsp subsystem.
+
+config QTI_CPU_HOTPLUG_COOLING_DEVICE
+	tristate "QTI CPU Hotplug cooling devices"
+	depends on THERMAL && HOTPLUG_CPU
+	help
+	   This enables the QTI CPU Hotplug cooling devices. These cooling
+	   devices will be used by QTI chipset to hotplug a CPU to achieve
+	   thermal cooling. CPU Hotplug will be done after core isolation,
+	   to prevent any process from waking the mitigated CPU.
+
+config QTI_DDR_COOLING_DEVICE
+	tristate "QTI DDR cooling devices"
+	depends on THERMAL && INTERCONNECT
+	help
+	   This enables the QTI DDR cooling devices. These cooling
+	   devices will be used by QTI chipset to place a DDR state request
+	   to meet the performance requirement under thermally constrained
+	   conditions.
+
+config MAX31760_FAN_CONTROLLER
+	tristate "MAX31760 Fan Controller Driver"
+	depends on THERMAL && THERMAL_OF
+	help
+	  This enables the MAX31760 fan controller cooling device.
+	  This driver uses i2c bus to control registers for setting
+	  different fan speed. Also, this driver initializes the power for
+	  the fan controller.
+
+config QTI_THERMALZONE_CONFIG_DEBUG
+	tristate "QTI ThermalZone config debug driver"
+	depends on THERMAL && THERMAL_OF
+	help
+	   This enables debugfs based interface support for thermal zones
+	   to read the entire configuration of a given thermal zone. It
+	   includes passive/polling delay, cooling device upper or lower
+	   level configuration etc. The userspace client can use this
+	   debugfs interface to understand full snapshot of a thermal zone.
+
+config QTI_USERSPACE_CDEV
+	tristate "QTI Userspace cooling device"
+	depends on THERMAL_OF
+	help
+	   This enables the QTI userspace cooling device, which will help
+	   send the mitigation notification via thermal framework netlink
+	   socket, so that userspace cooling device can perform a mitigation
+	   action.
+
+config QTI_CPUFREQ_CDEV
+	tristate "QTI CPU frequency cooling device"
+	depends on CPU_FREQ && THERMAL && PM_OPP
+	help
+	   This enables the QTI cpufreq cooling device, which will help
+	   register the cpu freq devices with thermal framework and allow
+	   limiting the cpu frequency by userspace.
+
+config QTI_DEVFREQ_CDEV
+	tristate "QTI Devfreq cooling device"
+	depends on PM_DEVFREQ && THERMAL && PM_OPP
+	help
+	   This enables the QTI devfreq cooling device, which will help
+	   register the devfreq cooling devices with thermal framework and
+	   allow limiting the devfreq frequency.
+
+config QTI_AOP_REG_COOLING_DEVICE
+	tristate "QTI AOP Regulator cooling device"
+	depends on THERMAL_OF && MSM_QMP
+	help
+	  This enables the AOP based Regulator cooling device. This cooling
+	  device will be used by QTI chipset to place a floor voltage
+	  restriction at low temperatures. The cooling device will message
+	  the AOP using mail box to establish the floor voltage.

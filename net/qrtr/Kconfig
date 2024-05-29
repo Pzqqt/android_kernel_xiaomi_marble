@@ -14,6 +14,28 @@ config QRTR
 
 if QRTR
 
+config QRTR_NODE_ID
+	int "QRTR Local Node ID"
+	default 1
+	help
+	  This option is used to configure the QRTR Node ID for the local
+	  processor. The node ID published to other nodes within the system.
+	  This value can be overridden by the name service application. This
+	  option is for configurations where Node ID needs to be customized
+	  but the name service application is not priveleged enough to use
+	  netlink sockets.
+
+config QRTR_WAKEUP_MS
+	int "QRTR Wakeup timeout"
+	default 0
+	help
+	  This option is used to configure the wakesource timeout that QRTR
+	  should take when a packet is received. The qrtr driver can guarantee
+	  that the packet gets queued to the socket but cannot guarantee the
+	  client process will get time to run if auto sleep is enabled. This
+	  config will help mitigate missed packets on systems where auto sleep
+	  is aggressive.
+
 config QRTR_SMD
 	tristate "SMD IPC Router channels"
 	depends on RPMSG || (COMPILE_TEST && RPMSG=n)
@@ -30,9 +52,27 @@ config QRTR_TUN
 
 config QRTR_MHI
 	tristate "MHI IPC Router channels"
-	depends on MHI_BUS
+	depends on MHI_BUS || (COMPILE_TEST && MHI_BUS=n)
 	help
-	  Say Y here to support MHI based ipcrouter channels. MHI is the
-	  transport used for communicating to external modems.
+	  Say Y here to support MHI based ipcrouter channels.  MHI is the
+	  transport used for external modem connections for IPC Router. The
+	  MHI transport fakes synchronous sends by waiting for the uplink
+	  callback from the MHI framework before returing to qrtr core.
+
+config QRTR_GUNYAH
+	tristate "Gunyah IPC Router channels"
+	help
+	  Say Y here to support a fifo based ipcrouter channel with gunyah
+	  hypervisor signaling. The gunyah transport layer enables IPC
+	  Router communication between two virtual machines. The transport
+	  uses dynamically shared memory and gunyah doorbells.
+
+config QRTR_DEBUG
+	bool "QRTR debug enhancements"
+	help
+	  Say Y here to enable QRTR debug enhancements support and currently
+	  supporting logging of resume tx failure cases when skb alloc failed
+	  and confirm rx flag is set. Also logging the skb alloc failure
+	  while allocating skb in rx path.
 
 endif # QRTR

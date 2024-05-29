@@ -1,9 +1,12 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2013, Sony Mobile Communications AB.
+ * Copyright (c) 2021, The Linux Foundation. All rights reserved.
  */
 #ifndef __PINCTRL_MSM_H__
 #define __PINCTRL_MSM_H__
+
+#include <linux/pinctrl/qcom-pinctrl.h>
 
 struct pinctrl_pin_desc;
 
@@ -35,6 +38,7 @@ struct msm_function {
  * @intr_status_reg:      Offset of the register holding the status bits for this group.
  * @intr_target_reg:      Offset of the register specifying routing of the interrupts
  *                        from this group.
+ * @reg_size_4k:          Size of the group register space in 4k granularity.
  * @mux_bit:              Offset in @ctl_reg for the pinmux function selection.
  * @pull_bit:             Offset in @ctl_reg for the bias configuration.
  * @drv_bit:              Offset in @ctl_reg for the drive strength configuration.
@@ -54,6 +58,8 @@ struct msm_function {
  * @intr_detection_width: Number of bits used for specifying interrupt type,
  *                        Should be 2 for SoCs that can detect both edges in hardware,
  *                        otherwise 1.
+ * @wake_reg:             Offset of the WAKEUP_INT_EN register from base tile
+ * @wake_bit:             Bit number for the corresponding gpio
  */
 struct msm_pingroup {
 	const char *name;
@@ -68,6 +74,7 @@ struct msm_pingroup {
 	u32 intr_cfg_reg;
 	u32 intr_status_reg;
 	u32 intr_target_reg;
+	unsigned int reg_size_4k:5;
 
 	unsigned int tile:2;
 
@@ -77,6 +84,8 @@ struct msm_pingroup {
 	unsigned drv_bit:5;
 
 	unsigned od_bit:5;
+	unsigned egpio_enable:5;
+	unsigned egpio_present:5;
 	unsigned oe_bit:5;
 	unsigned in_bit:5;
 	unsigned out_bit:5;
@@ -91,6 +100,9 @@ struct msm_pingroup {
 	unsigned intr_polarity_bit:5;
 	unsigned intr_detection_bit:5;
 	unsigned intr_detection_width:5;
+
+	u32 wake_reg;
+	unsigned int wake_bit;
 };
 
 /**
@@ -101,6 +113,16 @@ struct msm_pingroup {
 struct msm_gpio_wakeirq_map {
 	unsigned int gpio;
 	unsigned int wakeirq;
+};
+
+/*
+ * struct pinctrl_qup - Qup mode configuration
+ * @mode:	Qup i3c mode
+ * @offset:	Offset of the register
+ */
+struct pinctrl_qup {
+	u32 mode;
+	u32 offset;
 };
 
 /**
@@ -135,6 +157,8 @@ struct msm_pinctrl_soc_data {
 	const struct msm_gpio_wakeirq_map *wakeirq_map;
 	unsigned int nwakeirq_map;
 	bool wakeirq_dual_edge_errata;
+	struct pinctrl_qup *qup_regs;
+	unsigned int nqup_regs;
 	unsigned int gpio_func;
 };
 

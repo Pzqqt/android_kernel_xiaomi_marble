@@ -43,3 +43,6 @@ obj-$(CONFIG_BLK_DEV_NULL_BLK)	+= null_blk/
 
 skd-y		:= skd_main.o
 swim_mod-y	:= swim.o swim_asm.o
+
+obj-$(CONFIG_NEURON_APP_BLOCK_CLIENT) += neuron_block_client.o
+obj-$(CONFIG_NEURON_APP_BLOCK_SERVER) += neuron_block_server.o

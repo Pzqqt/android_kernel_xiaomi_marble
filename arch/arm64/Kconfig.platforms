@@ -201,6 +201,103 @@ config ARCH_QCOM
 	help
 	  This enables support for the ARMv8 based Qualcomm chipsets.
 
+config ARCH_LAHAINA
+	bool "Enable Support for Qualcomm Technologies, Inc. LAHAINA"
+	depends on ARCH_QCOM
+	help
+	  This enables support for the Qualcomm Technologies, Inc.'s
+	  LAHAINA chipset. If you do not wish to build a kernel that
+	  runs on this chipset or if you are unsure, say 'N' here.
+
+config ARCH_QTI_VM
+	bool "Enable Virtual Machines Support for Qualcomm Technologies, Inc."
+	depends on ARCH_QCOM
+	help
+	  This enables support for the Qualcomm Technologies, Inc.'s
+	  Virtual Machines. If you wish to build a kernel that doesn't
+	  require VM support or if you are unsure,
+	  say 'N' here.
+
+config ARCH_SHIMA
+	bool "Enable Support for Qualcomm Technologies, Inc. SHIMA"
+	depends on ARCH_QCOM
+	help
+	  This enables support for the Qualcomm Technologies, Inc.'s
+	  SHIMA chipset. If you do not wish to build a kernel that
+	  runs on this chipset or if you are unsure, say 'N' here.
+
+config ARCH_WAIPIO
+	bool "Enable Support for Qualcomm Technologies, Inc. WAIPIO"
+	depends on ARCH_QCOM
+	help
+	  This enables support for the Qualcomm Technologies, Inc.'s
+	  WAIPIO chipset. If you do not wish to build a kernel that
+	  runs on this chipset or if you are unsure, say 'N' here.
+
+config ARCH_ANORAK
+	bool "Enable Support for Qualcomm Technologies, Inc. ANORAK"
+	depends on ARCH_QCOM
+	help
+	  This enables support for the Qualcomm Technologies, Inc.'s
+	  ANORAK chipset. If you do not wish to build a kernel that
+	  runs on this chipset or if you are unsure, say 'N' here.
+
+config ARCH_NEO
+	bool "Enable Support for Qualcomm Technologies, Inc. NEO"
+	depends on ARCH_QCOM
+	help
+	  This enables support for the Qualcomm Technologies, Inc.'s
+	  NEO chipset. If you do not wish to build a kernel that
+	  runs on this chipset or if you are unsure, say 'N' here.
+
+config ARCH_DIWALI
+	bool "Enable Support for Qualcomm Technologies, Inc. DIWALI"
+	depends on ARCH_QCOM
+	help
+	  This enables support for the Qualcomm Technologies, Inc.'s
+	  DIWALI chipset. If you do not wish to build a kernel that
+	  runs on this chipset or if you are unsure, say 'N' here.
+
+config ARCH_PALM
+        bool "Enable Support for Qualcomm Technologies, Inc. PALM"
+        depends on ARCH_QCOM
+        help
+          This enables support for the Qualcomm Technologies, Inc.'s
+          PALM chipset. If you do not wish to build a kernel that
+          runs on this chipset or if you are unsure, say 'N' here.
+
+config ARCH_CAPE
+        bool "Enable Support for Qualcomm Technologies, Inc. CAPE"
+        depends on ARCH_QCOM
+        help
+          This enables support for the Qualcomm Technologies, Inc.'s
+          CAPE chipset. If you do not wish to build a kernel that
+          runs on this chipset or if you are unsure, say 'N' here.
+
+config ARCH_PARROT
+	bool "Enable Support for Qualcomm Technologies, Inc. PARROT"
+	depends on ARCH_QCOM
+	help
+	  This enables support for the Qualcomm Technologies, Inc.'s
+	  PARROT chipset. If you do not wish to build a kernel that
+	  runs on this chipset or if you are unsure, say 'N' here.
+
+config ARCH_RAVELIN
+        bool "Enable Support for Qualcomm Technologies, Inc. RAVELIN"
+        depends on ARCH_QCOM
+        help
+          This enables support for the Qualcomm Technologies, Inc.'s
+          RAVELIN chipset. If you do not wish to build a kernel that
+          runs on this chipset or if you are unsure, say 'N' here.
+
+config ARCH_HOLI
+	bool "Enable Support for Qualcomm Technologies, Inc. HOLI"
+	depends on ARCH_QCOM
+	help
+	  This enables support for the Qualcomm Technologies, Inc.'s
+	  HOLI chipset. If you do not wish to build a kernel that
+	  runs on this chipset or if you are unsure, say 'N' here.
+
 config ARCH_REALTEK
 	bool "Realtek Platforms"
 	select RESET_CONTROLLER

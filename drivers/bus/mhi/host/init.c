@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  */
 
@@ -8,6 +8,7 @@
 #include <linux/device.h>
 #include <linux/dma-direction.h>
 #include <linux/dma-mapping.h>
+#include <linux/idr.h>
 #include <linux/interrupt.h>
 #include <linux/list.h>
 #include <linux/mhi.h>
@@ -17,6 +18,8 @@
 #include <linux/vmalloc.h>
 #include <linux/wait.h>
 #include "internal.h"
+
+static DEFINE_IDA(mhi_controller_ida);
 
 const char * const mhi_ee_str[MHI_EE_MAX] = {
 	[MHI_EE_PBL] = "PBL",
@@ -51,6 +54,12 @@ const char * const mhi_state_str[MHI_STATE_MAX] = {
 	[MHI_STATE_SYS_ERR] = "SYS_ERR",
 };
 
+const char * const mhi_ch_state_type_str[MHI_CH_STATE_TYPE_MAX] = {
+	[MHI_CH_STATE_TYPE_RESET] = "RESET",
+	[MHI_CH_STATE_TYPE_STOP] = "STOP",
+	[MHI_CH_STATE_TYPE_START] = "START",
+};
+
 static const char * const mhi_pm_state_str[] = {
 	[MHI_PM_STATE_DISABLE] = "DISABLE",
 	[MHI_PM_STATE_POR] = "POR",
@@ -68,9 +77,12 @@ static const char * const mhi_pm_state_str[] = {
 
 const char *to_mhi_pm_state_str(enum mhi_pm_state state)
 {
-	int index = find_last_bit((unsigned long *)&state, 32);
+	int index;
 
-	if (index >= ARRAY_SIZE(mhi_pm_state_str))
+	if (state)
+		index = __fls(state);
+
+	if (!state || index >= ARRAY_SIZE(mhi_pm_state_str))
 		return "Invalid State";
 
 	return mhi_pm_state_str[index];
@@ -118,8 +130,10 @@ static int mhi_alloc_aligned_ring(struct mhi_controller *mhi_cntrl,
 				  u64 len)
 {
 	ring->alloc_size = len + (len - 1);
-	ring->pre_aligned = mhi_alloc_coherent(mhi_cntrl, ring->alloc_size,
-					       &ring->dma_handle, GFP_KERNEL);
+	ring->pre_aligned = dma_alloc_coherent(mhi_cntrl->cntrl_dev,
+					       ring->alloc_size,
+					       &ring->dma_handle,
+					       GFP_KERNEL);
 	if (!ring->pre_aligned)
 		return -ENOMEM;
 
@@ -163,7 +177,7 @@ int mhi_init_irq_setup(struct mhi_controller *mhi_cntrl)
 			continue;
 
 		if (mhi_event->irq >= mhi_cntrl->nr_irqs) {
-			dev_err(dev, "irq %d not available for event ring\n",
+			MHI_ERR("irq %d not available for event ring\n",
 				mhi_event->irq);
 			ret = -EINVAL;
 			goto error_request;
@@ -174,7 +188,7 @@ int mhi_init_irq_setup(struct mhi_controller *mhi_cntrl)
 				  IRQF_SHARED | IRQF_NO_SUSPEND,
 				  "mhi", mhi_event);
 		if (ret) {
-			dev_err(dev, "Error requesting irq:%d for ev:%d\n",
+			MHI_ERR("Error requesting irq:%d for ev:%d\n",
 				mhi_cntrl->irq[mhi_event->irq], i);
 			goto error_request;
 		}
@@ -205,13 +219,13 @@ void mhi_deinit_dev_ctxt(struct mhi_controller *mhi_cntrl)
 	mhi_cmd = mhi_cntrl->mhi_cmd;
 	for (i = 0; i < NR_OF_CMD_RINGS; i++, mhi_cmd++) {
 		ring = &mhi_cmd->ring;
-		mhi_free_coherent(mhi_cntrl, ring->alloc_size,
+		dma_free_coherent(mhi_cntrl->cntrl_dev, ring->alloc_size,
 				  ring->pre_aligned, ring->dma_handle);
 		ring->base = NULL;
 		ring->iommu_base = 0;
 	}
 
-	mhi_free_coherent(mhi_cntrl,
+	dma_free_coherent(mhi_cntrl->cntrl_dev,
 			  sizeof(*mhi_ctxt->cmd_ctxt) * NR_OF_CMD_RINGS,
 			  mhi_ctxt->cmd_ctxt, mhi_ctxt->cmd_ctxt_addr);
 
@@ -221,17 +235,17 @@ void mhi_deinit_dev_ctxt(struct mhi_controller *mhi_cntrl)
 			continue;
 
 		ring = &mhi_event->ring;
-		mhi_free_coherent(mhi_cntrl, ring->alloc_size,
+		dma_free_coherent(mhi_cntrl->cntrl_dev, ring->alloc_size,
 				  ring->pre_aligned, ring->dma_handle);
 		ring->base = NULL;
 		ring->iommu_base = 0;
 	}
 
-	mhi_free_coherent(mhi_cntrl, sizeof(*mhi_ctxt->er_ctxt) *
+	dma_free_coherent(mhi_cntrl->cntrl_dev, sizeof(*mhi_ctxt->er_ctxt) *
 			  mhi_cntrl->total_ev_rings, mhi_ctxt->er_ctxt,
 			  mhi_ctxt->er_ctxt_addr);
 
-	mhi_free_coherent(mhi_cntrl, sizeof(*mhi_ctxt->chan_ctxt) *
+	dma_free_coherent(mhi_cntrl->cntrl_dev, sizeof(*mhi_ctxt->chan_ctxt) *
 			  mhi_cntrl->max_chan, mhi_ctxt->chan_ctxt,
 			  mhi_ctxt->chan_ctxt_addr);
 
@@ -259,7 +273,7 @@ int mhi_init_dev_ctxt(struct mhi_controller *mhi_cntrl)
 		return -ENOMEM;
 
 	/* Setup channel ctxt */
-	mhi_ctxt->chan_ctxt = mhi_alloc_coherent(mhi_cntrl,
+	mhi_ctxt->chan_ctxt = dma_alloc_coherent(mhi_cntrl->cntrl_dev,
 						 sizeof(*mhi_ctxt->chan_ctxt) *
 						 mhi_cntrl->max_chan,
 						 &mhi_ctxt->chan_ctxt_addr,
@@ -291,7 +305,7 @@ int mhi_init_dev_ctxt(struct mhi_controller *mhi_cntrl)
 	}
 
 	/* Setup event context */
-	mhi_ctxt->er_ctxt = mhi_alloc_coherent(mhi_cntrl,
+	mhi_ctxt->er_ctxt = dma_alloc_coherent(mhi_cntrl->cntrl_dev,
 					       sizeof(*mhi_ctxt->er_ctxt) *
 					       mhi_cntrl->total_ev_rings,
 					       &mhi_ctxt->er_ctxt_addr,
@@ -338,7 +352,7 @@ int mhi_init_dev_ctxt(struct mhi_controller *mhi_cntrl)
 
 	/* Setup cmd context */
 	ret = -ENOMEM;
-	mhi_ctxt->cmd_ctxt = mhi_alloc_coherent(mhi_cntrl,
+	mhi_ctxt->cmd_ctxt = dma_alloc_coherent(mhi_cntrl->cntrl_dev,
 						sizeof(*mhi_ctxt->cmd_ctxt) *
 						NR_OF_CMD_RINGS,
 						&mhi_ctxt->cmd_ctxt_addr,
@@ -373,10 +387,10 @@ error_alloc_cmd:
 	for (--i, --mhi_cmd; i >= 0; i--, mhi_cmd--) {
 		struct mhi_ring *ring = &mhi_cmd->ring;
 
-		mhi_free_coherent(mhi_cntrl, ring->alloc_size,
+		dma_free_coherent(mhi_cntrl->cntrl_dev, ring->alloc_size,
 				  ring->pre_aligned, ring->dma_handle);
 	}
-	mhi_free_coherent(mhi_cntrl,
+	dma_free_coherent(mhi_cntrl->cntrl_dev,
 			  sizeof(*mhi_ctxt->cmd_ctxt) * NR_OF_CMD_RINGS,
 			  mhi_ctxt->cmd_ctxt, mhi_ctxt->cmd_ctxt_addr);
 	i = mhi_cntrl->total_ev_rings;
@@ -389,15 +403,15 @@ error_alloc_er:
 		if (mhi_event->offload_ev)
 			continue;
 
-		mhi_free_coherent(mhi_cntrl, ring->alloc_size,
+		dma_free_coherent(mhi_cntrl->cntrl_dev, ring->alloc_size,
 				  ring->pre_aligned, ring->dma_handle);
 	}
-	mhi_free_coherent(mhi_cntrl, sizeof(*mhi_ctxt->er_ctxt) *
+	dma_free_coherent(mhi_cntrl->cntrl_dev, sizeof(*mhi_ctxt->er_ctxt) *
 			  mhi_cntrl->total_ev_rings, mhi_ctxt->er_ctxt,
 			  mhi_ctxt->er_ctxt_addr);
 
 error_alloc_er_ctxt:
-	mhi_free_coherent(mhi_cntrl, sizeof(*mhi_ctxt->chan_ctxt) *
+	dma_free_coherent(mhi_cntrl->cntrl_dev, sizeof(*mhi_ctxt->chan_ctxt) *
 			  mhi_cntrl->max_chan, mhi_ctxt->chan_ctxt,
 			  mhi_ctxt->chan_ctxt_addr);
 
@@ -488,13 +502,13 @@ int mhi_init_mmio(struct mhi_controller *mhi_cntrl)
 		{ 0, 0, 0 }
 	};
 
-	dev_dbg(dev, "Initializing MHI registers\n");
+	MHI_VERB("Initializing MHI registers\n");
 
 	/* Read channel db offset */
 	ret = mhi_read_reg_field(mhi_cntrl, base, CHDBOFF, CHDBOFF_CHDBOFF_MASK,
 				 CHDBOFF_CHDBOFF_SHIFT, &val);
 	if (ret) {
-		dev_err(dev, "Unable to read CHDBOFF register\n");
+		MHI_ERR("Unable to read CHDBOFF register\n");
 		return -EIO;
 	}
 
@@ -519,7 +533,7 @@ int mhi_init_mmio(struct mhi_controller *mhi_cntrl)
 	ret = mhi_read_reg_field(mhi_cntrl, base, ERDBOFF, ERDBOFF_ERDBOFF_MASK,
 				 ERDBOFF_ERDBOFF_SHIFT, &val);
 	if (ret) {
-		dev_err(dev, "Unable to read ERDBOFF register\n");
+		MHI_ERR("Unable to read ERDBOFF register\n");
 		return -EIO;
 	}
 
@@ -547,6 +561,8 @@ int mhi_init_mmio(struct mhi_controller *mhi_cntrl)
 				    reg_info[i].mask, reg_info[i].shift,
 				    reg_info[i].val);
 
+	mhi_misc_init_mmio(mhi_cntrl);
+
 	return 0;
 }
 
@@ -562,7 +578,7 @@ void mhi_deinit_chan_ctxt(struct mhi_controller *mhi_cntrl,
 	tre_ring = &mhi_chan->tre_ring;
 	chan_ctxt = &mhi_cntrl->mhi_ctxt->chan_ctxt[mhi_chan->chan];
 
-	mhi_free_coherent(mhi_cntrl, tre_ring->alloc_size,
+	dma_free_coherent(mhi_cntrl->cntrl_dev, tre_ring->alloc_size,
 			  tre_ring->pre_aligned, tre_ring->dma_handle);
 	vfree(buf_ring->base);
 
@@ -605,7 +621,7 @@ int mhi_init_chan_ctxt(struct mhi_controller *mhi_cntrl,
 	buf_ring->base = vzalloc(buf_ring->len);
 
 	if (!buf_ring->base) {
-		mhi_free_coherent(mhi_cntrl, tre_ring->alloc_size,
+		dma_free_coherent(mhi_cntrl->cntrl_dev, tre_ring->alloc_size,
 				  tre_ring->pre_aligned, tre_ring->dma_handle);
 		return -ENOMEM;
 	}
@@ -659,7 +675,7 @@ static int parse_ev_cfg(struct mhi_controller *mhi_cntrl,
 			/* This event ring has a dedicated channel */
 			mhi_event->chan = event_cfg->channel;
 			if (mhi_event->chan >= mhi_cntrl->max_chan) {
-				dev_err(dev,
+				MHI_ERR(
 					"Event Ring channel not available\n");
 				goto error_ev_cfg;
 			}
@@ -668,8 +684,7 @@ static int parse_ev_cfg(struct mhi_controller *mhi_cntrl,
 				&mhi_cntrl->mhi_chan[mhi_event->chan];
 		}
 
-		/* Priority is fixed to 1 for now */
-		mhi_event->priority = 1;
+		mhi_event->priority = event_cfg->priority;
 
 		mhi_event->db_cfg.brstmode = event_cfg->mode;
 		if (MHI_INVALID_BRSTMODE(mhi_event->db_cfg.brstmode))
@@ -689,8 +704,15 @@ static int parse_ev_cfg(struct mhi_controller *mhi_cntrl,
 		case MHI_ER_CTRL:
 			mhi_event->process_event = mhi_process_ctrl_ev_ring;
 			break;
+		case MHI_ER_BW_SCALE:
+			mhi_event->process_event = mhi_process_misc_bw_ev_ring;
+			break;
+		case MHI_ER_TIMESYNC:
+			mhi_event->process_event =
+						mhi_process_misc_tsync_ev_ring;
+			break;
 		default:
-			dev_err(dev, "Event Ring type not supported\n");
+			MHI_ERR("Event Ring type not supported\n");
 			goto error_ev_cfg;
 		}
 
@@ -743,7 +765,7 @@ static int parse_ch_cfg(struct mhi_controller *mhi_cntrl,
 
 		chan = ch_cfg->num;
 		if (chan >= mhi_cntrl->max_chan) {
-			dev_err(dev, "Channel %d not available\n", chan);
+			MHI_ERR("Channel %d not available\n", chan);
 			goto error_chan_cfg;
 		}
 
@@ -783,14 +805,14 @@ static int parse_ch_cfg(struct mhi_controller *mhi_cntrl,
 		mhi_chan->offload_ch = ch_cfg->offload_channel;
 		mhi_chan->db_cfg.reset_req = ch_cfg->doorbell_mode_switch;
 		mhi_chan->pre_alloc = ch_cfg->auto_queue;
-		mhi_chan->auto_start = ch_cfg->auto_start;
+		mhi_chan->wake_capable = ch_cfg->wake_capable;
 
 		/*
 		 * If MHI host allocates buffers, then the channel direction
 		 * should be DMA_FROM_DEVICE
 		 */
 		if (mhi_chan->pre_alloc && mhi_chan->dir != DMA_FROM_DEVICE) {
-			dev_err(dev, "Invalid channel configuration\n");
+			MHI_ERR("Invalid channel configuration\n");
 			goto error_chan_cfg;
 		}
 
@@ -800,14 +822,14 @@ static int parse_ch_cfg(struct mhi_controller *mhi_cntrl,
 		 */
 		if ((mhi_chan->dir == DMA_BIDIRECTIONAL ||
 		     mhi_chan->dir == DMA_NONE) && !mhi_chan->offload_ch) {
-			dev_err(dev, "Invalid channel configuration\n");
+			MHI_ERR("Invalid channel configuration\n");
 			goto error_chan_cfg;
 		}
 
 		if (!mhi_chan->offload_ch) {
 			mhi_chan->db_cfg.brstmode = ch_cfg->doorbell;
 			if (MHI_INVALID_BRSTMODE(mhi_chan->db_cfg.brstmode)) {
-				dev_err(dev, "Invalid Door bell mode\n");
+				MHI_ERR("Invalid Door bell mode\n");
 				goto error_chan_cfg;
 			}
 		}
@@ -883,7 +905,7 @@ int mhi_register_controller(struct mhi_controller *mhi_cntrl,
 
 	if (!mhi_cntrl->runtime_get || !mhi_cntrl->runtime_put ||
 	    !mhi_cntrl->status_cb || !mhi_cntrl->read_reg ||
-	    !mhi_cntrl->write_reg)
+	    !mhi_cntrl->write_reg || !mhi_cntrl->nr_irqs)
 		return -EINVAL;
 
 	ret = parse_config(mhi_cntrl, config);
@@ -894,7 +916,7 @@ int mhi_register_controller(struct mhi_controller *mhi_cntrl,
 				     sizeof(*mhi_cntrl->mhi_cmd), GFP_KERNEL);
 	if (!mhi_cntrl->mhi_cmd) {
 		ret = -ENOMEM;
-		goto error_alloc_cmd;
+		goto err_free_event;
 	}
 
 	INIT_LIST_HEAD(&mhi_cntrl->transition_list);
@@ -904,6 +926,14 @@ int mhi_register_controller(struct mhi_controller *mhi_cntrl,
 	spin_lock_init(&mhi_cntrl->wlock);
 	INIT_WORK(&mhi_cntrl->st_worker, mhi_pm_st_worker);
 	init_waitqueue_head(&mhi_cntrl->state_event);
+
+	mhi_cntrl->hiprio_wq = alloc_ordered_workqueue("mhi_hiprio_wq",
+						       WQ_HIGHPRI);
+	if (!mhi_cntrl->hiprio_wq) {
+		dev_err(mhi_cntrl->cntrl_dev, "Failed to allocate workqueue\n");
+		ret = -ENOMEM;
+		goto err_free_cmd;
+	}
 
 	mhi_cmd = mhi_cntrl->mhi_cmd;
 	for (i = 0; i < NR_OF_CMD_RINGS; i++, mhi_cmd++)
@@ -917,11 +947,13 @@ int mhi_register_controller(struct mhi_controller *mhi_cntrl,
 
 		mhi_event->mhi_cntrl = mhi_cntrl;
 		spin_lock_init(&mhi_event->lock);
-		if (mhi_event->data_type == MHI_ER_CTRL)
-			tasklet_init(&mhi_event->task, mhi_ctrl_ev_task,
-				     (ulong)mhi_event);
+
+		if (mhi_event->priority == MHI_ER_PRIORITY_HI_SLEEP)
+			INIT_WORK(&mhi_event->work, mhi_process_ev_work);
 		else
-			tasklet_init(&mhi_event->task, mhi_ev_task,
+			tasklet_init(&mhi_event->task,
+				     (mhi_event->data_type == MHI_ER_CTRL) ?
+				     mhi_ctrl_ev_task : mhi_ev_task,
 				     (ulong)mhi_event);
 	}
 
@@ -948,7 +980,7 @@ int mhi_register_controller(struct mhi_controller *mhi_cntrl,
 	ret = mhi_read_reg(mhi_cntrl, mhi_cntrl->regs,
 			   SOC_HW_VERSION_OFFS, &soc_info);
 	if (ret)
-		goto error_alloc_dev;
+		goto err_destroy_wq;
 
 	mhi_cntrl->family_number = (soc_info & SOC_HW_VERSION_FAM_NUM_BMSK) >>
 					SOC_HW_VERSION_FAM_NUM_SHFT;
@@ -959,41 +991,57 @@ int mhi_register_controller(struct mhi_controller *mhi_cntrl,
 	mhi_cntrl->minor_version = (soc_info & SOC_HW_VERSION_MINOR_VER_BMSK) >>
 					SOC_HW_VERSION_MINOR_VER_SHFT;
 
+	mhi_cntrl->index = ida_alloc(&mhi_controller_ida, GFP_KERNEL);
+	if (mhi_cntrl->index < 0) {
+		ret = mhi_cntrl->index;
+		goto err_destroy_wq;
+	}
+
 	/* Register controller with MHI bus */
 	mhi_dev = mhi_alloc_device(mhi_cntrl);
 	if (IS_ERR(mhi_dev)) {
 		dev_err(mhi_cntrl->cntrl_dev, "Failed to allocate MHI device\n");
 		ret = PTR_ERR(mhi_dev);
-		goto error_alloc_dev;
+		goto err_ida_free;
 	}
 
 	mhi_dev->dev_type = MHI_DEVICE_CONTROLLER;
 	mhi_dev->mhi_cntrl = mhi_cntrl;
-	dev_set_name(&mhi_dev->dev, "%s", dev_name(mhi_cntrl->cntrl_dev));
-	mhi_dev->name = dev_name(mhi_cntrl->cntrl_dev);
+	dev_set_name(&mhi_dev->dev, "mhi%d", mhi_cntrl->index);
+	mhi_dev->name = dev_name(&mhi_dev->dev);
 
 	/* Init wakeup source */
 	device_init_wakeup(&mhi_dev->dev, true);
 
 	ret = device_add(&mhi_dev->dev);
 	if (ret)
-		goto error_add_dev;
+		goto err_release_dev;
 
 	mhi_cntrl->mhi_dev = mhi_dev;
+
+	ret = mhi_misc_register_controller(mhi_cntrl);
+	if (ret) {
+		dev_err(mhi_cntrl->cntrl_dev,
+			"Could not enable miscellaneous features\n");
+		mhi_cntrl->mhi_dev = NULL;
+		goto err_release_dev;
+	}
 
 	mhi_create_debugfs(mhi_cntrl);
 
 	return 0;
 
-error_add_dev:
+err_release_dev:
 	put_device(&mhi_dev->dev);
-
-error_alloc_dev:
+err_ida_free:
+	ida_free(&mhi_controller_ida, mhi_cntrl->index);
+err_destroy_wq:
+	destroy_workqueue(mhi_cntrl->hiprio_wq);
+err_free_cmd:
 	kfree(mhi_cntrl->mhi_cmd);
-
-error_alloc_cmd:
-	vfree(mhi_cntrl->mhi_chan);
+err_free_event:
 	kfree(mhi_cntrl->mhi_event);
+	vfree(mhi_cntrl->mhi_chan);
 
 	return ret;
 }
@@ -1005,8 +1053,20 @@ void mhi_unregister_controller(struct mhi_controller *mhi_cntrl)
 	struct mhi_chan *mhi_chan = mhi_cntrl->mhi_chan;
 	unsigned int i;
 
+	mhi_misc_unregister_controller(mhi_cntrl);
+
+	/* Free the memory controller wanted to preserve for BHIe images */
+	if (mhi_cntrl->img_pre_alloc) {
+		mhi_cntrl->img_pre_alloc = false;
+		if (mhi_cntrl->fbc_image)
+			mhi_free_bhie_table(mhi_cntrl, &mhi_cntrl->fbc_image);
+		if (mhi_cntrl->rddm_image)
+			mhi_free_bhie_table(mhi_cntrl, &mhi_cntrl->rddm_image);
+	}
+
 	mhi_destroy_debugfs(mhi_cntrl);
 
+	destroy_workqueue(mhi_cntrl->hiprio_wq);
 	kfree(mhi_cntrl->mhi_cmd);
 	kfree(mhi_cntrl->mhi_event);
 
@@ -1021,6 +1081,8 @@ void mhi_unregister_controller(struct mhi_controller *mhi_cntrl)
 
 	device_del(&mhi_dev->dev);
 	put_device(&mhi_dev->dev);
+
+	ida_free(&mhi_controller_ida, mhi_cntrl->index);
 }
 EXPORT_SYMBOL_GPL(mhi_unregister_controller);
 
@@ -1043,7 +1105,7 @@ EXPORT_SYMBOL_GPL(mhi_free_controller);
 int mhi_prepare_for_power_up(struct mhi_controller *mhi_cntrl)
 {
 	struct device *dev = &mhi_cntrl->mhi_dev->dev;
-	u32 bhie_off;
+	u32 bhi_off, bhie_off;
 	int ret;
 
 	mutex_lock(&mhi_cntrl->pm_mutex);
@@ -1052,44 +1114,57 @@ int mhi_prepare_for_power_up(struct mhi_controller *mhi_cntrl)
 	if (ret)
 		goto error_dev_ctxt;
 
-	/*
-	 * Allocate RDDM table if specified, this table is for debugging purpose
-	 */
-	if (mhi_cntrl->rddm_size) {
-		mhi_alloc_bhie_table(mhi_cntrl, &mhi_cntrl->rddm_image,
-				     mhi_cntrl->rddm_size);
+	ret = mhi_read_reg(mhi_cntrl, mhi_cntrl->regs, BHIOFF,
+			   &bhi_off);
+	if (ret) {
+		MHI_ERR("Error getting BHI offset\n");
+		goto error_reg_offset;
+	}
+	if (bhi_off >= mhi_cntrl->reg_len) {
+		MHI_ERR("BHI offset is out of range\n");
+		ret = -EINVAL;
+		goto error_reg_offset;
+	}
+	mhi_cntrl->bhi = mhi_cntrl->regs + bhi_off;
 
+	if (mhi_cntrl->fbc_download || mhi_cntrl->rddm_size) {
+		ret = mhi_read_reg(mhi_cntrl, mhi_cntrl->regs, BHIEOFF,
+				   &bhie_off);
+		if (ret) {
+			MHI_ERR("Error getting BHIE offset\n");
+			goto error_reg_offset;
+		}
+		if (bhie_off >= mhi_cntrl->reg_len) {
+			MHI_ERR("BHIe offset is out of range\n");
+			ret = -EINVAL;
+			goto error_reg_offset;
+		}
+		mhi_cntrl->bhie = mhi_cntrl->regs + bhie_off;
+	}
+
+	if (mhi_cntrl->rddm_size) {
 		/*
 		 * This controller supports RDDM, so we need to manually clear
 		 * BHIE RX registers since POR values are undefined.
 		 */
-		ret = mhi_read_reg(mhi_cntrl, mhi_cntrl->regs, BHIEOFF,
-				   &bhie_off);
-		if (ret) {
-			dev_err(dev, "Error getting BHIE offset\n");
-			goto bhie_error;
-		}
-
-		mhi_cntrl->bhie = mhi_cntrl->regs + bhie_off;
 		memset_io(mhi_cntrl->bhie + BHIE_RXVECADDR_LOW_OFFS,
 			  0, BHIE_RXVECSTATUS_OFFS - BHIE_RXVECADDR_LOW_OFFS +
 			  4);
-
+		/*
+		 * Allocate RDDM table for debugging purpose if specified
+		 */
+		mhi_alloc_bhie_table(mhi_cntrl, &mhi_cntrl->rddm_image,
+				     mhi_cntrl->rddm_size);
 		if (mhi_cntrl->rddm_image)
 			mhi_rddm_prepare(mhi_cntrl, mhi_cntrl->rddm_image);
 	}
-
-	mhi_cntrl->pre_init = true;
 
 	mutex_unlock(&mhi_cntrl->pm_mutex);
 
 	return 0;
 
-bhie_error:
-	if (mhi_cntrl->rddm_image) {
-		mhi_free_bhie_table(mhi_cntrl, mhi_cntrl->rddm_image);
-		mhi_cntrl->rddm_image = NULL;
-	}
+error_reg_offset:
+	mhi_deinit_dev_ctxt(mhi_cntrl);
 
 error_dev_ctxt:
 	mutex_unlock(&mhi_cntrl->pm_mutex);
@@ -1100,18 +1175,13 @@ EXPORT_SYMBOL_GPL(mhi_prepare_for_power_up);
 
 void mhi_unprepare_after_power_down(struct mhi_controller *mhi_cntrl)
 {
-	if (mhi_cntrl->fbc_image) {
-		mhi_free_bhie_table(mhi_cntrl, mhi_cntrl->fbc_image);
-		mhi_cntrl->fbc_image = NULL;
-	}
+	if (mhi_cntrl->rddm_image)
+		mhi_free_bhie_table(mhi_cntrl, &mhi_cntrl->rddm_image);
 
-	if (mhi_cntrl->rddm_image) {
-		mhi_free_bhie_table(mhi_cntrl, mhi_cntrl->rddm_image);
-		mhi_cntrl->rddm_image = NULL;
-	}
+	mhi_cntrl->bhi = NULL;
+	mhi_cntrl->bhie = NULL;
 
 	mhi_deinit_dev_ctxt(mhi_cntrl);
-	mhi_cntrl->pre_init = false;
 }
 EXPORT_SYMBOL_GPL(mhi_unprepare_after_power_down);
 
@@ -1147,7 +1217,15 @@ struct mhi_device *mhi_alloc_device(struct mhi_controller *mhi_cntrl)
 	device_initialize(dev);
 	dev->bus = &mhi_bus_type;
 	dev->release = mhi_release_device;
-	dev->parent = mhi_cntrl->cntrl_dev;
+
+	if (mhi_cntrl->mhi_dev) {
+		/* for MHI client devices, parent is the MHI controller device */
+		dev->parent = &mhi_cntrl->mhi_dev->dev;
+	} else {
+		/* for MHI controller device, parent is the bus device (e.g. pci device) */
+		dev->parent = mhi_cntrl->cntrl_dev;
+	}
+
 	mhi_dev->mhi_cntrl = mhi_cntrl;
 	mhi_dev->dev_wake = 0;
 
@@ -1185,11 +1263,6 @@ static int mhi_driver_probe(struct device *dev)
 			goto exit_probe;
 
 		ul_chan->xfer_cb = mhi_drv->ul_xfer_cb;
-		if (ul_chan->auto_start) {
-			ret = mhi_prepare_channel(mhi_cntrl, ul_chan);
-			if (ret)
-				goto exit_probe;
-		}
 	}
 
 	ret = -EINVAL;
@@ -1222,9 +1295,6 @@ static int mhi_driver_probe(struct device *dev)
 	ret = mhi_drv->probe(mhi_dev, mhi_dev->id);
 	if (ret)
 		goto exit_probe;
-
-	if (dl_chan && dl_chan->auto_start)
-		mhi_prepare_channel(mhi_cntrl, dl_chan);
 
 	mhi_device_put(mhi_dev);
 
@@ -1294,6 +1364,7 @@ static int mhi_driver_remove(struct device *dev)
 
 		if ((ch_state[dir] == MHI_CH_STATE_ENABLED ||
 		     ch_state[dir] == MHI_CH_STATE_STOP) &&
+		    mhi_chan->ch_state != MHI_CH_STATE_DISABLED &&
 		    !mhi_chan->offload_ch)
 			mhi_deinit_chan_ctxt(mhi_cntrl, mhi_chan);
 
@@ -1370,12 +1441,14 @@ struct bus_type mhi_bus_type = {
 
 static int __init mhi_init(void)
 {
+	mhi_misc_init();
 	mhi_debugfs_init();
 	return bus_register(&mhi_bus_type);
 }
 
 static void __exit mhi_exit(void)
 {
+	mhi_misc_exit();
 	mhi_debugfs_exit();
 	bus_unregister(&mhi_bus_type);
 }

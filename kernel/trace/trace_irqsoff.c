@@ -15,6 +15,9 @@
 #include <linux/module.h>
 #include <linux/ftrace.h>
 #include <linux/kprobes.h>
+#include <linux/sched.h>
+#include <linux/sched/clock.h>
+#include <linux/sched/sysctl.h>
 
 #include "trace.h"
 

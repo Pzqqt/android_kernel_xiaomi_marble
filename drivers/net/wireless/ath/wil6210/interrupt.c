@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2012-2017 Qualcomm Atheros, Inc.
- * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/interrupt.h>
@@ -33,7 +33,7 @@
 				    (~(BIT_DMA_EP_RX_ICR_RX_HTRSH)))
 #define WIL6210_IMC_TX		(BIT_DMA_EP_TX_ICR_TX_DONE | \
 				BIT_DMA_EP_TX_ICR_TX_DONE_N(0))
-#define WIL6210_IMC_TX_EDMA		BIT_TX_STATUS_IRQ
+#define WIL6210_IMC_TX_EDMA		(0xFFFFFFFFUL)
 #define WIL6210_IMC_RX_EDMA		BIT_RX_STATUS_IRQ
 #define WIL6210_IMC_MISC_NO_HALP	(ISR_MISC_FW_READY | \
 					 ISR_MISC_MBOX_EVT | \
@@ -215,6 +215,7 @@ void wil_unmask_irq(struct wil6210_priv *wil)
 void wil_configure_interrupt_moderation_edma(struct wil6210_priv *wil)
 {
 	u32 moderation;
+	int i, num_int_lines = 2 /* Rx + Tx status */;
 
 	wil_s(wil, RGF_INT_GEN_IDLE_TIME_LIMIT, WIL_EDMA_IDLE_TIME_LIMIT_USEC);
 
@@ -223,8 +224,11 @@ void wil_configure_interrupt_moderation_edma(struct wil6210_priv *wil)
 	/* Update RX and TX moderation */
 	moderation = wil->rx_max_burst_duration |
 		(WIL_EDMA_AGG_WATERMARK << WIL_EDMA_AGG_WATERMARK_POS);
-	wil_w(wil, RGF_INT_CTRL_INT_GEN_CFG_0, moderation);
-	wil_w(wil, RGF_INT_CTRL_INT_GEN_CFG_1, moderation);
+	if (wil->ipa_handle)
+		/* additional int per client, for Tx desc ring */
+		num_int_lines += max_assoc_sta;
+	for (i = 0; i < num_int_lines; i++)
+		wil_w(wil, i * 4 + RGF_INT_CTRL_INT_GEN_CFG, moderation);
 
 	/* Treat special events as regular
 	 * (set bit 0 to 0x1 and clear bits 1-8)
@@ -282,6 +286,36 @@ void wil_configure_interrupt_moderation(struct wil6210_priv *wil)
 	      BIT_DMA_ITR_RX_IDL_CNT_CTL_EXT_TIC_SEL);
 }
 
+static inline void write_rx_intr_cnt(struct wil6210_priv *wil)
+{
+	if (wil_tx_latency_threshold_enabled(wil))
+		wil_w(wil,
+		      wil->tx_latency_threshold_base +
+			      offsetof(struct wil_tx_latency_threshold_info,
+				       rx_intr_cnt),
+		      ++wil->tx_latency_threshold_info.rx_intr_cnt);
+}
+
+static inline void write_tx_intr_cnt(struct wil6210_priv *wil)
+{
+	if (wil_tx_latency_threshold_enabled(wil))
+		wil_w(wil,
+		      wil->tx_latency_threshold_base +
+			      offsetof(struct wil_tx_latency_threshold_info,
+				       tx_intr_cnt),
+		      ++wil->tx_latency_threshold_info.tx_intr_cnt);
+}
+
+static inline void write_hard_irq_cnt(struct wil6210_priv *wil)
+{
+	if (wil_tx_latency_threshold_enabled(wil))
+		wil_w(wil,
+		      wil->tx_latency_threshold_base +
+			      offsetof(struct wil_tx_latency_threshold_info,
+				       hard_irq_cnt),
+		      ++wil->tx_latency_threshold_info.hard_irq_cnt);
+}
+
 static irqreturn_t wil6210_irq_rx(int irq, void *cookie)
 {
 	struct wil6210_priv *wil = cookie;
@@ -296,6 +330,7 @@ static irqreturn_t wil6210_irq_rx(int irq, void *cookie)
 
 	trace_wil6210_irq_rx(isr);
 	wil_dbg_irq(wil, "ISR RX 0x%08x\n", isr);
+	write_rx_intr_cnt(wil);
 
 	if (unlikely(!isr)) {
 		wil_err_ratelimited(wil, "spurious IRQ: RX\n");
@@ -358,6 +393,7 @@ static irqreturn_t wil6210_irq_rx_edma(int irq, void *cookie)
 
 	trace_wil6210_irq_rx(isr);
 	wil_dbg_irq(wil, "ISR RX 0x%08x\n", isr);
+	write_rx_intr_cnt(wil);
 
 	if (unlikely(!isr)) {
 		wil_err(wil, "spurious IRQ: RX\n");
@@ -409,6 +445,7 @@ static irqreturn_t wil6210_irq_tx_edma(int irq, void *cookie)
 
 	trace_wil6210_irq_tx(isr);
 	wil_dbg_irq(wil, "ISR TX 0x%08x\n", isr);
+	write_tx_intr_cnt(wil);
 
 	if (unlikely(!isr)) {
 		wil_err(wil, "spurious IRQ: TX\n");
@@ -455,6 +492,7 @@ static irqreturn_t wil6210_irq_tx(int irq, void *cookie)
 
 	trace_wil6210_irq_tx(isr);
 	wil_dbg_irq(wil, "ISR TX 0x%08x\n", isr);
+	write_tx_intr_cnt(wil);
 
 	if (unlikely(!isr)) {
 		wil_err_ratelimited(wil, "spurious IRQ: TX\n");
@@ -530,7 +568,7 @@ static bool wil_validate_mbox_regs(struct wil6210_priv *wil)
 	return true;
 }
 
-static irqreturn_t wil6210_irq_misc(int irq, void *cookie)
+irqreturn_t wil6210_irq_misc(int irq, void *cookie)
 {
 	struct wil6210_priv *wil = cookie;
 	u32 isr;
@@ -580,11 +618,11 @@ static irqreturn_t wil6210_irq_misc(int irq, void *cookie)
 
 	if (isr & BIT_DMA_EP_MISC_ICR_HALP) {
 		isr &= ~BIT_DMA_EP_MISC_ICR_HALP;
-		if (wil->halp.handle_icr) {
+		if (atomic_read(&wil->halp.handle_icr)) {
 			/* no need to handle HALP ICRs until next vote */
-			wil->halp.handle_icr = false;
+			atomic_set(&wil->halp.handle_icr, 0);
 			wil_dbg_irq(wil, "irq_misc: HALP IRQ invoked\n");
-			wil6210_mask_irq_misc(wil, true);
+			wil6210_mask_halp(wil);
 			complete(&wil->halp.comp);
 		}
 	}
@@ -599,7 +637,7 @@ static irqreturn_t wil6210_irq_misc(int irq, void *cookie)
 	}
 }
 
-static irqreturn_t wil6210_irq_misc_thread(int irq, void *cookie)
+irqreturn_t wil6210_irq_misc_thread(int irq, void *cookie)
 {
 	struct wil6210_priv *wil = cookie;
 	u32 isr = wil->isr_misc;
@@ -749,6 +787,8 @@ static irqreturn_t wil6210_hardirq(int irq, void *cookie)
 	irqreturn_t rc = IRQ_HANDLED;
 	struct wil6210_priv *wil = cookie;
 	u32 pseudo_cause = wil_r(wil, RGF_DMA_PSEUDO_CAUSE);
+
+	write_hard_irq_cnt(wil);
 
 	/**
 	 * pseudo_cause is Clear-On-Read, no need to ACK

@@ -379,6 +379,16 @@ config PWM_PXA
 	  To compile this driver as a module, choose M here: the module
 	  will be called pwm-pxa.
 
+config PWM_QTI_LPG
+	tristate "Qualcomm Technologies, Inc. LPG driver"
+	depends on MFD_SPMI_PMIC && OF
+	help
+	  This driver supports the LPG (Light Pulse Generator) module found in
+	  Qualcomm Technologies, Inc. PMIC chips. Each LPG channel can be
+	  configured to operate in PWM mode to output a fixed amplitude with
+	  variable duty cycle or in LUT (Look up table) mode to output PWM
+	  signal with a modulated amplitude.
+
 config PWM_RCAR
 	tristate "Renesas R-Car PWM support"
 	depends on ARCH_RENESAS || COMPILE_TEST
@@ -569,5 +579,15 @@ config PWM_ZX
 
 	  To compile this driver as a module, choose M here: the module
 	  will be called pwm-zx.
+
+config PWM_QCOM
+	tristate "Qualcomm Technologies, Inc. PWM support"
+	depends on ARCH_QCOM
+	help
+	  Generic PWM framework driver for the PWM controller found on
+	  Qualcomm Technologies Inc. SoCs.
+
+	  To compile this driver as a module, choose M here: the module
+	  will be called pwm-qcom.
 
 endif

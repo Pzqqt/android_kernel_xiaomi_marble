@@ -603,6 +603,16 @@ config TASKSTATS
 
 	  Say N if unsure.
 
+config MSM_SYSSTATS
+	tristate "Export system/task statistics through netlink"
+	depends on NET
+	depends on MULTIUSER
+	help
+	  Export system and task statistics through generic netlink
+	  interface. Userspace can retrieve these statistics via netlink
+	  socket.
+	  If unsure, say N
+
 config TASK_DELAY_ACCT
 	bool "Enable per-task delay accounting"
 	depends on TASKSTATS
@@ -1914,6 +1924,18 @@ config VM_EVENT_COUNTERS
 	  on EXPERT systems.  /proc/vmstat will only show page counts
 	  if VM event counters are disabled.
 
+config VM_EVENT_COUNT_CLEAN_PAGE_RECLAIM
+	bool "Track the number of clean pages reclaimed from the page cache"
+	depends on VM_EVENT_COUNTERS
+	help
+	  VM event counters currently maintain a count of the pages that
+	  get dropped from the page cache as a part of memory reclaim.
+	  However, this count only tracks the number of dirty pages that
+	  get dropped, and does not account for the clean pages that get
+	  dropped as well. Enable this to also account for the clean pages
+	  that get dropped as part of memory reclaim to get a more holistic
+	  view of what is happening during memory reclaim.
+
 config SLUB_DEBUG
 	default y
 	bool "Enable SLUB debugging support" if EXPERT
@@ -2394,6 +2416,17 @@ config UNUSED_KSYMS_WHITELIST
 	  one per line. The path can be absolute, or relative to the kernel
 	  source tree.
 
+config UNUSED_KSYMS_WHITELIST_ONLY
+	bool "Export ONLY the symbols that are a part of whitelist"
+	depends on UNUSED_KSYMS_WHITELIST != ""
+	help
+	  Keep ONLY the symbols that are defined in the whitelist. The
+	  CONFIG works on top of CONFIG_UNUSED_KSYMS_WHITELIST which takes
+	  whitelist file(s) as its settings, and would export only the
+	  symbols listed in these file(s).
+	  This is mainly used to detect if drivers are using the symbols
+	  outside of the whitelist.
+
 endif # MODULES
 
 config MODULES_TREE_LOOKUP
@@ -2445,3 +2478,4 @@ config ARCH_HAS_SYSCALL_WRAPPER
 	def_bool n
 
 source "init/Kconfig.gki"
+source "init/Kconfig.gki-debug"

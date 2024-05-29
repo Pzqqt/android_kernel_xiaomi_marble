@@ -25,6 +25,10 @@
 #include <linux/of.h>
 #include <linux/of_device.h>
 #include <linux/regulator/of_regulator.h>
+#ifdef QTI_FIXED_REGULATOR
+#include <linux/regulator/debug-regulator.h>
+#include <linux/regulator/proxy-consumer.h>
+#endif
 #include <linux/regulator/machine.h>
 #include <linux/clk.h>
 
@@ -131,6 +135,28 @@ static const struct regulator_ops fixed_voltage_clkenabled_ops = {
 	.disable = reg_clock_disable,
 	.is_enabled = reg_clock_is_enabled,
 };
+
+#ifdef QTI_FIXED_REGULATOR
+static void qti_reg_fixed_voltage_init(struct device *dev,
+				       struct regulator_dev *rdev)
+{
+	int ret;
+
+	ret = devm_regulator_proxy_consumer_register(dev, dev->of_node);
+	if (ret)
+		dev_err(dev, "failed to register proxy consumer, ret=%d\n",
+			ret);
+
+	ret = devm_regulator_debug_register(dev, rdev);
+	if (ret)
+		dev_err(dev, "failed to register debug regulator, ret=%d\n",
+			ret);
+}
+#else
+static void qti_reg_fixed_voltage_init(struct device *dev,
+				       struct regulator_dev *rdev)
+{ }
+#endif
 
 static int reg_fixed_voltage_probe(struct platform_device *pdev)
 {
@@ -245,6 +271,8 @@ static int reg_fixed_voltage_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, drvdata);
 
+	qti_reg_fixed_voltage_init(dev, drvdata->dev);
+
 	dev_dbg(&pdev->dev, "%s supplying %duV\n", drvdata->desc.name,
 		drvdata->desc.fixed_uV);
 
@@ -261,6 +289,12 @@ static const struct fixed_dev_type fixed_clkenable_data = {
 };
 
 static const struct of_device_id fixed_of_match[] = {
+#ifdef QTI_FIXED_REGULATOR
+	{
+		.compatible = "qti-regulator-fixed",
+		.data = &fixed_voltage_data,
+	},
+#endif
 	{
 		.compatible = "regulator-fixed",
 		.data = &fixed_voltage_data,
@@ -278,7 +312,12 @@ MODULE_DEVICE_TABLE(of, fixed_of_match);
 static struct platform_driver regulator_fixed_voltage_driver = {
 	.probe		= reg_fixed_voltage_probe,
 	.driver		= {
+#ifdef QTI_FIXED_REGULATOR
+		.name		= "qti-reg-fixed-voltage",
+		.sync_state	= regulator_proxy_consumer_sync_state,
+#else
 		.name		= "reg-fixed-voltage",
+#endif
 		.of_match_table = of_match_ptr(fixed_of_match),
 	},
 };

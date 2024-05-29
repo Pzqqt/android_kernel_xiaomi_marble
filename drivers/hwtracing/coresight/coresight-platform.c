@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (c) 2012, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2021 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/acpi.h>
@@ -205,6 +205,27 @@ static int of_coresight_get_cpu(struct device *dev)
 }
 
 /*
+ * of_coresight_get_atid_number: Get the atid number of a source device.
+ *
+ * Returns the number of the atid. If the result is less than zero, it means
+ * failure.
+ */
+int of_coresight_get_atid_number(struct coresight_device *csdev)
+{
+	return of_property_count_u32_elems(csdev->dev.parent->of_node, "atid");
+}
+
+/*
+ * of_coresight_get_atid: Get the atid array of a source device.
+ *
+ * Returns 0 on success.
+ */
+int of_coresight_get_atid(struct coresight_device *csdev, u32 *atid, int atid_num)
+{
+	return of_property_read_u32_array(csdev->dev.parent->of_node, "atid", atid, atid_num);
+}
+
+/*
  * of_coresight_parse_endpoint : Parse the given output endpoint @ep
  * and fill the connection information in @conn
  *
@@ -225,6 +246,7 @@ static int of_coresight_parse_endpoint(struct device *dev,
 	struct device *rdev = NULL;
 	struct fwnode_handle *rdev_fwnode;
 	struct coresight_connection *conn;
+	struct device_node *sn = NULL;
 
 	do {
 		/* Parse the local port details */
@@ -269,6 +291,13 @@ static int of_coresight_parse_endpoint(struct device *dev,
 		 */
 		conn->child_fwnode = fwnode_handle_get(rdev_fwnode);
 		conn->child_port = rendpoint.port;
+		conn->source_name = NULL;
+		sn = of_parse_phandle(ep, "source", 0);
+		if (sn) {
+			ret = of_property_read_string(sn,
+				"coresight-name", &conn->source_name);
+				of_node_put(sn);
+		}
 		/* Connection record updated */
 	} while (0);
 

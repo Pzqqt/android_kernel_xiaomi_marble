@@ -25,8 +25,8 @@ static int mhi_debugfs_states_show(struct seq_file *m, void *d)
 		   mhi_cntrl->wake_set ? "true" : "false");
 
 	/* counters */
-	seq_printf(m, "M0: %u M2: %u M3: %u", mhi_cntrl->M0, mhi_cntrl->M2,
-		   mhi_cntrl->M3);
+	seq_printf(m, "M0: %u M2: %u M3: %u, M3_fast: %u", mhi_cntrl->M0,
+		   mhi_cntrl->M2, mhi_cntrl->M3, mhi_cntrl->M3_fast);
 
 	seq_printf(m, " device wake: %u pending packets: %u\n",
 		   atomic_read(&mhi_cntrl->dev_wake),
@@ -159,7 +159,9 @@ static int mhi_debugfs_devices_show(struct seq_file *m, void *d)
 		return -ENODEV;
 	}
 
-	device_for_each_child(mhi_cntrl->cntrl_dev, m, mhi_device_info_show);
+	/* Show controller and client(s) info */
+	mhi_device_info_show(&mhi_cntrl->mhi_dev->dev, m);
+	device_for_each_child(&mhi_cntrl->mhi_dev->dev, m, mhi_device_info_show);
 
 	return 0;
 }

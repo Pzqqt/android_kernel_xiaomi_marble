@@ -13,6 +13,15 @@ config MHI_BUS
 	  and communicate with modem devices over a high speed peripheral
 	  bus or shared memory.
 
+config MHI_BUS_MISC
+	bool "Support for miscellaneous MHI features"
+	depends on MHI_BUS
+	help
+	  Miscellaneous features support for MHI Bus driver includes IPC logs,
+	  introduction of a list of controllers for debug using ramdumps and
+	  other features not present upstream such as Dynamic Resource Vote,
+	  SFR parsing using RDDM dumps, scanning for the RDDM cookie and more.
+
 config MHI_BUS_DEBUG
 	bool "Debugfs support for the MHI bus"
 	depends on MHI_BUS && DEBUG_FS

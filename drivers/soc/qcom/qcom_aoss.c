@@ -1,17 +1,22 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2019, Linaro Ltd
+ * Copyright (c) 2023, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 #include <dt-bindings/power/qcom-aoss-qmp.h>
 #include <linux/clk-provider.h>
+#include <linux/debugfs.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
 #include <linux/mailbox_client.h>
 #include <linux/module.h>
+#include <linux/of_platform.h>
 #include <linux/platform_device.h>
 #include <linux/pm_domain.h>
 #include <linux/thermal.h>
 #include <linux/slab.h>
+#include <linux/soc/qcom/qcom_aoss.h>
+#include <linux/ipc_logging.h>
 
 #define QMP_DESC_MAGIC			0x0
 #define QMP_DESC_VERSION		0x4
@@ -83,6 +88,9 @@ struct qmp {
 	struct clk_hw qdss_clk;
 	struct genpd_onecell_data pd_data;
 	struct qmp_cooling_device *cooling_devs;
+#if IS_ENABLED(CONFIG_DEBUG_FS)
+	struct dentry *debugfs_file;
+#endif /* CONFIG_DEBUG_FS */
 };
 
 struct qmp_pd {
@@ -91,6 +99,12 @@ struct qmp_pd {
 };
 
 #define to_qmp_pd_resource(res) container_of(res, struct qmp_pd, pd)
+
+/* IPC Logging helpers */
+#define AOSS_IPC_LOG_PAGE_CNT	2
+static void *ilc;
+#define AOSS_INFO(x, ...)						  \
+	ipc_log_string(ilc, "[%s]: "x, __func__, ##__VA_ARGS__)
 
 static void qmp_kick(struct qmp *qmp)
 {
@@ -200,6 +214,7 @@ static irqreturn_t qmp_intr(int irq, void *data)
 {
 	struct qmp *qmp = data;
 
+	AOSS_INFO("\n");
 	wake_up_all(&qmp->event);
 
 	return IRQ_HANDLED;
@@ -222,11 +237,14 @@ static bool qmp_message_empty(struct qmp *qmp)
  *
  * Return: 0 on success, negative errno on failure
  */
-static int qmp_send(struct qmp *qmp, const void *data, size_t len)
+int qmp_send(struct qmp *qmp, const void *data, size_t len)
 {
 	long time_left;
 	size_t tlen;
 	int ret;
+
+	if (!qmp || !data)
+		return -EINVAL;
 
 	if (WARN_ON(len + sizeof(u32) > qmp->size))
 		return -EINVAL;
@@ -244,6 +262,7 @@ static int qmp_send(struct qmp *qmp, const void *data, size_t len)
 	/* Read back len to confirm data written in message RAM */
 	tlen = readl(qmp->msgram + qmp->offset);
 	qmp_kick(qmp);
+	AOSS_INFO("msg: %.*s\n", tlen, (char *)data);
 
 	time_left = wait_event_interruptible_timeout(qmp->event,
 						     qmp_message_empty(qmp), HZ);
@@ -252,15 +271,18 @@ static int qmp_send(struct qmp *qmp, const void *data, size_t len)
 		ret = -ETIMEDOUT;
 
 		/* Clear message from buffer */
+		AOSS_INFO("timed out clearing msg: %.*s\n", tlen, (char *)data);
 		writel(0, qmp->msgram + qmp->offset);
 	} else {
 		ret = 0;
 	}
+	AOSS_INFO("ack: %.*s\n", tlen, (char *)data);
 
 	mutex_unlock(&qmp->tx_lock);
 
 	return ret;
 }
+EXPORT_SYMBOL(qmp_send);
 
 static int qmp_qdss_clk_prepare(struct clk_hw *hw)
 {
@@ -521,6 +543,62 @@ static void qmp_cooling_devices_remove(struct qmp *qmp)
 		thermal_cooling_device_unregister(qmp->cooling_devs[i].cdev);
 }
 
+/**
+ * qmp_get() - get a qmp handle from a device
+ * @dev: client device pointer
+ *
+ * Return: handle to qmp device on success, ERR_PTR() on failure
+ */
+struct qmp *qmp_get(struct device *dev)
+{
+	struct platform_device *pdev;
+	struct device_node *np;
+	struct qmp *qmp;
+
+	if (!dev || !dev->of_node)
+		return ERR_PTR(-ENODEV);
+
+	np = of_parse_phandle(dev->of_node, "qcom,qmp", 0);
+	if (!np)
+		return ERR_PTR(-ENODEV);
+
+	pdev = of_find_device_by_node(np);
+	if (!pdev)
+		return ERR_PTR(-EINVAL);
+
+	qmp = platform_get_drvdata(pdev);
+	return qmp ? qmp : ERR_PTR(-EPROBE_DEFER);
+}
+EXPORT_SYMBOL(qmp_get);
+
+#if IS_ENABLED(CONFIG_DEBUG_FS)
+static ssize_t aoss_dbg_write(struct file *file, const char __user *userstr,
+			      size_t len, loff_t *pos)
+{
+	struct qmp *qmp = file->private_data;
+	char buf[QMP_MSG_LEN] = {};
+	int ret;
+
+	if (!len || len >= QMP_MSG_LEN)
+		return len;
+
+	ret  = copy_from_user(buf, userstr, len);
+	if (ret) {
+		dev_err(qmp->dev, "copy from user failed, ret:%d\n", ret);
+		return len;
+	}
+
+	ret = qmp_send(qmp, strim(buf), QMP_MSG_LEN);
+
+	return ret ? ret : len;
+}
+
+static const struct file_operations aoss_dbg_fops = {
+	.open = simple_open,
+	.write = aoss_dbg_write,
+};
+#endif /* CONFIG_DEBUG_FS */
+
 static int qmp_probe(struct platform_device *pdev)
 {
 	struct resource *res;
@@ -535,6 +613,7 @@ static int qmp_probe(struct platform_device *pdev)
 	qmp->dev = &pdev->dev;
 	init_waitqueue_head(&qmp->event);
 	mutex_init(&qmp->tx_lock);
+	ilc = ipc_log_context_create(AOSS_IPC_LOG_PAGE_CNT, "aoss", 0);
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	qmp->msgram = devm_ioremap_resource(&pdev->dev, res);
@@ -556,6 +635,7 @@ static int qmp_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "failed to request interrupt\n");
 		goto err_free_mbox;
 	}
+	enable_irq_wake(irq);
 
 	ret = qmp_open(qmp);
 	if (ret < 0)
@@ -574,6 +654,12 @@ static int qmp_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "failed to register aoss cooling devices\n");
 
 	platform_set_drvdata(pdev, qmp);
+	dev_set_drvdata(&pdev->dev, qmp);
+
+#if IS_ENABLED(CONFIG_DEBUG_FS)
+	qmp->debugfs_file = debugfs_create_file("aoss_send_message", 0220, NULL,
+						qmp, &aoss_dbg_fops);
+#endif /* CONFIG_DEBUG_FS */
 
 	return 0;
 
@@ -591,6 +677,10 @@ static int qmp_remove(struct platform_device *pdev)
 {
 	struct qmp *qmp = platform_get_drvdata(pdev);
 
+#if IS_ENABLED(CONFIG_DEBUG_FS)
+	debugfs_remove(qmp->debugfs_file);
+#endif /* CONFIG_DEBUG_FS */
+
 	qmp_qdss_clk_remove(qmp);
 	qmp_pd_remove(qmp);
 	qmp_cooling_devices_remove(qmp);
@@ -601,11 +691,38 @@ static int qmp_remove(struct platform_device *pdev)
 	return 0;
 }
 
+static int aoss_qmp_mbox_freeze(struct device *dev)
+{
+	return 0;
+}
+
+static int aoss_qmp_mbox_restore(struct device *dev)
+{
+	struct qmp *qmp = dev_get_drvdata(dev);
+	int ret;
+
+	ret = qmp_open(qmp);
+	if (ret < 0)
+		dev_err(dev, "QMP restore failed, ret = %d\n", ret);
+
+	return 0;
+}
+
+static const struct dev_pm_ops aoss_qmp_mbox_pm_ops = {
+	.freeze_late = aoss_qmp_mbox_freeze,
+	.restore_early = aoss_qmp_mbox_restore,
+};
+
 static const struct of_device_id qmp_dt_match[] = {
 	{ .compatible = "qcom,sc7180-aoss-qmp", },
 	{ .compatible = "qcom,sdm845-aoss-qmp", },
 	{ .compatible = "qcom,sm8150-aoss-qmp", },
 	{ .compatible = "qcom,sm8250-aoss-qmp", },
+	{ .compatible = "qcom,waipio-aoss-qmp", },
+	{ .compatible = "qcom,diwali-aoss-qmp", },
+	{ .compatible = "qcom,neo-aoss-qmp", },
+	{ .compatible = "qcom,anorak-aoss-qmp", },
+	{ .compatible = "qcom,ravelin-aoss-qmp", },
 	{}
 };
 MODULE_DEVICE_TABLE(of, qmp_dt_match);
@@ -614,6 +731,7 @@ static struct platform_driver qmp_driver = {
 	.driver = {
 		.name		= "qcom_aoss_qmp",
 		.of_match_table	= qmp_dt_match,
+		.pm = &aoss_qmp_mbox_pm_ops,
 	},
 	.probe = qmp_probe,
 	.remove	= qmp_remove,

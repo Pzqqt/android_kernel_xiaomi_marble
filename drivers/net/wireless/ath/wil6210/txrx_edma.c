@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: ISC
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/etherdevice.h>
@@ -14,6 +14,7 @@
 #include "txrx_edma.h"
 #include "txrx.h"
 #include "trace.h"
+#include "ipa.h"
 
 /* Max number of entries (packets to complete) to update the hwtail of tx
  * status ring. Should be power of 2
@@ -44,7 +45,7 @@ static void wil_tx_desc_unmap_edma(struct device *dev,
 	}
 }
 
-static int wil_find_free_sring(struct wil6210_priv *wil)
+int wil_find_free_sring(struct wil6210_priv *wil)
 {
 	int i;
 
@@ -56,8 +57,7 @@ static int wil_find_free_sring(struct wil6210_priv *wil)
 	return -EINVAL;
 }
 
-static void wil_sring_free(struct wil6210_priv *wil,
-			   struct wil_status_ring *sring)
+void wil_sring_free(struct wil6210_priv *wil, struct wil_status_ring *sring)
 {
 	struct device *dev = wil_to_dev(wil);
 	size_t sz;
@@ -103,47 +103,62 @@ static int wil_sring_alloc(struct wil6210_priv *wil,
 	return 0;
 }
 
+static int wil_init_tx_sring(struct wil6210_priv *wil, u16 status_ring_size,
+			     size_t elem_size, u16 sring_id)
+{
+	struct wil_status_ring *sring = &wil->srings[sring_id];
+	int rc;
+	u8 irq_mode = WMI_RING_ADD_IRQ_MODE_ENABLE;
+
+	wil_dbg_misc(wil, "init TX sring: size=%u, sring_id=%u\n",
+		     status_ring_size, sring_id);
+
+	sring->is_rx = false;
+	sring->size = status_ring_size;
+	sring->elem_size = elem_size;
+	rc = wil_sring_alloc(wil, sring);
+	if (rc)
+		return rc;
+
+	/* in IPA mode, use interrupts from desc ring instead of sring */
+	if (wil->ipa_handle)
+		irq_mode = WMI_RING_ADD_IRQ_MODE_DISABLE;
+
+	rc = wil_wmi_tx_sring_cfg(wil, sring_id, irq_mode);
+	if (rc)
+		goto out_free;
+
+	sring->desc_rdy_pol = 1;
+	return 0;
+
+out_free:
+	wil_sring_free(wil, sring);
+	return rc;
+}
+
 static int wil_tx_init_edma(struct wil6210_priv *wil)
 {
-	int ring_id = wil_find_free_sring(wil);
-	struct wil_status_ring *sring;
-	int rc;
-	u16 status_ring_size;
+	int sring_id = wil_find_free_sring(wil), rc;
+	u16 sring_size;
+
+	if (sring_id < 0)
+		return sring_id;
 
 	if (wil->tx_status_ring_order < WIL_SRING_SIZE_ORDER_MIN ||
 	    wil->tx_status_ring_order > WIL_SRING_SIZE_ORDER_MAX)
 		wil->tx_status_ring_order = WIL_TX_SRING_SIZE_ORDER_DEFAULT;
 
-	status_ring_size = 1 << wil->tx_status_ring_order;
-
-	wil_dbg_misc(wil, "init TX sring: size=%u, ring_id=%u\n",
-		     status_ring_size, ring_id);
-
-	if (ring_id < 0)
-		return ring_id;
+	sring_size = wil_ipa_offload() ?
+		WIL_IPA_STATUS_RING_SIZE : 1 << wil->tx_status_ring_order;
 
 	/* Allocate Tx status ring. Tx descriptor rings will be
 	 * allocated on WMI connect event
 	 */
-	sring = &wil->srings[ring_id];
+	rc = wil_init_tx_sring(wil, sring_size,
+			       sizeof(struct wil_ring_tx_status), sring_id);
+	if (!rc)
+		wil->tx_sring_idx = sring_id;
 
-	sring->is_rx = false;
-	sring->size = status_ring_size;
-	sring->elem_size = sizeof(struct wil_ring_tx_status);
-	rc = wil_sring_alloc(wil, sring);
-	if (rc)
-		return rc;
-
-	rc = wil_wmi_tx_sring_cfg(wil, ring_id);
-	if (rc)
-		goto out_free;
-
-	sring->desc_rdy_pol = 1;
-	wil->tx_sring_idx = ring_id;
-
-	return 0;
-out_free:
-	wil_sring_free(wil, sring);
 	return rc;
 }
 
@@ -169,10 +184,11 @@ static int wil_ring_alloc_skb_edma(struct wil6210_priv *wil,
 		return -EAGAIN;
 	}
 
-	skb = dev_alloc_skb(sz);
+	skb = dev_alloc_skb(sz + headroom_size);
 	if (unlikely(!skb))
 		return -ENOMEM;
 
+	skb_reserve(skb, headroom_size);
 	skb_put(skb, sz);
 
 	/**
@@ -338,10 +354,8 @@ static int wil_init_rx_buff_arr(struct wil6210_priv *wil,
 	return 0;
 }
 
-static int wil_init_rx_sring(struct wil6210_priv *wil,
-			     u16 status_ring_size,
-			     size_t elem_size,
-			     u16 ring_id)
+int wil_init_rx_sring(struct wil6210_priv *wil, u16 status_ring_size,
+		      size_t elem_size, u16 ring_id)
 {
 	struct wil_status_ring *sring = &wil->srings[ring_id];
 	int rc;
@@ -371,7 +385,8 @@ out_free:
 }
 
 static int wil_ring_alloc_desc_ring(struct wil6210_priv *wil,
-				    struct wil_ring *ring)
+				    struct wil_ring *ring,
+				    bool alloc_ctx)
 {
 	struct device *dev = wil_to_dev(wil);
 	size_t sz = ring->size * sizeof(ring->va[0]);
@@ -382,9 +397,15 @@ static int wil_ring_alloc_desc_ring(struct wil6210_priv *wil,
 
 	ring->swhead = 0;
 	ring->swtail = 0;
-	ring->ctx = kcalloc(ring->size, sizeof(ring->ctx[0]), GFP_KERNEL);
-	if (!ring->ctx)
-		goto err;
+
+	if (alloc_ctx) {
+		ring->ctx = kcalloc(ring->size, sizeof(ring->ctx[0]),
+				    GFP_KERNEL);
+		if (!ring->ctx)
+			goto err;
+	} else {
+		ring->ctx = NULL;
+	}
 
 	ring->va = dma_alloc_coherent(dev, sz, &ring->pa, GFP_KERNEL);
 	if (!ring->va)
@@ -415,7 +436,7 @@ err:
 	return -ENOMEM;
 }
 
-static void wil_ring_free_edma(struct wil6210_priv *wil, struct wil_ring *ring)
+void wil_ring_free_edma(struct wil6210_priv *wil, struct wil_ring *ring)
 {
 	struct device *dev = wil_to_dev(wil);
 	size_t sz;
@@ -469,6 +490,18 @@ static void wil_ring_free_edma(struct wil6210_priv *wil, struct wil_ring *ring)
 		ring->swtail = wil_ring_next_tail(ring);
 	}
 
+	if (wil->ipa_handle) {
+		int bcast_sring_id = wil_ipa_get_bcast_sring_id(wil);
+
+		/* when freeing bcast desc ring, free the bcast status ring */
+		if (wil->ring2cid_tid[ring_index][0] == WIL6210_MAX_CID &&
+		    bcast_sring_id < WIL6210_MAX_STATUS_RINGS) {
+			wil_sring_free(wil, &wil->srings[bcast_sring_id]);
+			wil_ipa_set_bcast_sring_id(wil,
+						   WIL6210_MAX_STATUS_RINGS);
+		}
+	}
+
 out:
 	dma_free_coherent(dev, sz, (void *)ring->va, ring->pa);
 	kfree(ring->ctx);
@@ -477,8 +510,8 @@ out:
 	ring->ctx = NULL;
 }
 
-static int wil_init_rx_desc_ring(struct wil6210_priv *wil, u16 desc_ring_size,
-				 int status_ring_id)
+int wil_init_rx_desc_ring(struct wil6210_priv *wil, u16 desc_ring_size,
+			  int status_ring_id)
 {
 	struct wil_ring *ring = &wil->ring_rx;
 	int rc;
@@ -487,7 +520,7 @@ static int wil_init_rx_desc_ring(struct wil6210_priv *wil, u16 desc_ring_size,
 
 	ring->size = desc_ring_size;
 	ring->is_rx = true;
-	rc = wil_ring_alloc_desc_ring(wil, ring);
+	rc = wil_ring_alloc_desc_ring(wil, ring, true);
 	if (rc)
 		return rc;
 
@@ -608,6 +641,10 @@ static int wil_rx_init_edma(struct wil6210_priv *wil, uint desc_ring_order)
 		sizeof(struct wil_rx_status_extended);
 	int i;
 
+	if (wil->ipa_handle)
+		/* in ipa offload, this is done as part of wil_ipa_start_ap */
+		return 0;
+
 	/* In SW reorder one must use extended status messages */
 	if (wil->use_compressed_rx_status && !wil->use_rx_hw_reordering) {
 		wil_err(wil,
@@ -639,7 +676,7 @@ static int wil_rx_init_edma(struct wil6210_priv *wil, uint desc_ring_order)
 	wil_dbg_misc(wil, "rx_init: allocate %d status rings\n",
 		     wil->num_rx_status_rings);
 
-	rc = wil_wmi_cfg_def_rx_offload(wil, wil->rx_buf_len);
+	rc = wil_wmi_cfg_def_rx_offload(wil, wil->rx_buf_len, true);
 	if (rc)
 		return rc;
 
@@ -655,11 +692,13 @@ static int wil_rx_init_edma(struct wil6210_priv *wil, uint desc_ring_order)
 				       sring_id);
 		if (rc)
 			goto err_free_status;
+
+		if (i == 0)
+			wil->rx_sring_idx = sring_id;
 	}
 
 	/* Allocate descriptor ring */
-	rc = wil_init_rx_desc_ring(wil, desc_ring_size,
-				   WIL_DEFAULT_RX_STATUS_RING_ID);
+	rc = wil_init_rx_desc_ring(wil, desc_ring_size, wil->rx_sring_idx);
 	if (rc)
 		goto err_free_status;
 
@@ -700,6 +739,7 @@ static int wil_ring_init_tx_edma(struct wil6210_vif *vif, int ring_id,
 	int rc;
 	struct wil_ring *ring = &wil->ring_tx[ring_id];
 	struct wil_ring_tx_data *txdata = &wil->ring_tx_data[ring_id];
+	u8 irq_mode = WMI_RING_ADD_IRQ_MODE_DISABLE;
 
 	lockdep_assert_held(&wil->mutex);
 
@@ -707,9 +747,9 @@ static int wil_ring_init_tx_edma(struct wil6210_vif *vif, int ring_id,
 		     "init TX ring: ring_id=%u, cid=%u, tid=%u, sring_id=%u\n",
 		     ring_id, cid, tid, wil->tx_sring_idx);
 
-	wil_tx_data_init(txdata);
+	wil_tx_data_init(wil, txdata);
 	ring->size = size;
-	rc = wil_ring_alloc_desc_ring(wil, ring);
+	rc = wil_ring_alloc_desc_ring(wil, ring, true);
 	if (rc)
 		goto out;
 
@@ -718,10 +758,22 @@ static int wil_ring_init_tx_edma(struct wil6210_vif *vif, int ring_id,
 	if (!vif->privacy)
 		txdata->dot1x_open = true;
 
-	rc = wil_wmi_tx_desc_ring_add(vif, ring_id, cid, tid);
+	/* in IPA mode, use interrupts from desc ring instead of sring */
+	if (wil->ipa_handle)
+		irq_mode = WMI_RING_ADD_IRQ_MODE_ENABLE;
+
+	rc = wil_wmi_tx_desc_ring_add(vif, ring_id, cid, tid, wil->tx_sring_idx,
+				      irq_mode);
 	if (rc) {
 		wil_err(wil, "WMI_TX_DESC_RING_ADD_CMD failed\n");
 		goto out_free;
+	}
+
+	if (wil->ipa_handle) {
+		rc = wil_ipa_conn_client(wil->ipa_handle, cid, ring_id,
+					 wil->tx_sring_idx);
+		if (rc)
+			goto out_free;
 	}
 
 	if (txdata->dot1x_open && agg_wsize >= 0)
@@ -749,6 +801,104 @@ static int wil_tx_ring_modify_edma(struct wil6210_vif *vif, int ring_id,
 	wil_err(wil, "ring modify is not supported for EDMA\n");
 
 	return -EOPNOTSUPP;
+}
+
+static int wil_check_amsdu(struct wil6210_priv *wil, void *msg, int cid,
+			   struct wil_ring_rx_data *rxdata,
+			   struct sk_buff *skb)
+{
+	u8 *sa, *da;
+	int mid, tid;
+	u16 seq;
+	struct wil6210_vif *vif;
+	struct net_device *ndev;
+	struct wil_sta_info *sta;
+
+	/* drop all WDS packets - not supported */
+	if (wil_rx_status_get_ds_type(wil, msg) == WIL_RX_EDMA_DS_TYPE_WDS) {
+		wil_dbg_txrx(wil, "WDS is not supported");
+		return -EAGAIN;
+	}
+
+	/* check amsdu packets */
+	sta = &wil->sta[cid];
+	if (!wil_rx_status_is_basic_amsdu(msg)) {
+		if (sta->amsdu_drop_sn != -1)
+			wil_sta_info_amsdu_init(sta);
+		return 0;
+	}
+
+	mid = wil_rx_status_get_mid(msg);
+	tid = wil_rx_status_get_tid(msg);
+	seq = le16_to_cpu(wil_rx_status_get_seq(wil, msg));
+	vif = wil->vifs[mid];
+
+	if (unlikely(!vif)) {
+		wil_dbg_txrx(wil, "amsdu with invalid mid %d", mid);
+		return -EAGAIN;
+	}
+
+	if (unlikely(sta->amsdu_drop)) {
+		if (sta->amsdu_drop_sn == seq && sta->amsdu_drop_tid == tid) {
+			wil_dbg_txrx(wil, "Drop AMSDU sub frame, sn=%d\n",
+				     seq);
+			return -EAGAIN;
+		}
+
+		/* previous AMSDU finished - clear drop amsdu flag */
+		sta->amsdu_drop = 0;
+	}
+
+	da = wil_skb_get_da(skb);
+	/* for all sub frame of the AMSDU, check that the SA or DA are valid
+	 * compared with client/AP mac addresses
+	 */
+	switch (vif->wdev.iftype) {
+	case NL80211_IFTYPE_STATION:
+	case NL80211_IFTYPE_P2P_CLIENT:
+		/* check if the MSDU (a sub-frame of AMSDU) is multicast */
+		if (is_multicast_ether_addr(da))
+			return 0;
+
+		/* check if the current AMSDU (MPDU) frame is a multicast.
+		 * If so we have unicast sub frame as part of a multicast
+		 * AMSDU. Current frame and all sub frames should be dropped.
+		 */
+		if (wil_rx_status_get_mcast(msg)) {
+			wil_dbg_txrx(wil,
+				     "Found unicast sub frame in a multicast mpdu. Drop it\n");
+			goto out;
+		}
+
+		/* On client side, DA should be the client mac address */
+		ndev = vif_to_ndev(vif);
+		if (ether_addr_equal(ndev->dev_addr, da))
+			return 0;
+		break;
+
+	case NL80211_IFTYPE_P2P_GO:
+	case NL80211_IFTYPE_AP:
+		sa = wil_skb_get_sa(skb);
+		/* On AP side, the packet SA should be the client mac address.
+		 * check also the DA is not rfc 1042 header
+		 */
+		if (ether_addr_equal(sta->addr, sa) &&
+		    !ether_addr_equal(rfc1042_header, da))
+			return 0;
+		break;
+	default:
+		return 0;
+	}
+
+out:
+	sta->amsdu_drop_sn = seq;
+	sta->amsdu_drop_tid = tid;
+	sta->amsdu_drop = 1;
+	wil_dbg_txrx(wil,
+		     "Drop AMSDU frame, sn=%d tid=%d. Drop this and all next sub frames\n",
+		     seq, tid);
+
+	return -EAGAIN;
 }
 
 /* This function is used only for RX SW reorder */
@@ -847,6 +997,24 @@ static int wil_rx_error_check_edma(struct wil6210_priv *wil,
 	return 0;
 }
 
+#if defined(CONFIG_MULTI_PACKET_EOP)
+static bool wil_skb_try_coalesce(struct sk_buff *to, struct sk_buff *from,
+				 bool *headstolen, int *delta_truesize)
+{
+	if (likely(skb_try_coalesce(to, from, headstolen, delta_truesize))) {
+		kfree_skb_partial(from, *headstolen);
+		return true;
+	}
+	return false;
+}
+#else
+static bool wil_skb_try_coalesce(struct sk_buff *to, struct sk_buff *from,
+				 bool *headstolen, int *delta_truesize)
+{
+	return false;
+}
+#endif
+
 static struct sk_buff *wil_sring_reap_rx_edma(struct wil6210_priv *wil,
 					      struct wil_status_ring *sring)
 {
@@ -902,7 +1070,7 @@ again:
 		wil_err(wil, "Corrupt buff_id=%d, sring->swhead=%d\n",
 			buff_id, sring->swhead);
 		print_hex_dump(KERN_ERR, "RxS ", DUMP_PREFIX_OFFSET, 16, 1,
-			       msg, wil->use_compressed_rx_status ?
+			       (void *)msg, wil->use_compressed_rx_status ?
 			       sizeof(struct wil_rx_status_compressed) :
 			       sizeof(struct wil_rx_status_extended), false);
 
@@ -1001,10 +1169,8 @@ skipping:
 	if (!rxdata->skb) {
 		rxdata->skb = skb;
 	} else {
-		if (likely(skb_try_coalesce(rxdata->skb, skb, &headstolen,
-					    &delta))) {
-			kfree_skb_partial(skb, headstolen);
-		} else {
+		if (likely(!wil_skb_try_coalesce(rxdata->skb, skb, &headstolen,
+						 &delta))) {
 			wil_err(wil, "failed to merge skbs!\n");
 			kfree_skb(skb);
 			kfree_skb(rxdata->skb);
@@ -1051,6 +1217,12 @@ skipping:
 
 	wil_hex_dump_txrx("Rx ", DUMP_PREFIX_OFFSET, 16, 1,
 			  skb->data, skb_headlen(skb), false);
+
+	if (!wil->use_compressed_rx_status &&
+	    wil_check_amsdu(wil, msg, cid, rxdata, skb)) {
+		kfree_skb(skb);
+		goto again;
+	}
 
 	/* Has to be done after dma_unmap_single as skb->cb is also
 	 * used for holding the pa
@@ -1113,10 +1285,8 @@ void wil_rx_handle_edma(struct wil6210_priv *wil, int *quota)
 	wil_rx_refill_edma(wil);
 }
 
-static int wil_tx_desc_map_edma(union wil_tx_desc *desc,
-				dma_addr_t pa,
-				u32 len,
-				int ring_index)
+int wil_tx_desc_map_edma(union wil_tx_desc *desc, dma_addr_t pa, u32 len,
+			 int ring_index)
 {
 	struct wil_tx_enhanced_desc *d =
 		(struct wil_tx_enhanced_desc *)&desc->enhanced;
@@ -1148,6 +1318,26 @@ wil_get_next_tx_status_msg(struct wil_status_ring *sring, u8 *dr_bit,
 	/* make sure dr_bit is read before the rest of status msg */
 	rmb();
 	*msg = *_msg;
+}
+
+static inline void wil_dump_tx_status(struct wil6210_priv *wil,
+				      struct wil_ring_tx_status *msg)
+{
+	wil_err(wil,
+		"Status Msg: num_desc: %d, ring_id: %d, status: %d, desc_ready: %d, timestamp: 0x%x, d2: 0x%x, seq_num: 0x%x, w7: 0x%x\n",
+		msg->num_descriptors, msg->ring_id, msg->status,
+		msg->desc_ready, msg->timestamp, msg->d2, msg->seq_number,
+		msg->w7);
+}
+
+static inline void
+wil_tx_latency_calc_edma(struct wil6210_priv *wil,
+			 struct sk_buff *skb,
+			 struct wil_sta_info *sta,
+			 struct wil_ring_tx_status *msg)
+{
+	if (wil_tx_latency_calc_common(wil, skb, sta))
+		wil_dump_tx_status(wil, msg);
 }
 
 /* Clean up transmitted skb's from the Tx descriptor RING.
@@ -1241,6 +1431,9 @@ int wil_tx_sring_handler(struct wil6210_priv *wil,
 					  (const void *)&msg, sizeof(msg),
 					  false);
 
+			if (ctx->flags & WIL_CTX_FLAG_RESERVED_USED)
+				txdata->tx_reserved_count++;
+
 			wil_tx_desc_unmap_edma(dev,
 					       (union wil_tx_desc *)d,
 					       ctx);
@@ -1250,11 +1443,16 @@ int wil_tx_sring_handler(struct wil6210_priv *wil,
 					ndev->stats.tx_packets++;
 					ndev->stats.tx_bytes += skb->len;
 					if (stats) {
+						struct wil_sta_info *sta;
+
 						stats->tx_packets++;
 						stats->tx_bytes += skb->len;
+						sta = &wil->sta[cid];
 
-						wil_tx_latency_calc(wil, skb,
-							&wil->sta[cid]);
+						wil_tx_latency_calc_edma(wil,
+									 skb,
+									 sta,
+									 &msg);
 					}
 				} else {
 					ndev->stats.tx_errors++;
@@ -1406,7 +1604,7 @@ static int __wil_tx_ring_tso_edma(struct wil6210_priv *wil,
 	struct wil_ring_tx_data *txdata = &wil->ring_tx_data[ring_index];
 	int nr_frags = skb_shinfo(skb)->nr_frags;
 	int min_desc_required = nr_frags + 2; /* Headers, Head, Fragments */
-	int used, avail = wil_ring_avail_tx(ring);
+	int used, avail = wil_ring_avail_tx(ring) - txdata->tx_reserved_count;
 	int f, hdrlen, headlen;
 	int gso_type;
 	bool is_ipv4;
@@ -1546,18 +1744,32 @@ static int wil_ring_init_bcast_edma(struct wil6210_vif *vif, int ring_id,
 {
 	struct wil6210_priv *wil = vif_to_wil(vif);
 	struct wil_ring *ring = &wil->ring_tx[ring_id];
-	int rc;
+	int rc, sring_id = wil->tx_sring_idx;
 	struct wil_ring_tx_data *txdata = &wil->ring_tx_data[ring_id];
 
-	wil_dbg_misc(wil, "init bcast: ring_id=%d, sring_id=%d\n",
-		     ring_id, wil->tx_sring_idx);
+	wil_dbg_misc(wil, "init bcast: ring_id=%d\n", ring_id);
 
 	lockdep_assert_held(&wil->mutex);
 
-	wil_tx_data_init(txdata);
+	if (wil->ipa_handle) {
+		/* alloc bcast status ring */
+		sring_id = wil_find_free_sring(wil);
+		if (sring_id < 0)
+			return sring_id;
+
+		rc = wil_init_tx_sring(wil, WIL_IPA_BCAST_SRING_SIZE,
+				       sizeof(struct wil_ring_tx_status),
+				       sring_id);
+		if (rc)
+			return rc;
+
+		wil_ipa_set_bcast_sring_id(wil, sring_id);
+	}
+
+	wil_tx_data_init(wil, txdata);
 	ring->size = size;
 	ring->is_rx = false;
-	rc = wil_ring_alloc_desc_ring(wil, ring);
+	rc = wil_ring_alloc_desc_ring(wil, ring, true);
 	if (rc)
 		goto out;
 
@@ -1566,7 +1778,7 @@ static int wil_ring_init_bcast_edma(struct wil6210_vif *vif, int ring_id,
 	if (!vif->privacy)
 		txdata->dot1x_open = true;
 
-	rc = wil_wmi_bcast_desc_ring_add(vif, ring_id);
+	rc = wil_wmi_bcast_desc_ring_add(vif, ring_id, sring_id);
 	if (rc)
 		goto out_free;
 
@@ -1580,16 +1792,28 @@ static int wil_ring_init_bcast_edma(struct wil6210_vif *vif, int ring_id,
 	wil_ring_free_edma(wil, ring);
 
 out:
+	if (wil->ipa_handle) {
+		wil_sring_free(wil, &wil->srings[sring_id]);
+		wil_ipa_set_bcast_sring_id(wil, WIL6210_MAX_STATUS_RINGS);
+	}
+
 	return rc;
 }
 
 static void wil_tx_fini_edma(struct wil6210_priv *wil)
 {
-	struct wil_status_ring *sring = &wil->srings[wil->tx_sring_idx];
+	int i;
 
-	wil_dbg_misc(wil, "free TX sring\n");
+	for (i = 0; i < WIL6210_MAX_STATUS_RINGS; i++) {
+		struct wil_status_ring *sring = &wil->srings[i];
 
-	wil_sring_free(wil, sring);
+		if (!sring->va || sring->is_rx)
+			continue;
+
+		wil_dbg_misc(wil, "free TX sring %d\n", i);
+
+		wil_sring_free(wil, sring);
+	}
 }
 
 static void wil_rx_data_free(struct wil_status_ring *sring)
@@ -1605,6 +1829,10 @@ static void wil_rx_fini_edma(struct wil6210_priv *wil)
 {
 	struct wil_ring *ring = &wil->ring_rx;
 	int i;
+
+	if (wil->ipa_handle)
+		/* in ipa offload, this is done part of wil_ipa_uninit */
+		return;
 
 	wil_dbg_misc(wil, "rx_fini_edma\n");
 

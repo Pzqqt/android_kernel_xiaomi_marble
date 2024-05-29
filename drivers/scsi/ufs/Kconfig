@@ -50,6 +50,17 @@ config SCSI_UFSHCD
 	  However, do not compile this as a module if your root file system
 	  (the one containing the directory /) is located on a UFS device.
 
+config UFS_DBG
+	bool "Universal Flash Storage Debug Mode"
+	depends on SCSI_UFSHCD
+	help
+	This selects the debug mode for ufs vendor driver.
+	  Enables tracing for QTI ufs driver.
+	  This also enables ftrace for ufs core and SCSI.
+	  Enabling this would have an adverse performance impact on disk IO.
+
+	  If unsure, say N.
+
 config SCSI_UFSHCD_PCI
 	tristate "PCI bus based UFS Controller support"
 	depends on SCSI_UFSHCD && PCI
@@ -183,6 +194,14 @@ config SCSI_UFS_CRYPTO
 	  Enabling this makes it possible for the kernel to use the crypto
 	  capabilities of the UFS device (if present) to perform crypto
 	  operations on data being transferred to/from the device.
+
+config SCSI_UFS_CRYPTO_QTI
+	tristate "Vendor specific UFS Crypto Engine Support"
+	depends on SCSI_UFS_CRYPTO
+	help
+	 Enable Vendor Crypto Engine Support in UFS
+	 Enabling this allows kernel to use UFS crypto operations defined
+	 and implemented by QTI.
 
 config SCSI_UFS_HPB
 	bool "Support UFS Host Performance Booster"

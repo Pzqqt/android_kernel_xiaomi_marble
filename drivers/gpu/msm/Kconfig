@@ -1,0 +1,127 @@
+# SPDX-License-Identifier: GPL-2.0-only
+config QCOM_KGSL
+	tristate "Qualcomm Technologies, Inc. 3D Graphics driver"
+	depends on ARCH_QCOM
+	depends on QCOM_QFPROM
+	select QCOM_MDT_LOADER
+	select INTERVAL_TREE
+	select TRACE_GPU_MEM
+	help
+	  3D graphics driver for the Adreno family of GPUs from QTI.
+	  Required to use hardware accelerated OpenGL, compute and Vulkan
+	  on QTI targets. This includes power management, memory management,
+	  and scheduling for the Adreno GPUs.
+
+config DEVFREQ_GOV_QCOM_ADRENO_TZ
+	tristate "Qualcomm Technologies, Inc. GPU frequency governor"
+	depends on PM_DEVFREQ && QCOM_KGSL
+	help
+	  GPU frequency governor for the Adreno GPU. Sets the frequency
+	  using an "on demand" algorithm in conjunction with other
+	  components on Adreno platforms. This is not useful for non-Adreno
+	  devices.
+
+config DEVFREQ_GOV_QCOM_GPUBW_MON
+	tristate "Qualcomm Technologies, Inc. GPU bandwidth governor"
+	depends on DEVFREQ_GOV_QCOM_ADRENO_TZ
+	help
+	  This governor works together with the Adreno GPU governor to
+	  select bus frequency votes using an "on-demand" algorithm.
+	  This governor will not be useful for non-Adreno based
+	  targets.
+
+config QCOM_KGSL_FENCE_TRACE
+	bool "Enable built-in tracing for adreno fence timeouts"
+	depends on QCOM_KGSL
+	help
+	  A boolean flag used to create a KGSL-specific tracing instance
+	  under <tracefs>/tracing/instances/kgsl-fence that can be used
+	  for debugging timeouts for fences between KGSL-contexts and
+	  sync-point blocks. If unsure, say 'N' here.
+
+config QCOM_ADRENO_DEFAULT_GOVERNOR
+	string "devfreq governor for the adreno core"
+	default "msm-adreno-tz"
+	depends on QCOM_KGSL
+
+config QCOM_KGSL_CORESIGHT
+	bool "Enable coresight support for the Adreno GPU"
+	depends on QCOM_KGSL && CORESIGHT
+	help
+	  When enabled, the Adreno GPU is available as a source for Coresight
+	  data. On a6xx targets there are two sources available for the GX and
+	  CX domains respectively. Debug kernels should say 'Y' here.
+
+config QCOM_KGSL_IOCOHERENCY_DEFAULT
+	bool "Enable I/O coherency on cached GPU memory by default"
+	depends on QCOM_KGSL
+	default y if ARCH_LAHAINA
+	help
+	 Say 'Y' here to enable I/O cache coherency by default on targets that
+	 support hardware I/O coherency. If enabled all cached GPU memory
+	 will use I/O coherency regardless of the user flags. If not enabled
+	 the user can still selectively enable I/O coherency with a flag.
+
+config QCOM_KGSL_IDLE_TIMEOUT
+	int
+	depends on QCOM_KGSL
+	default 80
+	help
+	  GPU idle timeout for Adreno GPU. This value decides after how
+	  long the GPU will go into slumber. A higher value will mean that
+	  the GPU is powered ON for a longer duration which will have
+	  power costs.
+
+config QCOM_KGSL_CONTEXT_DEBUG
+	bool "Log kgsl context information for all processes"
+	depends on QCOM_KGSL
+	help
+	  When enabled, total number of KGSL contexts, number of attached and
+	  detached contexts are dumped into kernel log for all the processes.
+	  This gives insight about the number of contexts held by each process.
+
+config QCOM_KGSL_SORT_POOL
+	bool "Sort pool page list based on physical address"
+	depends on QCOM_KGSL
+	default y
+	help
+	  When enabled, the pool page list is sorted based on physical
+	  addresses. This can be turned on for targets where better DDR
+	  efficiency is attained on accesses for adjacent memory.
+
+config QCOM_KGSL_QDSS_STM
+	bool "Enable support for QDSS STM for Adreno GPU"
+	depends on QCOM_KGSL && CORESIGHT
+	help
+	  When enabled, the Adreno GPU QDSS STM support is enabled. GPU QDSS STM
+	  memory will be mapped to GPU and QDSS clock needed to access this memory
+	  is voted. Debug kernels should say 'Y' here.
+
+config QCOM_KGSL_USE_SHMEM
+	bool "Enable using shmem for memory allocations"
+	depends on QCOM_KGSL
+	help
+	  Say 'Y' to enable using shmem for memory allocations. If enabled,
+	  there will be no support for the memory pools and higher order pages.
+	  But using shmem will help in making kgsl pages available for
+	  reclaiming.
+
+config QCOM_KGSL_PROCESS_RECLAIM
+	bool "Make driver pages available for reclaim"
+	depends on QCOM_KGSL
+	select QCOM_KGSL_USE_SHMEM
+	help
+	  Say 'Y' to make driver pages available for reclaiming. If enabled,
+	  shmem will be used for allocation. kgsl would know the process
+	  foreground/background activity through the sysfs entry exposed per
+	  process. Based on this kgsl can unpin given number of pages from
+	  background processes and make them available to the shrinker.
+
+config QCOM_KGSL_HIBERNATION
+	bool "Enable Hibernation support in KGSL"
+	depends on QCOM_KGSL && HIBERNATION
+	help
+	  Say 'Y' to enable hibernation support in kgsl.
+	  If enabled, kgsl will register necessary power manager callbacks to
+	  support hibernation. Also, driver will handle secure memory during
+	  hibernation entry and exit.

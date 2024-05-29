@@ -1,11 +1,14 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef __DRIVERS_INTERCONNECT_QCOM_ICC_RPMH_H__
 #define __DRIVERS_INTERCONNECT_QCOM_ICC_RPMH_H__
 
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
 #include <dt-bindings/interconnect/qcom,icc.h>
 
 #define to_qcom_provider(_provider) \
@@ -24,7 +27,12 @@ struct qcom_icc_provider {
 	struct device *dev;
 	struct qcom_icc_bcm **bcms;
 	size_t num_bcms;
-	struct bcm_voter *voter;
+	struct list_head probe_list;
+	struct regmap *regmap;
+	struct clk_bulk_data *clks;
+	int num_clks;
+	struct bcm_voter **voters;
+	size_t num_voters;
 };
 
 /**
@@ -47,7 +55,7 @@ struct bcm_db {
 #define MAX_VCD			10
 
 /**
- * struct qcom_icc_node - Qualcomm specific interconnect nodes
+ * struct qcom_icc_node - QTI specific interconnect nodes
  * @name: the node name used in debugfs
  * @links: an array of nodes where we can go next while traversing
  * @id: a unique node identifier
@@ -56,8 +64,10 @@ struct bcm_db {
  * @buswidth: width of the interconnect between a node and the bus
  * @sum_avg: current sum aggregate value of all avg bw requests
  * @max_peak: current max aggregate value of all peak bw requests
+ * @perf_mode: current OR aggregate value of all QCOM_ICC_TAG_PERF_MODE votes
  * @bcms: list of bcms associated with this logical node
  * @num_bcms: num of @bcms
+ * @disabled : flag used to indicate state of icc node
  */
 struct qcom_icc_node {
 	const char *name;
@@ -68,8 +78,13 @@ struct qcom_icc_node {
 	u16 buswidth;
 	u64 sum_avg[QCOM_ICC_NUM_BUCKETS];
 	u64 max_peak[QCOM_ICC_NUM_BUCKETS];
+	bool perf_mode[QCOM_ICC_NUM_BUCKETS];
 	struct qcom_icc_bcm *bcms[MAX_BCM_PER_NODE];
 	size_t num_bcms;
+	struct regmap *regmap;
+	struct qcom_icc_qosbox *qosbox;
+	const struct qcom_icc_noc_ops *noc_ops;
+	bool disabled;
 };
 
 /**
@@ -82,8 +97,11 @@ struct qcom_icc_node {
  * @vote_y: aggregated threshold values, represents peak_bw when @type is bw bcm
  * @vote_scale: scaling factor for vote_x and vote_y
  * @enable_mask: optional mask to send as vote instead of vote_x/vote_y
+ * @perf_mode_mask: mask to OR with enable_mask when QCOM_ICC_TAG_PERF_MODE is set
  * @dirty: flag used to indicate whether the bcm needs to be committed
  * @keepalive: flag used to indicate whether a keepalive is required
+ * @keepalive_early: keepalive only prior to sync-state
+ * @disabled: flag used to indicate state of bcm node
  * @aux_data: auxiliary data used when calculating threshold values and
  * communicating with RPMh
  * @list: used to link to other bcms when compiling lists for commit
@@ -99,11 +117,15 @@ struct qcom_icc_bcm {
 	u64 vote_y[QCOM_ICC_NUM_BUCKETS];
 	u64 vote_scale;
 	u32 enable_mask;
+	u32 perf_mode_mask;
 	bool dirty;
 	bool keepalive;
+	bool keepalive_early;
+	bool disabled;
 	struct bcm_db aux_data;
 	struct list_head list;
 	struct list_head ws_list;
+	int voter_idx;
 	size_t num_nodes;
 	struct qcom_icc_node *nodes[];
 };
@@ -114,10 +136,13 @@ struct qcom_icc_fabric {
 };
 
 struct qcom_icc_desc {
+	const struct regmap_config *config;
 	struct qcom_icc_node **nodes;
 	size_t num_nodes;
 	struct qcom_icc_bcm **bcms;
 	size_t num_bcms;
+	char **voters;
+	size_t num_voters;
 };
 
 #define DEFINE_QNODE(_name, _id, _channels, _buswidth, ...)		\
@@ -132,9 +157,15 @@ struct qcom_icc_desc {
 
 int qcom_icc_aggregate(struct icc_node *node, u32 tag, u32 avg_bw,
 		       u32 peak_bw, u32 *agg_avg, u32 *agg_peak);
+int qcom_icc_aggregate_stub(struct icc_node *node, u32 tag, u32 avg_bw,
+			    u32 peak_bw, u32 *agg_avg, u32 *agg_peak);
 int qcom_icc_set(struct icc_node *src, struct icc_node *dst);
+int qcom_icc_set_stub(struct icc_node *src, struct icc_node *dst);
 struct icc_node_data *qcom_icc_xlate_extended(struct of_phandle_args *spec, void *data);
 int qcom_icc_bcm_init(struct qcom_icc_bcm *bcm, struct device *dev);
 void qcom_icc_pre_aggregate(struct icc_node *node);
-
+int qcom_icc_get_bw_stub(struct icc_node *node, u32 *avg, u32 *peak);
+int qcom_icc_rpmh_probe(struct platform_device *pdev);
+int qcom_icc_rpmh_remove(struct platform_device *pdev);
+void qcom_icc_rpmh_sync_state(struct device *dev);
 #endif
