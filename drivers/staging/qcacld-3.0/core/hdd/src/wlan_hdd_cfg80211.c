@@ -7751,8 +7751,6 @@ const struct nla_policy wlan_hdd_wifi_config_policy[
 							.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_FT_OVER_DS] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ARP_NS_OFFLOAD] = {.type = NLA_U8 },
-	[QCA_WLAN_VENDOR_ATTR_CONFIG_WFC_STATE] = {
-		.type = NLA_U8 },
 };
 
 static const struct nla_policy
@@ -10081,39 +10079,6 @@ static int hdd_set_arp_ns_offload(struct hdd_adapter *adapter,
 #endif
 
 /**
- * hdd_set_wfc_state() - Set wfc state
- * @adapter: hdd adapter
- * @attr: pointer to nla attr
- *
- * Return: 0 on success, negative on failure
- */
-static int hdd_set_wfc_state(struct hdd_adapter *adapter,
-			     const struct nlattr *attr)
-{
-	uint8_t cfg_val;
-	enum pld_wfc_mode set_val;
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	int errno;
-
-	errno = wlan_hdd_validate_context(hdd_ctx);
-	if (errno)
-		return errno;
-
-	cfg_val = nla_get_u8(attr);
-
-	hdd_debug_rl("set wfc state %d", cfg_val);
-	if (cfg_val == 0)
-		set_val = PLD_WFC_MODE_OFF;
-	else if (cfg_val == 1)
-		set_val = PLD_WFC_MODE_ON;
-	else
-		return -EINVAL;
-
-	return pld_set_wfc_mode(hdd_ctx->parent_dev, set_val);
-
-}
-
-/**
  * typedef independent_setter_fn - independent attribute handler
  * @adapter: The adapter being configured
  * @attr: The nl80211 attribute being applied
@@ -10231,8 +10196,6 @@ static const struct independent_setters independent_setters[] = {
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_ARP_NS_OFFLOAD,
 	 hdd_set_arp_ns_offload},
 #endif
-	{QCA_WLAN_VENDOR_ATTR_CONFIG_WFC_STATE,
-	 hdd_set_wfc_state},
 };
 
 #ifdef WLAN_FEATURE_ELNA
