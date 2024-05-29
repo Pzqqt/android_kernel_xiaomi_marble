@@ -5058,16 +5058,6 @@ enum qca_wlan_vendor_attr_config {
 	 */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_ARP_NS_OFFLOAD = 81,
 
-	/* 8-bit unsigned value, whenever wifi calling (wfc) begin or end,
-	 * Userspace sends this information to driver/firmware to configure
-	 * wfc state. Driver/Firmware uses this information to
-	 * optimize power savings, rate adaption, roaming, etc.
-	 *
-	 * 1 - wfc is on.
-	 * 0 - wfc is off.
-	 */
-	QCA_WLAN_VENDOR_ATTR_CONFIG_WFC_STATE = 86,
-
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_CONFIG_MAX =
