@@ -4264,9 +4264,13 @@ static int arm_smmu_pm_prepare(struct device *dev)
 
 static const struct dev_pm_ops arm_smmu_pm_ops = {
 	.prepare = arm_smmu_pm_prepare,
-	SET_SYSTEM_SLEEP_PM_OPS(arm_smmu_pm_suspend, arm_smmu_pm_resume)
 	SET_RUNTIME_PM_OPS(arm_smmu_runtime_suspend,
 			   arm_smmu_runtime_resume, NULL)
+	.suspend  = arm_smmu_pm_suspend,
+	.resume   = arm_smmu_pm_resume,
+	.thaw_early = arm_smmu_pm_resume,
+	.freeze_late = arm_smmu_pm_suspend,
+	.restore_early = arm_smmu_pm_resume,
 };
 
 
