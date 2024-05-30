@@ -99,8 +99,6 @@ static const struct tsens_ops ops_generic_v2 = {
 	.get_cold_status  = get_cold_int_status,
 	.suspend = tsens_v2_tsens_suspend,
 	.resume = tsens_v2_tsens_resume,
-	.freeze = tsens_v2_tsens_freeze,
-	.restore = tsens_v2_tsens_restore,
 };
 
 struct tsens_plat_data data_tsens_v2 = {

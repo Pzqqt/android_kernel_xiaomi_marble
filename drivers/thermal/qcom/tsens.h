@@ -83,8 +83,6 @@ struct tsens_ops {
 	int (*resume)(struct tsens_priv *priv);
 	int (*get_trend)(struct tsens_sensor *s, enum thermal_trend *trend);
 	int (*get_cold_status)(const struct tsens_sensor *s, bool *cold_status);
-	int (*freeze)(struct tsens_priv *priv);
-	int (*restore)(struct tsens_priv *priv);
 };
 
 #define REG_FIELD_FOR_EACH_SENSOR11(_name, _offset, _startbit, _stopbit) \
@@ -617,8 +615,6 @@ struct tsens_priv {
 	int				crit_irq;
 	int				cold_irq;
 
-	bool			tm_disable_on_suspend;
-
 	struct dentry			*debug_root;
 	struct dentry			*debug;
 	struct tsens_sensor		*cold_sensor;
@@ -637,9 +633,6 @@ int get_temp_common(const struct tsens_sensor *s, int *temp);
 int get_cold_int_status(const struct tsens_sensor *s, bool *cold_status);
 int tsens_v2_tsens_suspend(struct tsens_priv *priv);
 int tsens_v2_tsens_resume(struct tsens_priv *priv);
-int tsens_v2_tsens_freeze(struct tsens_priv *priv);
-int tsens_v2_tsens_restore(struct tsens_priv *priv);
-
 
 /* TSENS target */
 extern struct tsens_plat_data data_8960;

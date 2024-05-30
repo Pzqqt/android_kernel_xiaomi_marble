@@ -1000,6 +1000,9 @@ static int  __maybe_unused tsens_suspend(struct device *dev)
 {
 	struct tsens_priv *priv = dev_get_drvdata(dev);
 
+	if (!pm_suspend_via_firmware())
+		return 0;
+
 	if (priv->ops && priv->ops->suspend)
 		return priv->ops->suspend(priv);
 
@@ -1009,6 +1012,9 @@ static int  __maybe_unused tsens_suspend(struct device *dev)
 static int __maybe_unused tsens_resume(struct device *dev)
 {
 	struct tsens_priv *priv = dev_get_drvdata(dev);
+
+	if (!pm_suspend_via_firmware())
+		return 0;
 
 	if (priv->ops && priv->ops->resume)
 		return priv->ops->resume(priv);
@@ -1020,8 +1026,8 @@ static int __maybe_unused tsens_freeze(struct device *dev)
 {
 	struct tsens_priv *priv = dev_get_drvdata(dev);
 
-	if (priv->ops && priv->ops->freeze)
-		return priv->ops->freeze(priv);
+	if (priv->ops && priv->ops->suspend)
+		return priv->ops->suspend(priv);
 
 	return 0;
 }
@@ -1030,8 +1036,8 @@ static int __maybe_unused tsens_restore(struct device *dev)
 {
 	struct tsens_priv *priv = dev_get_drvdata(dev);
 
-	if (priv->ops && priv->ops->restore)
-		return priv->ops->restore(priv);
+	if (priv->ops && priv->ops->resume)
+		return priv->ops->resume(priv);
 
 	return 0;
 }
@@ -1134,9 +1140,6 @@ static int tsens_reinit(struct tsens_priv *priv)
 
 int tsens_v2_tsens_suspend(struct tsens_priv *priv)
 {
-	if (!priv->tm_disable_on_suspend)
-		return 0;
-
 	if (priv->uplow_irq > 0) {
 		disable_irq_nosync(priv->uplow_irq);
 		disable_irq_wake(priv->uplow_irq);
@@ -1156,9 +1159,6 @@ int tsens_v2_tsens_suspend(struct tsens_priv *priv)
 
 int tsens_v2_tsens_resume(struct tsens_priv *priv)
 {
-	if (!priv->tm_disable_on_suspend)
-		return 0;
-
 	tsens_reinit(priv);
 
 	if (priv->uplow_irq > 0) {
@@ -1175,24 +1175,6 @@ int tsens_v2_tsens_resume(struct tsens_priv *priv)
 		enable_irq(priv->cold_irq);
 		enable_irq_wake(priv->cold_irq);
 	}
-
-	return 0;
-}
-
-int tsens_v2_tsens_freeze(struct tsens_priv *priv)
-{
-
-	if (priv->ops && priv->ops->suspend)
-		return priv->ops->suspend(priv);
-
-	return 0;
-}
-
-int tsens_v2_tsens_restore(struct tsens_priv *priv)
-{
-
-	if (priv->ops && priv->ops->resume)
-		return priv->ops->resume(priv);
 
 	return 0;
 }
@@ -1251,12 +1233,9 @@ static int tsens_register(struct tsens_priv *priv)
 					&tsens_cold_of_ops);
 		if (!IS_ERR_OR_NULL(tzd)) {
 			priv->cold_sensor->tzd = tzd;
-			ret = tsens_register_irq(priv, "cold",
+			tsens_register_irq(priv, "cold",
 					tsens_cold_irq_thread, &priv->cold_irq);
 		}
-
-		priv->cold_sensor->tzd = tzd;
-		ret = tsens_register_irq(priv, "cold", tsens_cold_irq_thread, &priv->cold_irq);
 	}
 	return ret;
 }
@@ -1333,9 +1312,6 @@ static int tsens_probe(struct platform_device *pdev)
 		}
 	}
 
-	priv->tm_disable_on_suspend =
-				of_property_read_bool(np, "tm-disable-on-suspend");
-
 	return tsens_register(priv);
 }
 
@@ -1352,8 +1328,10 @@ static int tsens_remove(struct platform_device *pdev)
 }
 
 static const struct dev_pm_ops tsens_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(tsens_suspend, tsens_resume)
-	SET_SYSTEM_SLEEP_PM_OPS(tsens_freeze, tsens_restore)
+	.freeze = tsens_freeze,
+	.restore = tsens_restore,
+	.suspend = tsens_suspend,
+	.resume = tsens_resume,
 };
 
 static struct platform_driver tsens_driver = {
