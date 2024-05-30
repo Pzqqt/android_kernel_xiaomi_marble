@@ -1,0 +1,44 @@
+ifneq (, $(filter y, $(CONFIG_ARCH_LAHAINA) $(CONFIG_ARCH_WAIPIO) $(CONFIG_ARCH_PARROT)))
+ccflags-y	+= -DRMNET_LA_PLATFORM
+endif
+
+ifeq ($(CONFIG_ARCH_SDXNIGHTJAR), y)
+ccflags-y	+= -DRMNET_TRACE_INCLUDE_LE
+endif
+
+ifeq ($(CONFIG_ARCH_SDXLEMUR), y)
+ccflags-y       += -Wframe-larger-than=2048
+endif
+
+obj-m += rmnet_core.o
+
+#core sources
+rmnet_core-y := \
+	rmnet_config.o \
+	rmnet_handlers.o \
+	rmnet_descriptor.o \
+	rmnet_genl.o \
+	rmnet_map_command.o \
+	rmnet_map_data.o \
+	rmnet_module.o \
+	rmnet_vnd.o
+
+rmnet_core-y += \
+	rmnet_ll.o \
+	rmnet_ll_ipa.o
+
+#DFC sources
+rmnet_core-y += \
+	qmi_rmnet.o \
+	wda_qmi.o \
+	dfc_qmi.o \
+	dfc_qmap.o \
+	rmnet_qmap.o \
+	rmnet_ll_qmap.o
+
+ifneq (, $(filter y, $(CONFIG_ARCH_LAHAINA) $(CONFIG_ARCH_WAIPIO) $(CONFIG_ARCH_PARROT)))
+obj-m += rmnet_ctl.o
+rmnet_ctl-y := \
+	rmnet_ctl_client.o \
+	rmnet_ctl_ipa.o
+endif
