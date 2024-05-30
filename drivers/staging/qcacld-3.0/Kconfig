@@ -1,0 +1,1396 @@
+comment "Qualcomm Atheros CLD WLAN module"
+
+config QCA_CLD_WLAN
+
+	tristate "Qualcomm Atheros CLD WLAN module"
+	default n
+	help
+	Add support for the Qualcomm Atheros CLD WLAN module
+
+if QCA_CLD_WLAN != n
+
+config QCACLD_WLAN_LFR3
+	bool "Enable the WLAN Legacy Fast Roaming feature Version 3"
+	default n
+
+config PRIMA_WLAN_OKC
+	bool "Enable the Prima WLAN Opportunistic Key Caching feature"
+	default n
+
+config WLAN_FEATURE_11W
+	bool "Enable the WLAN 802.11w Protected Management Frames feature"
+	default n
+
+config WLAN_FEATURE_LPSS
+	bool "Enable the WLAN LPSS feature"
+	default n
+
+config QCOM_VOWIFI_11R
+	bool "Enable Fast Transition (11r) feature"
+	default n
+
+config QCACLD_FEATURE_NAN
+	bool "Enable NAN feature"
+	default n
+
+config QCACLD_FEATURE_GREEN_AP
+	bool "Enable Green AP feature"
+	default n
+
+config HELIUMPLUS
+	bool "Enable Beeliner based descriptor structures for Helium"
+	default n
+
+config 64BIT_PADDR
+	bool "Enable 37-bit physical/bus addresses"
+	depends on HELIUMPLUS
+	default n
+
+config QCOM_TDLS
+	bool "Enable TDLS feature"
+	default n
+
+config QCOM_LTE_COEX
+	bool "Enable QCOM LTE Coex feature"
+	default n
+
+config MPC_UT_FRAMEWORK
+	bool "Enable Unit test framework for multiport concurrency"
+	default n
+
+config WLAN_OFFLOAD_PACKETS
+	bool "Enable offload packets feature"
+	default n
+
+config FEATURE_TSO
+	bool "Enable TCP Segmentation Offload"
+	depends on HELIUMPLUS
+	default n
+
+config FEATURE_TSO_DEBUG
+	bool "Enable TCP Segmentation Offload with debug"
+	depends on FEATURE_TSO
+	default n
+
+config WLAN_FASTPATH
+	bool "Enable fastpath for datapackets"
+	default n
+
+config WLAN_NAPI
+	bool "Enable NAPI - datapath rx"
+	default n
+
+config WLAN_NAPI_DEBUG
+       bool "Enable debug logging on NAPI"
+       depends on WLAN_NAPI
+       default n
+
+config WLAN_TX_FLOW_CONTROL_V2
+	bool "Enable tx flow control version:2"
+	default n
+
+config WLAN_LRO
+	bool "Enable Large Receive Offload"
+	depends on HELIUMPLUS
+	depends on INET_LRO
+	default n
+
+config WLAN_SYNC_TSF
+	bool "Enable QCOM sync multi devices tsf feature"
+	default n
+
+config LFR_SUBNET_DETECTION
+	bool "Enable LFR Subnet Change Detection"
+	default n
+
+config MCC_TO_SCC_SWITCH
+	bool "Enable MCC to SCC Switch Logic"
+	default n
+
+config QCACLD_WLAN_LFR2
+	bool "Enable the WLAN Legacy Fast Roaming feature Version 2"
+	default n
+
+config WLAN_FEATURE_DISA
+	bool "Enable DISA certification feature"
+	default n
+
+config WLAN_FEATURE_FIPS
+	bool "Enable FIPS certification feature"
+	default n
+
+config WLAN_FEATURE_11AX
+	bool "Enable 11AX(High Efficiency) feature"
+	default n
+
+config ICMP_DISABLE_PS
+	bool "Enable ICMP packet disable powersave feature"
+	default n
+
+config BUILD_TIMESTAMP
+	bool "Embed timestamp in wlan version"
+	default n
+
+config WLAN_FEATURE_FILS
+	bool "Enable FILS feature"
+	default n
+
+config NAN_CONVERGENCE
+	bool "Enable NAN_CONVERGENCE feature"
+	default n
+
+config WLAN_OBJMGR_DEBUG
+	bool "Enable WLAN Obj Mgr Debug services"
+	default n
+
+config WLAN_FEATURE_DFS_OFFLOAD
+	bool "Enable dfs offload feature"
+	default n
+
+config WLAN_FEATURE_SARV1_TO_SARV2
+	bool "Enable conversion of SAR v1 to v2 feature"
+	default n
+
+config HANDLE_RX_REROUTE_ERR
+	bool "Enable handle rx reroute error feature"
+	default n
+
+config ICNSS2_MODULE
+	bool "Enable ICNSS2 module"
+	default n
+
+config CNSS_GENL_MODULE
+	bool "Enable CNSS general module"
+	default n
+
+config CNSS_UTILS_MODULE
+	bool "Enable CNSS utils module"
+	default n
+
+config WCNSS_MEM_PRE_ALLOC_MODULE
+	bool "Enable WCNSS memory pre allocation module"
+	default n
+
+config ROME_IF
+	string "Enable ROME_IF"
+
+config ICNSS2_HELIUM
+	bool "Enable ICNSS2 feature for Helium"
+	default n
+
+config PLD_SNOC_ICNSS_FLAG
+	bool "Enable pld snoc ICNSS flag"
+	default n
+
+config BUILD_TAG
+	bool "Enable build tag feature"
+	default n
+
+config WLAN_FEATURE_MBSSID
+	bool "Enable wlan MBSSID feature"
+	default n
+
+config WLAN_FEATURE_P2P_P2P_STA
+	bool "Enable P2P P2P STA concurrency feature"
+	default n
+
+config WLAN_SYSFS
+	bool "Enable sysfs feature"
+	default n
+
+config THERMAL_STATS_SUPPORT
+	bool "Enable thermal stats support"
+	default n
+
+config WLAN_SYSFS_STA_INFO
+	bool "Enable sysfs STA info feature"
+	default n
+
+config WLAN_SYSFS_CHANNEL
+	bool "Enable sysfs SAP/P2P GO operation channel feature"
+	default n
+
+config WLAN_SYSFS_FW_MODE_CFG
+	bool "Enable sysfs firmware mode configuration feature"
+	default n
+
+config WLAN_SYSFS_MEM_STATS
+	bool "Enable sysfs memory stats feature"
+	default n
+
+config WLAN_SYSFS_CONNECT_INFO
+	bool "Enable sysfs connection info feature"
+	default n
+
+config WLAN_SYSFS_DCM
+	bool "Enable sysfs DCM feature"
+	default n
+
+config WLAN_SYSFS_TX_STBC
+	bool "Enable sysfs transmission STBC feature"
+	default n
+
+config WLAN_SYSFS_WLAN_DBG
+	bool "Enable sysfs wlan debug feature"
+	default n
+
+config WLAN_SYSFS_SCAN_CFG
+	bool "Enable sysfs wlan scan configuration feature"
+	default n
+
+config WLAN_SYSFS_MONITOR_MODE_CHANNEL
+	bool "Enable sysfs monitor mode channel info feature"
+	default n
+
+config WLAN_SYSFS_RADAR
+	bool "Enable sysfs radar detection feature"
+	default n
+
+config WLAN_SYSFS_RTS_CTS
+	bool "Enable sysfs RTS CTS feature"
+	default n
+
+config WLAN_SYSFS_HE_BSS_COLOR
+	bool "Enable sysfs he bss color feature"
+	default n
+
+config WLAN_SYSFS_DP_TRACE
+	bool "Enable sysfs DP trace feature"
+	default n
+
+config WLAN_SYSFS_STATS
+	bool "Enable sysfs stats feature"
+	default n
+
+config WLAN_SYSFS_TDLS_PEERS
+	bool "Enable sysfs tdls peers feature"
+	default n
+
+config WLAN_SYSFS_TEMPERATURE
+	bool "Enable sysfs temprature feature"
+	default n
+
+config WLAN_SYSFS_RANGE_EXT
+	bool "Enable sysfs range ext feature"
+	default n
+
+config WLAN_REASSOC
+	bool "Enable wlan reassociation feature"
+	default n
+
+config WLAN_SCAN_DISABLE
+	bool "Enable wlan scan disable feature"
+	default n
+
+config WLAN_WOW_ITO
+	bool "Enable WOW ITO feature"
+	default n
+
+config WLAN_WOWL_ADD_PTRN
+	bool "Enable WOWL add pattern feature"
+	default n
+
+config WLAN_WOWL_DEL_PTRN
+	bool "Enable WOWL delete pattern feature"
+	default n
+
+config WLAN_TXRX_FW_ST_RST
+	bool "Enable txrx firmware ST RST feature"
+	default n
+
+config WLAN_GTX_BW_MASK
+	bool "Enable GTX bandwidth mask feature"
+	default n
+
+config WLAN_TXRX_FW_STATS
+	bool "Enable firmware txrx stats feature"
+	default n
+
+config WLAN_TXRX_STATS
+	bool "Enable txrx stats feature"
+	default n
+
+config WLAN_THERMAL_CFG
+	bool "Enable thermal configuration feature"
+	default n
+
+config WLAN_DL_MODES
+	bool "Enable DL modes feature"
+	default n
+
+config WLAN_DUMP_IN_PROGRESS
+	bool "Enable dump in progress feature"
+	default n
+
+config WLAN_BMISS
+	bool "Enable beacon miss feature"
+	default n
+
+config WLAN_FREQ_LIST
+	bool "Enable frequency list feature"
+	default n
+
+config DP_PKT_ADD_TIMESTAMP
+	bool "Enable datapath packet add timestamp feature"
+	default n
+
+config WLAN_POWER_DEBUG
+	bool "Enable power debug feature"
+	default n
+
+config FEATURE_BECN_STATS
+	bool "Enable beacon stats feature"
+	default n
+
+config WLAN_FEATURE_MEDIUM_ASSESS
+	bool "Enable medium assess feature"
+	default n
+
+config WLAN_DISABLE_EXPORT_SYMBOL
+	bool "Enable feature to support disable export symbol"
+	default n
+
+config QCACLD_FEATURE_APF
+	bool "Enable APF feature"
+	default n
+
+config QCACLD_FEATURE_FW_STATE
+	bool "Enable firmware state feature"
+	default n
+
+config WLAN_FEATURE_ACTION_OUI
+	bool "Enable action oui feature"
+	default n
+
+config ADAPTIVE_11R
+	bool "Enable adaptive 11R feature"
+	default n
+
+config SAE_SINGLE_PMK
+	bool "Enable single PMK feature"
+	default n
+
+config MULTI_CLIENT_LL_SUPPORT
+	bool "Enable multiple client ll support feature"
+	default n
+
+config FEATURE_MSCS
+	bool "Enable MSCS feature"
+	default n
+
+config FEATURE_EPPING
+	bool "Enable EPPING feature"
+	default n
+
+config WLAN_FEATURE_SAE
+	bool "Enable SAE authentication feature"
+	default n
+
+config POWER_MANAGEMENT_OFFLOAD
+	bool "Enable power managment offloadto fw feature"
+	default n
+
+config LOCK_STATS_ON
+	bool "Enable lock stats support"
+	default n
+
+config WLAN_OBJMGR_REF_ID_TRACE
+	bool "Enable objmgr ref id trace services"
+	default n
+
+config LL_DP_SUPPORT
+	bool "Enable LL DP feature support"
+	default n
+
+config QMI_SUPPORT
+	bool "Enable QMI bus support"
+	default n
+
+config WIFI_3_0_ADRASTEA
+	bool "Enable wifi 3 Adrastea support"
+	default n
+
+config ADRASTEA_RRI_ON_DDR
+	bool "Enable RRI on DDR for Adrastea"
+	default n
+
+config ATH_PROCFS_DIAG_SUPPORT
+	bool "Enable athdiag procfs debug support for adrastea"
+	default n
+
+config ATH_11AC_TXCOMPACT
+	bool "Enable 11AC TX compact feature for adrastea"
+	default n
+
+config ADRASTEA_SHADOW_REGISTERS
+	bool "Enable shadow registers support for adrastea"
+	default n
+
+config OL_RX_INDICATION_RECORD
+	bool "Enable OL RX indication record feature"
+	default n
+
+config TSOSEG_DEBUG
+	bool "Enable TSOSEG debug INI mechanism"
+	default n
+
+config VERBOSE_DEBUG
+	bool "Enable Verbose debug INI mechanism"
+	default n
+
+config RX_DESC_SANITY_WAR
+	bool "Enable Rx description sanity feature"
+	default n
+
+config SHADOW_V2
+	bool "Enable Shadow V2 for all lithium platform"
+	default n
+
+config QCA_WIFI_QCA8074
+	bool "Enable QCA8074 wifi"
+	default n
+
+config QCA_WIFI_QCA8074_VP
+	bool "Enable QCA8074 VP"
+	default n
+
+config DP_INTR_POLL_BASED
+	bool "Enable interupt based poll support"
+	default n
+
+config TX_PER_PDEV_DESC_POOL
+	bool "Enable tx per pdev desc pool support"
+	default n
+
+config DP_TRACE
+	bool "Enable DP trace services"
+	default n
+
+config DP_LFR
+	bool "Enable DP LFR support"
+	default n
+
+config DUP_RX_DESC_WAR
+	bool "Enable DUP rx descriptor WAR"
+	default n
+
+config HTT_PADDR64
+	bool "Enable HTT 64 bit padder"
+	default n
+
+config RX_OL
+	bool "Enable RX ol"
+	default n
+
+config TX_TID_OVERRIDE
+	bool "Enable TX TID override support"
+	default n
+
+config DP_TXRX_SOC_ATTACH
+	bool "Enable txrx soc attach services"
+	default n
+
+config WLAN_CLD_PM_QOS
+	bool "Enable wlan cld pm qos"
+	default n
+
+config WLAN_CLD_DEV_PM_QOS
+	bool "Enable wlan DEV PM QOS"
+	default n
+
+config DISABLE_DP_STATS
+	bool "Enable feature to disable dp stats"
+	default n
+
+config MAX_ALLOC_PAGE_SIZE
+	bool "Enable max page size allocation support"
+	default n
+
+config REO_DESC_DEFER_FREE
+	bool "Enable reo desc defer free support"
+	default n
+
+config RXDMA_ERR_PKT_DROP
+	bool "Enable RXDMA error packet drop support"
+	default n
+
+config DELIVERY_TO_STACK_STATUS_CHECK
+	bool "Enable delivery to stack stats checker feature"
+	default n
+
+config WLAN_TRACE_HIDE_MAC_ADDRESS
+	bool "Enable trace hide mac address feature"
+	default n
+
+config DP_MEM_PRE_ALLOC
+	bool "Enable datapath pre memory allocation services"
+	default n
+
+config FEATURE_GPIO_CFG
+	bool "Enable GPIO configuration support"
+	default n
+
+config FEATURE_PKTLOG
+	bool "Enable packet log feature support"
+	default n
+
+config WLAN_DEBUG_CRASH_INJECT
+	bool "Enable debug crash inject feature support"
+	default n
+
+config WLAN_DEBUGFS
+	bool "Enable debugfs"
+	default n
+
+config WLAN_MWS_INFO_DEBUGFS
+	bool "Enable MWS info debugfs feature"
+	default n
+
+config WLAN_FEATURE_MIB_STATS
+	bool "Enable MIB stats feature"
+	default n
+
+config WLAN_LOG_FATAL
+	bool "Enable compilation support for fatal logs"
+	default n
+
+config WLAN_LOG_ERROR
+	bool "Enable compilation support for error logs"
+	default n
+
+config WLAN_LOG_WARN
+	bool "Enable compilation support for warning logs"
+	default n
+
+config WLAN_LOG_INFO
+	bool "Enable compilation support for info logs"
+	default n
+
+config WLAN_LOG_DEBUG
+	bool "Enable compilation support for debug logs"
+	default n
+
+config WLAN_LOG_ENTER
+	bool "Enable compilation support for enter logs"
+	default n
+
+config WLAN_LOG_EXIT
+	bool "Enable compilation support for exit logs"
+	default n
+
+config ATH_PERF_PWR_OFFLOAD
+	bool "Enable OL debug and wmi unified functions"
+	default n
+
+config REMOVE_PKT_LOG
+	bool "Enable suuport to disable packet log"
+	default n
+
+config HIF_SNOC
+	bool "Enable hif snoc feature"
+	default n
+
+config QCOM_ESE
+	bool "Enable qcom ese feature"
+	default n
+
+config WLAN_OPEN_P2P_INTERFACE
+	bool "Enable P2P open interface support"
+	default n
+
+config WLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY
+	bool "Enable support for 5 GHz social channels"
+	default n
+
+config ATH_BUS_PM
+	bool "Enable power management suspend/resume functionality to PCI"
+	default n
+
+config ATH_SUPPORT_FLOWMAC_MODULE
+	bool "Enable FLOWMAC module support"
+	default n
+
+config ATH_SUPPORT_SPECTRAL
+	bool "Enable spectral support"
+	default n
+
+config SMMU_S1_UNMAP
+	bool "Enable SMMU S1 unmap"
+	default n
+
+config PKTLOG_LEGACY
+	bool "Enable legacy packet log support"
+	default n
+
+config WDI_EVENT_ENABLE
+	bool "Enable WDI Event support"
+	default n
+
+config LITTLE_ENDIAN
+	bool "Enable endianness selection support"
+	default n
+
+config TX_CREDIT_RECLAIM_SUPPORT
+	bool "Enable TX reclaim support"
+	default n
+
+config QCA_WIFI_FTM
+	bool "Enable FTM support"
+	default n
+
+config GTK_OFFLOAD
+	bool "Enable GTK offload"
+	default n
+
+config ATH_PCIE_ACCESS_DEBUG
+	bool "Set this to 1 to catch erroneous Target accesses during debug"
+	default n
+
+config IPA_OFFLOAD
+	bool "Enable IPA offload"
+	default n
+
+config QCA_SIGNED_SPLIT_BINARY_SUPPORT
+	bool "Enable Signed firmware support for split binary format"
+	default n
+
+config QCA_SINGLE_BINARY_SUPPORT
+	bool "Enable single firmware binary format"
+	default n
+
+config TARGET_RAMDUMP_AFTER_KERNEL_PANIC
+	bool "Enable collecting target RAM dump after kernel panic"
+	default n
+
+config FEATURE_SECURE_FIRMWARE
+	bool "Enable/disable secure firmware feature"
+	default n
+
+config FEATURE_STATS_EXT
+	bool "Enable Stats Ext implementation"
+	default n
+
+config WLAN_LOGGING_BUFFERS_DYNAMICALLY
+	bool "Enable dynamic memory allocation for logging buffers"
+	default n
+
+config WLAN_DFS_STATIC_MEM_ALLOC
+	bool "Enable DFS static memory allocation support"
+	default n
+
+config FEATURE_HTC_CREDIT_HISTORY
+	bool "Enable HTC credit history feature"
+	default n
+
+config TRACE_RECORD_FEATURE
+	bool "Enable MTRACE feature"
+	default n
+
+config WLAN_FEATURE_P2P_DEBUG
+	bool "Enable p2p debug feature"
+	default n
+
+config FEATURE_ROAM_DEBUG
+	bool "Enable roam debug log"
+	default n
+
+config WLAN_DFS_MASTER_ENABLE
+	bool "Enable DFS Master feature"
+	default n
+
+config ENABLE_MTRACE_LOG
+	bool "Enable MTRACE feature"
+	default n
+
+config WLAN_NUD_TRACKING
+	bool "Enable NUD tracking feature"
+	default n
+
+config FUNC_CALL_MAP
+	bool "Enable function call trace feature"
+	default n
+
+config WLAN_WBUFF
+	bool "Enable WBUFF feature"
+	default n
+
+config DISABLE_CHANNEL_LIST
+	bool "Enable set and get disable channel list feature"
+	default n
+
+config WLAN_BCN_RECV_FEATURE
+	bool "Enable beacon receive feature"
+	default n
+
+config LTE_COEX
+	bool "Enable LTE coex feature"
+	default n
+
+config TARGET_11D_SCAN
+	bool "Enable 11d scan algorithm"
+	default n
+
+config SAP_AVOID_ACS_FREQ_LIST
+	bool "Enable avoid acs frequency list feature"
+	default n
+
+config HOST_OPCLASS
+	bool "Enable host op class feature"
+	default n
+
+config WLAN_DYNAMIC_CVM
+	bool "Enable Dynamic Voltage WDCVS (Config Voltage Mode)"
+	default n
+
+config SAR_SAFETY_FEATURE
+	bool "Enable SAR safety feature"
+	default n
+
+config CONNECTION_ROAMING_CFG
+	bool "Enable roaming connection config"
+	default n
+
+config WIFI_POS_CONVERGED
+	bool "Enable WIFI pos converged feature"
+	default n
+
+config WLAN_TWT_CONVERGED
+	bool "Enable TWT converged feature"
+	default n
+
+config CP_STATS
+	bool "Enable CP stats feature"
+	default n
+
+config FEATURE_INTEROP_ISSUES_AP
+	bool "Enable interop issues AP feature"
+	default n
+
+config FEATURE_WLAN_WAPI
+	bool "Enable WAPI feature"
+	default n
+
+config FEATURE_FW_LOG_PARSING
+	bool "Enable FW log parsing support feature"
+	default n
+
+config PTT_SOCK_SVC_ENABLE
+	bool "Enable PTT sock svc enable feature"
+	default n
+
+config SOFTAP_CHANNEL_RANGE
+	bool "Enable softap channel range"
+	default n
+
+config FEATURE_WLAN_SCAN_PNO
+	bool "Enable PNO scan feature"
+	default n
+
+config WLAN_FEATURE_PACKET_FILTERING
+	bool "Enable packet filtering feature"
+	default n
+
+config WLAN_NS_OFFLOAD
+	bool "Enable NS offload"
+	default n
+
+config FEATURE_WLAN_RA_FILTERING
+	bool "Enable RA filtering feature"
+	default n
+
+config FEATURE_WLAN_LPHB
+	bool "Enable LPHB feature"
+	default n
+
+config QCA_SUPPORT_TX_THROTTLE
+	bool "Enable TX throttle support"
+	default n
+
+config WMI_INTERFACE_EVENT_LOGGING
+	bool "Enable WMI interface event logging services"
+	default n
+
+config WLAN_FEATURE_LINK_LAYER_STATS
+	bool "Enable link layer stats feature"
+	default n
+
+config FEATURE_CLUB_LL_STATS_AND_GET_STATION
+	bool "Enable support to club ll stats and station stats feature"
+	default n
+
+config WMI_BCN_OFFLOAD
+	bool "Enable beacon offload"
+	default n
+
+config 160MHZ_SUPPORT
+	bool "Enable 160MHz bandwidth support"
+	default n
+
+config MCL
+	bool "Enable MCL"
+	default n
+
+config REG_CLIENT
+	bool "Flaf to distinguish between MCC and WIN"
+	default n
+
+config WLAN_PMO_ENABLE
+	bool "Enable PMO"
+	default n
+
+config CONVERGED_P2P_ENABLE
+	bool "Enable converged P2P implementation"
+	default n
+
+config WLAN_POLICY_MGR_ENABLE
+	bool "Enable policy manager"
+	default n
+
+config FEATURE_BLACKLIST_MGR
+	bool "Enable blacklist manager"
+	default n
+
+config FOURTH_CONNECTION
+	bool "Enable support for fourth connection"
+	default n
+
+config SUPPORT_11AX
+	bool "Enable 11AX support"
+	default n
+
+config HDD_INIT_WITH_RTNL_LOCK
+	bool "Enable support to init HDD module with RTNL lock"
+	default n
+
+config WLAN_CONV_SPECTRAL_ENABLE
+	bool "Enable spectral conv"
+	default n
+
+config WLAN_SPECTRAL_ENABLE
+	bool "Enable spectral"
+	default n
+
+config WMI_CMD_STRINGS
+	bool "Enable WMI command strings"
+	default n
+
+config FEATURE_MONITOR_MODE_SUPPORT
+	bool "Enable Monitor mode support"
+	default n
+
+config WLAN_FEATURE_TWT
+	bool "Enable TWT"
+	default n
+
+config FW_THERMAL_THROTTLE
+	bool "Enable firmware thermal throttle"
+	default n
+
+config WLAN_FEATURE_BIG_DATA_STATS
+	bool "Enable support for big data stats feature"
+	default n
+
+config WLAN_FEATURE_IGMP_OFFLOAD
+	bool "Enable IGMP offload"
+	default n
+
+config WLAN_FEATURE_GET_USABLE_CHAN_LIST
+	bool "Enable feature to get usable channel list"
+	default n
+
+config FEATURE_RADAR_HISTORY
+	bool "Enable feature to get radar history"
+	default n
+
+config FEATURE_RSSI_MONITOR
+	bool "Enable RSSI moitor vendor command"
+	default n
+
+config FEATURE_BSS_TRANSITION
+	bool "Enable BSSi transition vendor command"
+	default n
+
+config FEATURE_STATION_INFO
+	bool "Enable support to get station info"
+	default n
+
+config FEATURE_TX_POWER
+	bool "Enable support to get tx power"
+	default n
+
+config FEATURE_OTA_TEST
+	bool "Enable OTA test feature"
+	default n
+
+config FEATURE_ACTIVE_TOS
+	bool "Enable active TOS feature"
+	default n
+
+config FEATURE_SAR_LIMITS
+	bool "Enable SAR limits feature"
+	default n
+
+config FEATURE_CONCURRENCY_MATRIX
+	bool "Enable concurrency matrix"
+	default n
+
+config FEATURE_SAP_COND_CHAN_SWITCH
+	bool "Enable SAP conditional channel switch feature"
+	default n
+
+config FEATURE_P2P_LISTEN_OFFLOAD
+	bool "Enable P2P listne mode offload"
+	default n
+
+config QCACLD_RX_DESC_MULTI_PAGE_ALLOC
+	bool "Enable RX descriptor mulit page allocation"
+	default n
+
+config WMI_ROAM_SUPPORT
+	bool "Enable WMI roam support API"
+	default n
+
+config WMI_CONCURRENCY_SUPPORT
+	bool "Enable WMI concurrency support API"
+	default n
+
+config WMI_STA_SUPPORT
+	bool "Enable WMI STA support API"
+	default n
+
+config DSC_DEBUG
+	bool "Enable DSC debug"
+	default n
+
+config FEATURE_HAL_RECORD_SUSPEND_WRITE
+	bool "Enable record suspend write feature"
+	default n
+
+config HIF_DETECTION_LATENCY_ENABLE
+	bool "Enable latency detection"
+	default n
+
+config DESC_TIMESTAMP_DEBUG_INFO
+	bool "Enable descriptor timestamp support for debug info"
+	default n
+
+config FEATURE_UNIT_TEST_SUSPEND
+	bool "Enable unit test suspend"
+	default n
+
+config LEAK_DETECTION
+	bool "Enable feature to detect leak"
+	default n
+
+config TALLOC_DEBUG
+	bool "Enable talloc debug"
+	default n
+
+config UNIT_TEST
+	bool "Enable unit test support"
+	default n
+
+config REGISTER_OP_DEBUG
+	bool "Enable register op debug"
+	default n
+
+config ENABLE_QDF_PTR_HASH_DEBUG
+	bool "Enable QDF pointer hash debug"
+	default n
+
+config HAL_DEBUG
+	bool "Enable hal debug"
+	default n
+
+config ATH_DIAG_EXT_DIRECT
+	bool "Enable direct diag ext"
+	default n
+
+config HIF_DEBUG
+	bool "Enable HIF debug"
+	default n
+
+config DSC_TEST
+	bool "Enable DSC test support"
+	default n
+
+config QDF_TEST
+	bool "Enable QDF test"
+	default n
+
+config FEATURE_WLM_STATS
+	bool "Enable WLM stats feature"
+	default n
+
+config FEATURE_MEMDUMP_ENABLE
+	bool "Enable hdd memory dump feature"
+	default n
+
+config CONNECTIVITY_PKTLOG
+	bool "Enable connectivity packet loging"
+	default n
+
+config PKTLOG_HAS_SPECIFIC_DATA
+	bool "Enable packet log has specific data feature"
+	default n
+
+config DESC_DUP_DETECT_DEBUG
+	bool "Enable desc dup detect debug"
+	default n
+
+config FEATURE_OEM_DATA
+	bool "Enable OEM data feature"
+	default n
+
+config WLAN_FW_OFFLOAD
+	bool "Enable wlan firmware offload"
+	default n
+
+config WLAN_FEATURE_ELNA
+	bool "Enable ELNA feature"
+	default n
+
+config WLAN_FEATURE_MDNS_OFFLOAD
+	bool "Enable MDNS offload"
+	default n
+
+config WLAN_FEATURE_ICMP_OFFLOAD
+	bool "Enable ICMP offload"
+	default n
+
+config WLAN_FEATURE_DP_BUS_BANDWIDTH
+	bool "Enable DP bus bandwidth feature"
+	default n
+
+config HANDLE_BC_EAP_TX_FRM
+	bool "Enable support to handle BC EAP tx frame"
+	default n
+
+config SAP_DHCP_FW_IND
+	bool "Enable SAP DHCP FW indication"
+	default n
+
+config ANI_LEVEL_REQUEST
+	bool "Enable ANI level request"
+	default n
+
+config DEBUG_RX_RING_BUFFER
+	bool "Enable RX RING buffers debug"
+	default n
+
+config RX_HASH_DEBUG
+	bool "Enable hash debug"
+	default n
+
+config FEATURE_VDEV_OPS_WAKELOCK
+	bool "Enable vdev ops wakelock feature"
+	default n
+
+config WLAN_HANG_EVENT
+	bool "Enable hang event"
+	default n
+
+config WLAN_THERMAL_MULTI_CLIENT_SUPPORT
+	bool "Enable thermal multi client support"
+	default n
+
+config WLAN_DEBUG_LINK_VOTE
+	bool "Enable link vote debug"
+	default n
+
+config QCACLD_WLAN_CONNECTIVITY_LOGGING
+	bool "Enable connectivity logging"
+	default n
+
+config WLAN_FEATURE_CAL_FAILURE_TRIGGER
+	bool "Enable CAL failure trigger"
+	default n
+
+config WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+	bool "Enable dynamic mac address update feature"
+	default n
+
+config WLAN_OPEN_SOURCE
+	bool "Make WLAN as open-source driver by default"
+	default n
+
+config BUILD_DEBUG_VERSION
+	bool "Enable build debug version"
+	default n
+
+config BUILD_DIAG_VERSION
+	bool "Enable build diag version"
+	default n
+
+config PANIC_ON_BUG
+	bool "Enable panic on bug"
+	default n
+
+config WLAN_WARN_ON_ASSERT
+	bool "Enable warning on assert"
+	default n
+
+config QCA_WIFI_FTM_NL80211
+	bool "Enable FTM"
+	default n
+
+config HIF_LARGE_CE_RING_HISTORY
+	int "Enable HIF_LARGE_CE_RING_HISTORY"
+
+config MAX_LOGS_PER_SEC
+	int "Enable MAX_LOGS_PER_SEC"
+
+config SCHED_HISTORY_SIZE
+	int "Enable SCHED_HISTORY_SIZE"
+
+config ARCH_MSM
+	bool "Enable CONFIG_ARCH_MSM"
+	default n
+
+config CHECKSUM_OFFLOAD
+	bool "Enable CONFIG_CHECKSUM_OFFLOAD"
+	default n
+
+config CNSS_UTILS
+	tristate "Enable CONFIG_CNSS_UTILS"
+	default n
+
+config FEATURE_TSO_STATS
+	bool "Enable CONFIG_FEATURE_TSO_STATS"
+	default n
+
+config LINUX_QCMBR
+	bool "Enable CONFIG_LINUX_QCMBR"
+	default n
+
+config TSO_DEBUG_LOG_ENABLE
+	bool "Enable CONFIG_TSO_DEBUG_LOG_ENABLE"
+	default n
+
+config CONFIG_WCNSS_MEM_PRE_ALLOC
+	bool "Enable CONFIG_WCNSS_MEM_PRE_ALLOC"
+	default n
+
+config WLAN_CUSTOM_DSCP_UP_MAP
+	bool "Enable CONFIG_WLAN_CUSTOM_DSCP_UP_MAP"
+	default n
+
+config ALLOW_PKT_DROPPING
+	bool "Enable CONFIG_ALLOW_PKT_DROPPING"
+	default n
+
+config DP_RX_REFILL_CPU_PERF_AFFINE_MASK
+	bool "Enable CONFIG_DP_RX_REFILL_CPU_PERF_AFFINE_MASK"
+	default n
+
+config DP_TX_COMP_RING_DESC_SANITY_CHECK
+	bool "Enable CONFIG_DP_TX_COMP_RING_DESC_SANITY_CHECK"
+	default n
+
+config DP_TX_HW_DESC_HISTORY
+	bool "Enable CONFIG_DP_TX_HW_DESC_HISTORY"
+	default n
+
+config FEATURE_HIF_LATENCY_PROFILE_ENABLE
+	bool "Enable CONFIG_FEATURE_HIF_LATENCY_PROFILE_ENABLE"
+	default n
+
+config HIF_CE_DEBUG_DATA_BUF
+	bool "Enable CONFIG_HIF_CE_DEBUG_DATA_BUF"
+	default n
+
+config HIF_CPU_PERF_AFFINE_MASK
+	bool "Enable CONFIG_HIF_CPU_PERF_AFFINE_MASK"
+	default n
+
+config REO_QDESC_HISTORY
+	bool "Enable CONFIG_REO_QDESC_HISTORY"
+	default n
+
+config RX_DESC_DEBUG_CHECK
+	bool "Enable CONFIG_RX_DESC_DEBUG_CHECK"
+	default n
+
+config WLAN_FEATURE_DP_CFG_EVENT_HISTORY
+	bool "Enable CONFIG_WLAN_FEATURE_DP_CFG_EVENT_HISTORY"
+	default n
+
+config WLAN_FEATURE_DP_MON_STATUS_RING_HISTORY
+	bool "Enable CONFIG_WLAN_FEATURE_DP_MON_STATUS_RING_HISTORY"
+	default n
+
+config WLAN_FEATURE_DP_RX_RING_HISTORY
+	bool "Enable CONFIG_WLAN_FEATURE_DP_RX_RING_HISTORY"
+	default n
+
+config WLAN_FEATURE_DP_TX_DESC_HISTORY
+	bool "Enable CONFIG_WLAN_FEATURE_DP_TX_DESC_HISTORY"
+	default n
+
+config WLAN_RECORD_RX_PADDR
+	bool "Enable CONFIG_WLAN_RECORD_RX_PADDR"
+	default n
+
+config DYNAMIC_DEBUG
+	bool "Enable CONFIG_DYNAMIC_DEBUG"
+	default n
+
+config WLAN_TRACE_HIDE_MAC_ADDRESS_DISABLE
+	bool "Enable CONFIG_WLAN_TRACE_HIDE_MAC_ADDRESS_DISABLE"
+	default n
+
+config ENABLE_MAX_LOGS_PER_SEC
+	bool "Enable CONFIG_ENABLE_MAX_LOGS_PER_SEC"
+	default n
+
+config ENABLE_SCHED_HISTORY_SIZE
+	bool "Enable CONFIG_ENABLE_SCHED_HISTORY_SIZE"
+	default n
+
+config FEATURE_FORCE_WAKE
+	bool "Enable FEATURE_FORCE_WAKE"
+	default n
+
+config QCACLD_WLAN_CONNECTIVITY_DIAG_EVENT
+	bool "Enable CONFIG_QCACLD_WLAN_CONNECTIVITY_DIAG_EVENT"
+	default y
+
+config WLAN_LOGGING_SOCK_SVC
+	bool "Enable CONFIG_WLAN_LOGGING_SOCK_SVC"
+	default y
+
+config WLAN_CTRL_NAME
+	string "Enable WLAN_CTRL_NAME"
+	default wlan
+
+config ROME_IF
+	string "Enable ROME_IF"
+	default snoc
+
+config QDF_NBUF_HISTORY_SIZE
+	int "Enable CONFIG_QDF_NBUF_HISTORY_SIZE"
+	default 16384
+
+config HIF_LARGE_CE_RING_HISTORY
+	int "Enable CONFIG_HIF_LARGE_CE_RING_HISTORY"
+	default 8192
+
+config SCHED_HISTORY_SIZE
+	int "Enable SCHED_HISTORY_SIZE"
+	default 256
+
+config MAX_LOGS_PER_SEC
+	int "Enable CONFIG_MAX_LOGS_PER_SEC"
+	default 500
+
+config WLAN_DEBUG_VERSION
+	bool "Enable CONFIG_WLAN_DEBUG_VERSION"
+	default y
+
+config PKT_LOG
+	bool "Enable CONFIG_PKT_LOG"
+	default y
+
+config AR900B
+	bool "Enable CONFIG_AR900B"
+	default y
+
+config WLAN_DIAG_VERSION
+	bool "Enable WLAN_DIAG_VERSION"
+	default n
+
+config WLAN_WEXT_SUPPORT_ENABLE
+	bool "Enable WLAN_WEXT_SUPPORT_ENABLE"
+	default n
+
+config WLAN_SYSFS_LOG_BUFFER
+	bool "Enable CONFIG_WLAN_SYSFS_LOG_BUFFER"
+	default n
+
+config WLAN_SYSFS_DFSNOL
+	bool "Enable WLAN_SYSFS_DFSNOL"
+	default n
+
+config WLAN_SYSFS_WDS_MODE
+	bool "Enable WLAN_SYSFS_WDS_MODE"
+	default n
+
+config WLAN_SYSFS_ROAM_TRIGGER_BITMAP
+	bool "Enable WLAN_SYSFS_ROAM_TRIGGER_BITMAP"
+	default n
+
+config WLAN_SYSFS_RF_TEST_MODE
+	bool "Enable WLAN_SYSFS_RF_TEST_MODE"
+	default n
+
+config WLAN_PDEV_VDEV_SEND_MULTI_PARAM
+	bool "Enable WLAN_PDEV_VDEV_SEND_MULTI_PARAM"
+	default n
+
+config FEATURE_WLAN_PRE_CAC
+	bool "Enable FEATURE_WLAN_PRE_CAC"
+	default n
+
+config QCACLD_FEATURE_METERING
+	bool "Enable QCACLD_FEATURE_METERING"
+	default n
+
+config WLAN_VENDOR_HANDOFF_CONTROL
+	bool "Enable WLAN_VENDOR_HANDOFF_CONTROL"
+	default n
+
+config FEATURE_ENABLE_CE_DP_IRQ_AFFINE
+	bool "Enable FEATURE_ENABLE_CE_DP_IRQ_AFFINE"
+	default n
+
+config WLAN_SEND_DSCP_UP_MAP_TO_FW
+	bool "Enable WLAN_SEND_DSCP_UP_MAP_TO_FW"
+	default n
+
+config FEATURE_DELAYED_PEER_OBJ_DESTROY
+	bool "Enable FEATURE_DELAYED_PEER_OBJ_DESTROY"
+	default n
+
+config FEATURE_SET
+	bool "Enable FEATURE_SET"
+	default n
+
+config FEATURE_DENYLIST_MGR
+	bool "Enable FEATURE_DENYLIST_MGR"
+	default n
+
+config ENABLE_DEBUG_ADDRESS_MARKING
+	bool "Enable ENABLE_DEBUG_ADDRESS_MARKING"
+	default n
+
+config WLAN_FEATURE_SAP_ACS_OPTIMIZE
+	bool "Enable WLAN_FEATURE_SAP_ACS_OPTIMIZE"
+	default n
+
+config AGEIE_ON_SCAN_RESULTS
+	bool "Enable AGEIE_ON_SCAN_RESULTS"
+	default n
+
+config INTERFACE_MGR
+	bool "Enable INTERFACE_MGR"
+	default n
+
+config ENABLE_LOW_POWER_MODE
+	bool "Enable ENABLE_LOW_POWER_MODE"
+	default n
+
+config CNSS_ADRASTEA
+	bool "Enable CONFIG_CNSS_ADRASTEA"
+	default n
+
+menu "Optional Configs"
+
+if CNSS_ADRASTEA
+
+config MULTI_IF_NAME
+	string "Enable CONFIG_MULTI_IF_NAME"
+	default adrastea
+
+endif
+endmenu
+endif # QCA_CLD_WLAN
