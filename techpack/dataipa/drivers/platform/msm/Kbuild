@@ -1,0 +1,124 @@
+# SPDX-License-Identifier: GPL-2.0-only
+DATAIPADRVTOP = $(srctree)/techpack/dataipa/drivers/platform/msm
+
+#MSMs - GKI
+ifeq ($(filter $(CONFIG_ARCH_LAHAINA) $(CONFIG_ARCH_HOLI), y),y)
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa.h
+ifeq ($(CONFIG_QGKI),y)
+include $(srctree)/techpack/dataipa/config/dataipa_QGKI.conf
+ifeq ($(CONFIG_LOCALVERSION), "-qgki-debug")
+include $(srctree)/techpack/dataipa/config/dataipa_debug.conf
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa_debug.h
+endif
+else
+include $(srctree)/techpack/dataipa/config/dataipa_GKI.conf
+endif
+endif
+
+
+#MSM - Vendor SI
+ifeq ($(CONFIG_ARCH_PARROT), y)
+DATAIPADRVTOP = $(srctree)/../../vendor/qcom/opensource/dataipa/drivers/platform/msm
+LINUXINCLUDE    += -include $(srctree)/../../vendor/qcom/opensource/dataipa/config/dataipa_vendor.h
+include $(srctree)/../../vendor/qcom/opensource/dataipa/config/dataipa_GKI.conf
+ifeq ($(CONFIG_LOCALVERSION), "-gki-consolidate")
+include $(srctree)/../../vendor/qcom/opensource/dataipa/config/dataipa_debug.conf
+LINUXINCLUDE    += -include $(srctree)/../../vendor/qcom/opensource/dataipa/config/dataipa_debug.h
+endif
+endif
+
+
+
+#MSM - Vendor SI
+ifeq ($(CONFIG_ARCH_WAIPIO), y)
+DATAIPADRVTOP = $(srctree)/../../vendor/qcom/opensource/dataipa/drivers/platform/msm
+LINUXINCLUDE    += -include $(srctree)/../../vendor/qcom/opensource/dataipa/config/dataipa_vendor.h
+include $(srctree)/../../vendor/qcom/opensource/dataipa/config/dataipa_GKI.conf
+ifeq ($(CONFIG_LOCALVERSION), "-gki-consolidate")
+include $(srctree)/../../vendor/qcom/opensource/dataipa/config/dataipa_debug.conf
+LINUXINCLUDE    += -include $(srctree)/../../vendor/qcom/opensource/dataipa/config/dataipa_debug.h
+endif
+endif
+
+#MDMs
+ifeq ($(CONFIG_ARCH_SDXLEMUR), y)
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa.h
+include $(srctree)/techpack/dataipa/config/dataipa_QGKI.conf
+ifneq ($(CONFIG_LOCALVERSION), "-perf")
+include $(srctree)/techpack/dataipa/config/dataipa_debug.conf
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa_debug.h
+endif
+endif
+
+ifeq ($(CONFIG_ARCH_SDXNIGHTJAR), y)
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/sdx12dataipa.h
+include $(srctree)/techpack/dataipa/config/sdx12dataipa_QGKI.conf
+ifneq ($(CONFIG_LOCALVERSION), "-perf")
+include $(srctree)/techpack/dataipa/config/dataipa_debug.conf
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa_debug.h
+endif
+endif
+
+ifeq ($(CONFIG_ARCH_SCUBA), y)
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/auto_dataipa.h
+include $(srctree)/techpack/dataipa/config/auto_dataipa_QGKI.conf
+ifneq ($(CONFIG_LOCALVERSION), "-perf")
+include $(srctree)/techpack/dataipa/config/dataipa_debug.conf
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa_debug.h
+endif
+endif
+
+ifeq ($(CONFIG_ARCH_SA515M), y)
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/auto_dataipa.h
+include $(srctree)/techpack/dataipa/config/auto_dataipa_QGKI.conf
+ifneq ($(CONFIG_LOCALVERSION), "-perf")
+include $(srctree)/techpack/dataipa/config/dataipa_debug.conf
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa_debug.h
+endif
+endif
+
+ifeq ($(CONFIG_ARCH_SA415M), y)
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/auto_dataipa.h
+include $(srctree)/techpack/dataipa/config/auto_dataipa_QGKI.conf
+ifneq ($(CONFIG_LOCALVERSION), "-perf")
+include $(srctree)/techpack/dataipa/config/dataipa_debug.conf
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa_debug.h
+endif
+endif
+
+ifeq ($(CONFIG_ARCH_KHAJE), y)
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa.h
+include $(srctree)/techpack/dataipa/config/dataipa_QGKI.conf
+ifneq ($(CONFIG_LOCALVERSION), "-perf")
+include $(srctree)/techpack/dataipa/config/dataipa_debug.conf
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa_debug.h
+endif
+endif
+
+ifneq (,$(filter $(CONFIG_IPA3) $(CONFIG_GSI),y m))
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/gsi
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/gsi/gsihal
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_v3
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_v3/ipahal
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_clients
+ifneq (,$(filter $(CONFIG_IPA_KERNEL_TESTS_MODULE),y m))
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_test_module
+endif
+endif
+
+ifneq (,$(filter $(CONFIG_IPA3_REGDUMP),y m))
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_v3/dump
+endif
+
+ifneq (,$(filter $(CONFIG_IPA3_REGDUMP_IPA_4_5),y m))
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_v3/dump/ipa4.5
+endif
+
+ifneq (,$(filter $(CONFIG_IPA3_REGDUMP_IPA_5_0),y m))
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_v3/dump/ipa5.0
+endif
+
+
+obj-$(CONFIG_GSI) += gsi/
+obj-$(CONFIG_IPA3) += ipa/
