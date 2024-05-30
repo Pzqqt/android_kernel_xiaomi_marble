@@ -470,7 +470,6 @@ static ssize_t set_cpu_min_freq(struct kobject *kobj,
 	const char *cp = buf;
 	struct cpu_status *i_cpu_stats;
 	struct cpufreq_policy policy;
-	struct freq_qos_request *req;
 	int ret = 0;
 
 	if (!ready_for_freq_updates) {
@@ -524,9 +523,7 @@ static ssize_t set_cpu_min_freq(struct kobject *kobj,
 			continue;
 
 		if (cpu_online(i)) {
-			req = &per_cpu(qos_req_min, i);
-			if (freq_qos_update_request(req, i_cpu_stats->min) < 0)
-				break;
+
 		}
 
 		for_each_cpu(j, policy.related_cpus)
