@@ -1,0 +1,152 @@
+ifeq ($(obj),)
+obj := .
+endif
+
+DEPTH := ../..
+
+include $(obj)/$(DEPTH)/os/linux/Makefile-linux.common
+
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/inc -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/obj_mgr/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/cmn_defs/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/utils/nlink/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/scan/dispatcher/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/cmn_defs/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/global_umac_dispatcher/lmac_if/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/scheduler/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/global_lmac_if/inc
+INCS += -I$(obj)/$(DEPTH)/umac/scan
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/mgmt_txrx/dispatcher/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/regulatory/dispatcher/inc
+INCS += -I$(obj)/$(DEPTH)/umac/son/dispatcher/inc
+INCS += -I$(obj)/$(DEPTH)/umac/son/os/linux
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/regulatory/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/dfs/dispatcher/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/os_if/linux/scan/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/target_if/direct_buf_rx/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/wbuff/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/cfg/inc
+INCS += -I$(obj)/$(DEPTH)/ini_cfg/inc/
+INCS += -I$(obj)/$(DEPTH)/component_dev/wmi/inc
+INCS += -I$(obj)/$(DEPTH)/pld/inc
+INCS += -I$(obj)/$(DEPTH)/component_dev/dp/inc
+
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/crypto/inc
+INCS += -I$(obj)/$(DEPTH)/component_dev/crypto/inc
+
+ifeq ($(WLAN_SUPPORT_GREEN_AP), 1)
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/green_ap/dispatcher/inc
+endif
+
+#Start of offload related deifines
+HOST_CMN_CONVG_SRC := $(DEPTH)/cmn_dev
+
+INCS += -I$(obj)/$(DEPTH)/include -I$(obj)/$(DEPTH)/umac/include \
+        -I$(obj)/$(DEPTH)/umac/crypto \
+        -I$(obj)/$(DEPTH)/umac/scan -I$(obj)/$(DEPTH)/umac/resmgr \
+        -I$(obj)/$(DEPTH)/umac/pm -I$(obj)/$(DEPTH)/umac/txrx \
+        -I$(obj)/$(DEPTH)/umac/acs -I$(obj)/$(DEPTH)/umac/txbf \
+        -I$(obj)/$(DEPTH)/umac/wnm \
+        -I$(obj)/$(DEPTH)/umac/tdls \
+        -I$(obj)/$(DEPTH)/umac/rpt_placement \
+        -I$(obj)/$(DEPTH)/umac/wifipos \
+        -I$(obj)/$(DEPTH)/umac/wds -I$(obj)/$(DEPTH)/umac/ique \
+        -I$(obj)/$(DEPTH)/umac/vi_dbg \
+        -I$(obj)/$(DEPTH)/umac/smart_antenna \
+        -I$(obj)/$(DEPTH)/umac/smart_ant \
+        -I$(obj)/$(DEPTH)/umac/ald \
+        -I$(obj)/$(DEPTH)/lmac/ath_pktlog \
+        -I$(obj)/$(DEPTH)/os/linux/mem/ \
+        -I$(obj)/$(DEPTH)/umac/base \
+        -I$(obj)/$(DEPTH)/qca_ol \
+        -I$(obj)/$(DEPTH)/cmn_dev/qdf/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/qdf/linux/src \
+        -I$(obj)/$(DEPTH)/cmn_dev/qal/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/qal/linux/src \
+        -I$(obj)/$(DEPTH)/cmn_dev/hif \
+        -I$(obj)/$(DEPTH)/cmn_dev/hif/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/hif/src \
+        -I$(obj)/$(DEPTH)/cmn_dev/hif/src/ce \
+        -I$(obj)/$(DEPTH)/cmn_dev/hif/src/pcie \
+        -I$(obj)/$(DEPTH)/cmn_dev/hif/src/snoc \
+        -I$(obj)/$(DEPTH)/cmn_dev/hif/src/dispatcher \
+        -I$(obj)/$(DEPTH)/cmn_dev/pld_stub/inc  \
+        -I$(obj)/$(DEPTH)/cmn_dev/hal/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/hal/wifi3.0 \
+        -I$(obj)/$(DEPTH)/cmn_dev/dp/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/dp/wifi3.0 \
+        -I$(obj)/$(DEPTH)/cmn_dev/wlan_cfg \
+        -I$(obj)/$(HOST_CMN_CONVG_SRC)/htc \
+        -I$(obj)/$(DEPTH)/cmn_dev/wmi/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/obj_mgr/inc \
+        -I$(obj)/$(HOST_CMN_CONVG_SRC)/scheduler/inc \
+        -I$(obj)/$(HOST_CMN_CONVG_SRC)/init_deinit/dispatcher/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/global_umac_dispatcher/lmac_if/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/mgmt_txrx/dispatcher/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/target_if/init_deinit/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/global_lmac_if/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/os_if/linux \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/cmn_defs/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/target_if/core/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/scan/dispatcher/inc \
+        -I$(obj)/$(DEPTH)/umac/scan \
+        -I$(obj)/$(DEPTH)/cmn_dev/ol_if \
+        -I$(obj)/$(DEPTH)/cmn_dev/target_if/scan/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/serialization/core/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/regulatory/dispatcher/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/target_if/regulatory/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/mlme/mlme_objmgr/dispatcher/inc/ \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/mlme/vdev_mgr/dispatcher/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/mlme/pdev_mgr/dispatcher/inc \
+        -I$(obj)/$(DEPTH)/direct_attach/hal/linux \
+
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/target_if/iot_sim
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/wmi/inc
+#end of offload related defines
+
+ifeq ($(QCA_CFR_SUPPORT), 1)
+ccflags-y+= -DWLAN_CFR_ENABLE=1
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cfr/dispatcher/inc/
+INCS += -I$(obj)/$(DEPTH)/component_dev/umac/cfr/dispatcher/inc
+INCS += -I$(obj)/$(DEPTH)/component_dev/qal/inc
+endif
+
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/iot_sim/core
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/iot_sim/dispatcher/inc
+
+obj-m += qca_iot_sim.o
+
+inc_file := $(obj)/$(DEPTH)/iot_inc_opts
+inc_var := $(shell echo $(INCS) > $(inc_file))
+var := "@$(inc_file)"
+
+ccflags-y+= $(var) $(COPTS)
+
+ifeq ($(strip ${QCA_PARTNER_MAKE_F_SUPPORT}),1)
+MOD_CFLAGS = -D"KBUILD_STR(s)=\#s" -D"KBUILD_BASENAME=KBUILD_STR(qca_iot_sim.mod)"  -D"KBUILD_MODNAME=KBUILD_STR(qca_iot_sim)"
+endif
+
+IOT_SIM_CMN_OBJS +=  core/iot_sim_common.o \
+                     dispatcher/src/wlan_iot_sim_utils_api.o \
+                     dispatcher/src/wlan_iot_sim_tgt_api.o \
+		     core/iot_sim_utils.o \
+		     core/iot_sim_module.o
+
+qca_iot_sim-objs +=  ${IOT_SIM_CMN_OBJS}
+
+ifeq ($(strip ${QCA_PARTNER_MAKE_F_SUPPORT}),1)
+all: qca_iot_sim.ko
+
+qca_iot_sim.mod.o: qca_iot_sim.mod.c
+	${CC} -c -o $@ ${ccflags-y} ${MOD_CFLAGS} $<
+
+qca_iot_sim.o: ${qca_iot_sim-objs}
+	$(LD) -m elf32btsmip -r -o qca_iot_sim.o $(qca_iot_sim-objs)
+	$(KERNELPATH)/scripts/mod/modpost qca_iot_sim.o
+
+qca_iot_sim.ko: qca_iot_sim.o qca_iot_sim.mod.o
+	$(LD) -o qca_iot_sim.ko qca_iot_sim.o qca_iot_sim.mod.o
+
+%.o: %.c
+	${CC} -c -o $@ ${ccflags-y} $<
+endif

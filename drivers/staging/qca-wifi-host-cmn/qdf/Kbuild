@@ -1,0 +1,166 @@
+ifeq ($(obj),)
+obj := .
+endif
+
+DEPTH := ../..
+
+HOST_CMN_CONVG_SRC := $(DEPTH)/cmn_dev
+HOST_CMN_CONVG_NLINK := $(DEPTH)/cmn_dev/utils/nlink
+HOST_CMN_CONVG_LOGGING := $(DEPTH)/cmn_dev/utils/logging
+HOST_CMN_CONVG_PTT := $(DEPTH)/cmn_dev/utils/ptt
+HOST_QAL_SRC := $(DEPTH)/component_dev/qal
+
+include $(obj)/$(DEPTH)/os/linux/Makefile-linux.common
+
+INCS += -Iinclude/nbuf -Iinclude/net -Iinclude/os
+INCS += -Inbuf/linux -Inet/linux -Ios/linux
+INCS += -I$(WLAN_TOP)/../../include
+INCS += -I$(WLAN_TOP)/cmn_dev/qdf/inc
+INCS += -I$(WLAN_TOP)/cmn_dev/qal/inc
+INCS += -I$(WLAN_TOP)/cmn_dev/utils/sys
+INCS += -I$(WLAN_TOP)/component_dev/qal/inc
+INCS += -I$(WLAN_TOP)/cmn_dev/qal/linux/src
+INCS += -I$(WLAN_TOP)/cmn_dev/qdf/linux/src
+INCS += -I$(obj)/$(HOST_CMN_CONVG_PTT)/inc \
+        -I$(obj)/$(HOST_CMN_CONVG_NLINK)/inc \
+        -I$(obj)/$(HOST_CMN_CONVG_LOGGING)/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/utils/host_diag_log/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/utils/host_diag_log/src \
+        -I$(obj)/$(DEPTH)/cmn_dev/utils/ptt/inc \
+        -I$(obj)/$(HOST_CMN_CONVG_SRC)/ipa/core/inc \
+        -I$(obj)/$(HOST_CMN_CONVG_SRC)/ipa/core/src \
+        -I$(obj)/$(HOST_CMN_CONVG_SRC)/ipa/dispatcher/inc \
+        -I$(obj)/$(HOST_CMN_CONVG_SRC)/ipa/dispatcher/src \
+        -I$(WLAN_TOP)/pld/inc
+
+obj-m += qdf.o
+
+inc_file := $(obj)/$(DEPTH)/qdf_inc_opts
+inc_var := $(shell echo $(INCS) > $(inc_file))
+var := "@$(inc_file)"
+
+EXTRA_CFLAGS+= $(var) $(COPTS) -Wno-unused-function
+
+ifeq ($(strip ${QCA_PARTNER_MAKE_F_SUPPORT}),1)
+MOD_CFLAGS = -D"KBUILD_STR(s)=\#s" -D"KBUILD_BASENAME=KBUILD_STR(qdf.mod)"  -D"KBUILD_MODNAME=KBUILD_STR(qdf)"
+endif
+
+qdf-objs :=                     \
+linux/src/qdf_defer.o  \
+linux/src/qdf_func_tracker.o \
+linux/src/qdf_dev.o    \
+linux/src/qdf_event.o   \
+linux/src/qdf_file.o   \
+linux/src/qdf_list.o      \
+linux/src/qdf_lock.o       \
+linux/src/qdf_mc_timer.o    \
+linux/src/qdf_mem.o      \
+linux/src/qdf_crypto.o      \
+linux/src/qdf_module.o    \
+linux/src/qdf_net_if.o   \
+linux/src/qdf_nbuf.o       \
+linux/src/qdf_nbuf_frag.o       \
+linux/src/qdf_perf.o        \
+linux/src/qdf_status.o     \
+linux/src/qdf_threads.o     \
+linux/src/qdf_trace.o \
+linux/src/qdf_vfs.o \
+linux/src/qdf_delayed_work.o \
+src/qdf_flex_mem.o \
+src/qdf_parse.o \
+src/qdf_str.o \
+src/qdf_types.o \
+src/qdf_platform.o \
+$(HOST_CMN_CONVG_NLINK)/src/wlan_nlink_srv.o
+
+qal-objs :=    \
+$(HOST_QAL_SRC)/linux/src/qal_devcfg.o \
+$(HOST_QAL_SRC)/linux/src/qal_vbus_dev.o \
+$(HOST_QAL_SRC)/linux/src/qal_notifier.o \
+$(HOST_QAL_SRC)/linux/src/qal_devnode.o
+ifeq ($(DBDC_REPEATER_SUPPORT),1)
+qal-objs += $(HOST_QAL_SRC)/linux/src/qal_bridge.o
+endif
+
+#linux/src/qdf_net.o \
+#linux/src/qdf_net_event.o \
+#linux/src/qdf_net_ioctl.o
+#linux/src/qdf_net_wext.o
+
+ifeq ($(IPA_OFFLOAD), 1)
+qdf-objs += linux/src/qdf_ipa.o
+endif
+
+ifeq ($(MEMORY_DEBUG),1)
+qdf-objs += src/qdf_debug_domain.o \
+    src/qdf_tracker.o
+endif
+
+ifeq ($(LOGGING_UTILS_SUPPORT),1)
+qdf-objs += \
+$(HOST_CMN_CONVG_LOGGING)/src/wlan_logging_sock_svc.o
+endif
+
+ifeq ($(WLAN_TRACEPOINTS),1)
+qdf-objs += linux/src/qdf_tracepoint.o
+endif
+
+ifeq ($(WLAN_DEBUGFS),1)
+qdf-objs += linux/src/qdf_debugfs.o
+endif
+
+ifeq ($(ENHANCED_OS_ABSTRACTION),1)
+qdf-objs += linux/src/qdf_hrtimer.o
+qdf-objs += linux/src/qdf_time.o
+endif
+
+ifeq ($(WLAN_STREAMFS),1)
+qdf-objs += linux/src/qdf_streamfs.o
+endif
+
+qdf-objs += $(qal-objs)
+
+ifeq ($(BUILD_ADF_NET_IOCTL),1)
+EXTRA_CFLAGS+= -DADF_NET_IOCTL_SUPPORT
+#adf-objs += os/linux/adf_os_netlink_pvt.o \
+#    net/linux/adf_net_event.o  \
+#    net/linux/adf_net_wext.o    \
+#    net/linux/adf_net_ioctl.o
+endif
+
+ifeq ($(BUILD_ADF_DEFER_PVT),1)
+#adf-objs += os/linux/adf_os_defer_pvt.o
+endif
+ifeq ($(BUILD_ADF_IRQ_PVT),1)
+#adf-objs += os/linux/adf_os_irq_pvt.o
+endif
+
+ifeq ($(BUILD_ADF_PERF_PROFILING),1)
+#adf-objs += os/linux/adf_os_perf_pvt.o
+ifeq ($(BUILD_ADF_MIPS_PERF_PROFILING),1)
+#adf-objs += os/linux/adf_os_mips_perf_pvt.o
+endif
+endif
+
+#    os/linux/adf_os_pci_pvt.o    \
+#    net/linux/adf_net_ioctl.o    \
+#    net/linux/adf_net_pseudo.o   \
+
+clean-files := modules.order
+
+ifeq ($(strip ${QCA_PARTNER_MAKE_F_SUPPORT}),1)
+all: qdf.ko
+
+qdf.mod.o: qdf.mod.c
+	${CC} -c -o $@ ${EXTRA_CFLAGS} ${MOD_CFLAGS} $<
+
+adf.o: ${adf-objs}
+	$(LD) -m elf32btsmip -r -o adf.o $(adf-objs)
+	$(KERNELPATH)/scripts/mod/modpost qdf.o
+
+qdf.ko: qdf.o qdf.mod.o
+	$(LD) $(LDOPTS) -o qdf.ko qdf.o qdf.mod.o
+
+%.o: %.c
+	${CC} -c -o $@ ${EXTRA_CFLAGS} $<
+endif
