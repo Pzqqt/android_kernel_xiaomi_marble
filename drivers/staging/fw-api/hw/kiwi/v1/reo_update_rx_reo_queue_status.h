@@ -1,0 +1,315 @@
+
+/*
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for
+ * any purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+
+
+
+
+
+
+
+
+
+
+#ifndef _REO_UPDATE_RX_REO_QUEUE_STATUS_H_
+#define _REO_UPDATE_RX_REO_QUEUE_STATUS_H_
+#if !defined(__ASSEMBLER__)
+#endif
+
+#include "uniform_reo_status_header.h"
+#define NUM_OF_DWORDS_REO_UPDATE_RX_REO_QUEUE_STATUS 26
+
+#define NUM_OF_QWORDS_REO_UPDATE_RX_REO_QUEUE_STATUS 13
+
+
+struct reo_update_rx_reo_queue_status {
+	     struct   uniform_reo_status_header                                 status_header;
+	     uint32_t reserved_2a                                             : 32;
+	     uint32_t reserved_3a                                             : 32;
+	     uint32_t reserved_4a                                             : 32;
+	     uint32_t reserved_5a                                             : 32;
+	     uint32_t reserved_6a                                             : 32;
+	     uint32_t reserved_7a                                             : 32;
+	     uint32_t reserved_8a                                             : 32;
+	     uint32_t reserved_9a                                             : 32;
+	     uint32_t reserved_10a                                            : 32;
+	     uint32_t reserved_11a                                            : 32;
+	     uint32_t reserved_12a                                            : 32;
+	     uint32_t reserved_13a                                            : 32;
+	     uint32_t reserved_14a                                            : 32;
+	     uint32_t reserved_15a                                            : 32;
+	     uint32_t reserved_16a                                            : 32;
+	     uint32_t reserved_17a                                            : 32;
+	     uint32_t reserved_18a                                            : 32;
+	     uint32_t reserved_19a                                            : 32;
+	     uint32_t reserved_20a                                            : 32;
+	     uint32_t reserved_21a                                            : 32;
+	     uint32_t reserved_22a                                            : 32;
+	     uint32_t reserved_23a                                            : 32;
+	     uint32_t reserved_24a                                            : 32;
+	     uint32_t reserved_25a                                            : 28,
+		      looping_count                                           :  4;
+};
+
+
+
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_STATUS_HEADER_REO_STATUS_NUMBER_OFFSET       0x0000000000000000
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_STATUS_HEADER_REO_STATUS_NUMBER_LSB          0
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_STATUS_HEADER_REO_STATUS_NUMBER_MSB          15
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_STATUS_HEADER_REO_STATUS_NUMBER_MASK         0x000000000000ffff
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_STATUS_HEADER_CMD_EXECUTION_TIME_OFFSET      0x0000000000000000
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_STATUS_HEADER_CMD_EXECUTION_TIME_LSB         16
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_STATUS_HEADER_CMD_EXECUTION_TIME_MSB         25
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_STATUS_HEADER_CMD_EXECUTION_TIME_MASK        0x0000000003ff0000
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_STATUS_HEADER_REO_CMD_EXECUTION_STATUS_OFFSET 0x0000000000000000
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_STATUS_HEADER_REO_CMD_EXECUTION_STATUS_LSB   26
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_STATUS_HEADER_REO_CMD_EXECUTION_STATUS_MSB   27
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_STATUS_HEADER_REO_CMD_EXECUTION_STATUS_MASK  0x000000000c000000
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_STATUS_HEADER_RESERVED_0A_OFFSET             0x0000000000000000
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_STATUS_HEADER_RESERVED_0A_LSB                28
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_STATUS_HEADER_RESERVED_0A_MSB                31
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_STATUS_HEADER_RESERVED_0A_MASK               0x00000000f0000000
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_STATUS_HEADER_TIMESTAMP_OFFSET               0x0000000000000000
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_STATUS_HEADER_TIMESTAMP_LSB                  32
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_STATUS_HEADER_TIMESTAMP_MSB                  63
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_STATUS_HEADER_TIMESTAMP_MASK                 0xffffffff00000000
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_2A_OFFSET                           0x0000000000000008
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_2A_LSB                              0
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_2A_MSB                              31
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_2A_MASK                             0x00000000ffffffff
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_3A_OFFSET                           0x0000000000000008
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_3A_LSB                              32
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_3A_MSB                              63
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_3A_MASK                             0xffffffff00000000
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_4A_OFFSET                           0x0000000000000010
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_4A_LSB                              0
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_4A_MSB                              31
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_4A_MASK                             0x00000000ffffffff
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_5A_OFFSET                           0x0000000000000010
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_5A_LSB                              32
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_5A_MSB                              63
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_5A_MASK                             0xffffffff00000000
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_6A_OFFSET                           0x0000000000000018
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_6A_LSB                              0
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_6A_MSB                              31
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_6A_MASK                             0x00000000ffffffff
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_7A_OFFSET                           0x0000000000000018
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_7A_LSB                              32
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_7A_MSB                              63
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_7A_MASK                             0xffffffff00000000
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_8A_OFFSET                           0x0000000000000020
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_8A_LSB                              0
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_8A_MSB                              31
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_8A_MASK                             0x00000000ffffffff
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_9A_OFFSET                           0x0000000000000020
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_9A_LSB                              32
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_9A_MSB                              63
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_9A_MASK                             0xffffffff00000000
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_10A_OFFSET                          0x0000000000000028
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_10A_LSB                             0
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_10A_MSB                             31
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_10A_MASK                            0x00000000ffffffff
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_11A_OFFSET                          0x0000000000000028
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_11A_LSB                             32
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_11A_MSB                             63
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_11A_MASK                            0xffffffff00000000
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_12A_OFFSET                          0x0000000000000030
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_12A_LSB                             0
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_12A_MSB                             31
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_12A_MASK                            0x00000000ffffffff
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_13A_OFFSET                          0x0000000000000030
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_13A_LSB                             32
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_13A_MSB                             63
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_13A_MASK                            0xffffffff00000000
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_14A_OFFSET                          0x0000000000000038
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_14A_LSB                             0
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_14A_MSB                             31
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_14A_MASK                            0x00000000ffffffff
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_15A_OFFSET                          0x0000000000000038
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_15A_LSB                             32
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_15A_MSB                             63
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_15A_MASK                            0xffffffff00000000
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_16A_OFFSET                          0x0000000000000040
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_16A_LSB                             0
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_16A_MSB                             31
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_16A_MASK                            0x00000000ffffffff
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_17A_OFFSET                          0x0000000000000040
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_17A_LSB                             32
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_17A_MSB                             63
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_17A_MASK                            0xffffffff00000000
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_18A_OFFSET                          0x0000000000000048
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_18A_LSB                             0
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_18A_MSB                             31
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_18A_MASK                            0x00000000ffffffff
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_19A_OFFSET                          0x0000000000000048
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_19A_LSB                             32
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_19A_MSB                             63
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_19A_MASK                            0xffffffff00000000
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_20A_OFFSET                          0x0000000000000050
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_20A_LSB                             0
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_20A_MSB                             31
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_20A_MASK                            0x00000000ffffffff
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_21A_OFFSET                          0x0000000000000050
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_21A_LSB                             32
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_21A_MSB                             63
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_21A_MASK                            0xffffffff00000000
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_22A_OFFSET                          0x0000000000000058
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_22A_LSB                             0
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_22A_MSB                             31
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_22A_MASK                            0x00000000ffffffff
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_23A_OFFSET                          0x0000000000000058
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_23A_LSB                             32
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_23A_MSB                             63
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_23A_MASK                            0xffffffff00000000
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_24A_OFFSET                          0x0000000000000060
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_24A_LSB                             0
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_24A_MSB                             31
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_24A_MASK                            0x00000000ffffffff
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_25A_OFFSET                          0x0000000000000060
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_25A_LSB                             32
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_25A_MSB                             59
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_RESERVED_25A_MASK                            0x0fffffff00000000
+
+
+
+
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_LOOPING_COUNT_OFFSET                         0x0000000000000060
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_LOOPING_COUNT_LSB                            60
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_LOOPING_COUNT_MSB                            63
+#define REO_UPDATE_RX_REO_QUEUE_STATUS_LOOPING_COUNT_MASK                           0xf000000000000000
+
+
+
+#endif
