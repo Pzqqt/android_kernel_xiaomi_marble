@@ -1,0 +1,9 @@
+#
+# RMNET_SCH driver
+#
+
+menuconfig RMNET_SCH
+    tristate "Rmnet SCH Qdisc support"
+    default m
+    ---help---
+        QDisc module for RmNet driver

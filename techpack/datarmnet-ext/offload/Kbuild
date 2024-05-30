@@ -1,0 +1,8 @@
+obj-m += rmnet_offload.o
+#Need core headers
+ccflags-y := -I$(RMNET_CORE_INC_DIR) \
+             $(call cc-option,-Wno-misleading-indentation)
+rmnet_offload-y := rmnet_offload_state.o rmnet_offload_main.o \
+		   rmnet_offload_engine.o rmnet_offload_tcp.o \
+		   rmnet_offload_udp.o rmnet_offload_stats.o \
+		   rmnet_offload_knob.o
