@@ -77,6 +77,7 @@ enum MODE_TYPE {
 	Touch_Debug_Level      		= 18,
 	Touch_Power_Status     		= 19,
 	Touch_Fod_Longpress_Gesture,
+	Touch_Singletap_Gesture,
 	Touch_Mode_NUM,
 	THP_LOCK_SCAN_MODE      	= THP_CMD_BASE + 0,
 	THP_FOD_DOWNUP_CTL = THP_CMD_BASE + 1,
