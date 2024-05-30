@@ -10,7 +10,7 @@
 #include <linux/pagemap.h>
 #include <linux/rmap.h>
 
-#include "prmtv-common.h"
+#include "ops-common.h"
 
 /*
  * Get an online page for a pfn if it's in the LRU list.  Otherwise, returns
@@ -33,52 +33,29 @@ struct page *damon_get_page(unsigned long pfn)
 	return page;
 }
 
-void damon_ptep_mkold(pte_t *pte, struct mm_struct *mm, unsigned long addr)
+void damon_ptep_mkold(pte_t *pte, struct vm_area_struct *vma, unsigned long addr)
 {
-	bool referenced = false;
 	struct page *page = damon_get_page(pte_pfn(*pte));
 
 	if (!page)
 		return;
 
-	if (pte_young(*pte)) {
-		referenced = true;
-		*pte = pte_mkold(*pte);
-	}
-
-#ifdef CONFIG_MMU_NOTIFIER
-	if (mmu_notifier_clear_young(mm, addr, addr + PAGE_SIZE))
-		referenced = true;
-#endif /* CONFIG_MMU_NOTIFIER */
-
-	if (referenced)
+	if (ptep_clear_young_notify(vma, addr, pte))
 		set_page_young(page);
 
 	set_page_idle(page);
 	put_page(page);
 }
 
-void damon_pmdp_mkold(pmd_t *pmd, struct mm_struct *mm, unsigned long addr)
+void damon_pmdp_mkold(pmd_t *pmd, struct vm_area_struct *vma, unsigned long addr)
 {
 #ifdef CONFIG_TRANSPARENT_HUGEPAGE
-	bool referenced = false;
 	struct page *page = damon_get_page(pmd_pfn(*pmd));
 
 	if (!page)
 		return;
 
-	if (pmd_young(*pmd)) {
-		referenced = true;
-		*pmd = pmd_mkold(*pmd);
-	}
-
-#ifdef CONFIG_MMU_NOTIFIER
-	if (mmu_notifier_clear_young(mm, addr,
-				addr + ((1UL) << HPAGE_PMD_SHIFT)))
-		referenced = true;
-#endif /* CONFIG_MMU_NOTIFIER */
-
-	if (referenced)
+	if (pmdp_clear_young_notify(vma, addr, pmd))
 		set_page_young(page);
 
 	set_page_idle(page);
@@ -89,10 +66,9 @@ void damon_pmdp_mkold(pmd_t *pmd, struct mm_struct *mm, unsigned long addr)
 #define DAMON_MAX_SUBSCORE	(100)
 #define DAMON_MAX_AGE_IN_LOG	(32)
 
-int damon_pageout_score(struct damon_ctx *c, struct damon_region *r,
+int damon_hot_score(struct damon_ctx *c, struct damon_region *r,
 			struct damos *s)
 {
-	unsigned int max_nr_accesses;
 	int freq_subscore;
 	unsigned int age_in_sec;
 	int age_in_log, age_subscore;
@@ -100,10 +76,10 @@ int damon_pageout_score(struct damon_ctx *c, struct damon_region *r,
 	unsigned int age_weight = s->quota.weight_age;
 	int hotness;
 
-	max_nr_accesses = c->aggr_interval / c->sample_interval;
-	freq_subscore = r->nr_accesses * DAMON_MAX_SUBSCORE / max_nr_accesses;
+	freq_subscore = r->nr_accesses * DAMON_MAX_SUBSCORE /
+		damon_max_nr_accesses(&c->attrs);
 
-	age_in_sec = (unsigned long)r->age * c->aggr_interval / 1000000;
+	age_in_sec = (unsigned long)r->age * c->attrs.aggr_interval / 1000000;
 	for (age_in_log = 0; age_in_log < DAMON_MAX_AGE_IN_LOG && age_in_sec;
 			age_in_log++, age_in_sec >>= 1)
 		;
@@ -127,6 +103,14 @@ int damon_pageout_score(struct damon_ctx *c, struct damon_region *r,
 	 * Transform it to fit in [0, DAMOS_MAX_SCORE]
 	 */
 	hotness = hotness * DAMOS_MAX_SCORE / DAMON_MAX_SUBSCORE;
+
+	return hotness;
+}
+
+int damon_cold_score(struct damon_ctx *c, struct damon_region *r,
+			struct damos *s)
+{
+	int hotness = damon_hot_score(c, r, s);
 
 	/* Return coldness of the region */
 	return DAMOS_MAX_SCORE - hotness;
