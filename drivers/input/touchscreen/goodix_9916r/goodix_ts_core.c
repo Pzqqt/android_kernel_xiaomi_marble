@@ -44,6 +44,7 @@
 
 #ifdef CONFIG_TOUCH_BOOST
 extern void touch_irq_boost(void);
+static bool __read_mostly touch_boost_flag = true;
 #endif
 extern struct device *global_spi_parent_device;
 struct goodix_module goodix_modules;
@@ -902,6 +903,35 @@ static ssize_t goodix_ts_report_rate_store(struct device *dev,
 	return count;
 }
 
+/* touch boost show */
+static ssize_t goodix_ts_touch_boost_show(struct device *dev,
+				       struct device_attribute *attr,
+				       char *buf)
+{
+	int r = 0;
+
+	r = snprintf(buf, PAGE_SIZE, "state:%s\n",
+		    touch_boost_flag ?
+		    "enabled" : "disabled");
+
+	return r;
+}
+
+/* touch boost store */
+static ssize_t goodix_ts_touch_boost_store(struct device *dev,
+					struct device_attribute *attr,
+					const char *buf, size_t count)
+{
+	if (!buf || count <= 0)
+		return -EINVAL;
+
+	if (buf[0] != '0')
+		touch_boost_flag = true;
+	else
+		touch_boost_flag = false;
+	return count;
+}
+
 static DEVICE_ATTR_RO(goodix_ts_driver_info);
 static DEVICE_ATTR_RO(goodix_ts_chip_info);
 static DEVICE_ATTR_WO(goodix_ts_reset);
@@ -915,6 +945,7 @@ static DEVICE_ATTR_RW(goodix_ts_double_tap);
 static DEVICE_ATTR_RW(goodix_ts_aod);
 static DEVICE_ATTR_RW(goodix_ts_report_rate);
 static DEVICE_ATTR_RW(goodix_ts_fod);
+static DEVICE_ATTR_RW(goodix_ts_touch_boost);
 static struct attribute *sysfs_attrs[] = {
 	&dev_attr_goodix_ts_driver_info.attr,
 	&dev_attr_goodix_ts_chip_info.attr,
@@ -929,6 +960,7 @@ static struct attribute *sysfs_attrs[] = {
 	&dev_attr_goodix_ts_aod.attr,
 	&dev_attr_goodix_ts_report_rate.attr,
 	&dev_attr_goodix_ts_fod.attr,
+	&dev_attr_goodix_ts_touch_boost.attr,
 	NULL,
 };
 
@@ -1495,7 +1527,8 @@ static irqreturn_t goodix_ts_threadirq_func(int irq, void *data)
 	ts_esd->irq_status = true;
 	core_data->irq_trig_cnt++;
 #ifdef CONFIG_TOUCH_BOOST
-	touch_irq_boost();
+	if (touch_boost_flag)
+		touch_irq_boost();
 #endif
 	pm_stay_awake(core_data->bus->dev);
 #ifdef CONFIG_PM
