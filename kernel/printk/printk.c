@@ -1991,6 +1991,10 @@ int vprintk_store(int facility, int level,
 	 */
 	text_len = vscnprintf(text, sizeof(textbuf), fmt, args);
 
+	if (unlikely(strstr(text, "[mi_disp") != NULL) ||
+	    unlikely(strstr(text, "[drm") != NULL))
+		return 0;
+
 	/* mark and strip a trailing newline */
 	if (text_len && text[text_len-1] == '\n') {
 		text_len--;
