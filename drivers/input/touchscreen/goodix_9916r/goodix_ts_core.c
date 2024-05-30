@@ -38,10 +38,9 @@
 #define PINCTRL_STATE_ACTIVE		"pmx_ts_active"
 #define PINCTRL_STATE_SUSPEND		"pmx_ts_suspend"
 #define PINCTRL_STATE_BOOT		"pmx_ts_boot"
-#define PINCTRL_STATE_SPIMODE		"pmx_ts_spi_mode"
 
-#define DISP_ID_DET (30 + 38)
-#define DISP_ID1_DET (30 + 164)
+#define DISP_ID_DET 420
+#define DISP_ID1_DET 418
 
 #ifdef CONFIG_TOUCH_BOOST
 extern void touch_irq_boost(void);
@@ -58,6 +57,10 @@ static int goodix_send_ic_config(struct goodix_ts_core *cd, int type);
 static void goodix_set_gesture_work(struct work_struct *work);
 static struct proc_dir_entry *touch_debug;
 static int goodix_get_charging_status(void);
+#ifdef CONFIG_MACH_XIAOMI_MARBLE
+static int mi_panel_type;
+#endif
+
 /**
  * __do_register_ext_module - register external module
  * to register into touch core modules structure
@@ -1152,8 +1155,6 @@ static int goodix_parse_dt(struct device_node *node,
 {
 	const char *name_tmp;
 	int r;
-	int gpio_a;
-	int gpio_b;
 
 	if (!board_data) {
 		ts_err("invalid board data");
@@ -1228,12 +1229,14 @@ static int goodix_parse_dt(struct device_node *node,
 	}
 
 	/* get firmware file name */
-	gpio_a = gpio_get_value(DISP_ID_DET);
-	gpio_b = gpio_get_value(DISP_ID1_DET);
-	if (gpio_a == 0 && gpio_b == 1) {
-		r = of_property_read_string(node, "goodix,firmware-namea", &name_tmp);
-	} else
-		r = of_property_read_string(node, "goodix,firmware-nameb", &name_tmp);
+#ifdef CONFIG_MACH_XIAOMI_MARBLE
+	if (mi_panel_type == 2)
+		name_tmp = "goodix_firmware_TM_Second.bin";
+	else
+		r = of_property_read_string(node, "goodix,firmware-name", &name_tmp);
+#else
+	r = of_property_read_string(node, "goodix,firmware-name", &name_tmp);
+#endif
 	if (!r) {
 		ts_info("firmware name from dt: %s", name_tmp);
 		if (strlen(name_tmp) < sizeof(board_data->fw_name))
@@ -1246,10 +1249,14 @@ static int goodix_parse_dt(struct device_node *node,
 	}
 
 	/* get config file name */
-	if (gpio_a == 0 && gpio_b == 1) {
-		r = of_property_read_string(node, "goodix,config-namea", &name_tmp);
-	} else
-		r = of_property_read_string(node, "goodix,config-nameb", &name_tmp);
+#ifdef CONFIG_MACH_XIAOMI_MARBLE
+	if (mi_panel_type == 2)
+		name_tmp = "goodix_cfg_group_TM_Second.bin";
+	else
+		r = of_property_read_string(node, "goodix,config-name", &name_tmp);
+#else
+	r = of_property_read_string(node, "goodix,config-name", &name_tmp);
+#endif
 	if (!r) {
 		ts_info("firmware name from dt: %s", name_tmp);
 		if (strlen(name_tmp) < sizeof(board_data->cfg_bin_name))
@@ -1649,15 +1656,6 @@ static int goodix_ts_pinctrl_init(struct goodix_ts_core *core_data)
 		ts_err("Failed to get pinctrl state:%s, r:%d",
 				PINCTRL_STATE_SUSPEND, r);
 		core_data->pin_sta_suspend = NULL;
-		goto exit_pinctrl_put;
-	}
-	/* spimode state */
-	core_data->pinctrl_state_spimode
-		= pinctrl_lookup_state(core_data->pinctrl, PINCTRL_STATE_SPIMODE);
-
-	if (IS_ERR_OR_NULL(core_data->pinctrl_state_spimode)) {
-		r = PTR_ERR(core_data->pinctrl_state_spimode);
-		ts_err("Failed to get %s, r: %d", PINCTRL_STATE_SPIMODE, r);
 		goto exit_pinctrl_put;
 	}
 
@@ -3374,10 +3372,6 @@ static int goodix_ts_probe(struct platform_device *pdev)
 					core_data->pin_sta_active);
 		if (ret < 0)
 			ts_err("Failed to select active pinstate, r:%d", ret);
-		ret = pinctrl_select_state(core_data->pinctrl,
-					core_data->pinctrl_state_spimode);
-		if (ret < 0)
-			ts_err("Failed to select spi pinstate, r:%d", ret);
 	}
 
 	ret = goodix_ts_power_on(core_data);
@@ -3561,29 +3555,30 @@ static struct platform_driver goodix_ts_driver = {
 static int __init goodix_ts_core_init(void)
 {
 	int ret;
+#ifdef CONFIG_MACH_XIAOMI_MARBLE
 	int gpio_a;
 	int gpio_b;
-	int flag;
 
 	gpio_direction_input(DISP_ID_DET);
 	gpio_a = gpio_get_value(DISP_ID_DET);
 	gpio_direction_input(DISP_ID1_DET);
 	gpio_b = gpio_get_value(DISP_ID1_DET);
-	ts_info("gpio_a = %d, gpio_b:%d\n", gpio_a, gpio_b);
+	ts_info("gpio_a = %d, gpio_b = %d", gpio_a, gpio_b);
 
-	flag = gpio_a << 1 | gpio_b;
+	mi_panel_type = gpio_a << 1 | gpio_b;
 
-	if (flag == 1) {
-		pr_info("TP is goodix, panel is TM");
+	if (mi_panel_type == 1) {
+		ts_info("TP is goodix, panel is TM");
 
-	} else if (flag == 0) {
-		pr_info("TP is goodix, panel is GVO");
+	} else if (mi_panel_type == 2) {
+		ts_info("TP is goodix, panel is TM second");
 
 	} else {
-		pr_info("TP is not goodix");
+		ts_err("TP is not goodix");
 		return 0;
 	}
 	ts_info("TP is goodix");
+#endif
 	ts_info("Core layer init:%s", GOODIX_DRIVER_VERSION);
 #ifdef CONFIG_TOUCHSCREEN_GOODIX_BRL_SPI
 	ret = goodix_spi_bus_init();
