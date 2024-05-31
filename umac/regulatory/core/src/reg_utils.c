@@ -419,7 +419,7 @@ QDF_STATUS reg_check_if_6g_pwr_type_supp_for_chan(
 	    !(ch_info->chan_flags & REGULATORY_CHAN_DISABLED))
 		return QDF_STATUS_SUCCESS;
 
-	reg_err("6 GHz power type = %d not supported for 6 GHz power type AP: %d STA %d index %d",
+	reg_err("6 GHz power type: %d not supported for client type AP: %d, 6g chan index: %d",
 		pwr_type, client_type, ch_idx_6g);
 	return QDF_STATUS_E_NOSUPPORT;
 }
