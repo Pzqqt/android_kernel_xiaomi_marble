@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -32,6 +33,8 @@
 #include "athstartpack.h"
 #endif
 
+#include <a_types.h> /* A_UINT32 */
+#include <a_osapi.h> /* PREPACK */
 #include <wlan_module_ids.h>
 
 #ifdef __cplusplus
