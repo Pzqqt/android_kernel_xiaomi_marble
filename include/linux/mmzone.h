@@ -118,7 +118,8 @@ static inline bool free_area_empty(struct free_area *area, int migratetype)
 struct pglist_data;
 
 /*
- * Add a wild amount of padding here to ensure datas fall into separate
+ * zone->lock and the zone lru_lock are two of the hottest locks in the kernel.
+ * So add a wild amount of padding here to ensure that they fall into separate
  * cachelines.  There are very few zone structures in the machine, so space
  * consumption is not a concern here.
  */
@@ -293,11 +294,6 @@ struct lruvec {
 	unsigned long			flags;
 #ifdef CONFIG_MEMCG
 	struct pglist_data *pgdat;
-#endif
-#ifndef __GENKSYMS__
-	// HACK: CRC ABI fixups
-	/* per lruvec lru_lock for memcg */
-	spinlock_t			lru_lock;
 #endif
 };
 
@@ -806,13 +802,7 @@ typedef struct pglist_data {
 
 	/* Write-intensive fields used by page reclaim */
 	ZONE_PADDING(_pad1_)
-
-	/* HACK: KABI preservation, DO NOT USE! */
-#ifdef __GENKSYMS__
 	spinlock_t		lru_lock;
-#else
-	spinlock_t		unused;
-#endif
 
 #ifdef CONFIG_DEFERRED_STRUCT_PAGE_INIT
 	/*

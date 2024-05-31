@@ -2390,27 +2390,6 @@ static void remap_page(struct page *page, unsigned int nr)
 	}
 }
 
-static void lru_add_page_tail(struct page *head, struct page *tail,
-		struct lruvec *lruvec, struct list_head *list)
-{
-	VM_BUG_ON_PAGE(!PageHead(head), head);
-	VM_BUG_ON_PAGE(PageCompound(tail), head);
-	VM_BUG_ON_PAGE(PageLRU(tail), head);
-	lockdep_assert_held(&lruvec->lru_lock);
-
-	if (list) {
-		/* page reclaim is reclaiming a huge page */
-		VM_WARN_ON(PageLRU(head));
-		get_page(tail);
-		list_add_tail(&tail->lru, list);
-	} else {
-		/* head is still on lru (and we have it frozen) */
-		VM_WARN_ON(!PageLRU(head));
-		SetPageLRU(tail);
-		list_add_tail(&tail->lru, &head->lru);
-	}
-}
-
 static void __split_huge_page_tail(struct page *head, int tail,
 		struct lruvec *lruvec, struct list_head *list)
 {
@@ -2477,14 +2456,17 @@ static void __split_huge_page_tail(struct page *head, int tail,
 }
 
 static void __split_huge_page(struct page *page, struct list_head *list,
-		pgoff_t end)
+		pgoff_t end, unsigned long flags)
 {
 	struct page *head = compound_head(page);
+	pg_data_t *pgdat = page_pgdat(head);
 	struct lruvec *lruvec;
 	struct address_space *swap_cache = NULL;
 	unsigned long offset = 0;
 	unsigned int nr = thp_nr_pages(head);
 	int i;
+
+	lruvec = mem_cgroup_page_lruvec(head, pgdat);
 
 	/* complete memcg works before add pages to LRU */
 	split_page_memcg(head, nr);
@@ -2496,9 +2478,6 @@ static void __split_huge_page(struct page *page, struct list_head *list,
 		swap_cache = swap_address_space(entry);
 		xa_lock(&swap_cache->i_pages);
 	}
-
-	/* lock lru list/PageCompound, ref freezed by page_ref_freeze */
-	lruvec = lock_page_lruvec(head);
 
 	for (i = nr - 1; i >= 1; i--) {
 		__split_huge_page_tail(head, i, lruvec, list);
@@ -2519,8 +2498,6 @@ static void __split_huge_page(struct page *page, struct list_head *list,
 	}
 
 	ClearPageCompound(head);
-	unlock_page_lruvec(lruvec);
-	/* Caller disabled irqs, so they are still disabled here */
 
 	split_page_owner(head, nr);
 
@@ -2538,7 +2515,8 @@ static void __split_huge_page(struct page *page, struct list_head *list,
 		page_ref_add(head, 2);
 		xa_unlock(&head->mapping->i_pages);
 	}
-	local_irq_enable();
+
+	spin_unlock_irqrestore(&pgdat->lru_lock, flags);
 
 	remap_page(head, nr);
 
@@ -2684,10 +2662,12 @@ bool can_split_huge_page(struct page *page, int *pextra_pins)
 int split_huge_page_to_list(struct page *page, struct list_head *list)
 {
 	struct page *head = compound_head(page);
+	struct pglist_data *pgdata = NODE_DATA(page_to_nid(head));
 	struct deferred_split *ds_queue = get_deferred_split_queue(head);
 	struct anon_vma *anon_vma = NULL;
 	struct address_space *mapping = NULL;
 	int extra_pins, ret;
+	unsigned long flags;
 	pgoff_t end;
 
 	VM_BUG_ON_PAGE(is_huge_zero_page(head), head);
@@ -2747,8 +2727,9 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
 
 	unmap_page(head);
 
-	/* block interrupt reentry in xa_lock and spinlock */
-	local_irq_disable();
+	/* prevent PageLRU to go away from under us, and freeze lru stats */
+	spin_lock_irqsave(&pgdata->lru_lock, flags);
+
 	if (mapping) {
 		XA_STATE(xas, &mapping->i_pages, page_index(head));
 
@@ -2776,14 +2757,14 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
 				__dec_node_page_state(head, NR_FILE_THPS);
 		}
 
-		__split_huge_page(page, list, end);
+		__split_huge_page(page, list, end, flags);
 		ret = 0;
 	} else {
 		spin_unlock(&ds_queue->split_queue_lock);
 fail:
 		if (mapping)
 			xa_unlock(&mapping->i_pages);
-		local_irq_enable();
+		spin_unlock_irqrestore(&pgdata->lru_lock, flags);
 		remap_page(head, thp_nr_pages(head));
 		ret = -EBUSY;
 	}
