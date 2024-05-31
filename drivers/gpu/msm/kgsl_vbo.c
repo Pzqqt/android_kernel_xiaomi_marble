@@ -317,10 +317,13 @@ static void kgsl_sharedmem_free_bind_op(struct kgsl_sharedmem_bind_op *op)
 		/* Decrement the vbo_count we added when creating the bind_op */
 		if (op->ops[i].entry)
 			atomic_dec(&op->ops[i].entry->vbo_count);
-		kgsl_mem_entry_put(op->ops[i].entry);
+
+		/* Release the reference on the child entry */
+		kgsl_mem_entry_put_deferred(op->ops[i].entry);
 	}
 
-	kgsl_mem_entry_put(op->target);
+	/* Release the reference on the target entry */
+	kgsl_mem_entry_put_deferred(op->target);
 
 	kvfree(op->ops);
 	kfree(op);
@@ -508,14 +511,7 @@ static void kgsl_sharedmem_bind_worker(struct work_struct *work)
 				op->ops[i].last,
 				op->ops[i].entry);
 
-		/* Release the reference on the child entry */
-		kgsl_mem_entry_put(op->ops[i].entry);
-		op->ops[i].entry = NULL;
 	}
-
-	/* Release the reference on the target entry */
-	kgsl_mem_entry_put(op->target);
-	op->target = NULL;
 
 	/* Wake up any threads waiting for the bind operation */
 	complete_all(&op->comp);
@@ -523,7 +519,8 @@ static void kgsl_sharedmem_bind_worker(struct work_struct *work)
 	if (op->callback)
 		op->callback(op);
 
-	kref_put(&op->ref, kgsl_sharedmem_bind_range_destroy);
+	/* Put the refcount we took when scheduling the worker */
+	kgsl_sharedmem_put_bind_op(op);
 }
 
 void kgsl_sharedmem_bind_ranges(struct kgsl_sharedmem_bind_op *op)
