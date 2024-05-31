@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -278,13 +278,7 @@
 #define WMI_DBR_SUPPORT (1)
 #endif
 
-#ifndef CONFIG_CNSS_QCA6750
-#ifdef CONFIG_DIRECT_BUF_RX_ENABLE
-#define DBR_MULTI_SRNG_ENABLE (1)
-#endif
-#endif
-
-#ifndef CONFIG_CNSS_WCN6450
+#if !defined(CONFIG_CNSS_QCA6750) && !defined(CONFIG_CNSS_WCN6450)
 #ifdef CONFIG_DIRECT_BUF_RX_ENABLE
 #define DBR_MULTI_SRNG_ENABLE (1)
 #endif
