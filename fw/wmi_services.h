@@ -670,6 +670,7 @@ typedef  enum  {
     WMI_SERVICE_USE_STA_VDEV_FOR_P2P_DEVICE = 416, /* FW supports use of sta vdev to be repurposed for p2p device */
     WMI_SERVICE_AP_ASSISTED_DFS_CHAN_P2P_SESSION = 417, /* FW supports P2P session on DFS chan enabled by DFS master AP */
     WMI_SERVICE_MLO_SAP_EMLSR_SUPPORT = 418, /* Indicates FW MLO SAP supports EMLSR Mode */
+    WMI_SERVICE_PKTLOG_ML_TSTMP_SUPPORT = 419, /* Indicates ML timestamp for pktlog */
 
 
     WMI_MAX_EXT2_SERVICE
