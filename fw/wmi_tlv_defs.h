@@ -1441,6 +1441,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_p2p_cli_dfs_ap_bmiss_fixed_param,
     WMITLV_TAG_STRUC_wmi_p2p_go_dfs_ap_config_fixed_param,
     WMITLV_TAG_STRUC_wmi_twt_vdev_config_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_mgmt_srng_reap_event_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -2318,6 +2319,7 @@ typedef enum {
     OP(WMI_PDEV_ENABLE_XLNA_EVENTID) \
     OP(WMI_REG_CHAN_LIST_CC_EXT2_EVENTID) \
     OP(WMI_P2P_CLI_DFS_AP_BMISS_DETECTED_EVENTID) \
+    OP(WMI_MGMT_SRNG_REAP_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -7689,6 +7691,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_WIFI_RADAR_CAL_COMPLETION_STATUS_EVENTID);
 #define WMITLV_TABLE_WMI_PDEV_ENABLE_XLNA_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_enable_xlna_event_fixed_param, wmi_pdev_enable_xlna_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_ENABLE_XLNA_EVENTID);
+
+/* Bcn and Prb over new SRNG */
+#define WMITLV_TABLE_WMI_MGMT_SRNG_REAP_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mgmt_srng_reap_event_fixed_param, wmi_mgmt_srng_reap_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_SRNG_REAP_EVENTID);
 
 
 #ifdef __cplusplus

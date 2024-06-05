@@ -2041,6 +2041,9 @@ typedef enum {
     /** WMI event for Firmware Consumed/Dropped Rx management frames indication */
     WMI_MGMT_RX_FW_CONSUMED_EVENTID,
 
+    /** WMI event for indication to Host to reap the MGMT SRNG */
+    WMI_MGMT_SRNG_REAP_EVENTID,
+
 
     /* ADDBA Related WMI Events*/
     /** Indication the completion of the prior
@@ -4631,8 +4634,13 @@ typedef struct {
      *      0 -> disable the feature
      *      1 -> enable the feature
      *      Refer to the below WMI_RSRC_CFG_FLAGS2_EPM_GET/SET macros.
+     *  Bit 21 - enable new MGMT SRNG for beacons and probe responses.
+     *      0 -> disable the feature
+     *      1 -> enable the feature
+     *      Refer to the below WMI_RSRC_CFG_FLAGS2_IS_MGMT_SRNG_ENABLED_GET/SET
+     *      macros.
      *
-     *  Bits 31:21 - Reserved
+     *  Bits 31:22 - Reserved
      */
     A_UINT32 flags2;
     /** @brief host_service_flags - can be used by Host to indicate
@@ -5131,6 +5139,12 @@ typedef struct {
     WMI_GET_BITS(flags2, 20, 1)
 #define WMI_RSRC_CFG_FLAGS2_EPM_SET(flags2, value) \
     WMI_SET_BITS(flags2, 20, 1, value)
+
+#define WMI_RSRC_CFG_FLAGS2_IS_MGMT_SRNG_ENABLED_GET(flags2) \
+    WMI_GET_BITS(flags2, 21, 1)
+#define WMI_RSRC_CFG_FLAGS2_IS_MGMT_SRNG_ENABLED_SET(flags2, value) \
+    WMI_SET_BITS(flags2, 21, 1, value)
+
 
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_IFACE_SUPPORT_GET(host_service_flags) \
     WMI_GET_BITS(host_service_flags, 0, 1)
@@ -9657,6 +9671,7 @@ typedef enum {
     /** configure datastall consecutive no ack threshold */
     WMI_PDEV_PARAM_DSTALL_CONSECUTIVE_TX_NO_ACK_THRESHOLD,
 
+    WMI_PDEV_PARAM_MGMT_SRNG_REAP_EVENT_THRESHOLD,
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
@@ -48613,6 +48628,20 @@ typedef struct {
     wmi_mac_addr mld_mac_address; /* MLD MAC address */
     A_UINT32 is_ap_suspend; /* 1 = suspend, 0 = resume */
 } wmi_set_ap_suspend_resume_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_mgmt_srng_reap_event_fixed_param */
+    A_UINT32 tlv_header;
+    /** timestamp_tp_update_ms:
+     * This indicates the last time the tail pointer was updated by FW
+     * after filling MGMT SRNG entry.
+     * The timestamp is from the FW CPU's internal clock, in milliseconds units.
+     */
+    A_UINT32 timestamp_tp_update_ms;
+    /** This indicates the position of the tail pointer as last updated by FW */
+    A_UINT32 tail_pointer;
+} wmi_mgmt_srng_reap_event_fixed_param;
 
 
 
