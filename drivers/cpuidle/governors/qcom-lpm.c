@@ -595,6 +595,8 @@ static int lpm_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 	cpu_gov->predict_started = false;
 	cpu_gov->now = ktime_get();
 	duration_ns = tick_nohz_get_sleep_length(&delta_tick);
+	if (duration_ns <= 0)
+		duration_ns = S64_MAX;
 	update_cpu_history(cpu_gov);
 
 	if (lpm_disallowed(duration_ns, dev->cpu))
