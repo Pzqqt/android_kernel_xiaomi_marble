@@ -4639,8 +4639,12 @@ typedef struct {
      *      1 -> enable the feature
      *      Refer to the below WMI_RSRC_CFG_FLAGS2_IS_MGMT_SRNG_ENABLED_GET/SET
      *      macros.
+     *  Bit 22 - enable 4address WDS support
+     *      0 -> disable the feature
+     *      1 -> enable the feature
+     *     Refer to below WMI_RSRC_CFG_FLAGS2_ENABLE_WDS_NULL_FRAME_SUPPORT
      *
-     *  Bits 31:22 - Reserved
+     *  Bits 31:23 - Reserved
      */
     A_UINT32 flags2;
     /** @brief host_service_flags - can be used by Host to indicate
@@ -5144,6 +5148,11 @@ typedef struct {
     WMI_GET_BITS(flags2, 21, 1)
 #define WMI_RSRC_CFG_FLAGS2_IS_MGMT_SRNG_ENABLED_SET(flags2, value) \
     WMI_SET_BITS(flags2, 21, 1, value)
+
+#define WMI_RSRC_CFG_FLAGS2_ENABLE_WDS_NULL_FRAME_SUPPORT_GET(flags2) \
+    WMI_GET_BITS(flags2, 22, 1)
+#define WMI_RSRC_CFG_FLAGS2_ENABLE_WDS_NULL_FRAME_SUPPORT_SET(flags2, value) \
+    WMI_SET_BITS(flags2, 22, 1, value)
 
 
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_IFACE_SUPPORT_GET(host_service_flags) \

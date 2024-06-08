@@ -672,6 +672,7 @@ typedef  enum  {
     WMI_SERVICE_MLO_SAP_EMLSR_SUPPORT = 418, /* Indicates FW MLO SAP supports EMLSR Mode */
     WMI_SERVICE_PKTLOG_ML_TSTMP_SUPPORT = 419, /* Indicates ML timestamp for pktlog */
     WMI_SERVICE_MGMT_SRNG_SUPPORT = 420, /* FW supports MGMT frame forwarding via host provided SRNG instead of WMI */
+    WMI_SERVICE_WDS_NULL_FRAME_SUPPORT = 421,
 
 
     WMI_MAX_EXT2_SERVICE
