@@ -673,6 +673,7 @@ typedef  enum  {
     WMI_SERVICE_PKTLOG_ML_TSTMP_SUPPORT = 419, /* Indicates ML timestamp for pktlog */
     WMI_SERVICE_MGMT_SRNG_SUPPORT = 420, /* FW supports MGMT frame forwarding via host provided SRNG instead of WMI */
     WMI_SERVICE_WDS_NULL_FRAME_SUPPORT = 421,
+    WMI_SERVICE_MLO_SAP_CONCURRENCY_SUPPORT = 422, /* Indicates FW supports MLO SAP+STA Concurrency */
 
 
     WMI_MAX_EXT2_SERVICE
