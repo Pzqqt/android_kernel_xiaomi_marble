@@ -36940,6 +36940,8 @@ typedef struct {
      * For example, a value of 5 causes a power reduction of 1.25 dB.
      */
     A_UINT32 pout_reduction_25db;
+    /* tx chain mask: Chain mask to apply based on the temp level */
+    A_UINT32 tx_chain_mask;
 } wmi_therm_throt_level_config_info;
 
 typedef enum {
