@@ -41057,6 +41057,7 @@ typedef struct {
 
 typedef enum {
     WMI_ROAM_MSG_RSSI_RECOVERED = 1, /* Connected AP RSSI is recovered to good region */
+    WMI_ROAM_MSG_CONNECTED_IN_POOR_RSSI = 2, /* DUT connected to AP whose RSSI is below low RSSI threshold */
 } WMI_ROAM_MSG_ID;
 
 typedef struct {
