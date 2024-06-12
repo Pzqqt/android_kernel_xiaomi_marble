@@ -40,6 +40,8 @@
 #include <linux/fb.h>
 #endif
 
+#include "../xiaomi/xiaomi_touch.h"
+
 #define GOODIX_CORE_DRIVER_NAME			"goodix_ts"
 #define GOODIX_PEN_DRIVER_NAME			"goodix_ts,pen"
 #define GOODIX_DRIVER_VERSION			"v1.2.4"
@@ -542,6 +544,12 @@ struct goodix_ts_core {
 	atomic_t delayed_vm_probe_pending;
 	atomic_t trusted_touch_mode;
 #endif
+
+	struct workqueue_struct *gesture_wq;
+	struct work_struct gesture_work;
+
+	bool in_gesture_mode;
+	bool nonui_enabled;
 };
 
 /* external module structures */
