@@ -728,6 +728,7 @@ static int convert_ic_info(struct goodix_ic_info *info, const u8 *data)
 	struct goodix_ic_info_feature *feature = &info->feature;
 	struct goodix_ic_info_param *parm = &info->parm;
 	struct goodix_ic_info_misc *misc = &info->misc;
+	struct goodix_ic_info_other *other = &info->other;
 
 	info->length = le16_to_cpup((__le16 *)data);
 
@@ -845,6 +846,9 @@ static int convert_ic_info(struct goodix_ic_info *info, const u8 *data)
 	LE16_TO_CPU(misc->stylus_rawdata_len);
 	LE32_TO_CPU(misc->noise_data_addr);
 	LE32_TO_CPU(misc->esd_addr);
+
+	data += sizeof(*misc);
+	memcpy((u8 *)other, data, sizeof(*other));
 
 	return 0;
 }
