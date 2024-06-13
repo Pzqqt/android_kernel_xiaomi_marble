@@ -2031,8 +2031,10 @@ int goodix_ts_stage2_init(struct goodix_ts_core *cd)
 	ts_info("success register irq");
 
 #if defined(CONFIG_DRM)
-	if (cd->touch_environment && !strcmp(cd->touch_environment, "pvm"))
+	if (active_panel)
 		goodix_register_for_panel_events(cd->bus->dev->of_node, cd);
+	else
+		ts_err("No panel found");
 
 #elif defined(CONFIG_FB)
 	cd->fb_notifier.notifier_call = goodix_ts_fb_notifier_callback;
