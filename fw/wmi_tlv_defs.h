@@ -1442,6 +1442,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_p2p_go_dfs_ap_config_fixed_param,
     WMITLV_TAG_STRUC_wmi_twt_vdev_config_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_mgmt_srng_reap_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_mlo_tlt_selection_for_tid_spray_event_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -2320,6 +2321,7 @@ typedef enum {
     OP(WMI_REG_CHAN_LIST_CC_EXT2_EVENTID) \
     OP(WMI_P2P_CLI_DFS_AP_BMISS_DETECTED_EVENTID) \
     OP(WMI_MGMT_SRNG_REAP_EVENTID) \
+    OP(WMI_MLO_TLT_SELECTION_FOR_TID_SPRAY_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -7578,6 +7580,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_REMOVAL_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_link_removal_evt_fixed_param, wmi_mlo_link_removal_evt_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_link_removal_tbtt_update, wmi_mlo_link_removal_tbtt_update, tbtt_update, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_REMOVAL_EVENTID);
+
+/* WMI MLO TLT selection for 3+ link TID spray update event */
+#define WMITLV_TABLE_WMI_MLO_TLT_SELECTION_FOR_TID_SPRAY_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_tlt_selection_for_tid_spray_event_fixed_param, wmi_mlo_tlt_selection_for_tid_spray_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_MLO_TLT_SELECTION_FOR_TID_SPRAY_EVENTID);
 
 /* WMI MLO T2LM Vdev event */
 #define WMITLV_TABLE_WMI_MLO_AP_VDEV_TID_TO_LINK_MAP_EVENTID(id,op,buf,len) \

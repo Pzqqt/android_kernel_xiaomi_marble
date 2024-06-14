@@ -2525,6 +2525,8 @@ typedef enum {
     WMI_MLO_LINK_STATE_SWITCH_EVENTID,
     /** WMI Event to sync link info to host */
     WMI_MLO_LINK_INFO_SYNC_EVENTID,
+    /** WMI Event to announce host about the TLT update for TID */
+    WMI_MLO_TLT_SELECTION_FOR_TID_SPRAY_EVENTID,
 
     /* WMI event specific to Quiet handling */
     WMI_QUIET_HANDLING_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_QUIET_OFL),
@@ -46561,6 +46563,39 @@ typedef struct {
     /* Indicates the disabled link map for 802.11be T2LM */
     A_UINT32 disabled_link_bitmap;
 } wmi_mlo_ap_vdev_tid_to_link_map_ie_info;
+
+#define WMI_NUM_TID_PER_AC 2
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mlo_link_removal_evt_fixed_param */
+    A_UINT32 tlv_header;
+    wmi_mac_addr mld_mac;
+    /* hwlink_priority:
+     * Based on capacity, hw chip is ordered here.
+     * hwlink_priority[0] holds the HW chip ID which is the top priority,
+     * hwlink_priority[1] holds the HW chip ID which is the 2nd priority,
+     * etc.
+     */
+    A_UINT32 hwlink_priority[WMI_MAX_NUM_MLO_LINKS];
+    /* link_bmap:
+     * Bitmap segments for the primary TIDs (0/1/4/6)
+     * are provided in link_bmap[0].
+     * Bitmap segments for the secondary TIDs (3/2/5/7)
+     * are provided in link_bmap[1].
+     * link_bmap[0]:
+     *     bits  4:0  are used to indicate which links are used for TID 0
+     *     bits  9:5  are used to indicate which links are used for TID 1
+     *     bits 14:10 are used to indicate which links are used for TID 4
+     *     bits 19:15 are used to indicate which links are used for TID 6
+     *     bits 31:20 are unused
+     * link_bmap[0]:
+     *     bits  4:0  are used to indicate which links are used for TID 3
+     *     bits  9:5  are used to indicate which links are used for TID 2
+     *     bits 14:10 are used to indicate which links are used for TID 5
+     *     bits 19:15 are used to indicate which links are used for TID 7
+     *     bits 31:20 are unused
+     */
+    A_UINT32 link_bmap[WMI_NUM_TID_PER_AC];
+} wmi_mlo_tlt_selection_for_tid_spray_event_fixed_param;
 
 #define WMI_IGMP_OFFLOAD_SUPPORT_DISABLE_BITMASK    0x0
 #define WMI_IGMP_V1_OFFLOAD_SUPPORT_BITMASK         0x1
