@@ -171,6 +171,7 @@ int qcom_scm_handle_wait(struct device *dev, int scm_ret,
 #define QCOM_SCM_ES_CONFIG_SET_ICE_KEY_V2	0x05
 #define QCOM_SCM_ES_CLEAR_ICE_KEY		0x06
 #define QCOM_SCM_ES_DERIVE_RAW_SECRET	0x07
+#define QCOM_SCM_ES_HIBERNATE_EXIT	0x08
 
 #define QCOM_SCM_SVC_HDCP		0x11
 #define QCOM_SCM_HDCP_INVOKE		0x01
