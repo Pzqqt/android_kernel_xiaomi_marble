@@ -1437,6 +1437,9 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_ctrl_path_vdev_bcn_tx_stats_struct,
     WMITLV_TAG_STRUC_wmi_ctrl_path_pdev_bcn_tx_stats_struct,
     WMITLV_TAG_STRUC_wmi_soc_tx_packet_custom_classify_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_set_ap_suspend_resume_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_p2p_cli_dfs_ap_bmiss_fixed_param,
+    WMITLV_TAG_STRUC_wmi_p2p_go_dfs_ap_config_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -1986,6 +1989,8 @@ typedef enum {
     OP(WMI_PEER_ACTIVE_TRAFFIC_MAP_CMDID) \
     OP(WMI_REQUEST_OPM_STATS_CMDID) \
     OP(WMI_SOC_TX_PACKET_CUSTOM_CLASSIFY_CMDID) \
+    OP(WMI_SET_AP_SUSPEND_RESUME_CMDID) \
+    OP(WMI_P2P_GO_DFS_AP_CONFIG_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2310,6 +2315,7 @@ typedef enum {
     OP(WMI_MLO_LINK_INFO_SYNC_EVENTID) \
     OP(WMI_PDEV_ENABLE_XLNA_EVENTID) \
     OP(WMI_REG_CHAN_LIST_CC_EXT2_EVENTID) \
+    OP(WMI_P2P_CLI_DFS_AP_BMISS_DETECTED_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -3902,6 +3908,13 @@ WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_MLO_CONFIG_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_dsm_filter_fixed_param, wmi_pdev_dsm_filter_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_pdev_bssid_disallow_list_config_param, bssid_disallow_list, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_DSM_FILTER_CMDID);
+
+/* Add/remove DFS master AP configuration */
+#define WMITLV_TABLE_WMI_P2P_GO_DFS_AP_CONFIG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_p2p_go_dfs_ap_config_fixed_param, wmi_p2p_go_dfs_ap_config_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_mac_addr, bssid, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_mac_addr, non_tx_bssid, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_P2P_GO_DFS_AP_CONFIG_CMDID);
 
 #define WMITLV_TABLE_WMI_ROAM_BLACKLIST_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_blacklist_event_fixed_param, wmi_roam_blacklist_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
@@ -5613,6 +5626,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_ACTIVE_TRAFFIC_MAP_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_request_opm_stats_cmd_fixed_param, wmi_request_opm_stats_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_OPM_STATS_CMDID);
 
+/* SAP suspend/resume command */
+#define WMITLV_TABLE_WMI_SET_AP_SUSPEND_RESUME_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_set_ap_suspend_resume_cmd_fixed_param, wmi_set_ap_suspend_resume_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_SET_AP_SUSPEND_RESUME_CMDID);
+
 
 
 /************************** TLV definitions of WMI events *******************************/
@@ -6933,6 +6951,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_AUDIO_SYNC_START_STOP_EVENTID);
     WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_audio_sync_q_master_slave_offset_event_fixed_param, wmi_audio_sync_q_master_slave_offset_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_audio_sync_q_master_slave_times, audio_sync_q_master_slave_times, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_AUDIO_SYNC_Q_MASTER_SLAVE_OFFSET_EVENTID);
+
+#define WMITLV_TABLE_WMI_P2P_CLI_DFS_AP_BMISS_DETECTED_EVENTID(id, op , buf, len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_p2p_cli_dfs_ap_bmiss_fixed_param , wmi_p2p_cli_dfs_ap_bmiss_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_P2P_CLI_DFS_AP_BMISS_DETECTED_EVENTID);
 
 /* Layout of WMI_REPORT_STATS_EVENTID message:
  *    fixed_param;
