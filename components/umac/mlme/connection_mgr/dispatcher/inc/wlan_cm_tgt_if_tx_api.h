@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -234,7 +234,19 @@ QDF_STATUS wlan_cm_tgt_send_roam_triggers(struct wlan_objmgr_psoc *psoc,
 					  struct wlan_roam_triggers *req);
 
 /**
- * wlan_cm_tgt_send_roam_triggers()  - Send roam trigger command to FW
+ * wlan_cm_tgt_send_idle_params()  - Send idle roam params command to FW
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @params: idle roam params
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_tgt_send_idle_params(struct wlan_objmgr_psoc *psoc,
+					uint8_t vdev_id,
+					struct wlan_roam_idle_params *params);
+
+/**
+ * wlan_cm_tgt_send_roam_invoke_req()  - Send roam trigger command to FW
  * @psoc: psoc pointer
  * @roam_invoke_req: roam invoke parameter
  *
