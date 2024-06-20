@@ -91,7 +91,9 @@ typedef enum {
     DBGLOG_INFO_LVL_2,
     DBGLOG_WARN,
     DBGLOG_ERR,
-    DBGLOG_LVL_MAX
+    DBGLOG_LVL_MAX,
+
+    DBGLOG_INVALID = 0xf
 }DBGLOG_LOG_LVL;
 
 PREPACK struct dbglog_buf_s {

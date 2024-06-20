@@ -195,6 +195,7 @@ typedef enum {
 
   WLAN_MODULE_ID_MAX,
   WLAN_MODULE_ID_INVALID = WLAN_MODULE_ID_MAX,
+  WLAN_MODULE_ID_ALL = 0xffff /* wildcard to indicate all modules */
 } WLAN_MODULE_ID;
 
 
