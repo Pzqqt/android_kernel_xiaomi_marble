@@ -2025,6 +2025,14 @@ def _define_module_for_target_variant_chipset(target, variant, chipset):
         ],
         cmd = "cat $(SRCS) > $@",
     )
+    native.genrule(
+        name = "configs/{}_defconfig_generate_perf".format(tvc),
+        outs = ["configs/{}_defconfig.generated_perf".format(tvc)],
+        srcs = [
+            "configs/{}_gki_{}_defconfig".format(target, chipset),
+        ],
+        cmd = "cat $(SRCS) > $@",
+    )
 
     srcs = native.glob(iglobs) + _fixed_srcs
 
