@@ -23808,6 +23808,8 @@ typedef struct {
      * Refer to P2P_LO_PROB_RESP_MAX_LEN
      */
     A_UINT32 prob_resp_len;
+    /* MAC address to be used for P2P discovery */
+    wmi_mac_addr p2p_disc_mac_addr;
     /*
      * Two other TLVs follow this TLV:
      * A_UINT8 device_types_data[device_types_len];
