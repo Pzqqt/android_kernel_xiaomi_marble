@@ -20909,6 +20909,9 @@ extern void (*HTT_RX_PEER_META_DATA_CHIP_ID_SET) (A_UINT32 *var, A_UINT32 val);
 extern A_UINT32 (*HTT_RX_PEER_META_DATA_HW_LINK_ID_GET) (A_UINT32 var);
 extern void (*HTT_RX_PEER_META_DATA_HW_LINK_ID_SET) (A_UINT32 *var, A_UINT32 val);
 
+extern A_UINT32 (*HTT_RX_PEER_META_DATA_QDATA_REFILL_GET) (A_UINT32 var);
+extern void (*HTT_RX_PEER_META_DATA_QDATA_REFILL_SET) (A_UINT32 *var, A_UINT32 val);
+
 
 /*
  * In some systems, the host SW wants to specify priorities between
