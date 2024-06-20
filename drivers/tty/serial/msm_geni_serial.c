@@ -4211,6 +4211,12 @@ static int msm_geni_serial_sys_suspend(struct device *dev)
 		struct uart_state *state = uport->state;
 		struct tty_port *tty_port = &state->port;
 
+		if (!tty_port) {
+			dev_err(dev, "%s:tty_port is NULL\n", __func__);
+			UART_LOG_DBG(port->ipc_log_misc, dev, "%s:tty_port NULL\n", __func__);
+			return 0;
+		}
+
 		mutex_lock(&tty_port->mutex);
 		if (!pm_runtime_status_suspended(dev)) {
 			dev_err(dev, "%s:Active userspace vote; ioctl_cnt %d\n",
