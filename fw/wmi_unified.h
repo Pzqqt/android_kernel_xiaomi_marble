@@ -2457,7 +2457,7 @@ typedef enum {
     WMI_11D_NEW_COUNTRY_EVENTID,
     WMI_REG_CHAN_LIST_CC_EXT_EVENTID,
     WMI_AFC_EVENTID,
-    WMI_REG_CHAN_LIST_CC_EXT2_EVENTID,
+    WMI_REG_CHAN_LIST_CC_EXT2_EVENTID, /* DEPRECATED */
 
     /** Events for TWT(Target Wake Time) of STA and AP  */
     WMI_TWT_ENABLE_COMPLETE_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_TWT),
@@ -38355,26 +38355,44 @@ typedef struct {
  *     client LPI x4, client SP x4, client VLP x4).
  *   - wmi_regulatory_chan_priority_struct reg_chan_priority[]
  *   - wmi_regulatory_fcc_rule_struct reg_fcc_rule[]
+ *   - wmi_reg_chan_list_cc_ext_additional_params reg_more_data[]
+ *     struct used to fill more fixed additional data, as existing
+ *     fixed_param TLV struct can't be extended.
+ *   - wmi_regulatory_rule_meta_data reg_meta_data[]
+ *     struct used to fill meta information specific to new reg rules
+ *     getting added(i.e. from C2C onwards).
  */
 } wmi_reg_chan_list_cc_event_ext_fixed_param;
 
-typedef struct {
-    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_reg_chan_list_cc_event_ext2_fixed_param */
-    A_UINT32 is_c2c_supported;
-    A_UINT32 domain_code_6ghz_c2c_lpi;
-    A_UINT32 domain_code_6ghz_c2c_sp;
-    A_UINT32 min_bw_6ghz_c2c_lpi;
-    A_UINT32 max_bw_6ghz_c2c_lpi;
-    A_UINT32 min_bw_6ghz_c2c_sp;
-    A_UINT32 max_bw_6ghz_c2c_sp;
-    A_UINT32 num_6ghz_reg_rules_c2c_lpi;
-    A_UINT32 num_6ghz_reg_rules_c2c_sp;
+#define WMI_REG_CAPS_C2C_SUPPORT_GET(additional_regulatory_capabilities) \
+    WMI_GET_BITS(additional_regulatory_capabilities, 0, 1)
+#define WMI_REG_CAPS_C2C_SUPPORT_SET(additional_regulatory_capabilities, value) \
+    WMI_SET_BITS(additional_regulatory_capabilities, 0, 1, value)
 
-/*
- * This fixed_param TLV is followed by the following TLVs:
- *   - wmi_regulatory_rule_ext reg_rule_array[] struct TLV array.
- */
-} wmi_reg_chan_list_cc_event_ext2_fixed_param;
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_reg_chan_list_cc_ext_additional_params */
+    /* additional_regulatory_capabilities:
+     * bit     0  - whether C2C supported
+     * bits 31:1  - reserved
+     */
+    A_UINT32 additional_regulatory_capabilities;
+} wmi_reg_chan_list_cc_ext_additional_params;
+
+typedef enum {
+    WMI_REG_RULE_TYPE_indoor_enabled_ap,
+    WMI_REG_RULE_TYPE_indoor_enabled_def_cli,
+    WMI_REG_RULE_TYPE_indoor_enabled_sub_cli,
+    WMI_REG_RULE_TYPE_MAX,
+} WMI_REG_RULE_TYPE;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_regulatory_rule_meta_data */
+    A_UINT32 reg_rule_type; /* Refer enum WMI_REG_RULE_TYPE */
+    A_UINT32 domain_code_6ghz;
+    A_UINT32 min_bw_6ghz; /* units = MHz */
+    A_UINT32 max_bw_6ghz; /* units = MHz */
+    A_UINT32 num_6ghz_reg_rules;
+} wmi_regulatory_rule_meta_data;
 
 /* WFA AFC Version */
 #define WMI_AFC_WFA_MINOR_VERSION_GET(afc_wfa_version)             WMI_GET_BITS(afc_wfa_version, 0, 16)
