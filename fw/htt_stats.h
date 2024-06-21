@@ -3377,6 +3377,19 @@ typedef struct {
 typedef htt_stats_txbf_ofdma_be_steer_mpdu_stats_tlv
     htt_txbf_ofdma_be_steer_mpdu_stats_tlv;
 
+/* HTT_STATS_TXBF_OFDMA_BE_PARBW_TAG stats TLV:
+ * Sent by target in response to HTT_DBG_EXT_STATS_TXBF_OFDMA stats ID request.
+ */
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* Num of EHT TxBF Partial Bandwidth soundings */
+    A_UINT32 be_ofdma_parbw_user_snd;
+    /* Num of EHT Partial Bandwidth Sounded CVs received */
+    A_UINT32 be_ofdma_parbw_cv;
+    /* Num of 11BE EHT Total CVs received */
+    A_UINT32 be_ofdma_total_cv;
+} htt_stats_txbf_ofdma_be_parbw_tlv;
+
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TXBF_OFDMA
  * TLV_TAGS:
  *      - HTT_STATS_TXBF_OFDMA_NDPA_STATS_TAG
