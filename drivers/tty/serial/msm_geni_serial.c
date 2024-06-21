@@ -3888,6 +3888,7 @@ static int msm_geni_serial_probe(struct platform_device *pdev)
 		goto exit_geni_serial_probe;
 	}
 
+	dev_port->is_console = is_console;
 	dev_port->port_state = UART_PORT_CLOSED_SHUTDOWN;
 	if (drv->cons && !con_enabled) {
 		dev_err(&pdev->dev, "%s, Console Disabled\n", __func__);
