@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -891,7 +891,6 @@ struct wma_wlm_stats_data {
  * @tx_fail_cnt: Number of TX failures
  * @wlm_data: Data required for WLM req and resp handling
  * @he_cap: 802.11ax capabilities
- * @bandcapability: band capability configured through ini
  * @tx_bfee_8ss_enabled: Is Tx Beamformee support for 8x8 enabled?
  * @in_imps: Is device in Idle Mode Power Save?
  * @dynamic_nss_chains_update: per vdev nss, chains update
@@ -1022,7 +1021,6 @@ typedef struct {
 #ifdef WLAN_FEATURE_11AX
 	struct he_capability he_cap;
 #endif
-	uint8_t bandcapability;
 	bool tx_bfee_8ss_enabled;
 	bool in_imps;
 	bool dynamic_nss_chains_support;

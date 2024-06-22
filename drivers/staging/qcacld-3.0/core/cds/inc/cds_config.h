@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -70,7 +71,6 @@ enum cfg_sub_20_channel_width {
  * @is_fw_timeout: Indicate whether crash host when fw timesout or not
  * @ito_repeat_count: Indicates ito repeated count
  * @force_target_assert_enabled: Indicate whether target assert enabled or not
- * @bandcapability: Configured band by user
  * @rps_enabled: RPS enabled in SAP mode
  * Structure for holding cds ini parameters.
  * @num_vdevs: Configured max number of VDEVs can be supported in the stack.
@@ -101,7 +101,6 @@ struct cds_config_info {
 	struct ol_tx_sched_wrr_ac_specs_t ac_specs[QCA_WLAN_AC_ALL];
 	uint8_t ito_repeat_count;
 	bool force_target_assert_enabled;
-	uint8_t bandcapability;
 	bool rps_enabled;
 	uint32_t num_vdevs;
 	bool enable_tx_compl_tsf64;

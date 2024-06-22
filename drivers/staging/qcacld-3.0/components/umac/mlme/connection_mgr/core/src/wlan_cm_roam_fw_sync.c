@@ -863,8 +863,6 @@ cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		mlo_roam_copy_partner_info(connect_rsp, roam_synch_data);
 		mlo_roam_update_connected_links(vdev, connect_rsp);
 	}
-	cm_connect_info(vdev, true, &connect_rsp->bssid, &connect_rsp->ssid,
-			connect_rsp->freq);
 
 	status = cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_ROAM_DONE,
 					  sizeof(*roam_synch_data),

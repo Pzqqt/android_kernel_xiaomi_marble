@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -911,6 +911,7 @@ int hdd_reg_set_band(struct net_device *dev, uint32_t band_bitmap)
 		return -EINVAL;
 	}
 
+	ucfg_cm_set_roam_band_mask(hdd_ctx->psoc, adapter->vdev_id, band_bitmap);
 	status = ucfg_cm_set_roam_band_update(hdd_ctx->psoc, adapter->vdev_id);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Failed to send RSO update to fw on set band");
