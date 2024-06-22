@@ -653,6 +653,16 @@ kgsl_mem_entry_put(struct kgsl_mem_entry *entry)
 }
 
 /*
+ * kgsl_mem_entry_put_deferred() - Puts refcount and triggers deferred
+ * mem_entry destroy when refcount is the last refcount.
+ * @entry: memory entry to be put.
+ *
+ * Use this to put a memory entry when we don't want to block
+ * the caller while destroying memory entry.
+ */
+void kgsl_mem_entry_put_deferred(struct kgsl_mem_entry *entry);
+
+/*
  * kgsl_addr_range_overlap() - Checks if 2 ranges overlap
  * @gpuaddr1: Start of first address range
  * @size1: Size of first address range
