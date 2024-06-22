@@ -5415,6 +5415,8 @@ typedef struct {
      HTT_TX_PDEV_STATS_NUM_EXTRA2_MCS_COUNTERS)
 
 #define HTT_TX_PDEV_STATS_NUM_PER_COUNTERS 101
+#define HTT_MAX_POWER_LEVEL 32 /* 0 to 32 dBm */
+#define HTT_MAX_NEGATIVE_POWER_LEVEL 10 /* 0 to -10 dBm */
 
 /*
  * Introduce new TX counters to support 320MHz support and punctured modes
@@ -9422,6 +9424,29 @@ typedef struct {
      * units = 0.25dBm
      */
     A_INT32 max_reg_only_allowed_power[HTT_STATS_MAX_CHAINS];
+
+    /** number of PPDUs transmitted for each number of tx chains */
+    A_UINT32 tx_num_chains[HTT_STATS_MAX_CHAINS];
+
+    /** tx_power:
+     * Number of PPDUs transmitted with each power level >= 0 dBm.
+     * tx_power[0]: number of PPDUs with tx power in the [0 dBm, 1 dBm) range
+     * tx_power[1]: number of PPDUs with tx power in the [1 dBm, 2 dBm) range
+     * ...
+     * tx_power[30]: number of PPDUs with tx power in the [30 dBm, 31 dBm) range
+     * tx_power[31]: number of PPDUs with tx power >= 31 dBm
+     */
+    A_UINT32 tx_power[HTT_MAX_POWER_LEVEL];
+
+    /** tx_power_neg:
+     * Number of PPDUs transmitted with each power level < 0 dBm.
+     * tx_power_neg[0]: cnt of PPDUs with tx pwr in the [-1 dBm, 0 dBm) range
+     * tx_power_neg[1]: cnt of PPDUs with tx pwr in the [-2 dBm, -1 dBm) range
+     * ...
+     * tx_power_neg[8]: cnt of PPDUs with tx pwr in the [-9 dBm, -8 dBm) range
+     * tx_power_neg[9]: cnt of PPDUs with tx pwr < -9 dBm
+     */
+    A_UINT32 tx_power_neg[HTT_MAX_NEGATIVE_POWER_LEVEL];
 } htt_stats_phy_tpc_stats_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_phy_tpc_stats_tlv htt_phy_tpc_stats_tlv;
