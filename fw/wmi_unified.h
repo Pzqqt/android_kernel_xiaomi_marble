@@ -25147,6 +25147,17 @@ typedef enum _WMI_NLO_SSID_BcastNwType
 #define WMI_NLO_CONFIG_ENABLE_IE_WHITELIST_IN_PROBE_REQ (0x1 << 12)
 #define WMI_NLO_CONFIG_ENABLE_CNLO_RSSI_CONFIG          (0x1 << 13)
 
+/*
+ * This bit is used to indicate if MRSNO IE parsing for WiFi6 standard
+ * is enabled.
+ */
+#define WMI_NLO_CONFIG_ENABLE_MRSNO_WIFI6               (0x1 << 14)
+/*
+ * This bit is used to indicate if MRSNO IE parsing for WiFi7 standard
+ * is enabled.
+ */
+#define WMI_NLO_CONFIG_ENABLE_MRSNO_WIFI7               (0x1 << 15)
+
 /* Whether directed scan needs to be performed (for hidden SSIDs) */
 #define WMI_ENLO_FLAG_DIRECTED_SCAN      1
 /* Whether PNO event shall be triggered if the network is found on A band */
@@ -27270,8 +27281,10 @@ typedef struct
 #define LPI_IE_BITMAP_CACHING_REQD           0x00400000     /* extscan will use this field to indicate if this frame info needs to be cached in LOWI LP or not */
 #define LPI_IE_BITMAP_REPORT_CONTEXT_HUB     0x00800000     /* extscan will use this field to indicate to LOWI LP whether to report result to context hub or not. */
 #define LPI_IE_BITMAP_CHRE_RADIO_CHAIN       0x01000000     /* include radio chain and RSSI per chain information if this bit is set - for CHRE */
+#define LPI_IE_BITMAP_CHRE_SEC_MODE_MRSNO_WIFI6 0x02000000  /* include MRSNO IE's sec_mode information for WiFi6 if this bit is set - for CHRE */
+#define LPI_IE_BITMAP_CHRE_SEC_MODE_MRSNO_WIFI7 0x04000000  /* include MRSNO IE's sec_mode information for WiFi7 if this bit is set - for CHRE */
 
-/* 0x02000000, 0x04000000, and 0x08000000 are unused / available */
+/* 0x08000000 is unused / available */
 
 #define LPI_IE_BITMAP_CHRE_ESS               0x10000000     /* ESS capability info for CHRE */
 #define LPI_IE_BITMAP_CHRE_SEC_MODE          0x20000000     /* Security capability info for CHRE */

@@ -675,6 +675,7 @@ typedef  enum  {
     WMI_SERVICE_WDS_NULL_FRAME_SUPPORT = 421,
     WMI_SERVICE_MLO_SAP_CONCURRENCY_SUPPORT = 422, /* Indicates FW supports MLO SAP+STA Concurrency */
     WMI_SERVICE_MEC_AGING_TIMER_SUPPORT = 423, /* FW supports multicast echo check aging timer */
+    WMI_SERVICE_MULTI_RSNO_SUPPORT = 424, /* FW supports parsing of multiple RSN override IEs */
 
 
     WMI_MAX_EXT2_SERVICE
