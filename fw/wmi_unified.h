@@ -687,6 +687,12 @@ typedef enum {
     /** Connect request on the vdev */
     WMI_VDEV_OOB_CONNECTION_REQ_CMDID,
 
+    /**
+     * WMI command to inform the target of the AP's operating bandwidth
+     * (only applicable for STA vdev)
+     */
+    WMI_VDEV_REPORT_AP_OPER_BW_CMDID,
+
 
     /* peer specific commands */
 
@@ -21514,6 +21520,12 @@ typedef struct {
  */
 } wmi_peer_assoc_complete_cmd_fixed_param;
 
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_get_ap_oper_bw_cmd_fixed_param */
+    A_UINT32 vdev_id;
+    A_UINT32 ap_phymode; /* contains a WLAN_PHY_MODE value */
+} wmi_vdev_report_ap_oper_bw_cmd_fixed_param;
+
 /* WDS Entry Flags */
 #define WMI_WDS_FLAG_STATIC    0x1    /* Disable aging & learning */
 
@@ -37202,6 +37214,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_PLMREQ_STOP_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_TSF_TSTAMP_ACTION_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_SET_IE_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_REPORT_AP_OPER_BW_CMDID);
 
         /* peer specific commands */
 
