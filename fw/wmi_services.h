@@ -676,6 +676,13 @@ typedef  enum  {
     WMI_SERVICE_MLO_SAP_CONCURRENCY_SUPPORT = 422, /* Indicates FW supports MLO SAP+STA Concurrency */
     WMI_SERVICE_MEC_AGING_TIMER_SUPPORT = 423, /* FW supports multicast echo check aging timer */
     WMI_SERVICE_MULTI_RSNO_SUPPORT = 424, /* FW supports parsing of multiple RSN override IEs */
+    /* WMI_SERVICE_IS_TARGET_IPA:
+     * FW indicates to host whether the target is IPA or xFEM.
+     * If this flag is 0, the target is XFEM or unspecified.
+     * If this flag is 1, the target is IPA.
+     */
+    WMI_SERVICE_IS_TARGET_IPA = 425,
+    WMI_SERVICE_THERM_THROT_TX_CHAIN_MASK = 426, /*FW supports thermal throttling dynamic Tx ChainMask update */
 
 
     WMI_MAX_EXT2_SERVICE
