@@ -41584,6 +41584,12 @@ typedef enum {
      */
     WMI_ROAM_PARAM_CRYPTO_EHT_CONFIG = 10,
 
+    /*
+     * Roam Param for enabling/disabling Roam Latency Optimization via below
+     * BITMAP of wlan_roam_latency_optimization_t
+     */
+    WMI_ROAM_PARAM_ROAM_LATENCY_OPTIMIZATION_BITMAP = 11,
+
 
     /*=== END ROAM_PARAM_PROTOTYPE SECTION ===*/
 } WMI_ROAM_PARAM;
