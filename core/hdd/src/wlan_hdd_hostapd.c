@@ -6451,7 +6451,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		hdd_set_connection_in_progress(false);
 		sme_get_command_q_status(mac_handle);
 		wlansap_stop_bss(WLAN_HDD_GET_SAP_CTX_PTR(adapter));
-		if (!cds_is_driver_recovering())
+		if (!cds_is_driver_recovering() &&
+		    QDF_IS_STATUS_ERROR(qdf_status))
 			QDF_ASSERT(0);
 		ret = -EINVAL;
 		goto error;
