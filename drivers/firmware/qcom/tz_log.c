@@ -2070,8 +2070,8 @@ static int tz_log_restore(struct device *dev)
 	 * during restoration from hibernation.
 	 */
 	if (restore_from_hibernation) {
-		_disp_tz_log_stats(0);
-		_disp_qsee_log_stats(0);
+		_disp_tz_log_stats(0, false);
+		_disp_qsee_log_stats(0, false);
 	}
 	/* Register the log bugger at TZ during hibernation resume.
 	 * After hibernation the log buffer is with HLOS as TZ encountered
