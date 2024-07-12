@@ -1578,6 +1578,7 @@ typedef enum {
     WMI_TWT_NUDGE_DIALOG_CMDID,
     WMI_VDEV_SET_TWT_EDCA_PARAMS_CMDID, /* XPAN TWT */
     WMI_VDEV_GET_TWT_SESSION_STATS_INFO_CMDID,
+    WMI_TWT_VDEV_CONFIG_CMDID,
 
     /** WMI commands related to motion detection **/
     WMI_MOTION_DET_CONFIG_PARAM_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_MOTION_DET),
@@ -7339,6 +7340,9 @@ typedef struct {
 #define WMI_TX_SEND_FLAG_SET_IS_SA_QUERY    0x00000004
 #define WMI_TX_SEND_FLAG_SET_IS_SA_QUERY_GET(tx_flags) WMI_GET_BITS(tx_flags, 2, 1)
 #define WMI_TX_SEND_FLAG_SET_IS_SA_QUERY_SET(tx_flags, value) WMI_SET_BITS(tx_flags, 2, 1, value)
+#define WMI_TX_SEND_FLAG_SET_P2P_FRAME_ON_STA_VDEV 0x00000008
+#define WMI_TX_SEND_FLAG_SET_P2P_FRAME_ON_STA_VDEV_GET(tx_flags) WMI_GET_BITS(tx_flags, 3, 1)
+#define WMI_TX_SEND_FLAG_SET_P2P_FRAME_ON_STA_VDEV_SET(tx_flags, value) WMI_SET_BITS(tx_flags, 3, 1, value)
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_tx_send_params */
@@ -17784,6 +17788,7 @@ typedef enum {
 
 /** NAN vdev config Feature flags */
 #define WMI_VDEV_NAN_ALLOW_DW_CONFIG_CHANGE_IN_SYNC_ROLE                0x1
+#define WMI_VDEV_NAN_FORCE_CONGIG_WOW_DB_INTERVAL                       0x2
 
 
 /** the definition of different VDEV parameters */
@@ -18847,6 +18852,10 @@ typedef enum {
 
     /* Set HW CTS2SELF before DL OFDMA Sequence */
     WMI_VDEV_PARAM_HWCTS2SELF_OFDMA,                      /* 0xC5 */
+
+    /* Update TWT_UNAVAIL_MODE */
+    WMI_VDEV_PARAM_TWT_UNAVAIL_MODE,                      /* 0xC6 */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
@@ -37681,6 +37690,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_TWT_DEL_DIALOG_CMDID);
         WMI_RETURN_STRING(WMI_TWT_PAUSE_DIALOG_CMDID);
         WMI_RETURN_STRING(WMI_TWT_RESUME_DIALOG_CMDID);
+        WMI_RETURN_STRING(WMI_TWT_VDEV_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_REQUEST_ROAM_SCAN_STATS_CMDID);
         WMI_RETURN_STRING(WMI_PEER_TID_CONFIGURATIONS_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_SET_CUSTOM_SW_RETRY_TH_CMDID);
@@ -39385,6 +39395,22 @@ typedef struct {
     A_UINT32 pdev_id;
     A_UINT32 status; /* refer to WMI_DISABLE_TWT_STATUS_T enum */
 } wmi_twt_disable_complete_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_vdev_config_cmd_fixed_param */
+    /** pdev_id for identifying the MAC.
+     * See macros starting with WMI_PDEV_ID_ for values.
+     */
+    A_UINT32 pdev_id;
+    A_UINT32 vdev_id;
+    /* TWT support flag to be applied to the vdev
+     * 0 = ITWT, BTWT and RTWT are disabled.
+     * 1 = ITWT is enabled
+     * 2 = ITWT and BTWT are enabled
+     * 3 = ITWT, BTWT and RTWT are enabled
+     */
+    A_UINT32 twt_support;
+} wmi_twt_vdev_config_cmd_fixed_param;
 
 /* status code of TWT Disable */
 typedef enum _WMI_DISABLE_TWT_STATUS_T {
