@@ -2533,6 +2533,8 @@ typedef enum {
     WMI_MLO_LINK_INFO_SYNC_EVENTID,
     /** WMI Event to announce host about the TLT update for TID */
     WMI_MLO_TLT_SELECTION_FOR_TID_SPRAY_EVENTID,
+    /** WMI Event to send the status of T2LM configured */
+    WMI_MLO_PEER_TID_TO_LINK_MAP_EVENTID,
 
     /* WMI event specific to Quiet handling */
     WMI_QUIET_HANDLING_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_QUIET_OFL),
@@ -48753,6 +48755,14 @@ typedef struct {
     /** This indicates the position of the tail pointer as last updated by FW */
     A_UINT32 tail_pointer;
 } wmi_mgmt_srng_reap_event_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_mlo_peer_tid_to_link_map_event_fixed_param */
+    A_UINT32 tlv_header;
+    /* status takes values from WMI_MLO_TID_TO_LINK_MAP_STATUS */
+    A_UINT32 status;
+} wmi_mlo_peer_tid_to_link_map_event_fixed_param;
 
 
 

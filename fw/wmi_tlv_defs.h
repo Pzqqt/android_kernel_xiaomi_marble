@@ -1446,6 +1446,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_reg_chan_list_cc_ext_additional_params,
     WMITLV_TAG_STRUC_wmi_regulatory_rule_meta_data,
     WMITLV_TAG_STRUC_wmi_vdev_report_ap_oper_bw_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_mlo_peer_tid_to_link_map_event_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -2325,6 +2326,7 @@ typedef enum {
     OP(WMI_P2P_CLI_DFS_AP_BMISS_DETECTED_EVENTID) \
     OP(WMI_MGMT_SRNG_REAP_EVENTID) \
     OP(WMI_MLO_TLT_SELECTION_FOR_TID_SPRAY_EVENTID) \
+    OP(WMI_MLO_PEER_TID_TO_LINK_MAP_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -7707,6 +7709,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_ENABLE_XLNA_EVENTID);
 #define WMITLV_TABLE_WMI_MGMT_SRNG_REAP_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mgmt_srng_reap_event_fixed_param, wmi_mgmt_srng_reap_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_SRNG_REAP_EVENTID);
+
+/** WMI event used to send status of Tid to link map configured */
+#define WMITLV_TABLE_WMI_MLO_PEER_TID_TO_LINK_MAP_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_peer_tid_to_link_map_event_fixed_param, wmi_mlo_peer_tid_to_link_map_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_MLO_PEER_TID_TO_LINK_MAP_EVENTID);
 
 
 #ifdef __cplusplus
