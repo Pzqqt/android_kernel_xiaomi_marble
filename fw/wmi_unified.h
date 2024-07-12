@@ -258,6 +258,27 @@ static INLINE void wmi_packed_arr_set_bits(A_UINT32 *arr, A_UINT32 entry_index,
     (pwmi_mac_addr)->mac_addr47to32 = ((c_macaddr)[4] | ((c_macaddr)[5] << 8));\
    } while (0)
 
+/** macro to convert generic hash of 6 bytes from WMI word format to char array */
+#define WMI_GENERIC_HASH_TO_CHAR_ARRAY(pwmi_generic_hash,c_generic_hash) do { \
+    (c_generic_hash)[0] = (((pwmi_generic_hash)->generic_hash31to0)  >>  0) & 0xff; \
+    (c_generic_hash)[1] = (((pwmi_generic_hash)->generic_hash31to0)  >>  8) & 0xff; \
+    (c_generic_hash)[2] = (((pwmi_generic_hash)->generic_hash31to0)  >> 16) & 0xff; \
+    (c_generic_hash)[3] = (((pwmi_generic_hash)->generic_hash31to0)  >> 24) & 0xff; \
+    (c_generic_hash)[4] = (((pwmi_generic_hash)->generic_hash47to32) >>  0) & 0xff; \
+    (c_generic_hash)[5] = (((pwmi_generic_hash)->generic_hash47to32) >>  8) & 0xff; \
+} while (0)
+
+/** macro to convert generic hash from char array to WMI word format */
+#define WMI_CHAR_ARRAY_TO_GENERIC_HASH(c_generic_hash,pwmi_generic_hash)  do { \
+    (pwmi_generic_hash)->generic_hash31to0 = \
+        (((A_UINT32)(c_generic_hash)[0] <<  0) | \
+         ((A_UINT32)(c_generic_hash)[1] <<  8) | \
+         ((A_UINT32)(c_generic_hash)[2] << 16) | \
+         ((A_UINT32)(c_generic_hash)[3] << 24)); \
+    (pwmi_generic_hash)->generic_hash47to32 = \
+        ((c_generic_hash)[4] | ((c_generic_hash)[5] << 8)); \
+} while (0)
+
 /*
  * The below function declarations are for implementations on some
  * platforms of the above macros, but in function form, to save code
@@ -1319,6 +1340,9 @@ typedef enum {
     /** WMI command to Request SAP suspend/resume */
     WMI_SET_AP_SUSPEND_RESUME_CMDID,
 
+    /** Unsynchronized Service Discovery */
+    WMI_USD_SERVICE_CMDID,
+
 
     /*  Offload 11k related requests */
     WMI_11K_OFFLOAD_REPORT_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_11K_OFFLOAD),
@@ -2345,6 +2369,11 @@ typedef enum {
 
     /* WMI evt to indicate switch type either to WLAN(XPAN) or non_WLAN(BLE) */
     WMI_AUDIO_TRANSPORT_SWITCH_TYPE_EVENTID,
+
+    /** Usynchronized Service Discovery:
+     * Send USD event with USD mode status as success or fail.
+     */
+    WMI_USD_SERVICE_EVENTID,
 
 
     /* GPIO Event */
@@ -31459,6 +31488,78 @@ typedef struct {
     /** This is followed by a TLV array of wmi_dcc_ndl_active_state_config. */
     /** This is followed by a TLV array of wmi_ocb_schedule_element. */
 } wmi_ocb_set_config_cmd_fixed_param;
+
+/** WMI Generic hash to be used by any 6 byte or 8 byte hash
+ *  Used for 6 byte USD Service ID
+ */
+typedef struct _wmi_generic_hash {
+    /** upper 4 bytes of hash */
+    A_UINT32 generic_hash31to0;
+    /** lower 4 bytes of hash */
+    A_UINT32 generic_hash47to32;
+} wmi_generic_hash;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_usd_add_delete_update_service_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    A_UINT32 vdev_id;
+    /* picks service type from WMI_USD_MODE */
+    A_UINT32 usd_mode;
+    /* element_container_attribute struct:
+     * A_UINT8 element_container_attr_data[element_container_attr_len] */
+    A_UINT32 element_container_attr_data_len;
+    /* 6 bytes of service id hash */
+    wmi_generic_hash service_id;
+    /* Instance ID of the service */
+    A_UINT32 instance_id;
+    /* Default frequency in MHz */
+    A_UINT32 default_freq;
+    /* length of the Service Specific Info */
+    A_UINT32 service_specific_info_len;
+    /* Time to live in seconds */
+    A_UINT32 time_to_live;
+    /* picks protocol type from WMI_USD_SERVICE_PROTOCOL_TYPE */
+    A_UINT32 protocol_type;
+    wmi_mac_addr device_mac_addr;
+} wmi_usd_service_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;
+    A_UINT32 vdev_id;
+    /* picks values from WMI_USD_MODE_STATUS */
+    A_UINT32 usd_mode_status;
+} wmi_usd_service_event_fixed_param;
+
+typedef enum {
+    WMI_USD_MODE_FLUSH,
+    WMI_USD_MODE_PUBLISH,
+    WMI_USD_MODE_SUBSCRIBE,
+    WMI_USD_MODE_UPDATE_PUBLISH,
+    WMI_USD_MODE_CANCEL_PUBLISH,
+    WMI_USD_MODE_CANCEL_SUBSCRIBE,
+} WMI_USD_MODE;
+
+typedef enum {
+    WMI_USD_MODE_FLUSH_SUCCESS,
+    WMI_USD_MODE_FLUSH_FAIL,
+    WMI_USD_MODE_PUBLISH_SUCCESS,
+    WMI_USD_MODE_PUBLISH_FAIL,
+    WMI_USD_MODE_SUBSCRIBE_SUCCESS,
+    WMI_USD_MODE_SUBSCRIBE_FAIL,
+    WMI_USD_MODE_UPDATE_PUBLISH_SUCCESS,
+    WMI_USD_MODE_UPDATE_PUBLISH_FAIL,
+    WMI_USD_MODE_CANCEL_PUBLISH_SUCCESS,
+    WMI_USD_MODE_CANCEL_PUBLISH_FAIL,
+    WMI_USD_MODE_CANCEL_SUBSCRIBE_SUCCESS,
+    WMI_USD_MODE_CANCEL_SUBSCRIBE_FAIL,
+} WMI_USD_MODE_STATUS;
+
+typedef enum {
+    WMI_USD_SERVICE_PROTOCOL_TYPE_BONJOUR = 1,
+    WMI_USD_SERVICE_PROTOCOL_TYPE_GENERIC = 2,
+    WMI_USD_SERVICE_PROTOCOL_TYPE_CSA_MATTER = 3,
+} WMI_USD_SERVICE_PROTOCOL_TYPE;
 
 #define EXPIRY_TIME_IN_TSF_TIMESTAMP_OFFSET     0
 #define EXPIRY_TIME_IN_TSF_TIMESTAMP_MASK       1
