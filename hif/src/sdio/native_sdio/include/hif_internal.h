@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -326,7 +327,7 @@ struct _HIF_SCATTER_REQ {
 	enum HIF_SCATTER_METHOD   scatter_method;
 	void                 *hif_private[4]; /* HIF private area */
 	u_int8_t             *scatter_bounce_buffer; /* bounce buffers */
-	struct _HIF_SCATTER_ITEM    scatter_list[1]; /* start of scatter list */
+	QDF_FLEX_ARRAY(struct _HIF_SCATTER_ITEM, scatter_list); /* start of scatter list */
 };
 
 typedef struct _HIF_SCATTER_REQ * (*HIF_ALLOCATE_SCATTER_REQUEST)(
