@@ -154,7 +154,7 @@ static int get_sg_from_child(struct sg_table *sgt, struct kgsl_memdesc *child,
 	int pgoffset = (offset >> PAGE_SHIFT);
 	struct scatterlist *target_sg;
 	struct sg_page_iter iter;
-	int ret;
+	int i = 0, ret;
 
 	if (child->pages)
 		return sg_alloc_table_from_pages(sgt,
@@ -167,9 +167,12 @@ static int get_sg_from_child(struct sg_table *sgt, struct kgsl_memdesc *child,
 
 	target_sg = sgt->sgl;
 
-	for_each_sg_page(child->sgt->sgl, &iter, npages, pgoffset) {
+	for_each_sgtable_page(child->sgt, &iter, pgoffset) {
 		sg_set_page(target_sg, sg_page_iter_page(&iter), PAGE_SIZE, 0);
 		target_sg = sg_next(target_sg);
+
+		if (++i == npages)
+			break;
 	}
 
 	return 0;
