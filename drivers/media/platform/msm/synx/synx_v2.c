@@ -2224,6 +2224,7 @@ static ssize_t synx_read(struct file *filep,
 
 	list_del_init(&cb->node);
 	mutex_unlock(&client->event_q_lock);
+	memset(&data, 0, sizeof(struct synx_userpayload_info_v2));
 
 	rc = size;
 	data.synx_obj = cb->kernel_cb.h_synx;

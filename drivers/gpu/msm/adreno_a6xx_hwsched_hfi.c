@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/iommu.h>
@@ -1180,7 +1180,11 @@ int a6xx_hwsched_hfi_start(struct adreno_device *adreno_dev)
 	if (ret)
 		goto err;
 
-	ret = a6xx_hfi_send_feature_ctrl(adreno_dev, HFI_FEATURE_A6XX_KPROF,
+	if (adreno_is_a621(adreno_dev))
+		ret = a6xx_hfi_send_feature_ctrl(adreno_dev, HFI_FEATURE_KPROF,
+			1, 0);
+	else
+		ret = a6xx_hfi_send_feature_ctrl(adreno_dev, HFI_FEATURE_A6XX_KPROF,
 			1, 0);
 	if (ret)
 		goto err;

@@ -1345,13 +1345,14 @@ static void fastrpc_mmap_free(struct fastrpc_mmap *map, uint32_t flags)
 		map->refs--;
 		if (!map->refs && !map->ctx_refs)
 			hlist_del_init(&map->hn);
-		spin_unlock_irqrestore(&me->hlock, irq_flags);
 		if (map->refs > 0) {
 			ADSPRPC_WARN(
 				"multiple references for remote heap size %zu va 0x%lx ref count is %d\n",
 				map->size, map->va, map->refs);
+			spin_unlock_irqrestore(&me->hlock, irq_flags);
 			return;
 		}
+		spin_unlock_irqrestore(&me->hlock, irq_flags);
 	} else {
 		map->refs--;
 		if (!map->refs && !map->ctx_refs)
