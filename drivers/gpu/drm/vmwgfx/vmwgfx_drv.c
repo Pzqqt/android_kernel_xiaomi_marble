@@ -372,7 +372,7 @@ static int vmw_dummy_query_bo_create(struct vmw_private *dev_priv)
 		return -ENOMEM;
 
 	ret = vmw_bo_init(dev_priv, vbo, PAGE_SIZE,
-			  &vmw_sys_ne_placement, false,
+			  &vmw_sys_placement, false, true,
 			  &vmw_bo_bo_free);
 	if (unlikely(ret != 0))
 		return ret;
@@ -751,13 +751,6 @@ static int vmw_driver_load(struct drm_device *dev, unsigned long chipset)
 			mem_size =
 				vmw_read(dev_priv,
 					 SVGA_REG_SUGGESTED_GBOBJECT_MEM_SIZE_KB);
-
-		/*
-		 * Workaround for low memory 2D VMs to compensate for the
-		 * allocation taken by fbdev
-		 */
-		if (!(dev_priv->capabilities & SVGA_CAP_3D))
-			mem_size *= 3;
 
 		dev_priv->max_mob_pages = mem_size * 1024 / PAGE_SIZE;
 		dev_priv->prim_bb_mem =
