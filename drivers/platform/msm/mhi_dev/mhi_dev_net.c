@@ -66,10 +66,10 @@ struct mhi_dev_net_chan_attr {
 #define CHAN_TO_CLIENT(_CHAN_NR) (_CHAN_NR / 2)
 
 #define mhi_dev_net_log(_msg_lvl, _msg, ...) do { \
-	if (_msg_lvl >= mhi_net_msg_lvl) { \
+	if ((enum mhi_dev_net_dbg_lvl)_msg_lvl >= mhi_net_msg_lvl) { \
 		pr_err("[%s] "_msg, __func__, ##__VA_ARGS__); \
 	} \
-	if (mhi_net_ipc_log && (_msg_lvl >= mhi_net_ipc_log_lvl)) { \
+	if (mhi_net_ipc_log && ((enum mhi_dev_net_dbg_lvl)_msg_lvl >= mhi_net_ipc_log_lvl)) { \
 		ipc_log_string(mhi_net_ipc_log,                     \
 			"[%s] " _msg, __func__, ##__VA_ARGS__);     \
 	} \
