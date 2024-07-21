@@ -31534,6 +31534,8 @@ typedef struct {
     A_UINT32 vdev_id;
     /* picks values from WMI_USD_MODE_STATUS */
     A_UINT32 usd_mode_status;
+    /* Instance ID of the service */
+    A_UINT32 instance_id;
 } wmi_usd_service_event_fixed_param;
 
 typedef enum {
