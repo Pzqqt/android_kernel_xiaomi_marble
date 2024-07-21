@@ -40704,6 +40704,11 @@ typedef enum {
         WMI_ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER_AFTER_INACTIVITY,
     WMI_ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER_AFTER_INACTIVITY_CU,
     WMI_ROAM_TRIGGER_SUB_REASON_INACTIVITY_TIMER_CU,
+    /* MLD_EXTRA_PARTIAL_SCAN:
+     * FW triggers extra partial scan when all ml links are not found
+     * during first partial scan.
+     */
+    WMI_ROAM_TRIGGER_SUB_REASON_MLD_EXTRA_PARTIAL_SCAN,
 } WMI_ROAM_TRIGGER_SUB_REASON_ID;
 
 typedef enum wmi_roam_invoke_status_error {
