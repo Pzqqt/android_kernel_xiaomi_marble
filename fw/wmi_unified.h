@@ -25849,6 +25849,11 @@ typedef enum
      */
     WMI_VENDOR_OUI_ACTION_FORCE_MLSR = 14,
 
+    /*
+     * Disable AUX learning and AUX listen if OUI matches
+     */
+    WMI_VENDOR_OUI_ACTION_DISABLE_AUXL = 15,
+
 
     /* Add any action before this line */
     WMI_VENDOR_OUI_ACTION_MAX_ACTION_ID
