@@ -24166,6 +24166,8 @@ typedef enum wake_reason_e {
     WOW_REASON_STX_WOW_HIGH_DUTY_CYCLE,
     /* WoW exit reason MCC lite */
     WOW_REASON_MCC_LITE,
+    /* P2P CLI detected BMISS from DFS master AP */
+    WOW_REASON_P2P_CLI_DFS_AP_BMISS_DETECTED,
 
     /* add new WOW_REASON_ defs before this line */
     WOW_REASON_MAX,
@@ -27496,16 +27498,19 @@ typedef struct
     A_UINT32 isLastResult;  /*is this event a last event of the whole batch scan*/
 }  wmi_batch_scan_result_event_fixed_param;
 
-typedef enum {
+typedef enum { /* DEPRECATED - DO NOT USE */
     /** beacons not received from P2P GO */
     WMI_P2P_GO_BMISS = 0,
     /** beacons not received from P2 GO's STA's connected AP */
     WMI_DFS_AP_BMISS = 1,
-} wmi_dfs_ap_bmiss_reason;
+} wmi_dfs_ap_bmiss_reason; /* DEPRECATED - DO NOT USE */
 
 typedef struct {
     A_UINT32 tlv_header;  /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_p2p_cli_dfs_ap_bmiss_fixed_param*/
     A_UINT32 vdev_id;
+    /* NOTE:
+     * The reason_code field is deprecated, and should be ignored.
+     */
     A_UINT32 reason_code; /* contains a wmi_dfs_ap_bmiss_reason value */
 } wmi_p2p_cli_dfs_ap_bmiss_fixed_param;
 
