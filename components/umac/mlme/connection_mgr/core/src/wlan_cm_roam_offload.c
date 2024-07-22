@@ -2001,12 +2001,11 @@ cm_fetch_valid_ch_lst(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-static void
-cm_fill_rso_channel_list(struct wlan_objmgr_psoc *psoc,
-			 struct wlan_objmgr_vdev *vdev,
-			 struct rso_config *rso_cfg,
-			 struct wlan_roam_scan_channel_list *chan_info,
-			 uint8_t reason)
+void cm_fill_rso_channel_list(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_objmgr_vdev *vdev,
+			      struct rso_config *rso_cfg,
+			      struct wlan_roam_scan_channel_list *chan_info,
+			      uint8_t reason)
 {
 	QDF_STATUS status;
 	uint8_t ch_cache_str[128] = {0};

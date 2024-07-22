@@ -1287,6 +1287,7 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	struct rso_config *rso_cfg;
 	struct rso_cfg_params *dst_cfg;
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct wlan_roam_scan_channel_list chan_info = {0};
 
 	mlme_obj = mlme_get_psoc_ext_obj(psoc);
 	if (!mlme_obj)
@@ -1378,9 +1379,30 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 					src_config->chan_info.num_chan, true);
 		if (QDF_IS_STATUS_ERROR(status))
 			break;
-		if (mlme_obj->cfg.lfr.roam_scan_offload_enabled)
-			cm_roam_update_cfg(psoc, vdev_id,
-					   REASON_CHANNEL_LIST_CHANGED);
+		if (!mlme_obj->cfg.lfr.roam_scan_offload_enabled)
+			break;
+
+		chan_info.vdev_id = vdev_id;
+		chan_info.chan_count = dst_cfg->pref_chan_info.num_chan;
+		qdf_mem_copy(chan_info.chan_freq_list,
+			     dst_cfg->pref_chan_info.freq_list,
+			     chan_info.chan_count * sizeof(uint32_t));
+		chan_info.chan_cache_type = CHANNEL_LIST_DYNAMIC;
+
+		status = cm_roam_acquire_lock(vdev);
+		if (QDF_IS_STATUS_ERROR(status))
+			break;
+		if (!MLME_IS_ROAM_STATE_RSO_ENABLED(psoc, vdev_id)) {
+			mlme_debug("PREF_CHAN received while ROAM RSO not started");
+			cm_roam_release_lock(vdev);
+			status = QDF_STATUS_E_INVAL;
+			break;
+		}
+		cm_fill_rso_channel_list(psoc, vdev, rso_cfg,
+					 &chan_info,
+					 REASON_CHANNEL_LIST_CHANGED);
+		wlan_cm_tgt_send_roam_freqs(psoc, vdev_id, &chan_info);
+		cm_roam_release_lock(vdev);
 		break;
 	case ROAM_SPECIFIC_CHAN:
 		status = cm_update_roam_scan_channel_list(psoc, vdev, rso_cfg,
@@ -1390,9 +1412,30 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 					false);
 		if (QDF_IS_STATUS_ERROR(status))
 			break;
-		if (mlme_obj->cfg.lfr.roam_scan_offload_enabled)
-			cm_roam_update_cfg(psoc, vdev_id,
-					   REASON_CHANNEL_LIST_CHANGED);
+		if (!mlme_obj->cfg.lfr.roam_scan_offload_enabled)
+			break;
+
+		chan_info.vdev_id = vdev_id;
+		chan_info.chan_count = dst_cfg->specific_chan_info.num_chan;
+		qdf_mem_copy(chan_info.chan_freq_list,
+			     dst_cfg->specific_chan_info.freq_list,
+			     chan_info.chan_count * sizeof(uint32_t));
+		chan_info.chan_cache_type = CHANNEL_LIST_DYNAMIC;
+
+		status = cm_roam_acquire_lock(vdev);
+		if (QDF_IS_STATUS_ERROR(status))
+			break;
+		if (!MLME_IS_ROAM_STATE_RSO_ENABLED(psoc, vdev_id)) {
+			mlme_debug("SPECIFIC_CHAN received while ROAM RSO not started");
+			cm_roam_release_lock(vdev);
+			status = QDF_STATUS_E_INVAL;
+			break;
+		}
+		cm_fill_rso_channel_list(psoc, vdev, rso_cfg,
+					 &chan_info,
+					 REASON_CHANNEL_LIST_CHANGED);
+		wlan_cm_tgt_send_roam_freqs(psoc, vdev_id, &chan_info);
+		cm_roam_release_lock(vdev);
 		break;
 	case ROAM_RSSI_DIFF:
 		dst_cfg->roam_rssi_diff = src_config->uint_value;
