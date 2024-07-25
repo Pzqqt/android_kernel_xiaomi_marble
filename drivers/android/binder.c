@@ -1187,7 +1187,7 @@ static int get_ref_desc_olocked(struct binder_proc *proc,
 				struct binder_node *node,
 				u32 *desc)
 {
-	struct dbitmap *dmap = &proc->dmap;
+	struct dbitmap *dmap = &binder_proc_ext_entry(proc)->dmap;
 	unsigned int nbits, offset;
 	unsigned long *new, bit;
 
@@ -1303,7 +1303,7 @@ retry:
 
 static void binder_cleanup_ref_olocked(struct binder_ref *ref)
 {
-	struct dbitmap *dmap = &ref->proc->dmap;
+	struct dbitmap *dmap = &binder_proc_ext_entry(ref->proc)->dmap;
 	bool delete_node = false;
 
 	binder_debug(BINDER_DEBUG_INTERNAL_REFS,
@@ -1478,11 +1478,12 @@ static void binder_free_ref(struct binder_ref *ref)
 /* shrink descriptor bitmap if needed */
 static void try_shrink_dmap(struct binder_proc *proc)
 {
+	struct dbitmap *dmap = &binder_proc_ext_entry(proc)->dmap;
 	unsigned long *new;
 	int nbits;
 
 	binder_proc_lock(proc);
-	nbits = dbitmap_shrink_nbits(&proc->dmap);
+	nbits = dbitmap_shrink_nbits(dmap);
 	binder_proc_unlock(proc);
 
 	if (!nbits)
@@ -1490,7 +1491,7 @@ static void try_shrink_dmap(struct binder_proc *proc)
 
 	new = bitmap_zalloc(nbits, GFP_KERNEL);
 	binder_proc_lock(proc);
-	dbitmap_shrink(&proc->dmap, new, nbits);
+	dbitmap_shrink(dmap, new, nbits);
 	binder_proc_unlock(proc);
 }
 
@@ -5089,7 +5090,7 @@ static void binder_free_proc(struct binder_proc *proc)
 	put_task_struct(proc->tsk);
 	put_cred(eproc->cred);
 	binder_stats_deleted(BINDER_STAT_PROC);
-	dbitmap_free(&proc->dmap);
+	dbitmap_free(&eproc->dmap);
 	trace_android_vh_binder_free_proc(proc);
 	kfree(eproc);
 }
@@ -5791,7 +5792,7 @@ static int binder_open(struct inode *nodp, struct file *filp)
 	if (proc == NULL)
 		return -ENOMEM;
 
-	dbitmap_init(&proc->dmap);
+	dbitmap_init(&eproc->dmap);
 	spin_lock_init(&proc->inner_lock);
 	spin_lock_init(&proc->outer_lock);
 	get_task_struct(current->group_leader);
