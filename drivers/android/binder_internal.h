@@ -532,10 +532,7 @@ binder_alloc_get_free_async_space(struct binder_alloc *alloc)
 
 static inline const struct cred *binder_get_cred(struct binder_proc *proc)
 {
-	struct binder_proc_ext *eproc;
-
-	eproc = container_of(proc, struct binder_proc_ext, proc);
-	return eproc->cred;
+	return binder_proc_ext_entry(proc)->cred;
 }
 
 /**
