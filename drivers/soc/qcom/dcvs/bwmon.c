@@ -1577,6 +1577,7 @@ void __stop_bw_hwmon(struct bw_hwmon *hw, enum mon_reg_type type)
 
 	bwmon_monitor_stop(hw);
 	mon_irq_disable(m, type);
+	synchronize_irq(m->irq);
 	free_irq(m->irq, m);
 	mon_disable(m, type);
 	mon_clear(m, true, type);
