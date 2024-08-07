@@ -24071,6 +24071,7 @@ typedef enum event_type_e {
     WOW_RTT_11AZ_EVENT,                   /* 32 + 13 */
     WOW_P2P_NOA_EVENT,                    /* 32 + 14 */
     WOW_XGAP_EVENT,                       /* 32 + 15 */
+    WOW_PAGE_FAULT_EVENT,                 /* 32 + 16 */
 } WOW_WAKE_EVENT_TYPE;
 
 typedef enum wake_reason_e {
@@ -24168,6 +24169,8 @@ typedef enum wake_reason_e {
     WOW_REASON_MCC_LITE,
     /* P2P CLI detected BMISS from DFS master AP */
     WOW_REASON_P2P_CLI_DFS_AP_BMISS_DETECTED,
+    /* if Page Fault blocking feature enabled and PF observed under WoW */
+    WOW_REASON_PF_BLOCKING_LAST_TIME,
 
     /* add new WOW_REASON_ defs before this line */
     WOW_REASON_MAX,
