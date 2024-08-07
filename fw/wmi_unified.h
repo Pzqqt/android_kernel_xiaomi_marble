@@ -47685,6 +47685,7 @@ typedef struct {
 #define WMI_PDEV_SET_CUSTOM_TX_PWR_MAX_CHAIN_NUM         4
 
 #define WMI_PDEV_SET_CUSTOM_TX_PWR_MAX_2G_RATE_NUM       18
+#define WMI_PDEV_SET_CUSTOM_TX_PWR_MAX_2G_RATE_NUM_EXT   8
 
 #define WMI_PDEV_SET_CUSTOM_TX_PWR_MAX_5G_6G_RATE_NUM    24
 
@@ -47698,14 +47699,14 @@ typedef struct {
      */
 
     /* currently 2GHz band has 2 chains (though space is allocated for up
-     * to 4 chains) and each chain has 18 rates.
+     * to 4 chains) and each chain has 18 rates and 8 extended rates.
      * bitmap_of_2GHz_band[0] -> chain 0 bitmap:
-     * |bit  0|bit  1|......|bit  17|
-     * |rate 0|rate 1|......|rate 17|
+     * |bit  0|bit  1|......|bit  17| bit   18 |......| bit   25 |
+     * |rate 0|rate 1|......|rate 17|ext rate 0|......|ext rate 7|
      *
      * bitmap_of_2GHz_band[1] -> chain 1 bitmap:
-     * |bit  0|bit  1|......|bit  17|
-     * |rate 0|rate 1|......|rate 17|
+     * |bit  0|bit  1|......|bit  17| bit   18 |......| bit   25 |
+     * |rate 0|rate 1|......|rate 17|ext rate 0|......|ext rate 7|
      *
      * bitmap_of_2GHz_band[2] -> reserved
      * bitmap_of_2GHz_band[3] -> reserved
