@@ -857,6 +857,11 @@ static int sde_rsc_hw_init(struct sde_rsc_priv *rsc)
 {
 	int ret;
 
+	ret = regulator_set_mode(rsc->fs, REGULATOR_MODE_NORMAL);
+	if (ret)
+		pr_err("current vvd reg mode:%d, vdd reg normal mode set failed ret:%d\n",
+				regulator_get_mode(rsc->fs), ret);
+
 	ret = regulator_enable(rsc->fs);
 	if (ret) {
 		pr_err("sde rsc: fs on failed ret:%d\n", ret);
@@ -1849,16 +1854,8 @@ static int sde_rsc_pm_freeze_late(struct device *dev)
 {
 	struct platform_device *pdev = to_platform_device(dev);
 	struct sde_rsc_priv *rsc = platform_get_drvdata(pdev);
-	int rc = 0;
 
-	rc = regulator_set_mode(rsc->fs, REGULATOR_MODE_NORMAL);
-	if (rc) {
-		pr_err("vdd reg normal mode set failed rc:%d\n", rc);
-		return rc;
-	}
-	rsc->sw_fs_enabled = true;
 	rsc->need_hwinit = true;
-
 	return 0;
 }
 
