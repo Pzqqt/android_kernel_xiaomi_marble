@@ -205,6 +205,7 @@ struct mlo_link_ie_info {
  * @prev_auth_seq_num: Sequence number of previously received auth frame to
  * detect duplicate frames.
  * @prev_auth_mac_addr: mac_addr of the sta correspond to @prev_auth_seq_num
+ * @cal_tpc_post_csa: Recalculate tx power power csa
  */
 struct pe_session {
 	/* To check session table is in use or free */
@@ -658,6 +659,7 @@ struct pe_session {
 #endif
 #endif /* WLAN_FEATURE_11BE */
 	uint8_t user_edca_set;
+	bool cal_tpc_post_csa;
 };
 
 /*-------------------------------------------------------------------------

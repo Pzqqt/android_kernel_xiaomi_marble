@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -92,7 +93,7 @@ struct wlan_diag_data {
 	unsigned int word0;             /* type, length */
 	unsigned int target_time;
 	unsigned int code;              /* Diag log or event Code */
-	uint8_t payload[0];
+	uint8_t payload[];
 };
 
 struct dbglog_slot {
@@ -101,7 +102,7 @@ struct dbglog_slot {
 	unsigned int length;
 	unsigned int dropped;
 	/* max ATH6KL_FWLOG_PAYLOAD_SIZE bytes */
-	uint8_t payload[0];
+	uint8_t payload[];
 } __packed;
 
 typedef struct event_report_s {
