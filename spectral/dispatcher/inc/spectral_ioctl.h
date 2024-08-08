@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -548,7 +549,7 @@ struct samp_detector_info {
 	uint8_t pri80ind;
 	uint8_t is_sec80;
 	/* Padding bits to make struct size multiple of 4 bytes */
-	uint8_t padding_detector_info[1];
+	uint8_t padding_detector_info[];
 } __packed;
 
 /* Compile time assert to check struct size is divisible by 4 Bytes */
@@ -626,7 +627,7 @@ struct spectral_samp_msg {
 	uint8_t dcs_enabled;
 	uint8_t int_type;
 	uint8_t num_freq_spans;
-	uint8_t bin_pwr[0];  /*This should be the last item in the structure*/
+	uint8_t bin_pwr[];  /*This should be the last item in the structure*/
 } __packed;
 
 #else
