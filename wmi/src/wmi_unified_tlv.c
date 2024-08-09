@@ -15207,7 +15207,7 @@ static QDF_STATUS extract_comb_phyerr_tlv(wmi_unified_t wmi_handle,
 	phyerr->bufp = param_tlvs->bufp;
 
 	if (pe_hdr->buf_len > param_tlvs->num_bufp) {
-		WMI_LOGD("Invalid buf_len %d, num_bufp %d",
+		wmi_debug("Invalid buf_len %d, num_bufp %d",
 			 pe_hdr->buf_len, param_tlvs->num_bufp);
 		return QDF_STATUS_E_FAILURE;
 	}
