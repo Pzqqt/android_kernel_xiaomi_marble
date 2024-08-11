@@ -4641,6 +4641,7 @@ typedef struct {
     A_UINT32 incomplete_llc;
     A_UINT32 eapol_duplicate_m3;
     A_UINT32 eapol_duplicate_m4;
+    A_UINT32 eapol_invalid_mac;
 } htt_stats_tx_de_classify_failed_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_tx_de_classify_failed_tlv htt_tx_de_classify_failed_stats_tlv;
