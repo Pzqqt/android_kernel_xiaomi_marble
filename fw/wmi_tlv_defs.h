@@ -1441,6 +1441,14 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_p2p_cli_dfs_ap_bmiss_fixed_param,
     WMITLV_TAG_STRUC_wmi_p2p_go_dfs_ap_config_fixed_param,
     WMITLV_TAG_STRUC_wmi_twt_vdev_config_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_mgmt_srng_reap_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_mlo_tlt_selection_for_tid_spray_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_reg_chan_list_cc_ext_additional_params,
+    WMITLV_TAG_STRUC_wmi_regulatory_rule_meta_data,
+    WMITLV_TAG_STRUC_wmi_vdev_report_ap_oper_bw_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_mlo_peer_tid_to_link_map_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_usd_service_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_usd_service_event_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -1993,6 +2001,8 @@ typedef enum {
     OP(WMI_SOC_TX_PACKET_CUSTOM_CLASSIFY_CMDID) \
     OP(WMI_SET_AP_SUSPEND_RESUME_CMDID) \
     OP(WMI_P2P_GO_DFS_AP_CONFIG_CMDID) \
+    OP(WMI_VDEV_REPORT_AP_OPER_BW_CMDID) \
+    OP(WMI_USD_SERVICE_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2316,8 +2326,11 @@ typedef enum {
     OP(WMI_PDEV_WIFI_RADAR_CAL_COMPLETION_STATUS_EVENTID) \
     OP(WMI_MLO_LINK_INFO_SYNC_EVENTID) \
     OP(WMI_PDEV_ENABLE_XLNA_EVENTID) \
-    OP(WMI_REG_CHAN_LIST_CC_EXT2_EVENTID) \
     OP(WMI_P2P_CLI_DFS_AP_BMISS_DETECTED_EVENTID) \
+    OP(WMI_MGMT_SRNG_REAP_EVENTID) \
+    OP(WMI_MLO_TLT_SELECTION_FOR_TID_SPRAY_EVENTID) \
+    OP(WMI_MLO_PEER_TID_TO_LINK_MAP_EVENTID) \
+    OP(WMI_USD_SERVICE_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -5638,6 +5651,19 @@ WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_OPM_STATS_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_set_ap_suspend_resume_cmd_fixed_param, wmi_set_ap_suspend_resume_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_SET_AP_SUSPEND_RESUME_CMDID);
 
+/* cmd to get AP operating BW */
+#define WMITLV_TABLE_WMI_VDEV_REPORT_AP_OPER_BW_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_report_ap_oper_bw_cmd_fixed_param, wmi_vdev_report_ap_oper_bw_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_REPORT_AP_OPER_BW_CMDID);
+
+/* Unsynchronized Service Discovery Service Cmd */
+#define WMITLV_TABLE_WMI_USD_SERVICE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_usd_service_cmd_fixed_param, wmi_usd_service_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, element_container_attr_data, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, chan_list, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, service_specific_info, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_USD_SERVICE_CMDID);
+
 
 
 /************************** TLV definitions of WMI events *******************************/
@@ -6830,14 +6856,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_REG_CHAN_LIST_CC_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_reg_chan_list_cc_event_ext_fixed_param, wmi_reg_chan_list_cc_event_ext_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_regulatory_rule_ext_struct, reg_rule_array, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_regulatory_chan_priority_struct, reg_chan_priority, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_regulatory_fcc_rule_struct, reg_fcc_rule, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_regulatory_fcc_rule_struct, reg_fcc_rule, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_reg_chan_list_cc_ext_additional_params, reg_more_data, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_regulatory_rule_meta_data, reg_meta_data, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_REG_CHAN_LIST_CC_EXT_EVENTID);
-
-/* Ext2 regulatory channel list of current country code */
-#define WMITLV_TABLE_WMI_REG_CHAN_LIST_CC_EXT2_EVENTID(id,op,buf,len) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_reg_chan_list_cc_event_ext2_fixed_param, wmi_reg_chan_list_cc_event_ext2_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_regulatory_rule_ext_struct, reg_rule_array, WMITLV_SIZE_VAR)
-WMITLV_CREATE_PARAM_STRUC(WMI_REG_CHAN_LIST_CC_EXT2_EVENTID);
 
 /* WMI AFC info event */
 #define WMITLV_TABLE_WMI_AFC_EVENTID(id,op,buf,len) \
@@ -7577,6 +7599,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_REMOVAL_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_link_removal_tbtt_update, wmi_mlo_link_removal_tbtt_update, tbtt_update, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_REMOVAL_EVENTID);
 
+/* WMI MLO TLT selection for 3+ link TID spray update event */
+#define WMITLV_TABLE_WMI_MLO_TLT_SELECTION_FOR_TID_SPRAY_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_tlt_selection_for_tid_spray_event_fixed_param, wmi_mlo_tlt_selection_for_tid_spray_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_MLO_TLT_SELECTION_FOR_TID_SPRAY_EVENTID);
+
 /* WMI MLO T2LM Vdev event */
 #define WMITLV_TABLE_WMI_MLO_AP_VDEV_TID_TO_LINK_MAP_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_ap_vdev_tid_to_link_map_evt_fixed_param, wmi_mlo_ap_vdev_tid_to_link_map_evt_fixed_param, fixed_param, WMITLV_SIZE_FIX)
@@ -7689,6 +7716,21 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_WIFI_RADAR_CAL_COMPLETION_STATUS_EVENTID);
 #define WMITLV_TABLE_WMI_PDEV_ENABLE_XLNA_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_enable_xlna_event_fixed_param, wmi_pdev_enable_xlna_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_ENABLE_XLNA_EVENTID);
+
+/* Bcn and Prb over new SRNG */
+#define WMITLV_TABLE_WMI_MGMT_SRNG_REAP_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mgmt_srng_reap_event_fixed_param, wmi_mgmt_srng_reap_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_SRNG_REAP_EVENTID);
+
+/** WMI event used to send status of Tid to link map configured */
+#define WMITLV_TABLE_WMI_MLO_PEER_TID_TO_LINK_MAP_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_peer_tid_to_link_map_event_fixed_param, wmi_mlo_peer_tid_to_link_map_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_MLO_PEER_TID_TO_LINK_MAP_EVENTID);
+
+/* USD Service Event */
+#define WMITLV_TABLE_WMI_USD_SERVICE_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_usd_service_event_fixed_param, wmi_usd_service_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_USD_SERVICE_EVENTID);
 
 
 #ifdef __cplusplus

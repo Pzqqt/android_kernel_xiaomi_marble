@@ -156,9 +156,47 @@ typedef enum {
   WLAN_MODULE_AUX_MAC_MGR,              /* 0x73 */
   WLAN_MODULE_TCAM,                     /* 0x74 */
   WLAN_MODULE_P2P_R2,                   /* 0x75 */
+  WLAN_MODULE_SYSSW,                    /* 0x76 */
+
+  /* HDL MODULE IDS */
+  WLAN_MODULE_PHYLIB_RXDCOCAL,          /* 0x77 */
+  WLAN_MODULE_PHYLIB_COMBCAL,           /* 0x78 */
+  WLAN_MODULE_PHYLIB_TPCCAL,            /* 0x79 */
+  WLAN_MODULE_PHYLIB_BBFILTCAL,         /* 0x7a */
+  WLAN_MODULE_PHYLIB_PKTDETCAL,         /* 0x7b */
+  WLAN_MODULE_PHYLIB_PAPRDCAL,          /* 0x7c */
+  WLAN_MODULE_PHYLIB_NFCAL,             /* 0x7d */
+  WLAN_MODULE_PHYLIB_ADCCAL,            /* 0x7e */
+  WLAN_MODULE_PHYLIB_DACCAL,            /* 0x7f */
+  WLAN_MODULE_PHYLIB_PALCAL,            /* 0x80 */
+  WLAN_MODULE_PHYLIB_RXGAINCAL,         /* 0x81 */
+  WLAN_MODULE_PHYLIB_CALUTILS,          /* 0x82 */
+  WLAN_MODULE_PHYLIB_PHYRESET,          /* 0x83 */
+  WLAN_MODULE_PHYLIB_RFACONFIG,         /* 0x84 */
+  WLAN_MODULE_PHYLIB_SETCHAINMASK,      /* 0x85 */
+  WLAN_MODULE_PHYLIB_SETXBAR,           /* 0x86 */
+  WLAN_MODULE_PHYLIB_M3,                /* 0x87 */
+  WLAN_MODULE_PHYLIB_COMMON,            /* 0x88 */
+  WLAN_MODULE_PHYLIB_SPURMITT,          /* 0x89 */
+  WLAN_MODULE_PHYLIB_RTT,               /* 0x8a */
+  WLAN_MODULE_PHYLIB_FTPG,              /* 0x8b */
+  WLAN_MODULE_PHYLIB_RSTCAL,            /* 0x8c */
+  WLAN_MODULE_PHYLIB_RXBBFCAL,          /* 0x8d */
+  WLAN_MODULE_PHYLIB_TIADCCAL,          /* 0x8e */
+  WLAN_MODULE_PHYLIB_IM2CAL,            /* 0x8f */
+  WLAN_MODULE_PHYLIB_PACCAL,            /* 0x90 */
+  WLAN_MODULE_PHYLIB_PDCCAL,            /* 0x91 */
+  WLAN_MODULE_PHYLIB_SPURCAL,           /* 0x92 */
+  WLAN_MODULE_PHYLIB_PHYDBG,            /* 0x93 */
+  WLAN_MODULE_PHYLIB_RRI,               /* 0x94 */
+  WLAN_MODULE_PHYLIB_SSCAN,             /* 0x95 */
+  WLAN_MODULE_PHYLIB_RSVD,              /* 0x96 */
+  WLAN_MODULE_USD,                      /* 0x97 */
+
 
   WLAN_MODULE_ID_MAX,
   WLAN_MODULE_ID_INVALID = WLAN_MODULE_ID_MAX,
+  WLAN_MODULE_ID_ALL = 0xffff /* wildcard to indicate all modules */
 } WLAN_MODULE_ID;
 
 
