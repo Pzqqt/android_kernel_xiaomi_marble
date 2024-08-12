@@ -64,7 +64,6 @@ config WLAN_OFFLOAD_PACKETS
 
 config FEATURE_TSO
 	bool "Enable TCP Segmentation Offload"
-	depends on HELIUMPLUS
 	default n
 
 config FEATURE_TSO_DEBUG
@@ -616,6 +615,10 @@ config ATH_SUPPORT_SPECTRAL
 
 config SMMU_S1_UNMAP
 	bool "Enable SMMU S1 unmap"
+	default n
+
+config ENABLE_SMMU_S1_TRANSLATION
+	bool "Enable SMMU S1 transaltion"
 	default n
 
 config PKTLOG_LEGACY
@@ -1253,11 +1256,11 @@ config FEATURE_FORCE_WAKE
 
 config QCACLD_WLAN_CONNECTIVITY_DIAG_EVENT
 	bool "Enable CONFIG_QCACLD_WLAN_CONNECTIVITY_DIAG_EVENT"
-	default y
+	default n
 
 config WLAN_LOGGING_SOCK_SVC
 	bool "Enable CONFIG_WLAN_LOGGING_SOCK_SVC"
-	default y
+	default n
 
 config WLAN_CTRL_NAME
 	string "Enable WLAN_CTRL_NAME"
@@ -1285,15 +1288,15 @@ config MAX_LOGS_PER_SEC
 
 config WLAN_DEBUG_VERSION
 	bool "Enable CONFIG_WLAN_DEBUG_VERSION"
-	default y
+	default n
 
 config PKT_LOG
 	bool "Enable CONFIG_PKT_LOG"
-	default y
+	default n
 
 config AR900B
 	bool "Enable CONFIG_AR900B"
-	default y
+	default n
 
 config WLAN_DIAG_VERSION
 	bool "Enable WLAN_DIAG_VERSION"
@@ -1383,14 +1386,312 @@ config CNSS_ADRASTEA
 	bool "Enable CONFIG_CNSS_ADRASTEA"
 	default n
 
-menu "Optional Configs"
+config 6G_SCAN_CHAN_SORT_ALGO
+	bool "Enable 6G_SCAN_CHAN_SORT_ALGO"
+	default n
+
+config BAND_6GHZ
+	bool "Enable CONFIG_BAND_6GHZ"
+	default n
+
+config BUS_AUTO_SUSPEND
+	bool "Enable BUS_AUTO_SUSPEND"
+	default n
+
+config DDP_MON_RSSI_IN_DBM
+    bool "Enable DDP_MON_RSSI_IN_DBM"
+    default n
+
+config DIRECT_BUF_RX_ENABLE
+    bool "Enable DIRECT_BUF_RX_ENABLE"
+    default n
+
+config DISABLE_EAPOL_INTRABSS_FWD
+    bool "Enable  DISABLE_EAPOL_INTRABSS_FWD"
+    default n
+
+config DP_HW_TX_DELAY_STATS_ENABLE
+    bool "Enable DP_HW_TX_DELAY_STATS_ENABLE"
+    default n
+
+config DP_RX_DROP_RAW_FRM
+    bool "Enable DP_RX_DROP_RAW_FRM"
+    default n
+
+config  DP_RX_PKT_NO_PEER_DELIVER
+	bool "Enable DP_RX_PKT_NO_PEER_DELIVER"
+	default n
+
+config DP_RX_SPECIAL_FRAME_NEED
+	bool "Enable DP_RX_SPECIAL_FRAME_NEED"
+	default n
+
+config DP_SWLM
+	bool "Enable DP_SWLM"
+	default n
+
+config DP_TX_TRACKING
+	bool "Enable DP_TX_TRACKING"
+	default n
+
+config DYNAMIC_RX_AGGREGATION
+	bool "Enable DYNAMIC_RX_AGGREGATION"
+	default n
+
+config ENABLE_HAL_REG_WR_HISTORY
+	bool "Enable ENABLE_HAL_REG_WR_HISTORY"
+	default n
+
+config ENABLE_HAL_SOC_STATS
+	bool "Enable ENABLE_HAL_SOC_STATS"
+	default n
+
+config FEATURE_ALIGN_STATS_FROM_DP
+	bool "Enable FEATURE_ALIGN_STATS_FROM_DP"
+	default n
+
+config FEATURE_AST
+	bool "Enable FEATURE_AST"
+	default n
+
+config FEATURE_HAL_DELAYED_REG_WRITE
+	bool "Enable FEATURE_HAL_DELAYED_REG_WRITE"
+	default n
+
+config FEATURE_NO_DBS_INTRABAND_MCC_SUPPORT
+	bool "Enable FEATURE_NO_DBS_INTRABAND_MCC_SUPPORT"
+	default n
+
+config FEATURE_STATS_EXT_V2
+	bool "Enable FEATURE_STATS_EXT_V2"
+	default n
+
+config FIX_TXDMA_LIMITATION
+	bool "Enable FIX_TXDMA_LIMITATION"
+	default n
+
+config HAL_DISABLE_NON_BA_2K_JUMP_ERROR
+	bool "Enable HAL_DISABLE_NON_BA_2K_JUMP_ERROR"
+	default n
+
+config HASTINGS_BT_WAR
+	bool "Enable HASTINGS_BT_WAR"
+	default n
+
+config HIF_IPCI
+	bool "Enable HIF_IPCI"
+	default n
+
+config HOST_WAKEUP_OVER_QMI
+	bool "Enable HOST_WAKEUP_OVER_QMI"
+	default n
+
+config IPA_SET_RESET_TX_DB_PA
+	bool "Enable IPA_SET_RESET_TX_DB_PA"
+	default n
+
+config LITHIUM
+	bool "Enable LITHIUM"
+	default n
+
+config MARK_ICMP_REQ_TO_FW
+	bool "Enable MARK_ICMP_REQ_TO_FW"
+	default n
+
+config MON_ENABLE_DROP_FOR_MAC
+	bool "Enable MON_ENABLE_DROP_FOR_MAC"
+	default n
+
+config MORE_TX_DESC
+	bool "Enable MORE_TX_DESC"
+	default n
+
+config PCI_LINK_STATUS_SANITY
+	bool "Enable PCI_LINK_STATUS_SANITY"
+	default n
+
+config PEER_PROTECTED_ACCESS
+	bool "Enable PEER_PROTECTED_ACCESS"
+	default n
+
+config QCA6750_HEADERS_DEF
+	bool "Enable QCA6750_HEADERS_DEF"
+	default n
+
+config QCA_MONITOR_PKT_SUPPORT
+	bool "Enable QCA_MONITOR_PKT_SUPPORT"
+	default n
+
+config QCA_WIFI_QCA6750
+	bool "Enable QCA_WIFI_QCA6750"
+	default n
+
+config PLD_IPCI_ICNSS_FLAG
+	bool "Enable PLD_IPCI_ICNSS_FLAG"
+	default n
+
+config RX_DEFRAG_DO_NOT_REINJECT
+	bool "Enable RX_DEFRAG_DO_NOT_REINJECT"
+	default n
+
+config RX_DESC_DEBUG_CHECK
+	bool "Enable RX_DESC_DEBUG_CHECK"
+	default n
+
+config RX_FISA
+	bool "Enable RX_FISA"
+	default n
+
+config PLD_IPCI_ICNSS_FLAG
+	bool "Enable PLD_IPCI_ICNSS_FLAG"
+	default n
+
+config SCALE_INCLUDES
+	bool "Enable SCALE_INCLUDES"
+	default n
+
+config SERIALIZE_QUEUE_SETUP
+	bool "Enable SERIALIZE_QUEUE_SETUP"
+	default n
+
+config SYSTEM_PM_CHECK
+	bool "Enable SYSTEM_PM_CHECK"
+	default n
+
+config TX_MULTIQ_PER_AC
+	bool "Enable TX_MULTIQ_PER_AC"
+	default n
+
+config TX_MULTI_TCL
+	bool "Enable TX_MULTI_TCL"
+	default n
+
+config WAPI_BIG_ENDIAN
+	bool "Enable WAPI_BIG_ENDIAN"
+	default n
+
+config WDI3_IPA_OVER_GSI
+	bool "Enable WDI3_IPA_OVER_GSI"
+	default n
+
+config WIFI_MONITOR_SUPPORT
+	bool "Enable WIFI_MONITOR_SUPPORT"
+	default n
+
+config WLAN_CE_INTERRUPT_THRESHOLD_CONFIG
+	bool "Enable WLAN_CE_INTERRUPT_THRESHOLD_CONFIG"
+	default n
+
+config WLAN_CFR_ENABLE
+	bool "Enable WLAN_CFR_ENABLE"
+	default n
+
+config WLAN_DP_FEATURE_DEFERRED_REO_QDESC_DESTROY
+	bool "Enable WLAN_DP_FEATURE_DEFERRED_REO_QDESC_DESTROY"
+	default n
+
+config WLAN_DP_PENDING_MEM_FLUSH
+	bool "Enable WLAN_DP_PENDING_MEM_FLUSH"
+	default n
+
+config WLAN_DP_PER_RING_TYPE_CONFIG
+	bool "Enable WLAN_DP_PER_RING_TYPE_CONFIG"
+	default n
+
+config WLAN_ENH_CFR_ENABLE
+	bool "Enable WLAN_ENH_CFR_ENABLE"
+	default n
+
+config WLAN_FEATURE_DP_EVENT_HISTORY
+	bool "Enable WLAN_FEATURE_DP_EVENT_HISTORY"
+	default n
+
+config WLAN_FEATURE_DP_RX_THREADS
+	bool "Enable WLAN_FEATURE_DP_RX_THREADS"
+	default n
+
+config WLAN_FEATURE_LRO_CTX_IN_CB
+	bool "Enable WLAN_FEATURE_LRO_CTX_IN_CB"
+	default n
+
+config WLAN_FEATURE_RX_BUFFER_POOL
+	bool "Enable WLAN_FEATURE_RX_BUFFER_POOL"
+	default n
+
+config WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT
+	bool "Enable WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT"
+	default n
+
+config WLAN_FEATURE_WMI_DIAG_OVER_CE7
+	bool "Enable WLAN_FEATURE_WMI_DIAG_OVER_CE7"
+	default n
+
+config WLAN_SKIP_BAR_UPDATE
+	bool "Enable WLAN_SKIP_BAR_UPDATE"
+	default n
+
+config WLAN_SUPPORT_DATA_STALL
+	bool "Enable "
+	default n
+
+config WLAN_TRACEPOINTS
+	bool "Enable WLAN_TRACEPOINTS"
+	default n
+
+config WMI_DBR_SUPPORT
+	bool "Enable WMI_DBR_SUPPORT"
+	default n
+
+config WMI_SEND_RECV_QMI
+	bool "Enable WMI_SEND_RECV_QMI"
+	default n
+
+config DP_RX_DESC_COOKIE_INVALIDATE
+	bool "Enable DP_RX_DESC_COOKIE_INVALIDATE"
+	default n
+
+config ALLOW_PKT_DROPPING
+	bool "Enable ALLOW_PKT_DROPPING"
+	default n
+
+config RX_DESC_DEBUG_CHECK
+	bool "Enable RX_DESC_DEBUG_CHECK"
+	default n
+
+config FEATURE_WLAN_MCC_TO_SCC_SWITCH
+	bool "Enable CONFIG_FEATURE_WLAN_MCC_TO_SCC_SWITCH"
+	default n
+
+config DP_FT_LOCK_HISTORY
+	bool "Enable DP_FT_LOCK_HISTORY"
+	default n
+
+config FEATURE_PKTLOG_EN_NON_LEGACY
+	bool "Enable FEATURE_PKTLOG_EN_NON_LEGACY"
+	default n
 
 if CNSS_ADRASTEA
-
 config MULTI_IF_NAME
 	string "Enable CONFIG_MULTI_IF_NAME"
 	default adrastea
+endif
+
+if QCA_WIFI_QCA6750
+config MULTI_IF_NAME
+    string "Enable CONFIG_MULTI_IF_NAME"
+    default qca6750
+
+config DP_LEGACY_MODE_CSM_DEFAULT_DISABLE
+    int "Enable DP_LEGACY_MODE_CSM_DEFAULT_DISABLE"
+
+config DP_RX_BUFFER_POOL_ALLOC_THRES
+    int "Enable DP_RX_BUFFER_POOL_ALLOC_THRES"
+
+config DP_RX_BUFFER_POOL_SIZE
+    int "Enable DP_RX_BUFFER_POOL_SIZE"
+
+config NUM_SOC_PERF_CLUSTER
+    int "Enable NUM_SOC_PERF_CLUSTER"
 
 endif
-endmenu
 endif # QCA_CLD_WLAN

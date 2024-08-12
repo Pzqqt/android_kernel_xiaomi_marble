@@ -12369,7 +12369,7 @@ int hdd_update_acs_timer_reason(struct hdd_adapter *adapter, uint8_t reason)
 	return status;
 }
 
-#ifdef FEATURE_WLAN_CH_AVOID_EXT
+#if defined(FEATURE_WLAN_CH_AVOID) && defined(FEATURE_WLAN_CH_AVOID_EXT)
 uint32_t wlan_hdd_get_restriction_mask(struct hdd_context *hdd_ctx)
 {
 	return hdd_ctx->restriction_mask;

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,6 +29,8 @@
 #include "wlan_cm_tgt_if_tx_api.h"
 #include "wlan_mlme_public_struct.h"
 #include "wma.h"
+#include "wlan_cm_roam_api.h"
+#include "target_if.h"
 
 static inline
 struct wlan_cm_roam_tx_ops *wlan_cm_roam_get_tx_ops_from_vdev(
@@ -570,6 +572,46 @@ QDF_STATUS wlan_cm_tgt_send_roam_triggers(struct wlan_objmgr_psoc *psoc,
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 
+	return status;
+}
+
+QDF_STATUS wlan_cm_tgt_send_idle_params(struct wlan_objmgr_psoc *psoc,
+					uint8_t vdev_id,
+					struct wlan_roam_idle_params *params)
+{
+	struct wlan_cm_roam_tx_ops *roam_tx_ops;
+	struct wlan_objmgr_vdev *vdev;
+	struct wmi_unified *wmi_handle;
+	QDF_STATUS status;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev)
+		return QDF_STATUS_E_INVAL;
+
+	roam_tx_ops = wlan_cm_roam_get_tx_ops_from_vdev(vdev);
+	if (!roam_tx_ops || !roam_tx_ops->send_roam_idle_trigger) {
+		mlme_err("CM_RSO: vdev %d send_roam_idle_trigger is NULL",
+			 vdev_id);
+		status = QDF_STATUS_E_INVAL;
+		goto release_ref;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		mlme_debug("Invalid WMI handle");
+		status = QDF_STATUS_E_INVAL;
+		goto release_ref;
+	}
+
+	status = roam_tx_ops->send_roam_idle_trigger(wmi_handle,
+						     ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+						     params);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("CM_RSO: vdev %d failed to send idle params", vdev_id);
+
+release_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 	return status;
 }
 #endif
