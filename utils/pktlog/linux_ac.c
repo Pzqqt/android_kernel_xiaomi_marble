@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -314,6 +314,100 @@ qdf_sysctl_decl(ath_sysctl_pktlog_size, ctl, write, filp, buffer, lenp, ppos)
 	return ret;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 0))
+static int pktlog_sysctl_register(struct hif_opaque_softc *scn)
+{
+	struct pktlog_dev_t *pl_dev = get_pktlog_handle();
+	struct ath_pktlog_info_lnx *pl_info_lnx;
+	char *proc_name;
+	char buf[64] = {0};
+
+	if (pl_dev) {
+		pl_info_lnx = PL_INFO_LNX(pl_dev->pl_info);
+		proc_name = pl_dev->name;
+	} else {
+		pl_info_lnx = PL_INFO_LNX(g_pktlog_info);
+		proc_name = PKTLOG_PROC_SYSTEM;
+	}
+
+	/*
+	 * Setup the sysctl table for creating the following sysctl entries:
+	 * /proc/sys/PKTLOG_PROC_DIR/<adapter>/enable for enabling/disabling
+	 * pktlog
+	 * /proc/sys/PKTLOG_PROC_DIR/<adapter>/size for changing the buffer size
+	 */
+	snprintf(buf, sizeof(buf), "%s/%s", PKTLOG_PROC_DIR, proc_name);
+	memset(pl_info_lnx->sysctls, 0, sizeof(pl_info_lnx->sysctls));
+
+	pl_info_lnx->sysctls[0].procname = "enable";
+	pl_info_lnx->sysctls[0].mode = PKTLOG_PROCSYS_PERM;
+	pl_info_lnx->sysctls[0].proc_handler = ath_sysctl_pktlog_enable;
+	pl_info_lnx->sysctls[0].extra1 = scn;
+
+	pl_info_lnx->sysctls[1].procname = "size";
+	pl_info_lnx->sysctls[1].mode = PKTLOG_PROCSYS_PERM;
+	pl_info_lnx->sysctls[1].proc_handler = ath_sysctl_pktlog_size;
+	pl_info_lnx->sysctls[1].extra1 = scn;
+
+	pl_info_lnx->sysctls[2].procname = "options";
+	pl_info_lnx->sysctls[2].mode = PKTLOG_PROCSYS_PERM;
+	pl_info_lnx->sysctls[2].proc_handler = proc_dointvec;
+	pl_info_lnx->sysctls[2].data = &pl_info_lnx->info.options;
+	pl_info_lnx->sysctls[2].maxlen = sizeof(pl_info_lnx->info.options);
+
+	pl_info_lnx->sysctls[3].procname = "sack_thr";
+	pl_info_lnx->sysctls[3].mode = PKTLOG_PROCSYS_PERM;
+	pl_info_lnx->sysctls[3].proc_handler = proc_dointvec;
+	pl_info_lnx->sysctls[3].data = &pl_info_lnx->info.sack_thr;
+	pl_info_lnx->sysctls[3].maxlen = sizeof(pl_info_lnx->info.sack_thr);
+
+	pl_info_lnx->sysctls[4].procname = "tail_length";
+	pl_info_lnx->sysctls[4].mode = PKTLOG_PROCSYS_PERM;
+	pl_info_lnx->sysctls[4].proc_handler = proc_dointvec;
+	pl_info_lnx->sysctls[4].data = &pl_info_lnx->info.tail_length;
+	pl_info_lnx->sysctls[4].maxlen = sizeof(pl_info_lnx->info.tail_length);
+
+	pl_info_lnx->sysctls[5].procname = "thruput_thresh";
+	pl_info_lnx->sysctls[5].mode = PKTLOG_PROCSYS_PERM;
+	pl_info_lnx->sysctls[5].proc_handler = proc_dointvec;
+	pl_info_lnx->sysctls[5].data = &pl_info_lnx->info.thruput_thresh;
+	pl_info_lnx->sysctls[5].maxlen =
+		sizeof(pl_info_lnx->info.thruput_thresh);
+
+	pl_info_lnx->sysctls[6].procname = "phyerr_thresh";
+	pl_info_lnx->sysctls[6].mode = PKTLOG_PROCSYS_PERM;
+	pl_info_lnx->sysctls[6].proc_handler = proc_dointvec;
+	pl_info_lnx->sysctls[6].data = &pl_info_lnx->info.phyerr_thresh;
+	pl_info_lnx->sysctls[6].maxlen =
+		sizeof(pl_info_lnx->info.phyerr_thresh);
+
+	pl_info_lnx->sysctls[7].procname = "per_thresh";
+	pl_info_lnx->sysctls[7].mode = PKTLOG_PROCSYS_PERM;
+	pl_info_lnx->sysctls[7].proc_handler = proc_dointvec;
+	pl_info_lnx->sysctls[7].data = &pl_info_lnx->info.per_thresh;
+	pl_info_lnx->sysctls[7].maxlen = sizeof(pl_info_lnx->info.per_thresh);
+
+	pl_info_lnx->sysctls[8].procname = "trigger_interval";
+	pl_info_lnx->sysctls[8].mode = PKTLOG_PROCSYS_PERM;
+	pl_info_lnx->sysctls[8].proc_handler = proc_dointvec;
+	pl_info_lnx->sysctls[8].data = &pl_info_lnx->info.trigger_interval;
+	pl_info_lnx->sysctls[8].maxlen =
+		sizeof(pl_info_lnx->info.trigger_interval);
+	/* [9] is NULL terminator */
+
+	/* and register everything */
+	/* register_sysctl_table changed from 2.6.21 onwards */
+	pl_info_lnx->sysctl_header =
+		register_sysctl(buf, pl_info_lnx->sysctls);
+
+	if (!pl_info_lnx->sysctl_header) {
+		qdf_nofl_info("%s: failed to register sysctls!", proc_name);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+#else
 /* Register sysctl table */
 static int pktlog_sysctl_register(struct hif_opaque_softc *scn)
 {
@@ -414,6 +508,7 @@ static int pktlog_sysctl_register(struct hif_opaque_softc *scn)
 
 	return 0;
 }
+#endif
 
 /*
  * Initialize logging for system or adapter
