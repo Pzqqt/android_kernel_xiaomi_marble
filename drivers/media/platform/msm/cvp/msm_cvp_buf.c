@@ -655,7 +655,6 @@ int msm_cvp_mark_user_persist(struct msm_cvp_inst *inst,
 			rc = -EFAULT;
 			break;
 		}
-		pbuf->ktid = ktid;
 		rc = 0;
 	}
 	return rc;

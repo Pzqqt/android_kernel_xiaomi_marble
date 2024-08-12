@@ -15,6 +15,7 @@
 #include <linux/coresight.h>
 #include <linux/regulator/consumer.h>
 #include <linux/qcom_scm.h>
+#include <linux/suspend.h>
 
 #include "coresight-priv.h"
 #include "coresight-common.h"
@@ -4244,6 +4245,23 @@ static void __exit tpdm_remove(struct amba_device *adev)
 	coresight_unregister(drvdata->csdev);
 }
 
+#ifdef CONFIG_HIBERNATION
+static int tpdm_freeze(struct device *dev)
+{
+	struct tpdm_drvdata *drvdata = dev_get_drvdata(dev);
+
+	coresight_disable(drvdata->csdev);
+
+	return 0;
+}
+#endif
+
+static const struct dev_pm_ops tpdm_dev_pm_ops = {
+#ifdef CONFIG_HIBERNATION
+	.freeze  = tpdm_freeze,
+#endif
+};
+
 static struct amba_id tpdm_ids[] = {
 	{
 		.id     = 0x0003b968,
@@ -4259,6 +4277,7 @@ static struct amba_driver tpdm_driver = {
 		.name   = "coresight-tpdm",
 		.owner	= THIS_MODULE,
 		.suppress_bind_attrs = true,
+		.pm	= &tpdm_dev_pm_ops,
 	},
 	.probe          = tpdm_probe,
 	.remove		= tpdm_remove,
