@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2021-2023, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"eusb2_phy: %s: " fmt, __func__
@@ -719,6 +719,8 @@ static int msm_eusb2_phy_init(struct usb_phy *uphy)
 			CMN_CTRL_OVERRIDE_EN, CMN_CTRL_OVERRIDE_EN);
 
 	msm_eusb2_write_readback(phy->base, USB_PHY_UTMI_CTRL5, POR, POR);
+
+	udelay(10);
 
 	msm_eusb2_write_readback(phy->base, USB_PHY_HS_PHY_CTRL_COMMON0,
 			PHY_ENABLE | RETENABLEN, PHY_ENABLE | RETENABLEN);
