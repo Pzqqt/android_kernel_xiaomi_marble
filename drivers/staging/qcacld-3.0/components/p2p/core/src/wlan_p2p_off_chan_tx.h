@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -186,6 +186,28 @@ struct tx_action_context {
 	struct p2p_frame_info frame_info;
 	qdf_nbuf_t nbuf;
 };
+
+/**
+ * p2p_get_frame_info() - get frame information from packet
+ * @data_buf:          data buffer address
+ * @length:            buffer length
+ * @frame_info:        frame information
+ *
+ * This function gets frame information from packet.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS p2p_get_frame_info(uint8_t *data_buf, uint32_t length,
+			      struct p2p_frame_info *frame_info);
+
+/**
+ * p2p_is_action_frame_of_p2p_type() - Given action frame is p2p type or not
+ * @data_buf: data buffer address
+ * @length: buffer length
+ *
+ * Return: bool
+ */
+bool p2p_is_action_frame_of_p2p_type(uint8_t *data_buf, uint32_t length);
 
 /**
  * p2p_rand_mac_tx_done() - process random mac mgmt tx done

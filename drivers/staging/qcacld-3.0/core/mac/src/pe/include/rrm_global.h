@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2012, 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -141,7 +142,7 @@ typedef struct sSirNeighborReportInd {
 	uint8_t measurement_idx;
 	uint16_t numNeighborReports;
 	tSirMacAddr bssId;      /* For the session. */
-	tSirNeighborBssDescription sNeighborBssDescription[1];
+	QDF_FLEX_ARRAY(tSirNeighborBssDescription, sNeighborBssDescription);
 } tSirNeighborReportInd, *tpSirNeighborReportInd;
 
 typedef struct sRRMBeaconReportRequestedIes {

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -54,6 +54,7 @@
 #include "dot11f.h"
 #include "wlan_p2p_cfg_api.h"
 #include "son_api.h"
+#include "wlan_p2p_api.h"
 
 #define SA_QUERY_REQ_MIN_LEN \
 (DOT11F_FF_CATEGORY_LEN + DOT11F_FF_ACTION_LEN + DOT11F_FF_TRANSACTIONID_LEN)
@@ -2147,7 +2148,6 @@ void lim_process_action_frame_no_session(struct mac_context *mac, uint8_t *pBd)
 	tpSirMacMgmtHdr mac_hdr = WMA_GET_RX_MAC_HEADER(pBd);
 	uint32_t frame_len = WMA_GET_RX_PAYLOAD_LEN(pBd);
 	uint8_t *pBody = WMA_GET_RX_MPDU_DATA(pBd);
-	uint8_t dpp_oui[] = { 0x50, 0x6F, 0x9A, 0x1A };
 	tpSirMacActionFrameHdr action_hdr = (tpSirMacActionFrameHdr) pBody;
 	tpSirMacVendorSpecificPublicActionFrameHdr vendor_specific;
 
@@ -2172,17 +2172,19 @@ void lim_process_action_frame_no_session(struct mac_context *mac, uint8_t *pBd)
 					 frame_len);
 				return;
 			}
-			/*
-			 * Check if it is a DPP public action frame and fall
-			 * thru, else drop the frame.
-			 */
-			if (qdf_mem_cmp(vendor_specific->Oui, dpp_oui, 4)) {
-				pe_debug("Unhandled public action frame (Vendor specific) OUI: %x %x %x %x",
-					vendor_specific->Oui[0],
-					vendor_specific->Oui[1],
-					vendor_specific->Oui[2],
-					vendor_specific->Oui[3]);
-				break;
+
+			pe_debug("Unhandled public action frame (Vendor specific) OUI: %x %x %x %x",
+				 vendor_specific->Oui[0],
+				 vendor_specific->Oui[1],
+				 vendor_specific->Oui[2],
+				 vendor_specific->Oui[3]);
+
+			/* Drop P2P frames as they are handled by P2P module */
+			if (wlan_p2p_is_action_frame_of_p2p_type(
+						(uint8_t *)mac_hdr,
+						WMA_GET_RX_MPDU_LEN(pBd))) {
+				pe_debug("Drop P2P public action frame as already handled in p2p module");
+				return;
 			}
 			fallthrough;
 		case SIR_MAC_ACTION_GAS_INITIAL_REQUEST:

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1677,4 +1677,32 @@ bool wlan_cm_same_band_sta_allowed(struct wlan_objmgr_psoc *psoc);
  * Return: qdf_status
  */
 QDF_STATUS cm_cleanup_mlo_link(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_is_roaming_enabled() - Check if Roaming is enabled
+ *
+ * @pdev: pointer to pdev object
+ * @vdev_id : Vdev id
+ *
+ * Check if the ROAM enable vdev param (WMI_VDEV_PARAM_ROAM_FW_OFFLOAD)
+ * is sent to firmware or not.
+ *
+ * Return: True if RSO state is not DEINIT, which indicates that vdev param
+ * WMI_VDEV_PARAM_ROAM_FW_OFFLOAD is sent to firmware.
+ */
+bool wlan_is_roaming_enabled(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
+
+/**
+ * wlan_is_rso_enabled() - Check if RSO state is enabled
+ *
+ * @pdev: pointer to pdev object
+ * @vdev_id : Vdev id
+ *
+ * Check if the ROAM SCAN OFFLOAD enable is sent to firmware. Host driver tracks
+ * this through RSO state machine and the states can be WLAN_ROAM_RSO_ENABLED/
+ * WLAN_ROAMING_IN_PROG/WLAN_ROAM_SYNCH_IN_PROG/WLAN_MLO_ROAM_SYNCH_IN_PROG.
+ *
+ * Return: True if RSO state is any of the above mentioned states.
+ */
+bool wlan_is_rso_enabled(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
 #endif  /* WLAN_CM_ROAM_API_H__ */

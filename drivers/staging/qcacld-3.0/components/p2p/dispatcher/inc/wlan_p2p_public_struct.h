@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -118,7 +118,7 @@ struct p2p_rx_mgmt_frame {
 	uint32_t vdev_id;
 	uint32_t frm_type;
 	uint32_t rx_rssi;
-	uint8_t buf[1];
+	QDF_FLEX_ARRAY(uint8_t, buf);
 };
 
 /**
