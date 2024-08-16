@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -232,6 +232,68 @@ static inline bool __qdf_mem_smmu_s1_enabled(qdf_device_t osdev)
  */
 typedef struct iommu_domain __qdf_iommu_domain_t;
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 13, 0))
+#if IS_ENABLED(CONFIG_QCOM_IOMMU_UTIL)
+/**
+ * __qdf_iommu_attr_to_os() - Convert qdf iommu attribute to OS mapping
+ *			      configurations bitmap
+ * @attr: QDF iommu attribute
+ *
+ * Return: IOMMU mapping configuration bitmaps
+ */
+static inline int __qdf_iommu_attr_to_os(enum qdf_iommu_attr attr)
+{
+	switch (attr) {
+	case QDF_DOMAIN_ATTR_S1_BYPASS:
+		return QCOM_IOMMU_MAPPING_CONF_S1_BYPASS;
+	case QDF_DOMAIN_ATTR_ATOMIC:
+		return QCOM_IOMMU_MAPPING_CONF_ATOMIC;
+	case QDF_DOMAIN_ATTR_FAST:
+		return QCOM_IOMMU_MAPPING_CONF_FAST;
+	default:
+		return -EINVAL;
+	}
+}
+
+/**
+ * __qdf_iommu_domain_get_attr() - API to get iommu domain attributes
+ *
+ * @domain: iommu domain
+ * @attr: iommu attribute
+ * @data: data pointer
+ *
+ * Return: 0 for success, and negative values otherwise
+ */
+static inline int
+__qdf_iommu_domain_get_attr(__qdf_iommu_domain_t *domain,
+			    enum qdf_iommu_attr attr, void *data)
+{
+	int mapping_config;
+	int mapping_bitmap;
+	int *value;
+
+	mapping_bitmap = __qdf_iommu_attr_to_os(attr);
+	if (mapping_bitmap < 0)
+		return -EINVAL;
+
+	mapping_config = qcom_iommu_get_mappings_configuration(domain);
+	if (mapping_config < 0)
+		return -EINVAL;
+
+	value = data;
+	*value = (mapping_config & mapping_bitmap) ? 1 : 0;
+
+	return 0;
+}
+#else /* !CONFIG_QCOM_IOMMU_UTIL */
+static inline int
+__qdf_iommu_domain_get_attr(__qdf_iommu_domain_t *domain,
+			    enum qdf_iommu_attr attr, void *data)
+{
+	return -ENOTSUPP;
+}
+#endif /* CONFIG_QCOM_IOMMU_UTIL */
+#else
 /**
  * __qdf_iommu_attr_to_os() - Convert qdf iommu attribute to OS specific enum
  * @attr: QDF iommu attribute
@@ -311,6 +373,7 @@ __qdf_iommu_domain_get_attr(__qdf_iommu_domain_t *domain,
 	return iommu_domain_get_attr(domain, __qdf_iommu_attr_to_os(attr),
 				     data);
 }
+#endif
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
 /**

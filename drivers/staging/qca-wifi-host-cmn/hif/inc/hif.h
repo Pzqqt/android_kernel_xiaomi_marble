@@ -26,6 +26,7 @@ extern "C" {
 
 /* Header files */
 #include <qdf_status.h>
+#include "qdf_ipa.h"
 #include "qdf_nbuf.h"
 #include "qdf_lro.h"
 #include "ol_if_athvar.h"
@@ -1417,7 +1418,7 @@ enum ipa_hw_type hif_get_ipa_hw_type(void)
 static inline
 bool hif_get_ipa_present(void)
 {
-	if (ipa_uc_reg_rdyCB(NULL) != -EPERM)
+	if (qdf_ipa_uc_reg_rdyCB(NULL) != -EPERM)
 		return true;
 	else
 		return false;

@@ -148,7 +148,7 @@ struct wmi_ext_dbg_msg {
 	uint32_t len;
 	uint64_t ts;
 	enum WMI_MSG_TYPE type;
-	uint8_t buf[0];
+	uint8_t buf[];
 };
 #endif /*WMI_EXT_DBG */
 

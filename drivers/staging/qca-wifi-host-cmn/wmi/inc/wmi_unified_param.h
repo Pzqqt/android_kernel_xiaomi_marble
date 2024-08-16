@@ -7683,7 +7683,7 @@ struct wmi_roam_scan_stats_params {
  */
 struct wmi_roam_scan_stats_res {
 	uint32_t num_roam_scans;
-	struct wmi_roam_scan_stats_params roam_scan[0];
+	struct wmi_roam_scan_stats_params roam_scan[];
 };
 
 #define MAX_ROAM_CANDIDATE_AP    9

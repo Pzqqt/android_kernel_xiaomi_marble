@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011,2017-2021 The Linux Foundation. All rights reserved.
- *
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -283,7 +283,7 @@ typedef uint32_t SPECTRAL_SEGID_INFO;
  * @buf: fft report
  */
 struct spectral_phyerr_fft_gen2 {
-	uint8_t buf[0];
+	__QDF_DECLARE_FLEX_ARRAY(uint8_t, buf);
 };
 
 /**
@@ -458,7 +458,7 @@ struct spectral_phyerr_fft_report_gen3 {
 	uint32_t hdr_b;
 	uint32_t hdr_c;
 	uint32_t resv;
-	uint8_t buf[0];
+	uint8_t buf[];
 } __ATTRIB_PACK;
 
 /**
