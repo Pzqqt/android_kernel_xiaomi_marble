@@ -656,7 +656,7 @@ typedef  enum  {
     WMI_SERVICE_DYNAMIC_WSI_REMAP_SUPPORT = 403, /* WSI bypass remap is supported by Firmware */
     WMI_SERVICE_QMS_DLKM_SUPPORT = 404, /* DEPRECATED */
     WMI_SERVICE_SMEM_MAILBOX_SUPPORT = 404, /* FW code has smem_mailbox support enabled */
-    WMI_SERVICE_REG_CC_EXT2_EVENT_SUPPORT = 405, /* Indicate FW would send EXT2 REG_CC event having data which would be a continuation to EXT REG_CC event */
+    WMI_SERVICE_REG_CC_EXT2_EVENT_SUPPORT = 405, /* DEPRECATED */
     WMI_SERVICE_MLO_MODE2_RECOVERY_SUPPORTED = 406, /* Indicate FW support for MLO mode2 recovery */
     WMI_SERVICE_MSDUQ_RECFG = 407, /* FW support the HTT MSDUQ_RECFG_REQ + MSDUQ_CFG_IND messages */
     WMI_SERVICE_TRAFFIC_CONTEXT_SUPPORT = 408, /* FW supports traffic context aware manager */
@@ -670,6 +670,19 @@ typedef  enum  {
     WMI_SERVICE_USE_STA_VDEV_FOR_P2P_DEVICE = 416, /* FW supports use of sta vdev to be repurposed for p2p device */
     WMI_SERVICE_AP_ASSISTED_DFS_CHAN_P2P_SESSION = 417, /* FW supports P2P session on DFS chan enabled by DFS master AP */
     WMI_SERVICE_MLO_SAP_EMLSR_SUPPORT = 418, /* Indicates FW MLO SAP supports EMLSR Mode */
+    WMI_SERVICE_PKTLOG_ML_TSTMP_SUPPORT = 419, /* Indicates ML timestamp for pktlog */
+    WMI_SERVICE_MGMT_SRNG_SUPPORT = 420, /* FW supports MGMT frame forwarding via host provided SRNG instead of WMI */
+    WMI_SERVICE_WDS_NULL_FRAME_SUPPORT = 421,
+    WMI_SERVICE_MLO_SAP_CONCURRENCY_SUPPORT = 422, /* Indicates FW supports MLO SAP+STA Concurrency */
+    WMI_SERVICE_MEC_AGING_TIMER_SUPPORT = 423, /* FW supports multicast echo check aging timer */
+    WMI_SERVICE_MULTI_RSNO_SUPPORT = 424, /* FW supports parsing of multiple RSN override IEs */
+    /* WMI_SERVICE_IS_TARGET_IPA:
+     * FW indicates to host whether the target is IPA or xFEM.
+     * If this flag is 0, the target is XFEM or unspecified.
+     * If this flag is 1, the target is IPA.
+     */
+    WMI_SERVICE_IS_TARGET_IPA = 425,
+    WMI_SERVICE_THERM_THROT_TX_CHAIN_MASK = 426, /*FW supports thermal throttling dynamic Tx ChainMask update */
 
 
     WMI_MAX_EXT2_SERVICE
