@@ -48890,6 +48890,8 @@ typedef struct {
     A_UINT32 tlv_header;
     /* status takes values from WMI_MLO_TID_TO_LINK_MAP_STATUS */
     A_UINT32 status;
+    /* Vdev_id on which T2LM command request is received */
+    A_UINT32 vdev_id;
 } wmi_mlo_peer_tid_to_link_map_event_fixed_param;
 
 
