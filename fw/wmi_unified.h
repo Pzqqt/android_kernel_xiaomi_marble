@@ -3520,6 +3520,11 @@ typedef struct {
 #define WMI_TARGET_CAP_QDATA_TX_LCE_FILTER_SUPPORT_SET(target_cap_flags, value)\
     WMI_SET_BITS(target_cap_flags, 15, 1, value)
 
+#define WMI_TARGET_CAP_MPDU_STATS_PER_TX_NSS_SUPPORT_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 16, 1)
+#define WMI_TARGET_CAP_MPDU_STATS_PER_TX_NSS_SUPPORT_SET(target_cap_flags, value)\
+    WMI_SET_BITS(target_cap_flags, 16, 1, value)
+
 
 /*
  * wmi_htt_msdu_idx_to_htt_msdu_qtype GET/SET APIs
@@ -3666,7 +3671,8 @@ typedef struct {
      * Bit 13 - Support for multipass SAP
      * Bit 14 - Support for ML monitor mode
      * Bit 15 - Support for Qdata Tx LCE filter installation
-     * Bits 31:16 - Reserved
+     * Bit 16 - Support for MPDU stats per tx Nss capability
+     * Bits 31:17 - Reserved
      */
     A_UINT32 target_cap_flags;
 
