@@ -674,7 +674,7 @@ int rpmh_rsc_send_data(struct rsc_drv *drv, const struct tcs_request *msg)
 
 	/* Controller is busy in 'solver' mode */
 	if (drv->in_solver_mode) {
-		spin_unlock_irqrestore(&drv->lock, flags);
+		spin_unlock_irq(&drv->lock);
 		return -EBUSY;
 	}
 
