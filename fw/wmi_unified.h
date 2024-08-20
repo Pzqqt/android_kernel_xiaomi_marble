@@ -40455,6 +40455,17 @@ typedef struct {
      * than rssi_6g_threshold. If rssi_6g_threshold is 0, it should be ignored.
      */
     A_INT32 rssi_6g_threshold; /* units = dBm */
+    /** bss_load_alpha_pct
+     * This parameter is used for updating the exponential average of the
+     * BSS load:
+     * new avg BSS load =
+     *     new BSS load measurement * alpha / 100 +
+     *     old avg BSS load * (100 - alpha) / 100
+     * This parameter uses percent units.  E.g. if bss_load_alpha_pct == 10,
+     * the new average will be the sum of 10% of the new measurement + 90% of
+     * the old average.
+     */
+    A_UINT32 bss_load_alpha_pct;
 } wmi_roam_bss_load_config_cmd_fixed_param;
 
 /** Deauth roam trigger parameters */
