@@ -141,6 +141,7 @@ struct walt_sched_cluster {
 	unsigned int		max_freq;
 	u64			aggr_grp_load;
 	unsigned long		util_to_cost[1024];
+	int8_t			sibling_cluster;
 };
 
 extern struct walt_sched_cluster *sched_cluster[WALT_NR_CPUS];

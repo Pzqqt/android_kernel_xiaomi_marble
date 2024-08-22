@@ -233,7 +233,8 @@ static inline int walt_get_mvp_task_prio(struct task_struct *p);
 static void walt_find_best_target(struct sched_domain *sd,
 					cpumask_t *candidates,
 					struct task_struct *p,
-					struct find_best_target_env *fbt_env)
+					struct find_best_target_env *fbt_env,
+					bool *force_energy_eval)
 {
 	unsigned long min_task_util = uclamp_task_util(p);
 	long target_max_spare_cap = 0;
@@ -252,6 +253,9 @@ static void walt_find_best_target(struct sched_domain *sd,
 	bool rtg_high_prio_task = task_rtg_high_prio(p);
 	cpumask_t visit_cpus;
 	struct walt_task_struct *wts = (struct walt_task_struct *) p->android_vendor_data1;
+	unsigned int visited_cluster = 0;
+	unsigned int search_sibling_cluster = 0;
+	int cpu;
 
 	/* Find start CPU based on boost value */
 	start_cpu = fbt_env->start_cpu;
@@ -278,21 +282,35 @@ static void walt_find_best_target(struct sched_domain *sd,
 				cpumask_test_cpu(prev_cpu, p->cpus_ptr)) {
 		fbt_env->fastpath = PREV_CPU_FASTPATH;
 		cpumask_set_cpu(prev_cpu, candidates);
+		visited_cluster = BIT(cpu_cluster(prev_cpu)->id);
 		goto out;
 	}
 
+/* retry for sibling clusters */
+retry:
 	for (cluster = 0; cluster < num_sched_clusters; cluster++) {
 		int best_idle_cpu_cluster = -1;
 		int target_cpu_cluster = -1;
 		int this_complex_idle = 0;
 		int best_complex_idle = 0;
 
+		if (BIT(sched_cluster[cluster]->id) & visited_cluster)
+			continue;
 		target_max_spare_cap = 0;
 		min_exit_latency = INT_MAX;
 		best_idle_cuml_util = ULONG_MAX;
 
-		cpumask_and(&visit_cpus, &p->cpus_mask,
-				&cpu_array[order_index][cluster]);
+		if (search_sibling_cluster) {
+			if (!(search_sibling_cluster & BIT(cluster)))
+				continue;
+			visited_cluster |= BIT(cluster);
+			cpumask_and(&visit_cpus, p->cpus_ptr, &sched_cluster[cluster]->cpus);
+		} else {
+			cpumask_and(&visit_cpus, p->cpus_ptr, &cpu_array[order_index][cluster]);
+			visited_cluster |= BIT(cpu_cluster(
+					cpumask_first(&cpu_array[order_index][cluster]))->id);
+		}
+
 		for_each_cpu(i, &visit_cpus) {
 			unsigned long capacity_orig = capacity_orig_of(i);
 			unsigned long wake_cpu_util, new_cpu_util, new_util_cuml;
@@ -473,6 +491,20 @@ static void walt_find_best_target(struct sched_domain *sd,
 	}
 
 out:
+	search_sibling_cluster = 0;
+	for_each_cpu(cpu, candidates) {
+		struct walt_sched_cluster *cluster = cpu_cluster(cpu);
+
+		if ((cluster->sibling_cluster >= 0) &&
+		    !(BIT(cluster->sibling_cluster) & visited_cluster)) {
+			search_sibling_cluster |= BIT(cluster->sibling_cluster);
+		}
+	}
+	if (search_sibling_cluster) {
+		*force_energy_eval = true;
+		goto retry;
+	}
+
 	trace_sched_find_best_target(p, min_task_util, start_cpu, cpumask_bits(candidates)[0],
 			     most_spare_cap_cpu, order_index, end_index,
 			     fbt_env->skip_cpu, task_on_rq_queued(p), least_nr_cpu,
@@ -771,6 +803,7 @@ int walt_find_energy_efficient_cpu(struct task_struct *p, int prev_cpu,
 	int first_cpu;
 	bool energy_eval_needed = true;
 	struct compute_energy_output output;
+	bool force_energy_eval = false;
 
 	if (walt_is_many_wakeup(sibling_count_hint) && prev_cpu != cpu &&
 			cpumask_test_cpu(prev_cpu, &p->cpus_mask))
@@ -803,7 +836,8 @@ int walt_find_energy_efficient_cpu(struct task_struct *p, int prev_cpu,
 		sync = 0;
 
 	if (sysctl_sched_sync_hint_enable && sync
-			&& bias_to_this_cpu(p, cpu, start_cpu)) {
+			&& bias_to_this_cpu(p, cpu, start_cpu)
+			&& (cpu_cluster(cpu)->sibling_cluster == -1)) {
 		best_energy_cpu = cpu;
 		fbt_env.fastpath = SYNC_WAKEUP;
 		goto unlock;
@@ -822,7 +856,7 @@ int walt_find_energy_efficient_cpu(struct task_struct *p, int prev_cpu,
 	fbt_env.skip_cpu = walt_is_many_wakeup(sibling_count_hint) ?
 			   cpu : -1;
 
-	walt_find_best_target(NULL, candidates, p, &fbt_env);
+	walt_find_best_target(NULL, candidates, p, &fbt_env, &force_energy_eval);
 
 	/* Bail out if no candidate was found. */
 	weight = cpumask_weight(candidates);
@@ -842,7 +876,7 @@ int walt_find_energy_efficient_cpu(struct task_struct *p, int prev_cpu,
 		goto unlock;
 	}
 
-	if (!energy_eval_needed) {
+	if (!energy_eval_needed && !force_energy_eval) {
 		int max_spare_cpu = first_cpu;
 
 		for_each_cpu(cpu, candidates) {
