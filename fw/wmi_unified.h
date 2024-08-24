@@ -5392,6 +5392,12 @@ typedef enum {
     WMI_HOST_BAND_CAP_6GHZ = 0x04,
 } WMI_HOST_BAND_CAP;
 
+typedef enum {
+    WLAN_CONNECT_EXT_FEATURE_RSNO   = 0,
+
+    NUM_WLAN_CONNECT_EXT_FEATURES /* keep last */
+} wlan_connect_ext_features;
+
 /* HW features supported info */
 /* enum WMI_WIFI_STANDARD are possible values for WiFi standard bitfield */
 #define WMI_GET_WIFI_STANDARD(var, feature_bitmap)              \
@@ -18935,6 +18941,12 @@ typedef enum {
 
     /* Update TWT_UNAVAIL_MODE */
     WMI_VDEV_PARAM_TWT_UNAVAIL_MODE,                      /* 0xC6 */
+
+    /*
+     * Additional features supported for connection.
+     * Value is from enum wlan_connect_ext_features
+     */
+    WMI_VDEV_PARAM_CONNECT_EXT_FEATURES,                  /* 0xC7 */
 
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
