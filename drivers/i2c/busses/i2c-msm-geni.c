@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/clk.h>
@@ -620,7 +620,7 @@ static int geni_i2c_prepare(struct geni_i2c_dev *gi2c)
 			I2C_LOG_DBG(gi2c->ipcl, false, gi2c->dev,
 					"i2c in GSI ONLY mode\n");
 		} else {
-			int gi2c_tx_depth = get_tx_fifo_depth(gi2c->base);
+			int gi2c_tx_depth = get_tx_fifo_depth(&gi2c->i2c_rsc);
 
 			gi2c->se_mode = FIFO_SE_DMA;
 
@@ -2078,6 +2078,7 @@ static int geni_i2c_probe(struct platform_device *pdev)
 
 	gi2c->i2c_rsc.wrapper_dev = &wrapper_pdev->dev;
 	gi2c->i2c_rsc.ctrl_dev = gi2c->dev;
+	gi2c->i2c_rsc.base = gi2c->base;
 
 	/*
 	 * For LE, clocks, gpio and icb voting will be provided by

@@ -2750,7 +2750,7 @@ static int get_tx_fifo_size(struct msm_geni_serial_port *port)
 		return -ENODEV;
 
 	uport = &port->uport;
-	port->tx_fifo_depth = get_tx_fifo_depth(uport->membase);
+	port->tx_fifo_depth = get_tx_fifo_depth(&port->serial_rsc);
 	if (!port->tx_fifo_depth) {
 		dev_err(uport->dev, "%s:Invalid TX FIFO depth read\n",
 								__func__);
@@ -2764,7 +2764,7 @@ static int get_tx_fifo_size(struct msm_geni_serial_port *port)
 		return -ENXIO;
 	}
 
-	port->rx_fifo_depth = get_rx_fifo_depth(uport->membase);
+	port->rx_fifo_depth = get_rx_fifo_depth(&port->serial_rsc);
 	if (!port->rx_fifo_depth) {
 		dev_err(uport->dev, "%s:Invalid RX FIFO depth read\n",
 								__func__);
@@ -3832,6 +3832,7 @@ static int msm_geni_serial_read_dtsi(struct platform_device *pdev,
 		dev_err(&pdev->dev, "Err IO mapping serial iomem\n");
 		return -ENOMEM;
 	}
+	dev_port->serial_rsc.base = uport->membase;
 
 	ret = msm_geni_serial_get_irq_pinctrl(pdev, dev_port);
 	if (ret)
