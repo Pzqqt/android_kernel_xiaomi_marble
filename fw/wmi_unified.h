@@ -34020,6 +34020,28 @@ typedef enum {
       *  A_INT8 6G 320M Channel Center Freq 6265 CTL Limit Power OFDMA
       */
 
+    BIOS_PARAM_TYPE_PPAG_DATA,
+    /*
+     *  BIOS_PARAM_TYPE_PPAG_DATA Structure has 12 bytes as below,
+     *  antennaGain value unit is 0.25 dBm.
+     *  If Enable flag is 0, FW will not use PPAG antennaGain value of bios.
+     *
+     *  A_UINT8 version
+     *  A_UINT8 enableFlag
+     *  A_INT8  antennaGain[GAIN_BANDS]; // 9bytes
+     *  A_UINT8 reserved
+     *  ==================== A_INT8  antennaGain[GAIN_BANDS]; =================
+     * A_INT8 atennaGain for [2400, 2483)
+     * A_INT8 atennaGain for [5150, 5250)
+     * A_INT8 atennaGain for [5250, 5350)
+     * A_INT8 atennaGain for [5470, 5725)
+     * A_INT8 atennaGain for [5725, 5895)
+     * A_INT8 atennaGain for [5925, 6425)
+     * A_INT8 atennaGain for [6425, 6525)
+     * A_INT8 atennaGain for [6525, 6875)
+     * A_INT8 atennaGain for [6875, 7125)
+     *  ==============================================================
+     */
 
     BIOS_PARAM_TYPE_MAX,
 } bios_param_type_e;
