@@ -2362,6 +2362,7 @@ static struct walt_sched_cluster *alloc_new_cluster(const struct cpumask *cpus)
 	cluster->cur_freq		=	1;
 	cluster->max_freq		=	1;
 	cluster->max_possible_freq	=	1;
+	cluster->sibling_cluster	=	-1;
 
 	raw_spin_lock_init(&cluster->load_lock);
 	cluster->cpus = *cpus;
