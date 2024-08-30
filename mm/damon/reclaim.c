@@ -64,10 +64,10 @@ DEFINE_DAMON_MODULES_DAMOS_QUOTAS(damon_reclaim_quota);
 
 static struct damos_watermarks damon_reclaim_wmarks = {
 	.metric = DAMOS_WMARK_FREE_MEM_RATE,
-	.interval = 20000000,	/* 20 seconds */
-	.high = 700,		/* 70 percent */
-	.mid = 500,		/* 50 percent */
-	.low = 100,		/* 10 percent */
+	.interval = 30000000,	/* 30 seconds */
+	.high = 350,		/* 35 percent */
+	.mid = 250,		/* 25 percent */
+	.low = 150,		/* 15 percent */
 };
 DEFINE_DAMON_MODULES_WMARKS_PARAMS(damon_reclaim_wmarks);
 
