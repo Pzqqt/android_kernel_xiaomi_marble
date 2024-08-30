@@ -27,7 +27,7 @@
  * condition.  Refer to below descriptions for the watermarks parameter for
  * this.
  */
-static bool enabled __read_mostly = true;
+static bool enabled __read_mostly;
 
 /*
  * Make DAMON_RECLAIM reads the input parameters again, except ``enabled``.
