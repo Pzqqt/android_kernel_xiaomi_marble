@@ -48,6 +48,7 @@ module_param(force_high_report_rate, bool, S_IRUGO);
 
 #ifdef CONFIG_TOUCH_BOOST
 extern void touch_irq_boost(void);
+extern void lpm_disable_for_input(bool on);
 static bool __read_mostly touch_boost_flag = true;
 #endif
 extern struct device *global_spi_parent_device;
@@ -1569,6 +1570,9 @@ static irqreturn_t goodix_ts_threadirq_func(int irq, void *data)
 		}
 	}
 #endif
+#ifdef CONFIG_TOUCH_BOOST
+	lpm_disable_for_input(true);
+#endif
 	/* inform external module */
 	mutex_lock(&goodix_modules.mutex);
 	list_for_each_entry_safe(ext_module, next,
@@ -1578,6 +1582,9 @@ static irqreturn_t goodix_ts_threadirq_func(int irq, void *data)
 		ret = ext_module->funcs->irq_event(core_data, ext_module);
 		if (ret == EVT_CANCEL_IRQEVT) {
 			mutex_unlock(&goodix_modules.mutex);
+#ifdef CONFIG_TOUCH_BOOST
+			lpm_disable_for_input(false);
+#endif
 			pm_relax(core_data->bus->dev);
 			return IRQ_HANDLED;
 		}
@@ -1604,6 +1611,9 @@ static irqreturn_t goodix_ts_threadirq_func(int irq, void *data)
 	if (!core_data->tools_ctrl_sync && !ts_event->retry)
 		hw_ops->after_event_handler(core_data);
 	ts_event->retry = 0;
+#ifdef CONFIG_TOUCH_BOOST
+	lpm_disable_for_input(false);
+#endif
 	pm_relax(core_data->bus->dev);
 
 	return IRQ_HANDLED;
@@ -2200,6 +2210,9 @@ static int goodix_ts_suspend(struct goodix_ts_core *core_data)
 	mutex_unlock(&goodix_modules.mutex);
 
 out:
+#ifdef CONFIG_TOUCH_BOOST
+	lpm_disable_for_input(false);
+#endif
 	goodix_ts_release_connects(core_data);
 	ts_info("Suspend end");
 	return 0;
