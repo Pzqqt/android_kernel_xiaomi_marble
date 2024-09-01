@@ -1065,10 +1065,12 @@ int mi_dsi_panel_set_doze_brightness(struct dsi_panel *panel,
 	}
 
 	if (is_hbm_fod_on(panel)) {
+		mi_cfg->last_doze_brightness = mi_cfg->doze_brightness;
 		mi_cfg->doze_brightness = doze_brightness;
 		DISP_INFO("Skip! [%s] set doze brightness %d due to FOD_HBM_ON\n",
 			panel->type, doze_brightness);
 	} else if (panel->mi_cfg.aod_to_normal_status == true) {
+		mi_cfg->last_doze_brightness = mi_cfg->doze_brightness;
 		mi_cfg->doze_brightness = doze_brightness;
 		mi_dsi_update_backlight_in_aod(panel, false);
 	} else if (panel->mi_cfg.panel_state == PANEL_STATE_ON
@@ -1133,6 +1135,7 @@ int mi_dsi_panel_set_doze_brightness(struct dsi_panel *panel,
 				}
 			}
 		}
+		mi_cfg->last_doze_brightness = mi_cfg->doze_brightness;
 		mi_cfg->doze_brightness = doze_brightness;
 		DISP_TIME_INFO("[%s] set doze brightness to %s\n",
 			panel->type, get_doze_brightness_name(doze_brightness));

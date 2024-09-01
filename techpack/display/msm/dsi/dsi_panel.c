@@ -4944,7 +4944,6 @@ int dsi_panel_set_lp1(struct dsi_panel *panel)
 		       panel->name, rc);
 
 exit:
-	panel->mi_cfg.bl_enable = false;
 	panel->mi_cfg.bl_wait_frame = false;
 	mutex_unlock(&panel->panel_lock);
 	DISP_TIME_INFO("%s panel: DSI_CMD_SET_LP1\n", panel->type);
@@ -5024,12 +5023,7 @@ int dsi_panel_set_nolp(struct dsi_panel *panel)
 			"ibb", REGULATOR_MODE_NORMAL);
 	if (mi_get_panel_id(panel->mi_cfg.mi_panel_id) == L1_PANEL_PA ||
 		mi_get_panel_id(panel->mi_cfg.mi_panel_id) == L2_PANEL_PA ||
-		mi_get_panel_id(panel->mi_cfg.mi_panel_id) == L2S_PANEL_PA ||
-		mi_get_panel_id(panel->mi_cfg.mi_panel_id) == M11A_PANEL_PA ||
-		mi_get_panel_id(panel->mi_cfg.mi_panel_id) == M16T_PANEL_PA ||
-		mi_get_panel_id(panel->mi_cfg.mi_panel_id) == M16T_PANEL_PB ||
-		mi_get_panel_id(panel->mi_cfg.mi_panel_id) == N16_PANEL_PA ||
-		mi_get_panel_id(panel->mi_cfg.mi_panel_id) == N16_PANEL_PB) {
+		mi_get_panel_id(panel->mi_cfg.mi_panel_id) == L2S_PANEL_PA) {
 		switch (panel->mi_cfg.doze_brightness) {
 			case DOZE_BRIGHTNESS_HBM:
 				DISP_INFO("enter DOZE HBM NOLP\n");
@@ -5044,6 +5038,41 @@ int dsi_panel_set_nolp(struct dsi_panel *panel)
 				rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_NOLP);
 				break;
 		}
+	} else if (mi_get_panel_id(panel->mi_cfg.mi_panel_id) == L18_PANEL_PA ||
+	    mi_get_panel_id(panel->mi_cfg.mi_panel_id) == L18_PANEL_SA ||
+	    mi_get_panel_id(panel->mi_cfg.mi_panel_id) == M11A_PANEL_PA ||
+	    mi_get_panel_id(panel->mi_cfg.mi_panel_id) == M16T_PANEL_PA ||
+	    mi_get_panel_id(panel->mi_cfg.mi_panel_id) == M16T_PANEL_PB ||
+	    mi_get_panel_id(panel->mi_cfg.mi_panel_id) == N16_PANEL_PA ||
+	    mi_get_panel_id(panel->mi_cfg.mi_panel_id) == N16_PANEL_PB) {
+		int update_bl = 0;
+		u32 doze_brightness = panel->mi_cfg.doze_brightness;
+
+		if (doze_brightness == DOZE_TO_NORMAL)
+			doze_brightness = panel->mi_cfg.last_doze_brightness;
+
+		switch (doze_brightness) {
+			case DOZE_BRIGHTNESS_HBM:  // 1
+				DISP_INFO("set doze_hbm_dbv_level in nolp");
+				update_bl = panel->mi_cfg.doze_hbm_dbv_level;
+				break;
+			case DOZE_BRIGHTNESS_LBM:  // 2
+				DISP_INFO("set doze_lbm_dbv_level in nolp");
+				update_bl = panel->mi_cfg.doze_lbm_dbv_level;
+				break;
+			default:
+				break;
+		}
+		if (mi_get_panel_id(panel->mi_cfg.mi_panel_id) == L18_PANEL_SA &&
+		    panel->mi_cfg.last_no_zero_bl_level < panel->mi_cfg.doze_lbm_dbv_level)
+			update_bl = panel->mi_cfg.last_no_zero_bl_level;
+		if (panel->mi_cfg.unknown_flag) {
+			update_bl = panel->mi_cfg.last_bl_level;
+			DISP_INFO("set backlight to %d in nolp", update_bl);
+		}
+		mi_dsi_update_51_mipi_cmd(panel, DSI_CMD_SET_NOLP, update_bl);
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_NOLP);
+		panel->power_mode = SDE_MODE_DPMS_ON;
 	} else {
 		mi_dsi_update_nolp_cmd_B2reg(panel, DSI_CMD_SET_NOLP);
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_NOLP);
@@ -5065,6 +5094,7 @@ int dsi_panel_set_nolp(struct dsi_panel *panel)
 exit1:
 
 exit:
+	panel->mi_cfg.unknown_flag = false;
 	panel->mi_cfg.panel_state = PANEL_STATE_ON;
 	panel->mi_cfg.dimming_state = STATE_DIM_RESTORE;
 	mutex_unlock(&panel->panel_lock);
@@ -5805,6 +5835,7 @@ int dsi_panel_disable(struct dsi_panel *panel)
 	panel->mi_cfg.panel_state = PANEL_STATE_OFF;
 	mi_cfg->aod_to_normal_status = false;
 	mi_cfg->doze_brightness = DOZE_TO_NORMAL;
+	mi_cfg->last_doze_brightness = DOZE_TO_NORMAL;
 	panel->mi_cfg.bl_enable = true;
 
 	mutex_unlock(&panel->panel_lock);

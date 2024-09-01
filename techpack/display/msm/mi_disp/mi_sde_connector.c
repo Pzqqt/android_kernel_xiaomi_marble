@@ -271,6 +271,8 @@ static int mi_sde_connector_update_aod_status(struct drm_connector *connector,
 				}
 				if (c_conn->lp_mode == SDE_MODE_DPMS_LP1
 						|| c_conn->lp_mode == SDE_MODE_DPMS_LP2) {
+					DISP_INFO("DSI_CMD_SET_NOLP when AOD disappear\n");
+					display->panel->mi_cfg.unknown_flag = true;
 					dsi_panel_set_nolp(display->panel);
 				}
 			}
