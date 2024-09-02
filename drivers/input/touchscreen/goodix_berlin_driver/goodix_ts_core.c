@@ -28,6 +28,12 @@
 
 #include "goodix_ts_core.h"
 
+#define GOODIX_DEFAULT_FW_PROPERTY	"goodix,firmware-name"
+#define GOODIX_DEFAULT_CFG_PROPERTY	"goodix,config-name"
+#define GOODIX_FW_PROPERTY_A		"goodix,firmware-namea"
+#define GOODIX_FW_PROPERTY_B		"goodix,firmware-nameb"
+#define GOODIX_CFG_PROPERTY_A		"goodix,config-namea"
+#define GOODIX_CFG_PROPERTY_B		"goodix,config-nameb"
 #define GOODIX_DEFAULT_CFG_NAME		"goodix_cfg_group.cfg"
 #define GOOIDX_INPUT_PHYS			"goodix_ts/input0"
 
@@ -1004,10 +1010,15 @@ static int goodix_parse_dt_resolution(struct device_node *node,
  * return: 0 - no error, <0 error
  */
 static int goodix_parse_dt(struct device_node *node,
+	struct device *dev,
 	struct goodix_ts_board_data *board_data)
 {
 	const char *name_tmp;
+	const char *firmware_property = GOODIX_DEFAULT_FW_PROPERTY;
+	const char *config_property = GOODIX_DEFAULT_CFG_PROPERTY;
 	int r;
+	int gpio_a;
+	int gpio_b;
 
 	if (!board_data) {
 		ts_err("invalid board data");
@@ -1081,8 +1092,45 @@ static int goodix_parse_dt(struct device_node *node,
 				sizeof(board_data->iovdd_name));
 	}
 
+	/* get panel ID GPIOs */
+	board_data->panel_id_gpio_a = of_get_named_gpio(node, "goodix,panel-id-gpio-a", 0);
+	if (r < 0)
+		board_data->panel_id_gpio_a = 0;
+
+	board_data->panel_id_gpio_b = of_get_named_gpio(node, "goodix,panel-id-gpio-b", 0);
+	if (r < 0)
+		board_data->panel_id_gpio_b = 0;
+
+	/* check panel ID GPIOs */
+	if (board_data->panel_id_gpio_a && board_data->panel_id_gpio_b) {
+		r = devm_gpio_request_one(dev, board_data->panel_id_gpio_a,
+				GPIOF_IN, "LCD_ID_DET1");
+		if (board_data->panel_id_gpio_a < 0)
+			return -EINVAL;
+
+		r = devm_gpio_request_one(dev, board_data->panel_id_gpio_b,
+				GPIOF_IN, "LCD_ID_DET2");
+		if (board_data->panel_id_gpio_b < 0)
+			return -EINVAL;
+
+		gpio_a = gpio_get_value(board_data->panel_id_gpio_a);
+		gpio_b = gpio_get_value(board_data->panel_id_gpio_b);
+		ts_info("gpio_a=%d, gpio_b=%d\n", gpio_a, gpio_b);
+
+		/* not at least one GPIO down? unsupported panel */
+		if (gpio_a && gpio_b)
+			return -ENOTSUPP;
+		else if (!gpio_a) {
+			firmware_property = GOODIX_FW_PROPERTY_A;
+			config_property = GOODIX_CFG_PROPERTY_A;
+		} else if (!gpio_b) {
+			firmware_property = GOODIX_FW_PROPERTY_B;
+			config_property = GOODIX_CFG_PROPERTY_B;
+		}
+	}
+
 	/* get firmware file name */
-	r = of_property_read_string(node, "goodix,firmware-name", &name_tmp);
+	r = of_property_read_string(node, firmware_property, &name_tmp);
 	if (!r) {
 		ts_info("firmware name from dt: %s", name_tmp);
 		strlcpy(board_data->fw_name,
@@ -1096,7 +1144,7 @@ static int goodix_parse_dt(struct device_node *node,
 	}
 
 	/* get config file name */
-	r = of_property_read_string(node, "goodix,config-name", &name_tmp);
+	r = of_property_read_string(node, config_property, &name_tmp);
 	if (!r) {
 		ts_info("config name from dt: %s", name_tmp);
 		strlcpy(board_data->cfg_bin_name, name_tmp,
@@ -2321,8 +2369,11 @@ static int goodix_ts_probe(struct platform_device *pdev)
 
 	if (IS_ENABLED(CONFIG_OF) && bus_interface->dev->of_node) {
 		/* parse devicetree property */
-		ret = goodix_parse_dt(node, &core_data->board_data);
-		if (ret) {
+		ret = goodix_parse_dt(node, &pdev->dev, &core_data->board_data);
+		if (ret == -ENOTSUPP) {
+			ts_info("unsupported touch panel\n");
+			return -ENOTSUPP;
+		} else if (ret) {
 			ts_err("failed parse device info form dts, %d", ret);
 			return -EINVAL;
 		}
