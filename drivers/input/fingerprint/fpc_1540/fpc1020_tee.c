@@ -127,6 +127,10 @@ struct fpc1020_data {
 	struct mutex fb_lock;
 	bool wait_finger_down;
 	struct work_struct work;
+#ifndef FPC_DRM_INTERFACE_WA
+	unsigned int screenoff_cooling;
+	struct delayed_work screenoff_cooling_dw;
+#endif
 };
 
 static int reset_gpio_res(struct fpc1020_data *fpc1020);
@@ -959,6 +963,39 @@ static ssize_t irq_enable_set(struct device *dev,
 static DEVICE_ATTR(irq_enable, S_IWUSR | S_IRUSR | S_IRGRP | S_IWGRP, NULL,
 		   irq_enable_set);
 
+#ifndef FPC_DRM_INTERFACE_WA
+static ssize_t screenoff_cooling_get(struct device *dev,
+		       struct device_attribute *attr, char *buf)
+{
+	struct fpc1020_data *fpc1020 = dev_get_drvdata(dev);
+
+	return scnprintf(buf, PAGE_SIZE, "%d\n", fpc1020->screenoff_cooling);
+}
+
+static ssize_t screenoff_cooling_set(struct device *dev,
+		       struct device_attribute *attr,
+		       const char *buf, size_t count)
+{
+	struct fpc1020_data *fpc1020 = dev_get_drvdata(dev);
+	int ret;
+	unsigned int temp;
+
+	ret = kstrtouint(buf, 0, &temp);
+	if (ret)
+		return ret;
+
+	if (temp > 3000)  // 3 seconds
+		return -EINVAL;
+
+	fpc1020->screenoff_cooling = temp;
+
+	return count;
+}
+
+static DEVICE_ATTR(screenoff_cooling, S_IRUSR | S_IWUSR,
+		   screenoff_cooling_get, screenoff_cooling_set);
+#endif
+
 static struct attribute *attributes[] = {
 	&dev_attr_screen.attr,
 	&dev_attr_power_ctrl.attr,
@@ -975,6 +1012,9 @@ static struct attribute *attributes[] = {
 	&dev_attr_irq.attr,
 	&dev_attr_vendor.attr,
 	&dev_attr_fingerdown_wait.attr,
+#ifndef FPC_DRM_INTERFACE_WA
+	&dev_attr_screenoff_cooling.attr,
+#endif
 	NULL
 };
 
@@ -1063,6 +1103,16 @@ static int fpc_check_panel(struct device_node *np)
 	return PTR_ERR(panel);
 }
 
+static void fpc_screenoff_cooling_work(struct work_struct *work)
+{
+	struct fpc1020_data *fpc1020 = container_of(work, struct fpc1020_data, screenoff_cooling_dw.work);
+
+	mutex_lock(&fpc1020->lock);
+	enable_irq(gpio_to_irq(fpc1020->irq_gpio));
+	mutex_unlock(&fpc1020->lock);
+	pr_debug("%s: exit\n", __func__);
+}
+
 static void fpc_screen_state_for_fingerprint_callback(enum panel_event_notifier_tag notifier_tag,
   		struct panel_event_notification *notification, void *client_data)
 {
@@ -1086,14 +1136,29 @@ static void fpc_screen_state_for_fingerprint_callback(enum panel_event_notifier_
 				mutex_lock(&fpc1020->fb_lock);
 				fpc1020->fb_black = false;
 				mutex_unlock(&fpc1020->fb_lock);
+				if (fpc1020->screenoff_cooling != 0) {
+					if (cancel_delayed_work_sync(&fpc1020->screenoff_cooling_dw)) {
+						fpc_screenoff_cooling_work(&fpc1020->screenoff_cooling_dw.work);
+					}
+				}
 				pr_info("%s:exit\n", __func__);
 				break;
 			case DRM_PANEL_EVENT_BLANK:
 				pr_info("%s:DRM_PANEL_EVENT_BLANK\n", __func__);
+				if (fpc1020->fb_black)
+					goto blank_exit;
 				mutex_lock(&fpc1020->fb_lock);
 				fpc1020->fb_black = true;
 				mutex_unlock(&fpc1020->fb_lock);
 				sysfs_notify(&fpc1020->dev->kobj, NULL, dev_attr_screen.attr.name);
+				if (fpc1020->screenoff_cooling != 0) {
+					mutex_lock(&fpc1020->lock);
+					disable_irq(gpio_to_irq(fpc1020->irq_gpio));
+					mutex_unlock(&fpc1020->lock);
+					schedule_delayed_work(&fpc1020->screenoff_cooling_dw,
+							      msecs_to_jiffies(fpc1020->screenoff_cooling));
+				}
+blank_exit:
 				pr_info("%s:exit\n", __func__);
 				break;
 			default:
@@ -1283,6 +1348,9 @@ static int fpc1020_probe(struct platform_device *pdev)
 	if (fpc1020->screen_state_wq) {
 		INIT_DELAYED_WORK(&fpc1020->screen_state_dw,fpc_register_panel_notifier_work);
 	}
+
+	fpc1020->screenoff_cooling = 0;
+	INIT_DELAYED_WORK(&fpc1020->screenoff_cooling_dw, fpc_screenoff_cooling_work);
 #endif
 exit:
 	dev_info(dev, "fpc %s <---: exit! \n", __func__);
@@ -1304,6 +1372,8 @@ static int fpc1020_remove(struct platform_device *pdev)
 	} else {
 		pr_err("%s:active_panel_event_notifier_unregister falt\n", __func__);
 	}
+
+	cancel_delayed_work_sync(&fpc1020->screenoff_cooling_dw);
 #endif
 	sysfs_remove_group(&pdev->dev.kobj, &attribute_group);
 	mutex_destroy(&fpc1020->lock);
