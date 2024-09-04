@@ -45,6 +45,7 @@
 #ifndef GOODIX_DRM_INTERFACE_WA
 //#include <drm/drm_notifier_mi.h>
 #include <linux/workqueue.h>
+#include <linux/module.h>
 #include <linux/soc/qcom/panel_event_notifier.h>
 static struct drm_panel *active_panel;
 static void *cookie = NULL;
@@ -81,6 +82,28 @@ static DEFINE_MUTEX(regulator_ocp_lock);
 static struct regulator *p_3v3_vreg = NULL;
 static int disable_regulator_3V3(void);
 static int enable_regulator_3V3(struct device *dev);
+
+#ifndef GOODIX_DRM_INTERFACE_WA
+static unsigned int __read_mostly screenoff_cooling = 0;
+
+static int set_screenoff_cooling(const char *buf, const struct kernel_param *kp)
+{
+	int ret;
+	unsigned int temp;
+
+	ret = kstrtouint(buf, 0, &temp);
+	if (ret)
+		return ret;
+
+	if (temp > 3000)  // 3 seconds
+		return -EINVAL;
+
+	return param_set_uint(buf, kp);
+}
+
+module_param_call(screenoff_cooling, set_screenoff_cooling, param_get_uint,
+		  &screenoff_cooling, 0600);
+#endif
 
 static int disable_regulator_3V3(void)
 {
@@ -895,12 +918,21 @@ static int goodix_check_panel(struct device_node *np)
 	return PTR_ERR(panel);
 }
 
+static void gf_screenoff_cooling_work(struct work_struct *work)
+{
+	struct gf_dev *gf_dev = container_of(work, struct gf_dev, screenoff_cooling_dw.work);
+
+	gf_enable_irq(gf_dev);
+	pr_debug("%s: exit\n", __func__);
+}
+
 static void goodix_screen_state_for_fingerprint_callback(enum panel_event_notifier_tag notifier_tag,
   		struct panel_event_notification *notification, void *client_data)
 {
 
 	struct gf_dev *gf_dev = client_data;
 	char temp[4] = { 0x0 };
+	bool skip_sched_cooling_work = false;
 	if (!gf_dev)
 	 	return ;
 
@@ -929,10 +961,17 @@ static void goodix_screen_state_for_fingerprint_callback(enum panel_event_notifi
 
 #endif
 			}
+			if (screenoff_cooling != 0) {
+				if (cancel_delayed_work_sync(&gf_dev->screenoff_cooling_dw)) {
+					gf_screenoff_cooling_work(&gf_dev->screenoff_cooling_dw.work);
+				}
+			}
 			pr_info("%s:exit\n", __func__);
 				break;
 			case DRM_PANEL_EVENT_BLANK:
 			pr_info("%s:DRM_PANEL_EVENT_BLANK\n", __func__);
+			if (gf_dev->fb_black == 1)
+				skip_sched_cooling_work = true;
 			if (gf_dev->device_available == 1) {
 				gf_dev->fb_black = 1;
 				gf_dev->wait_finger_down = true;
@@ -946,6 +985,11 @@ static void goodix_screen_state_for_fingerprint_callback(enum panel_event_notifi
 				}
 
 #endif
+			}
+			if (screenoff_cooling != 0 && !skip_sched_cooling_work) {
+				gf_disable_irq(gf_dev);
+				schedule_delayed_work(&gf_dev->screenoff_cooling_dw,
+						      msecs_to_jiffies(screenoff_cooling));
 			}
 			pr_info("%s:exit\n", __func__);
 				break;
@@ -1161,6 +1205,8 @@ static int gf_probe(struct platform_device *pdev)
 		if (gf_dev->screen_state_wq) {
 			INIT_DELAYED_WORK(&gf_dev->screen_state_dw,goodix_register_panel_notifier_work);
 		}
+
+		INIT_DELAYED_WORK(&gf_dev->screenoff_cooling_dw, gf_screenoff_cooling_work);
 #endif
 	gf_dev->irq = gf_irq_num(gf_dev);
 	fp_wakelock = wakeup_source_register(&gf_dev->spi->dev, "fp_wakelock");
@@ -1236,6 +1282,8 @@ static int gf_remove(struct platform_device *pdev)
 	} else {
 		pr_err("%s:active_panel_event_notifier_unregister falt\n", __func__);
 	}
+
+	cancel_delayed_work_sync(&gf_dev->screenoff_cooling_dw);
 #endif
 	mutex_unlock(&device_list_lock);
 	return 0;

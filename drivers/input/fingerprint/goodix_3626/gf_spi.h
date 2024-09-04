@@ -153,8 +153,9 @@ struct gf_dev {
 #ifdef CONFIG_FINGERPRINT_FP_VREG_CONTROL
 	struct regulator *vreg;
 #endif
-
-
+#ifndef GOODIX_DRM_INTERFACE_WA
+	struct delayed_work screenoff_cooling_dw;
+#endif
 };
 
 int gf_parse_dts(struct gf_dev *gf_dev);
