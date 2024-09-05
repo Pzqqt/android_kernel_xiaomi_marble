@@ -1233,12 +1233,20 @@ static void sde_encoder_phys_cmd_enable(struct sde_encoder_phys *phys_enc)
 static bool sde_encoder_phys_cmd_is_autorefresh_enabled(
 		struct sde_encoder_phys *phys_enc)
 {
+	struct sde_encoder_phys_cmd *cmd_enc;
 	struct sde_hw_pingpong *hw_pp;
 	struct sde_hw_intf *hw_intf;
 	struct sde_hw_autorefresh cfg;
 	int ret;
 
-	if (!phys_enc || !phys_enc->hw_pp || !phys_enc->hw_intf)
+	if (!phys_enc)
+		return false;
+
+	cmd_enc = to_sde_encoder_phys_cmd(phys_enc);
+	if (!cmd_enc->autorefresh.cfg.enable)
+		return false;
+
+	if (!phys_enc->hw_pp || !phys_enc->hw_intf)
 		return false;
 
 	if (!sde_encoder_phys_cmd_is_master(phys_enc))
