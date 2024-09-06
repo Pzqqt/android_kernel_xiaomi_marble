@@ -1450,6 +1450,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_usd_service_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_usd_service_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_create_wfdr2_mode_params,
+    WMITLV_TAG_STRUC_wmi_pdev_power_boost_event_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -2332,6 +2333,7 @@ typedef enum {
     OP(WMI_MLO_TLT_SELECTION_FOR_TID_SPRAY_EVENTID) \
     OP(WMI_MLO_PEER_TID_TO_LINK_MAP_EVENTID) \
     OP(WMI_USD_SERVICE_EVENTID) \
+    OP(WMI_PDEV_POWER_BOOST_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -7733,6 +7735,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_PEER_TID_TO_LINK_MAP_EVENTID);
 #define WMITLV_TABLE_WMI_USD_SERVICE_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_usd_service_event_fixed_param, wmi_usd_service_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_USD_SERVICE_EVENTID);
+
+/* WMI Event used to send Power Boost status update */
+#define WMITLV_TABLE_WMI_PDEV_POWER_BOOST_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_power_boost_event_fixed_param, wmi_pdev_power_boost_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_POWER_BOOST_EVENTID);
 
 
 #ifdef __cplusplus

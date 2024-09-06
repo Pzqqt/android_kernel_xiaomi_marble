@@ -1878,6 +1878,10 @@ typedef enum {
     /* Event to indicate xLNA is enabled */
     WMI_PDEV_ENABLE_XLNA_EVENTID,
 
+    /* Event to indicate ANN Power Boost update status from Target */
+    WMI_PDEV_POWER_BOOST_EVENTID,
+
+
     /* VDEV specific events */
     /** VDEV started event in response to VDEV_START request */
     WMI_VDEV_START_RESP_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_VDEV),
@@ -3525,6 +3529,11 @@ typedef struct {
 #define WMI_TARGET_CAP_MPDU_STATS_PER_TX_NSS_SUPPORT_SET(target_cap_flags, value)\
     WMI_SET_BITS(target_cap_flags, 16, 1, value)
 
+#define WMI_TARGET_CAP_POWER_BOOST_SUPPORT_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 17, 1)
+#define WMI_TARGET_CAP_POWER_BOOST_SUPPORT_SET(target_cap_flags) \
+    WMI_SET_BITS(target_cap_flags, 17, 1, value)
+
 
 /*
  * wmi_htt_msdu_idx_to_htt_msdu_qtype GET/SET APIs
@@ -3672,7 +3681,8 @@ typedef struct {
      * Bit 14 - Support for ML monitor mode
      * Bit 15 - Support for Qdata Tx LCE filter installation
      * Bit 16 - Support for MPDU stats per tx Nss capability
-     * Bits 31:17 - Reserved
+     * Bit 17 - Support for Power Boost capability
+     * Bits 31:18 - Reserved
      */
     A_UINT32 target_cap_flags;
 
@@ -48968,6 +48978,47 @@ typedef struct {
     /* Vdev_id on which T2LM command request is received */
     A_UINT32 vdev_id;
 } wmi_mlo_peer_tid_to_link_map_event_fixed_param;
+
+typedef enum {
+    WMI_EVENT_POWER_BOOST_START_TRAINING = 0,
+    WMI_EVENT_POWER_BOOST_ABORT,
+    WMI_EVENT_POWER_BOOST_COMPLETE,
+
+    WMI_EVENT_POWER_BOOST_MAX
+} wmi_pdev_power_boost_event_type;
+
+typedef struct {
+    /* WMITLV_TAG_STRUC_wmi_pdev_power_boost_event_fixed_param */
+    A_UINT32 tlv_header;
+    /* to identify for which pdev the event is sent */
+    A_UINT32 pdev_id;
+    /* enum wmi_pdev_power_boost_event_type to update the power boost status */
+    A_UINT32 status;
+    /* training_stage:
+     * The training stage such as 1st, 2nd for which the I/Q samples are
+     * updated in DDR.
+     */
+    A_UINT32 training_stage;
+    /* MCS value for which the current DPD training has been done */
+    A_UINT32 mcs;
+    /* bandwidth:
+     * Bandwidth value in Mhz for which the current DPD training has been done
+     */
+    A_UINT32 bandwidth;
+    /* current target temperature while training the DPD packet in degree C */
+    A_INT32 temperature_degreeC;
+    /* primary channel frequency in MHz for which DPD training is done */
+    A_UINT32 primary_chan_mhz;
+    /** Center frequency 1 in MHz */
+    A_UINT32 band_center_freq1;
+    /** Center frequency 2 in MHz - valid only for 11ac/VHT 80+80 mode */
+    A_UINT32 band_center_freq2;
+    /* phy_mode:
+     * PHY mode as listed by enum WLAN_PHY_MODE, for which the current DPD
+     * training has been done
+     */
+    A_UINT32 phy_mode;
+} wmi_pdev_power_boost_event_fixed_param;
 
 
 
