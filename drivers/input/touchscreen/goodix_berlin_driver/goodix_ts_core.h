@@ -702,7 +702,7 @@ int goodix_fw_update_init(struct goodix_ts_core *core_data);
 void goodix_fw_update_uninit(void);
 int goodix_do_fw_update(struct goodix_ic_config *ic_config, int mode);
 
-int goodix_get_ic_type(struct device_node *node);
+int goodix_get_ic_type(struct device_node *node, const struct of_device_id *goodix_dt_ids);
 int gesture_module_init(void);
 void gesture_module_exit(void);
 int inspect_module_init(void);

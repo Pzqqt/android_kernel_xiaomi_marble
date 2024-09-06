@@ -161,6 +161,16 @@ static void goodix_pdev_release(struct device *dev)
 	kfree(goodix_pdev);
 }
 
+#ifdef CONFIG_OF
+static const struct of_device_id i2c_matchs[] = {
+	{.compatible = "goodix,gt9897",},
+	{.compatible = "goodix,gt9966",},
+	{.compatible = "goodix,gt9916",},
+	{},
+};
+MODULE_DEVICE_TABLE(of, i2c_matchs);
+#endif
+
 static int goodix_i2c_probe(struct i2c_client *client,
 	const struct i2c_device_id *dev_id)
 {
@@ -172,7 +182,7 @@ static int goodix_i2c_probe(struct i2c_client *client,
 		return -EIO;
 
 	/* get ic type */
-	ret = goodix_get_ic_type(client->dev.of_node);
+	ret = goodix_get_ic_type(client->dev.of_node, i2c_matchs);
 	if (ret < 0)
 		return ret;
 
@@ -220,16 +230,6 @@ static int goodix_i2c_remove(struct i2c_client *client)
 	platform_device_unregister(goodix_pdev);
 	return 0;
 }
-
-#ifdef CONFIG_OF
-static const struct of_device_id i2c_matchs[] = {
-	{.compatible = "goodix,gt9897",},
-	{.compatible = "goodix,gt9966",},
-	{.compatible = "goodix,gt9916",},
-	{},
-};
-MODULE_DEVICE_TABLE(of, i2c_matchs);
-#endif
 
 static const struct i2c_device_id i2c_id_table[] = {
 	{TS_DRIVER_NAME, 0},
