@@ -25897,6 +25897,15 @@ typedef enum
      */
     WMI_VENDOR_OUI_ACTION_DISABLE_AUXL = 15,
 
+    /*
+     * Used to downgrade to 2 link ML connection for specific AP matchs OUI.
+     * This is the preferred name, since it specifies that the downgraded
+     * number of links is 2.
+     */
+    WMI_VENDOR_OUI_ACTION_RESTRICT_MAX_2_MLO_LINKS = 16,
+    /* alias for the above (less suitable, since it is less precise) */
+    WMI_VENDOR_OUI_ACTION_RESTRICT_MAX_MLO_LINKS =
+        WMI_VENDOR_OUI_ACTION_RESTRICT_MAX_2_MLO_LINKS,
 
     /* Add any action before this line */
     WMI_VENDOR_OUI_ACTION_MAX_ACTION_ID
