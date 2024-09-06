@@ -1728,6 +1728,9 @@
   __traceiter_android_vh_blk_rq_ctx_init
   __traceiter_android_vh_cpu_idle_enter
   __traceiter_android_vh_cpu_idle_exit
+  __traceiter_android_vh_do_anonymous_page
+  __traceiter_android_vh_do_swap_page
+  __traceiter_android_vh_do_wp_page
   __traceiter_android_vh_dup_task_struct
   __traceiter_android_vh_filemap_fault_cache_page
   __traceiter_android_vh_filemap_fault_get_page
@@ -1736,6 +1739,7 @@
   __traceiter_android_vh_ftrace_oops_enter
   __traceiter_android_vh_ftrace_oops_exit
   __traceiter_android_vh_ftrace_size_check
+  __traceiter_android_vh_fuse_request_end
   __traceiter_android_vh_iommu_setup_dma_ops
   __traceiter_android_vh_ipi_stop
   __traceiter_android_vh_irqtime_account_process_tick
@@ -1747,9 +1751,11 @@
   __traceiter_android_vh_mmc_gpio_cd_irqt
   __traceiter_android_vh_mm_dirty_limits
   __traceiter_android_vh_printk_hotplug
+  __traceiter_android_vh_queue_request_and_unlock
   __traceiter_android_vh_scheduler_tick
   __traceiter_android_vh_sdhci_get_cd
   __traceiter_android_vh_sd_update_bus_speed_mode
+  __traceiter_android_vh_shmem_swapin_page
   __traceiter_android_vh_show_max_freq
   __traceiter_android_vh_show_resume_epoch_val
   __traceiter_android_vh_show_suspend_epoch_val
@@ -1762,6 +1768,7 @@
   __traceiter_android_vh_ufs_compl_command
   __traceiter_android_vh_ufs_send_command
   __traceiter_android_vh_ufs_update_sdev
+  __traceiter_android_vh_uprobes_replace_page
   __traceiter_android_vh_vmpressure
   __traceiter_binder_transaction_received
   __traceiter_block_bio_complete
@@ -1841,6 +1848,9 @@
   __tracepoint_android_vh_blk_rq_ctx_init
   __tracepoint_android_vh_cpu_idle_enter
   __tracepoint_android_vh_cpu_idle_exit
+  __tracepoint_android_vh_do_anonymous_page
+  __tracepoint_android_vh_do_swap_page
+  __tracepoint_android_vh_do_wp_page
   __tracepoint_android_vh_dup_task_struct
   __tracepoint_android_vh_filemap_fault_cache_page
   __tracepoint_android_vh_filemap_fault_get_page
@@ -1849,6 +1859,7 @@
   __tracepoint_android_vh_ftrace_oops_enter
   __tracepoint_android_vh_ftrace_oops_exit
   __tracepoint_android_vh_ftrace_size_check
+  __tracepoint_android_vh_fuse_request_end
   __tracepoint_android_vh_iommu_setup_dma_ops
   __tracepoint_android_vh_ipi_stop
   __tracepoint_android_vh_irqtime_account_process_tick
@@ -1860,9 +1871,11 @@
   __tracepoint_android_vh_mmc_gpio_cd_irqt
   __tracepoint_android_vh_mm_dirty_limits
   __tracepoint_android_vh_printk_hotplug
+  __tracepoint_android_vh_queue_request_and_unlock
   __tracepoint_android_vh_scheduler_tick
   __tracepoint_android_vh_sdhci_get_cd
   __tracepoint_android_vh_sd_update_bus_speed_mode
+  __tracepoint_android_vh_shmem_swapin_page
   __tracepoint_android_vh_show_max_freq
   __tracepoint_android_vh_show_resume_epoch_val
   __tracepoint_android_vh_show_suspend_epoch_val
@@ -1875,6 +1888,7 @@
   __tracepoint_android_vh_ufs_compl_command
   __tracepoint_android_vh_ufs_send_command
   __tracepoint_android_vh_ufs_update_sdev
+  __tracepoint_android_vh_uprobes_replace_page
   __tracepoint_android_vh_vmpressure
   __tracepoint_binder_transaction_received
   __tracepoint_block_bio_complete
