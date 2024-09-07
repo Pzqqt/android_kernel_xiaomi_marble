@@ -1,5 +1,5 @@
-obj-$(CONFIG_TOUCHSCREEN_GOODIX_BRL) += goodix_core.o
-goodix_core-y := \
+obj-$(CONFIG_TOUCHSCREEN_GOODIX_BRL) += goodix_core_los.o
+goodix_core_los-y := \
 				goodix_brl_i2c.o \
 				goodix_brl_spi.o \
 				goodix_ts_core.o \
