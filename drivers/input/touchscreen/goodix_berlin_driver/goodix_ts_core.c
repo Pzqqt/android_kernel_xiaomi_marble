@@ -780,6 +780,40 @@ static ssize_t goodix_ts_debug_log_store(struct device *dev,
 	return count;
 }
 
+/* report_rate show */
+static ssize_t goodix_ts_report_rate_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct goodix_ts_core *core_data = dev_get_drvdata(dev);
+	int r = 0;
+
+	r = snprintf(buf, PAGE_SIZE, "touch report rate::%s\n",
+			core_data->report_rate == 240 ?
+			"240HZ" : "480HZ");
+
+	return r;
+}
+
+/* report_rate_store */
+static ssize_t goodix_ts_report_rate_store(struct device *dev,
+					struct device_attribute *attr,
+					const char *buf, size_t count)
+{
+	struct goodix_ts_core *core_data = dev_get_drvdata(dev);
+
+	if (!buf || count <= 0)
+		return -EINVAL;
+
+	if (buf[0] != '0') {
+		core_data->report_rate = 480;
+		core_data->hw_ops->switch_report_rate(core_data, true);
+	} else {
+		core_data->report_rate = 240;
+		core_data->hw_ops->switch_report_rate(core_data, false);
+	}
+	return count;
+}
+
 static DEVICE_ATTR(driver_info, 0440,
 		driver_info_show, NULL);
 static DEVICE_ATTR(chip_info, 0440,
@@ -798,6 +832,7 @@ static DEVICE_ATTR(esd_info, 0664,
 		goodix_ts_esd_info_show, goodix_ts_esd_info_store);
 static DEVICE_ATTR(debug_log, 0664,
 		goodix_ts_debug_log_show, goodix_ts_debug_log_store);
+static DEVICE_ATTR_RW(goodix_ts_report_rate);
 
 static struct attribute *sysfs_attrs[] = {
 	&dev_attr_driver_info.attr,
@@ -809,6 +844,7 @@ static struct attribute *sysfs_attrs[] = {
 	&dev_attr_irq_info.attr,
 	&dev_attr_esd_info.attr,
 	&dev_attr_debug_log.attr,
+	&dev_attr_goodix_ts_report_rate.attr,
 	NULL,
 };
 
@@ -2557,6 +2593,7 @@ static int goodix_ts_probe(struct platform_device *pdev)
 	goodix_tools_init();
 
 	core_data->init_stage = CORE_INIT_STAGE1;
+	core_data->report_rate = 240;
 	goodix_modules.core_data = core_data;
 	core_module_prob_sate = CORE_MODULE_PROB_SUCCESS;
 	ts_core = core_data;
