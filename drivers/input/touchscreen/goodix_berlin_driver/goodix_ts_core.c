@@ -40,6 +40,9 @@ struct goodix_ts_core *ts_core;
 #define GOODIX_DEFAULT_CFG_NAME		"goodix_cfg_group.cfg"
 #define GOOIDX_INPUT_PHYS			"goodix_ts/input0"
 
+static bool force_high_report_rate = false;
+module_param(force_high_report_rate, bool, S_IRUGO);
+
 #if defined(CONFIG_DRM)
 static struct drm_panel *active_panel;
 static void goodix_panel_notifier_callback(enum panel_event_notifier_tag tag,
@@ -800,6 +803,9 @@ static ssize_t goodix_ts_report_rate_store(struct device *dev,
 					const char *buf, size_t count)
 {
 	struct goodix_ts_core *core_data = dev_get_drvdata(dev);
+
+	if (force_high_report_rate)
+		return count;
 
 	if (!buf || count <= 0)
 		return -EINVAL;
@@ -1973,6 +1979,11 @@ out:
 	hw_ops->irq_enable(core_data, true);
 	/* open esd */
 	goodix_ts_blocking_notify(NOTIFY_RESUME, NULL);
+	/* Re-enable high sampling rate */
+	if (core_data->report_rate != 240) {
+		ts_info("Re-enable high sampling rate");
+		hw_ops->switch_report_rate(core_data, true);
+	}
 	xiaomi_touch_set_suspend_state(0);
 	ts_info("Resume end");
 	return 0;
@@ -2390,6 +2401,12 @@ upgrade:
 		ts_err("stage2 init failed");
 		goto uninit_fw;
 	}
+
+	if (force_high_report_rate) {
+		ts_info("%s: Enable high sampling rate", __func__);
+		hw_ops->switch_report_rate(cd, true);
+	}
+
 	cd->init_stage = CORE_INIT_STAGE2;
 
 	if (cd->bus->ic_type == IC_TYPE_BERLIN_D)
@@ -2593,7 +2610,7 @@ static int goodix_ts_probe(struct platform_device *pdev)
 	goodix_tools_init();
 
 	core_data->init_stage = CORE_INIT_STAGE1;
-	core_data->report_rate = 240;
+	core_data->report_rate = force_high_report_rate ? 480 : 240;
 	goodix_modules.core_data = core_data;
 	core_module_prob_sate = CORE_MODULE_PROB_SUCCESS;
 	ts_core = core_data;
