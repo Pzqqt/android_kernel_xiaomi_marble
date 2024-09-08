@@ -37188,6 +37188,8 @@ typedef struct {
     A_UINT32 pout_reduction_25db;
     /* tx chain mask: Chain mask to apply based on the temp level */
     A_UINT32 tx_chain_mask;
+    /* duty cycle in ms for this level */
+    A_UINT32 duty_cycle;
 } wmi_therm_throt_level_config_info;
 
 typedef enum {
