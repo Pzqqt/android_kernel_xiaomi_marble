@@ -1209,7 +1209,7 @@ int mi_display_powerkey_callback(int status)
 }
 
 
-bool mi_dsi_display_ramdump_support()
+bool mi_dsi_display_ramdump_support(void)
 {
 	/* when debug policy is 0x0 or 0x20, full dump not supported */
 	if (strcmp(display_debug_policy, "0x0") != 0 && strcmp(display_debug_policy, "0x20") != 0)
