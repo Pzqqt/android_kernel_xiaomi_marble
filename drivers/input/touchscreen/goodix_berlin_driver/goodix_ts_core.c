@@ -2262,6 +2262,8 @@ static int goodix_send_ic_config(struct goodix_ts_core *cd, int type)
 	return cd->hw_ops->send_config(cd, cfg->data, cfg->len);
 }
 
+int brld_set_coor_mode(struct goodix_ts_core *cd);
+
 /**
  * goodix_later_init_thread - init IC fw and config
  * @data: point to goodix_ts_core
@@ -2333,6 +2335,9 @@ upgrade:
 		goto uninit_fw;
 	}
 	cd->init_stage = CORE_INIT_STAGE2;
+
+	if (cd->bus->ic_type == IC_TYPE_BERLIN_D)
+		brld_set_coor_mode(cd);
 
 	return 0;
 

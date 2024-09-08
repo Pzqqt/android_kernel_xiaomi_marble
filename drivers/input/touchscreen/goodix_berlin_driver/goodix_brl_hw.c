@@ -308,8 +308,47 @@ int brl_gesture(struct goodix_ts_core *cd, int gesture_type)
 	return 0;
 }
 
+#define GOODIX_BRLD_CMD_RAWDATA 0x90
+#define GOODIX_BRLD_CMD_COORD 0x91
+int brld_set_coor_mode(struct goodix_ts_core *cd) {
+	struct goodix_ts_cmd cmd;
+	int ret = 0;
+
+	ts_debug("brld_set_coor_mode, init_stage: %d", cd->init_stage);
+
+	if (cd->init_stage < CORE_INIT_STAGE2)
+		goto exit;
+
+	// Disable rawdata mode
+	cmd.cmd = GOODIX_BRLD_CMD_RAWDATA;
+	cmd.data[0] = 0;
+	cmd.len = 5;
+	ret = cd->hw_ops->send_cmd(cd, &cmd);
+	if (ret < 0) {
+		ts_err("could not disable rawdata mode, err %d", ret);
+		goto exit;
+	}
+
+	// Enable coor mode
+	cmd.cmd = GOODIX_BRLD_CMD_COORD;
+	cmd.data[0] = 0x81;
+	cmd.len = 5;
+	ret = cd->hw_ops->send_cmd(cd, &cmd);
+	if (ret < 0) {
+		ts_err("could not enable coor mode, err: %d", ret);
+		goto exit;
+	}
+
+	ts_debug("successfully enabled coor mode");
+
+exit:
+	return ret;
+}
+
 static int brl_reset(struct goodix_ts_core *cd, int delay)
 {
+	int ret = 0;
+
 	ts_info("chip_reset");
 
 	gpio_direction_output(cd->board_data.reset_gpio, 0);
@@ -320,7 +359,14 @@ static int brl_reset(struct goodix_ts_core *cd, int delay)
 	else
 		msleep(delay);
 
-	return brl_select_spi_mode(cd);
+	ret = brl_select_spi_mode(cd);
+	if (ret)
+		return ret;
+
+	if (cd->bus->ic_type == IC_TYPE_BERLIN_D)
+		brld_set_coor_mode(cd);
+
+	return ret;
 }
 
 static int brl_irq_enbale(struct goodix_ts_core *cd, bool enable)
