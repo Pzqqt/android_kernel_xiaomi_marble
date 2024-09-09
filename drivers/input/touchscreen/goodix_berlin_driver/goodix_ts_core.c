@@ -1094,11 +1094,11 @@ static int goodix_parse_dt(struct device_node *node,
 
 	/* get panel ID GPIOs */
 	board_data->panel_id_gpio_a = of_get_named_gpio(node, "goodix,panel-id-gpio-a", 0);
-	if (r < 0)
+	if (board_data->panel_id_gpio_a < 0)
 		board_data->panel_id_gpio_a = 0;
 
 	board_data->panel_id_gpio_b = of_get_named_gpio(node, "goodix,panel-id-gpio-b", 0);
-	if (r < 0)
+	if (board_data->panel_id_gpio_b < 0)
 		board_data->panel_id_gpio_b = 0;
 
 	/* check panel ID GPIOs */
