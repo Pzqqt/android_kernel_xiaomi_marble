@@ -235,7 +235,6 @@ static int gsx_gesture_ist(struct goodix_ts_core *cd,
 	struct goodix_ts_hw_ops *hw_ops = cd->hw_ops;
 	struct goodix_ts_event gs_event = {0};
 	int ret;
-	int key_value;
 #ifdef GOODIX_FOD_AREA_REPORT
 	unsigned int fodx, fody, fod_id;
 	unsigned int overlay_area;
@@ -321,21 +320,24 @@ static int gsx_gesture_ist(struct goodix_ts_core *cd,
 		ts_info("GTP got valid gesture type 0x%x", gs_event.gesture_type);
 		if (cd->double_wakeup && gs_event.gesture_type == 0xcc) {
 			ts_info("GTP gesture report double tap");
-			key_value = KEY_WAKEUP;
-		}
-		if ((cd->fod_icon_status || cd->aod_status) &&
-				cd->nonui_status == 0 &&
-				gs_event.gesture_type == 0x4c) {
+			input_report_key(cd->input_dev, KEY_WAKEUP, 1);
+			input_sync(cd->input_dev);
+			input_report_key(cd->input_dev, KEY_WAKEUP, 0);
+			input_sync(cd->input_dev);
+			notify_gesture_double_tap();
+			goto re_send_ges_cmd;
+		} else if ((cd->fod_icon_status || cd->aod_status) &&
+		    cd->nonui_status == 0 && gs_event.gesture_type == 0x4c) {
 			ts_info("GTP gesture report single tap");
-			key_value = KEY_GOTO;
+			input_report_key(cd->input_dev, KEY_GOTO, 1);
+			input_sync(cd->input_dev);
+			input_report_key(cd->input_dev, KEY_GOTO, 0);
+			input_sync(cd->input_dev);
+			notify_gesture_single_tap();
+			goto re_send_ges_cmd;
 		}
-		input_report_key(cd->input_dev, key_value, 1);
-		input_sync(cd->input_dev);
-		input_report_key(cd->input_dev, key_value, 0);
-		input_sync(cd->input_dev);
-		goto re_send_ges_cmd;
 	} else {
-		ts_info("unsupported gesture:%x", gs_event.gesture_type);
+		ts_info("unsupported gesture: %x", gs_event.gesture_type);
 	}
 
 re_send_ges_cmd:
