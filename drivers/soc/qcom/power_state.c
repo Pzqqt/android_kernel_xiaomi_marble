@@ -479,7 +479,7 @@ static ssize_t suspend_delay_store(struct kobject *kobj, struct kobj_attribute *
 		return ret;
 	}
 
-	drv->deep_sleep_allowed = val;
+	drv->suspend_delay = val;
 
 	return count;
 }
