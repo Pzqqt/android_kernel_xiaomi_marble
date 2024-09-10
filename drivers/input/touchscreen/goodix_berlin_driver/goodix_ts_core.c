@@ -1945,21 +1945,39 @@ out:
 static void goodix_set_gesture_work(struct work_struct *work)
 {
 	struct goodix_ts_core *core_data = container_of(work, struct goodix_ts_core, gesture_work);
-	bool should_enter_gesture_mode;
+	struct goodix_ts_hw_ops *hw_ops = core_data->hw_ops;
+	unsigned int target_gesture_type;
+	int res;
 
 	if (!atomic_read(&core_data->suspended)) {
 		ts_debug("touch is not suspended, skip re-wake");
 		return;
 	}
 
-	should_enter_gesture_mode = core_data->gesture_type && !core_data->nonui_enabled;
+	mutex_lock(&core_data->gesture_mutex);
+	pm_stay_awake(core_data->bus->dev);
 
-	if (should_enter_gesture_mode == core_data->in_gesture_mode) {
-		return;
+	target_gesture_type = core_data->nonui_enabled ? 0 : core_data->gesture_type;
+
+	if (target_gesture_type == 0) {
+		hw_ops->gesture(core_data, 0);
+		goto exit;
 	}
 
-	goodix_ts_resume(core_data);
-	goodix_ts_suspend(core_data);
+	hw_ops->reset(core_data, GOODIX_NORMAL_RESET_DELAY_MS);
+	res = hw_ops->gesture(core_data, target_gesture_type);
+	if (res) {
+		ts_err("failed enter gesture mode");
+		goto exit;
+	} else {
+		ts_err("enter gesture mode");
+	}
+	hw_ops->irq_enable(core_data, true);
+	enable_irq_wake(core_data->irq);
+
+exit:
+	pm_relax(core_data->bus->dev);
+	mutex_unlock(&core_data->gesture_mutex);
 }
 
 static int goodix_set_cur_value(int mode, int value)
@@ -2223,6 +2241,8 @@ int goodix_ts_stage2_init(struct goodix_ts_core *cd)
 	/* gesture init */
 	gesture_module_init();
 #endif
+
+	mutex_init(&cd->gesture_mutex);
 
 	/* inspect init */
 	inspect_module_init();

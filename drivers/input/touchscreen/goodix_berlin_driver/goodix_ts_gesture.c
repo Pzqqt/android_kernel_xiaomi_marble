@@ -243,6 +243,7 @@ static int gsx_gesture_ist(struct goodix_ts_core *cd,
 	if (atomic_read(&cd->suspended) == 0 || cd->gesture_type == 0 || cd->nonui_enabled)
 		return EVT_CONTINUE;
 
+	mutex_lock(&cd->gesture_mutex);
 	ret = hw_ops->event_handler(cd, &gs_event);
 	if (ret) {
 		ts_err("failed get gesture data");
@@ -296,6 +297,9 @@ static int gsx_gesture_ist(struct goodix_ts_core *cd,
 re_send_ges_cmd:
 	if (hw_ops->gesture(cd, 0))
 		ts_info("warning: failed re_send gesture cmd");
+
+	mutex_unlock(&cd->gesture_mutex);
+
 	return EVT_CANCEL_IRQEVT;
 }
 
@@ -325,8 +329,6 @@ static int gsx_gesture_before_suspend(struct goodix_ts_core *cd,
 	hw_ops->irq_enable(cd, true);
 	enable_irq_wake(cd->irq);
 
-	cd->in_gesture_mode = true;
-
 	return EVT_CANCEL_SUSPEND;
 }
 
@@ -340,8 +342,6 @@ static int gsx_gesture_before_resume(struct goodix_ts_core *cd,
 
 	disable_irq_wake(cd->irq);
 	hw_ops->reset(cd, GOODIX_NORMAL_RESET_DELAY_MS);
-
-	cd->in_gesture_mode = false;
 
 	return EVT_CONTINUE;
 }

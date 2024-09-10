@@ -548,8 +548,8 @@ struct goodix_ts_core {
 	struct workqueue_struct *gesture_wq;
 	struct work_struct gesture_work;
 
-	bool in_gesture_mode;
 	bool nonui_enabled;
+	struct mutex gesture_mutex;
 };
 
 /* external module structures */
