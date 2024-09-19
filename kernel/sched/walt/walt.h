@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _WALT_H
@@ -122,6 +122,9 @@ struct walt_rq {
 	u64			cycles;
 	int			num_mvp_tasks;
 	struct list_head	mvp_tasks;
+
+	/* UCLAMP tracking */
+	unsigned long		uclamp_limit[UCLAMP_CNT];
 };
 
 struct walt_sched_cluster {
@@ -138,6 +141,7 @@ struct walt_sched_cluster {
 	unsigned int		max_freq;
 	u64			aggr_grp_load;
 	unsigned long		util_to_cost[1024];
+	int8_t			sibling_cluster;
 };
 
 extern struct walt_sched_cluster *sched_cluster[WALT_NR_CPUS];
@@ -295,6 +299,8 @@ extern unsigned int sched_lib_mask_force;
 #define WALT_CPUFREQ_PL			(1U << 3)
 #define WALT_CPUFREQ_EARLY_DET		(1U << 4)
 #define WALT_CPUFREQ_BOOST_UPDATE	(1U << 5)
+#define WALT_CPUFREQ_UCLAMP		(1U << 6)
+
 
 #define NO_BOOST 0
 #define FULL_THROTTLE_BOOST 1
@@ -909,65 +915,6 @@ struct compute_energy_output {
 	unsigned long	cost[MAX_CLUSTERS];
 	unsigned int	cluster_first_cpu[MAX_CLUSTERS];
 };
-
-struct cluster_freq_relation {
-	int src_freq_scale;
-	int dst_cpu;
-	int tgt_freq_scale;
-};
-
-extern struct cluster_freq_relation cluster_arr[3][5];
-extern int sched_ignore_cluster_handler(struct ctl_table *table, int write,
-			void __user *buffer, size_t *lenp, loff_t *ppos);
-//Check to confirm if we can ignore cluster for p
-static inline bool ignore_cluster_valid(struct task_struct *p, struct rq *rq)
-{
-	cpumask_t tmp;
-	int i;
-	struct walt_rq *wrq = (struct walt_rq *)rq->android_vendor_data1;
-	int cluster = wrq->cluster->id;
-	int src_cpu = cpumask_first(&wrq->cluster->cpus);
-	int src_freq_scale = arch_scale_freq_capacity(src_cpu);
-	int tgt_scale, tgt_cpu;
-
-
-	/* if src cluster has no relationship */
-	if (cluster_arr[cluster][0].src_freq_scale <= 0)
-		return false;
-
-	/* if src cluster is below its threshold frequency */
-	if (src_freq_scale < cluster_arr[cluster][0].src_freq_scale)
-		return false;
-
-	/* if p is only affine to src cluster */
-	if (p) {
-		cpumask_andnot(&tmp, cpu_active_mask, &wrq->cluster->cpus);
-		if (!cpumask_intersects(&tmp, &p->cpus_mask))
-			return false;
-	}
-
-	for (i = 0; i < 5; i++)
-		if (cluster_arr[cluster][i].src_freq_scale > src_freq_scale)
-			break;
-	tgt_cpu = cpumask_first(&sched_cluster[cluster_arr[cluster][i - 1].dst_cpu]->cpus);
-	tgt_scale = cluster_arr[cluster][i - 1].tgt_freq_scale;
-
-	/*
-	 * In case target cluster is frequency limited to a frequency below target
-	 * scale then skip ignoring src cluster.
-	 */
-	if (capacity_orig_of(tgt_cpu) < tgt_scale)
-		return false;
-
-	/* Target cluster is above target scale */
-	if (arch_scale_freq_capacity(tgt_cpu) >= tgt_scale)
-		return false;
-
-	/* We reach here, means we need to ignore src cluster for placement */
-	return true;
-}
-
-
 
 extern void walt_task_dump(struct task_struct *p);
 extern void walt_rq_dump(int cpu);

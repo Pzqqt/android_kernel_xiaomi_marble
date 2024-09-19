@@ -1837,6 +1837,7 @@ static int i3c_geni_rsrcs_init(struct geni_i3c_dev *gi3c,
 	}
 
 	gi3c->se.i3c_rsc.wrapper_dev = &wrapper_pdev->dev;
+	gi3c->se.i3c_rsc.base = gi3c->se.base;
 
 	ret = geni_se_resources_init(&gi3c->se.i3c_rsc, I3C_CORE2X_VOTE,
 				     (DEFAULT_SE_CLK * DEFAULT_BUS_WIDTH));
@@ -2093,7 +2094,7 @@ static int geni_i3c_probe(struct platform_device *pdev)
 		goto geni_resources_off;
 	}
 
-	tx_depth = get_tx_fifo_depth(gi3c->se.base);
+	tx_depth = get_tx_fifo_depth(&gi3c->se.i3c_rsc);
 	gi3c->tx_wm = tx_depth - 1;
 	geni_se_init(gi3c->se.base, gi3c->tx_wm, tx_depth);
 	se_config_packing(gi3c->se.base, BITS_PER_BYTE, PACKING_BYTES_PW, true);
