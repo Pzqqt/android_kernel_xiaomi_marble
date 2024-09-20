@@ -833,6 +833,7 @@ typedef enum {
     HTT_STATS_TX_PDEV_WIFI_RADAR_TAG                = 200, /* htt_stats_tx_pdev_wifi_radar_tlv */
     HTT_STATS_TXBF_OFDMA_BE_PARBW_TAG               = 201, /* htt_stats_txbf_ofdma_be_parbw_tlv */
     HTT_STATS_RX_PDEV_RSSI_HIST_TAG                 = 202, /* htt_stats_rx_pdev_rssi_hist_tlv */
+    HTT_STATS_TX_VDEV_NSS_TAG                       = 203, /* htt_stats_tx_vdev_nss_tlv */
 
     HTT_STATS_MAX_TAG,
 } htt_stats_tlv_tag_t;

@@ -676,6 +676,14 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_GTX_STATS = 68,
 
+    /** HTT_DBG_EXT_STATS_TX_VDEV_NSS
+     * PARAMS:
+     *   - No Params
+     * RESP MSG:
+     *    - htt_stats_tx_vdev_nss_tlv
+     */
+    HTT_DBG_EXT_STATS_TX_VDEV_NSS = 69,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -4641,6 +4649,7 @@ typedef struct {
     A_UINT32 incomplete_llc;
     A_UINT32 eapol_duplicate_m3;
     A_UINT32 eapol_duplicate_m4;
+    A_UINT32 eapol_invalid_mac;
 } htt_stats_tx_de_classify_failed_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_tx_de_classify_failed_tlv htt_tx_de_classify_failed_stats_tlv;
@@ -5405,6 +5414,7 @@ typedef struct {
 #define HTT_TX_PDEV_STATS_NUM_LTF 4
 #define HTT_TX_PDEV_STATS_NUM_11AX_TRIGGER_TYPES 6
 #define HTT_TX_PDEV_STATS_NUM_11BE_TRIGGER_TYPES 6
+#define HTT_TX_VDEV_STATS_NUM_SPATIAL_STREAMS 4
 #define HTT_TX_NUM_OF_SOUNDING_STATS_WORDS \
     (HTT_TX_PDEV_STATS_NUM_BW_COUNTERS * \
      HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS)
@@ -5623,6 +5633,20 @@ typedef struct {
 } htt_stats_tx_pdev_rate_stats_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_tx_pdev_rate_stats_tlv htt_tx_pdev_rate_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 vdev_id; /* which vdev produced these per-Nss tx stats */
+    /* tx_nss:
+     * Count how many MPDUs the vdev has sent using each possible number
+     * of spatial streams:
+     * tx_nss[0] -> number of MPDUs transmitted using Nss=1
+     * tx_nss[1] -> number of MPDUs transmitted using Nss=2
+     * tx_nss[2] -> number of MPDUs transmitted using Nss=3
+     * tx_nss[3] -> number of MPDUs transmitted using Nss=4
+     */
+    A_UINT32 tx_nss[HTT_TX_VDEV_STATS_NUM_SPATIAL_STREAMS];
+} htt_stats_tx_vdev_nss_tlv;
 
 typedef struct {
      /* 11be mode pdev rate stats; placed in a separate TLV to adhere to size restrictions */

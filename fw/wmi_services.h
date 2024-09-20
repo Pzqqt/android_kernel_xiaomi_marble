@@ -683,6 +683,7 @@ typedef  enum  {
      */
     WMI_SERVICE_IS_TARGET_IPA = 425,
     WMI_SERVICE_THERM_THROT_TX_CHAIN_MASK = 426, /*FW supports thermal throttling dynamic Tx ChainMask update */
+    WMI_SERVICE_SPLIT_PHY_PDEV_SUSPEND_RESUME_SUPPORT = 427, /* Indicates FW support pdev suspend/resume in split-phy radio */
 
 
     WMI_MAX_EXT2_SERVICE
