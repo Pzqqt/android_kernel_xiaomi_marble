@@ -6746,7 +6746,7 @@ QDF_STATUS sme_get_neighbor_lookup_rssi_threshold(mac_handle_t mac_handle,
 	struct cm_roam_values_copy temp;
 
 	wlan_cm_roam_cfg_get_value(mac->psoc, vdev_id,
-				   NEIGHBOUR_LOOKUP_THRESHOLD, &temp);
+				   NEXT_RSSI_THRESHOLD, &temp);
 	*lookup_threshold = temp.uint_value;
 
 	return QDF_STATUS_SUCCESS;

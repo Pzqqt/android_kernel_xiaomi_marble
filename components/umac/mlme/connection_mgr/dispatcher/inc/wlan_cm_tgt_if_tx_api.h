@@ -198,6 +198,18 @@ QDF_STATUS wlan_cm_tgt_send_roam_stop_req(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS wlan_cm_tgt_send_roam_update_req(struct wlan_objmgr_psoc *psoc,
 					   uint8_t vdev_id,
 					   struct wlan_roam_update_config *req);
+/**
+ * wlan_cm_tgt_send_roam_freqs()  - Send roam frequencies to firmware
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @req: roam frequency list to be sent to fw
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_tgt_send_roam_freqs(struct wlan_objmgr_psoc *psoc,
+			    uint8_t vdev_id,
+			    struct wlan_roam_scan_channel_list *req);
 
 /**
  * wlan_cm_tgt_send_roam_abort_req()  - Send roam abort command to firmware

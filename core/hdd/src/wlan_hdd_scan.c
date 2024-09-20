@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -831,25 +831,11 @@ static void hdd_process_vendor_acs_response(struct hdd_adapter *adapter)
 
 #if defined(CFG80211_SCAN_RANDOM_MAC_ADDR) || \
 	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
-
-#ifdef CFG80211_SINGLE_NETDEV_MULTI_LINK_SUPPORT
-static inline bool
-wlan_util_get_connected_status(struct wireless_dev *wdev)
-{
-	return wdev->connected;
-}
-#else
-static inline bool
-wlan_util_get_connected_status(struct wireless_dev *wdev)
-{
-	return !!wdev->current_bss;
-}
-#endif
 /**
  * wlan_hdd_vendor_scan_random_attr() - check and fill scan randomization attrs
  * @wiphy: Pointer to wiphy
  * @request: Pointer to scan request
- * @wdev: Pointer to wireless device
+ * @adapter: Pointer to hdd adapter
  * @tb: Pointer to nl attributes
  *
  * This function is invoked to check whether vendor scan needs
@@ -860,7 +846,7 @@ wlan_util_get_connected_status(struct wireless_dev *wdev)
  */
 static int wlan_hdd_vendor_scan_random_attr(struct wiphy *wiphy,
 					struct cfg80211_scan_request *request,
-					struct wireless_dev *wdev,
+					struct hdd_adapter *adapter,
 					struct nlattr **tb)
 {
 	uint32_t i;
@@ -870,7 +856,7 @@ static int wlan_hdd_vendor_scan_random_attr(struct wiphy *wiphy,
 		return 0;
 
 	if (!(wiphy->features & NL80211_FEATURE_SCAN_RANDOM_MAC_ADDR) ||
-	    (wlan_util_get_connected_status(wdev))) {
+	    (hdd_cm_is_vdev_connected(adapter))) {
 		hdd_err("SCAN RANDOMIZATION not supported");
 		return -EOPNOTSUPP;
 	}
@@ -912,7 +898,7 @@ static int wlan_hdd_vendor_scan_random_attr(struct wiphy *wiphy,
 #else
 static int wlan_hdd_vendor_scan_random_attr(struct wiphy *wiphy,
 					struct cfg80211_scan_request *request,
-					struct wireless_dev *wdev,
+					struct hdd_adapter *adapter,
 					struct nlattr **tb)
 {
 	return 0;
@@ -1123,7 +1109,8 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 			goto error;
 		}
 
-		if (wlan_hdd_vendor_scan_random_attr(wiphy, request, wdev, tb))
+		if (wlan_hdd_vendor_scan_random_attr(wiphy, request,
+						     adapter, tb))
 			goto error;
 	}
 
