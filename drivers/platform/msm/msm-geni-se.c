@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/clk.h>
@@ -19,7 +19,6 @@
 #include <linux/msm_rtb.h>
 #include <linux/spinlock.h>
 #include <linux/pinctrl/consumer.h>
-
 
 #define QUPV3_TEST_BUS_EN	0x204 //write 0x11
 #define QUPV3_TEST_BUS_SEL	0x200 //write 0x5  [for SE index 4)
@@ -623,19 +622,27 @@ EXPORT_SYMBOL(geni_abort_s_cmd);
 
 /**
  * get_tx_fifo_depth() - Get the TX fifo depth of the serial engine
- * @base:	Base address of the serial engine's register block.
+ * @se: Pointer to the concerned serial engine.
  *
  * This function is used to get the depth i.e. number of elements in the
  * TX fifo of the serial engine.
  *
  * Return:	TX fifo depth in units of FIFO words.
  */
-int get_tx_fifo_depth(void __iomem *base)
+int get_tx_fifo_depth(struct se_geni_rsc *se)
 {
 	int tx_fifo_depth;
+	u32 ret, hw_major, hw_minor, hw_step, tx_fifo_depth_mask;
 
-	tx_fifo_depth = ((geni_read_reg(base, SE_HW_PARAM_0)
-			& TX_FIFO_DEPTH_MSK) >> TX_FIFO_DEPTH_SHFT);
+	ret = geni_se_qupv3_hw_version(se->wrapper_dev, &hw_major,
+				       &hw_minor, &hw_step);
+	if ((hw_major == 3 && hw_minor >= 10) || hw_major > 3)
+		tx_fifo_depth_mask = TX_FIFO_DEPTH_MSK_256_BYTES;
+	else
+		tx_fifo_depth_mask = TX_FIFO_DEPTH_MSK;
+
+	tx_fifo_depth = ((geni_read_reg(se->base, SE_HW_PARAM_0)
+			& tx_fifo_depth_mask) >> TX_FIFO_DEPTH_SHFT);
 	return tx_fifo_depth;
 }
 EXPORT_SYMBOL(get_tx_fifo_depth);
@@ -661,19 +668,27 @@ EXPORT_SYMBOL(get_tx_fifo_width);
 
 /**
  * get_rx_fifo_depth() - Get the RX fifo depth of the serial engine
- * @base:	Base address of the serial engine's register block.
+ * @se: Pointer to the concerned serial engine.
  *
  * This function is used to get the depth i.e. number of elements in the
  * RX fifo of the serial engine.
  *
  * Return:	RX fifo depth in units of FIFO words
  */
-int get_rx_fifo_depth(void __iomem *base)
+int get_rx_fifo_depth(struct se_geni_rsc *se)
 {
 	int rx_fifo_depth;
+	u32 ret, hw_major, hw_minor, hw_step, rx_fifo_depth_mask;
 
-	rx_fifo_depth = ((geni_read_reg(base, SE_HW_PARAM_1)
-			& RX_FIFO_DEPTH_MSK) >> RX_FIFO_DEPTH_SHFT);
+	ret = geni_se_qupv3_hw_version(se->wrapper_dev, &hw_major,
+				       &hw_minor, &hw_step);
+	if ((hw_major == 3 && hw_minor >= 10) || hw_major > 3)
+		rx_fifo_depth_mask = RX_FIFO_DEPTH_MSK_256_BYTES;
+	else
+		rx_fifo_depth_mask = RX_FIFO_DEPTH_MSK;
+
+	rx_fifo_depth = ((geni_read_reg(se->base, SE_HW_PARAM_1)
+			& rx_fifo_depth_mask) >> RX_FIFO_DEPTH_SHFT);
 	return rx_fifo_depth;
 }
 EXPORT_SYMBOL(get_rx_fifo_depth);

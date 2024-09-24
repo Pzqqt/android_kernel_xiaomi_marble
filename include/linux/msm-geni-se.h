@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _LINUX_MSM_GENI_SE
@@ -30,7 +30,8 @@ enum se_protocol_types {
 };
 
 /**
- * struct geni_se_rsc - GENI Serial Engine Resource
+ * struct se_geni_rsc - GENI Serial Engine Resource
+ * @base:		Base Address of the Serial Engine's register block
  * @ctrl_dev		Pointer to controller device.
  * @wrapper_dev:	Pointer to the parent QUPv3 core.
  * @se_clk:		Handle to the core serial engine clock.
@@ -56,6 +57,7 @@ enum se_protocol_types {
  * @is_list_add;	To synchronize list add and del.
  */
 struct se_geni_rsc {
+	void __iomem *base;
 	struct device *ctrl_dev;
 	struct device *wrapper_dev;
 	struct clk *se_clk;
@@ -323,15 +325,25 @@ struct se_geni_rsc {
 /* SE_HW_PARAM_0 fields */
 #define TX_FIFO_WIDTH_MSK	(GENMASK(29, 24))
 #define TX_FIFO_WIDTH_SHFT	(24)
-#define TX_FIFO_DEPTH_MSK	(GENMASK(21, 16))
-#define TX_FIFO_DEPTH_SHFT	(16)
-#define GEN_I3C_IBI_CTRL	(BIT(7))
+/*
+ * For QUP HW Version >= 3.10 Tx fifo depth support is increased
+ * to 256bytes and corresponding bits are 16 to 23
+ */
+#define TX_FIFO_DEPTH_MSK_256_BYTES	(GENMASK(23, 16))
+#define TX_FIFO_DEPTH_MSK		(GENMASK(21, 16))
+#define TX_FIFO_DEPTH_SHFT		(16)
+#define GEN_I3C_IBI_CTRL		(BIT(7))
 
 /* SE_HW_PARAM_1 fields */
 #define RX_FIFO_WIDTH_MSK	(GENMASK(29, 24))
 #define RX_FIFO_WIDTH_SHFT	(24)
-#define RX_FIFO_DEPTH_MSK	(GENMASK(21, 16))
-#define RX_FIFO_DEPTH_SHFT	(16)
+/*
+ * For QUP HW Version >= 3.10 Rx fifo depth support is increased
+ * to 256bytes and corresponding bits are 16 to 23
+ */
+#define RX_FIFO_DEPTH_MSK_256_BYTES	(GENMASK(23, 16))
+#define RX_FIFO_DEPTH_MSK		(GENMASK(21, 16))
+#define RX_FIFO_DEPTH_SHFT		(16)
 
 /* SE_HW_PARAM_2 fields */
 #define GEN_HW_FSM_I2C		(BIT(15))
@@ -608,14 +620,14 @@ void geni_abort_s_cmd(void __iomem *base);
 
 /**
  * get_tx_fifo_depth() - Get the TX fifo depth of the serial engine
- * @base:	Base address of the serial engine's register block.
+ * @se: Pointer to the concerned serial engine.
  *
  * This function is used to get the depth i.e. number of elements in the
  * TX fifo of the serial engine.
  *
  * Return:	TX fifo depth in units of FIFO words.
  */
-int get_tx_fifo_depth(void __iomem *base);
+int get_tx_fifo_depth(struct se_geni_rsc *se);
 
 /**
  * get_tx_fifo_width() - Get the TX fifo width of the serial engine
@@ -630,14 +642,14 @@ int get_tx_fifo_width(void __iomem *base);
 
 /**
  * get_rx_fifo_depth() - Get the RX fifo depth of the serial engine
- * @base:	Base address of the serial engine's register block.
+ * @se: Pointer to the concerned serial engine.
  *
  * This function is used to get the depth i.e. number of elements in the
  * RX fifo of the serial engine.
  *
  * Return:	RX fifo depth in units of FIFO words.
  */
-int get_rx_fifo_depth(void __iomem *base);
+int get_rx_fifo_depth(struct se_geni_rsc *se);
 
 /**
  * se_get_packing_config() - Get the packing configuration based on input

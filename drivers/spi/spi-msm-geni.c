@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/clk.h>
@@ -1308,8 +1308,8 @@ static int spi_geni_mas_setup(struct spi_master *spi)
 			spi_master_setup(mas);
 	}
 
-	mas->tx_fifo_depth = get_tx_fifo_depth(mas->base);
-	mas->rx_fifo_depth = get_rx_fifo_depth(mas->base);
+	mas->tx_fifo_depth = get_tx_fifo_depth(&mas->spi_rsc);
+	mas->rx_fifo_depth = get_rx_fifo_depth(&mas->spi_rsc);
 	mas->tx_fifo_width = get_tx_fifo_width(mas->base);
 	mas->oversampling = 1;
 	geni_se_init(mas->base, 0x0, (mas->tx_fifo_depth - 2));
@@ -2391,6 +2391,7 @@ static int spi_geni_probe(struct platform_device *pdev)
 		goto spi_geni_probe_err;
 	}
 
+	geni_mas->spi_rsc.base = geni_mas->base;
 	geni_mas->slave_cross_connected =
 		of_property_read_bool(pdev->dev.of_node, "slv-cross-connected");
 	spi->mode_bits = (SPI_CPOL | SPI_CPHA | SPI_LOOP | SPI_CS_HIGH);

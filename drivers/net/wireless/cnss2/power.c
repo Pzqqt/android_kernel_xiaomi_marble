@@ -79,7 +79,6 @@ static struct cnss_clk_cfg cnss_clk_list[] = {
 #define MAX_TCS_NUM			8
 #define MAX_TCS_CMD_NUM			5
 #define BT_CXMX_VOLTAGE_MV		950
-#define CNSS_MBOX_MSG_MAX_LEN 64
 #define CNSS_MBOX_TIMEOUT_MS 1000
 /* Platform HW config */
 #define CNSS_PMIC_VOLTAGE_STEP 4
@@ -1208,7 +1207,8 @@ int cnss_aop_send_msg(struct cnss_plat_data *plat_priv, char *mbox_msg)
 	int mbox_msg_size;
 	int ret = 0;
 
-	mbox_msg_size = strlen(mbox_msg) + 1;
+	/* 4 bytes alignment is MUST */
+	mbox_msg_size = ((strlen(mbox_msg) + 1) + 0x3) & ~0x3;
 
 	if (mbox_msg_size > CNSS_MBOX_MSG_MAX_LEN) {
 		cnss_pr_err("message length greater than max length\n");
@@ -1240,8 +1240,15 @@ int cnss_aop_pdc_reconfig(struct cnss_plat_data *plat_priv)
 	cnss_pr_dbg("Setting PDC defaults for device ID: %d\n",
 		    plat_priv->device_id);
 	for (i = 0; i < plat_priv->pdc_init_table_len; i++) {
-		ret = cnss_aop_send_msg(plat_priv,
-					(char *)plat_priv->pdc_init_table[i]);
+		char buf[CNSS_MBOX_MSG_MAX_LEN] = {0x00};
+
+		if (strlen(plat_priv->pdc_init_table[i]) > CNSS_MBOX_MSG_MAX_LEN) {
+			cnss_pr_err("msg too long: %s\n", plat_priv->pdc_init_table[i]);
+			continue;
+		}
+
+		snprintf(buf, CNSS_MBOX_MSG_MAX_LEN, plat_priv->pdc_init_table[i]);
+		ret = cnss_aop_send_msg(plat_priv, buf);
 		if (ret < 0)
 			break;
 	}
