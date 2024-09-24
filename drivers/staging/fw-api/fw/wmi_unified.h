@@ -3520,6 +3520,11 @@ typedef struct {
 #define WMI_TARGET_CAP_QDATA_TX_LCE_FILTER_SUPPORT_SET(target_cap_flags, value)\
     WMI_SET_BITS(target_cap_flags, 15, 1, value)
 
+#define WMI_TARGET_CAP_MPDU_STATS_PER_TX_NSS_SUPPORT_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 16, 1)
+#define WMI_TARGET_CAP_MPDU_STATS_PER_TX_NSS_SUPPORT_SET(target_cap_flags, value)\
+    WMI_SET_BITS(target_cap_flags, 16, 1, value)
+
 
 /*
  * wmi_htt_msdu_idx_to_htt_msdu_qtype GET/SET APIs
@@ -3666,7 +3671,8 @@ typedef struct {
      * Bit 13 - Support for multipass SAP
      * Bit 14 - Support for ML monitor mode
      * Bit 15 - Support for Qdata Tx LCE filter installation
-     * Bits 31:16 - Reserved
+     * Bit 16 - Support for MPDU stats per tx Nss capability
+     * Bits 31:17 - Reserved
      */
     A_UINT32 target_cap_flags;
 
@@ -5371,6 +5377,7 @@ typedef enum {
     WMI_VENDOR1_REQ1_VERSION_3_40   = 4,
     WMI_VENDOR1_REQ1_VERSION_4_00   = 5,
     WMI_VENDOR1_REQ1_VERSION_4_10   = 6,
+    WMI_VENDOR1_REQ1_VERSION_4_20   = 7,
 } WMI_VENDOR1_REQ1_VERSION;
 
 typedef enum {
@@ -5385,6 +5392,12 @@ typedef enum {
     WMI_HOST_BAND_CAP_5GHZ = 0x02,
     WMI_HOST_BAND_CAP_6GHZ = 0x04,
 } WMI_HOST_BAND_CAP;
+
+typedef enum {
+    WLAN_CONNECT_EXT_FEATURE_RSNO   = 0,
+
+    NUM_WLAN_CONNECT_EXT_FEATURES /* keep last */
+} wlan_connect_ext_features;
 
 /* HW features supported info */
 /* enum WMI_WIFI_STANDARD are possible values for WiFi standard bitfield */
@@ -16675,6 +16688,9 @@ typedef struct {
  *   wmi_vdev_create_mlo_params mlo_params[0,1];
  *       optional TLV, only present for MLO vdev;
  *       if the vdev is not MLO the array length should be 0.
+ *   wmi_vdev_create_wfdr2_mode_params wfdr2_mode[0,1];
+ *       picked as per WMI_VDEV_CREATE_WFDR2_MODES
+ *       to enable/disable NOA
  */
 } wmi_vdev_create_cmd_fixed_param;
 
@@ -16787,6 +16803,22 @@ typedef struct {
     /** MLD MAC address */
     wmi_mac_addr mld_macaddr;
 } wmi_vdev_create_mlo_params;
+
+/*
+ * this TLV structure is used to pass WFD R2 parameters on vdev create
+ * to enable/disable NOA
+ */
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; */
+    A_UINT32 wfdr2_mode; /** WFD R2 modes as per WMI_VDEV_CREATE_WFDR2_MODES */
+}  wmi_vdev_create_wfdr2_mode_params;
+
+/** VDEV create WFD R2 modes */
+typedef enum {
+    WMI_VDEV_CREATE_WFDR2_MODE = 0,
+    WMI_VDEV_CREATE_WFDR2_PCC_MODE = 1,
+} WMI_VDEV_CREATE_WFDR2_MODES;
+
 
 /* this TLV structure used for pass mlo parameters on vdev start*/
 typedef struct {
@@ -18929,6 +18961,12 @@ typedef enum {
 
     /* Update TWT_UNAVAIL_MODE */
     WMI_VDEV_PARAM_TWT_UNAVAIL_MODE,                      /* 0xC6 */
+
+    /*
+     * Additional features supported for connection.
+     * Value is from enum wlan_connect_ext_features
+     */
+    WMI_VDEV_PARAM_CONNECT_EXT_FEATURES,                  /* 0xC7 */
 
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
@@ -24071,6 +24109,7 @@ typedef enum event_type_e {
     WOW_RTT_11AZ_EVENT,                   /* 32 + 13 */
     WOW_P2P_NOA_EVENT,                    /* 32 + 14 */
     WOW_XGAP_EVENT,                       /* 32 + 15 */
+    WOW_PAGE_FAULT_EVENT,                 /* 32 + 16 */
 } WOW_WAKE_EVENT_TYPE;
 
 typedef enum wake_reason_e {
@@ -24168,6 +24207,8 @@ typedef enum wake_reason_e {
     WOW_REASON_MCC_LITE,
     /* P2P CLI detected BMISS from DFS master AP */
     WOW_REASON_P2P_CLI_DFS_AP_BMISS_DETECTED,
+    /* if Page Fault blocking feature enabled and PF observed under WoW */
+    WOW_REASON_PF_BLOCKING_LAST_TIME,
 
     /* add new WOW_REASON_ defs before this line */
     WOW_REASON_MAX,
@@ -33999,6 +34040,28 @@ typedef enum {
       *  A_INT8 6G 320M Channel Center Freq 6265 CTL Limit Power OFDMA
       */
 
+    BIOS_PARAM_TYPE_PPAG_DATA,
+    /*
+     *  BIOS_PARAM_TYPE_PPAG_DATA Structure has 12 bytes as below,
+     *  antennaGain value unit is 0.25 dBm.
+     *  If Enable flag is 0, FW will not use PPAG antennaGain value of bios.
+     *
+     *  A_UINT8 version
+     *  A_UINT8 enableFlag
+     *  A_INT8  antennaGain[GAIN_BANDS]; // 9bytes
+     *  A_UINT8 reserved
+     *  ==================== A_INT8  antennaGain[GAIN_BANDS]; =================
+     * A_INT8 atennaGain for [2400, 2483)
+     * A_INT8 atennaGain for [5150, 5250)
+     * A_INT8 atennaGain for [5250, 5350)
+     * A_INT8 atennaGain for [5470, 5725)
+     * A_INT8 atennaGain for [5725, 5895)
+     * A_INT8 atennaGain for [5925, 6425)
+     * A_INT8 atennaGain for [6425, 6525)
+     * A_INT8 atennaGain for [6525, 6875)
+     * A_INT8 atennaGain for [6875, 7125)
+     *  ==============================================================
+     */
 
     BIOS_PARAM_TYPE_MAX,
 } bios_param_type_e;
@@ -40446,6 +40509,17 @@ typedef struct {
      * than rssi_6g_threshold. If rssi_6g_threshold is 0, it should be ignored.
      */
     A_INT32 rssi_6g_threshold; /* units = dBm */
+    /** bss_load_alpha_pct
+     * This parameter is used for updating the exponential average of the
+     * BSS load:
+     * new avg BSS load =
+     *     new BSS load measurement * alpha / 100 +
+     *     old avg BSS load * (100 - alpha) / 100
+     * This parameter uses percent units.  E.g. if bss_load_alpha_pct == 10,
+     * the new average will be the sum of 10% of the new measurement + 90% of
+     * the old average.
+     */
+    A_UINT32 bss_load_alpha_pct;
 } wmi_roam_bss_load_config_cmd_fixed_param;
 
 /** Deauth roam trigger parameters */
@@ -47682,6 +47756,7 @@ typedef struct {
 #define WMI_PDEV_SET_CUSTOM_TX_PWR_MAX_CHAIN_NUM         4
 
 #define WMI_PDEV_SET_CUSTOM_TX_PWR_MAX_2G_RATE_NUM       18
+#define WMI_PDEV_SET_CUSTOM_TX_PWR_MAX_2G_RATE_NUM_EXT   8
 
 #define WMI_PDEV_SET_CUSTOM_TX_PWR_MAX_5G_6G_RATE_NUM    24
 
@@ -47695,14 +47770,14 @@ typedef struct {
      */
 
     /* currently 2GHz band has 2 chains (though space is allocated for up
-     * to 4 chains) and each chain has 18 rates.
+     * to 4 chains) and each chain has 18 rates and 8 extended rates.
      * bitmap_of_2GHz_band[0] -> chain 0 bitmap:
-     * |bit  0|bit  1|......|bit  17|
-     * |rate 0|rate 1|......|rate 17|
+     * |bit  0|bit  1|......|bit  17| bit   18 |......| bit   25 |
+     * |rate 0|rate 1|......|rate 17|ext rate 0|......|ext rate 7|
      *
      * bitmap_of_2GHz_band[1] -> chain 1 bitmap:
-     * |bit  0|bit  1|......|bit  17|
-     * |rate 0|rate 1|......|rate 17|
+     * |bit  0|bit  1|......|bit  17| bit   18 |......| bit   25 |
+     * |rate 0|rate 1|......|rate 17|ext rate 0|......|ext rate 7|
      *
      * bitmap_of_2GHz_band[2] -> reserved
      * bitmap_of_2GHz_band[3] -> reserved
@@ -48880,6 +48955,8 @@ typedef struct {
     A_UINT32 tlv_header;
     /* status takes values from WMI_MLO_TID_TO_LINK_MAP_STATUS */
     A_UINT32 status;
+    /* Vdev_id on which T2LM command request is received */
+    A_UINT32 vdev_id;
 } wmi_mlo_peer_tid_to_link_map_event_fixed_param;
 
 
