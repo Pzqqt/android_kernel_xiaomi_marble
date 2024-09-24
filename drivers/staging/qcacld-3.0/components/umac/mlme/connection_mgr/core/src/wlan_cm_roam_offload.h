@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -581,4 +581,20 @@ cm_roam_beacon_loss_disconnect_event(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif /* FEATURE_CONNECTIVITY_LOGGING */
+
+/**
+ * cm_fill_rso_channel_list() - Fill roam frequencies in chan_info
+ * @psoc: PSOC pointer
+ * @vdev: vdev pointer
+ * @rso_cfg: roam config
+ * @chan_info: roam scan channel list
+ * @reason: Channel update reason
+ *
+ * Return: None
+ */
+void cm_fill_rso_channel_list(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_objmgr_vdev *vdev,
+			      struct rso_config *rso_cfg,
+			      struct wlan_roam_scan_channel_list *chan_info,
+			      uint8_t reason);
 #endif /* _WLAN_CM_ROAM_OFFLOAD_H_ */

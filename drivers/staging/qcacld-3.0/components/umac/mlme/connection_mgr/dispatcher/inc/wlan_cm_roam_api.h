@@ -29,6 +29,7 @@
 #include "wlan_mlme_main.h"
 #include "wlan_mlme_api.h"
 #include "wlan_reg_ucfg_api.h"
+#include "wlan_cm_tgt_if_tx_api.h"
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**

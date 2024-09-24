@@ -2001,12 +2001,11 @@ cm_fetch_valid_ch_lst(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-static void
-cm_fill_rso_channel_list(struct wlan_objmgr_psoc *psoc,
-			 struct wlan_objmgr_vdev *vdev,
-			 struct rso_config *rso_cfg,
-			 struct wlan_roam_scan_channel_list *chan_info,
-			 uint8_t reason)
+void cm_fill_rso_channel_list(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_objmgr_vdev *vdev,
+			      struct rso_config *rso_cfg,
+			      struct wlan_roam_scan_channel_list *chan_info,
+			      uint8_t reason)
 {
 	QDF_STATUS status;
 	uint8_t ch_cache_str[128] = {0};
@@ -4619,6 +4618,7 @@ QDF_STATUS cm_neighbor_roam_update_config(struct wlan_objmgr_pdev *pdev,
 	case REASON_LOOKUP_THRESH_CHANGED:
 		old_value = cfg_params->neighbor_lookup_threshold;
 		cfg_params->neighbor_lookup_threshold = value;
+		cfg_params->next_rssi_threshold = value;
 		break;
 	case REASON_OPPORTUNISTIC_THRESH_DIFF_CHANGED:
 		old_value = cfg_params->opportunistic_threshold_diff;
@@ -4682,6 +4682,8 @@ cm_restore_default_roaming_params(struct wlan_mlme_psoc_ext_obj *mlme_obj,
 	cfg_params->neighbor_scan_period =
 			mlme_obj->cfg.lfr.neighbor_scan_timer_period;
 	cfg_params->neighbor_lookup_threshold =
+			mlme_obj->cfg.lfr.neighbor_lookup_rssi_threshold;
+	cfg_params->next_rssi_threshold =
 			mlme_obj->cfg.lfr.neighbor_lookup_rssi_threshold;
 	cfg_params->roam_rssi_diff =
 			mlme_obj->cfg.lfr.roam_rssi_diff;

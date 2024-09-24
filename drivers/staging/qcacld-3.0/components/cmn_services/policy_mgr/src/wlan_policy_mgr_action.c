@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2122,12 +2122,8 @@ void policy_mgr_check_sap_restart(struct wlan_objmgr_psoc *psoc,
 
 	if (pm_ctx->hdd_cbacks.hdd_is_chan_switch_in_progress &&
 	    pm_ctx->hdd_cbacks.hdd_is_chan_switch_in_progress()) {
-		policy_mgr_debug("wait as channel switch is already in progress");
-		status =
-			qdf_wait_single_event(&pm_ctx->channel_switch_complete_evt,
-					      CHANNEL_SWITCH_COMPLETE_TIMEOUT);
-		if (QDF_IS_STATUS_ERROR(status))
-			policy_mgr_err("wait for event failed, still continue with channel switch");
+		policy_mgr_debug("channel switch is already in progress");
+		return;
 	}
 
 	if (!pm_ctx->hdd_cbacks.wlan_hdd_get_channel_for_sap_restart) {
