@@ -20,9 +20,6 @@
 #include <linux/slab.h>
 #include <linux/qcom-cpufreq-hw.h>
 #include <linux/topology.h>
-#ifdef CONFIG_MACH_XIAOMI_MARBLE
-#include <linux/moduleparam.h>
-#endif
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/dcvsh.h>
@@ -40,11 +37,6 @@
 
 #define CYCLE_CNTR_OFFSET(core_id, m, acc_count)		\
 			(acc_count ? ((core_id + 1) * 4) : 0)
-
-#ifdef CONFIG_MACH_XIAOMI_MARBLE
-static bool ukee_overclock = false;
-module_param(ukee_overclock, bool, S_IRUGO);
-#endif
 
 enum {
 	REG_ENABLE,
@@ -486,11 +478,8 @@ static int qcom_cpufreq_hw_read_lut(struct platform_device *pdev,
 			freq = cpu_hw_rate / 1000;
 
 		c->table[i].frequency = freq;
-		// dev_dbg(dev, "index=%d freq=%d, core_count %d\n",
-				// i, c->table[i].frequency, core_count);
-		dev_info(dev, "cpu=%lu, index=%d, freq=%d, core_count=%d, src=%d, lval=%d, volt=%d\n",
-				cpu, i, c->table[i].frequency, core_count,
-				src, lval, volt);
+		dev_dbg(dev, "index=%d freq=%d, core_count %d\n",
+				i, c->table[i].frequency, core_count);
 
 		if (core_count != max_cores)
 			c->table[i].flags  = CPUFREQ_BOOST_FREQ;
@@ -505,21 +494,6 @@ static int qcom_cpufreq_hw_read_lut(struct platform_device *pdev,
 		if (cpu_dev)
 			dev_pm_opp_add(cpu_dev, freq * 1000, volt);
 	}
-
-#ifdef CONFIG_MACH_XIAOMI_MARBLE
-	if (ukee_overclock) {
-		if (cpu == 0) {
-			c->table[i++].frequency = 1920000;
-			c->table[i++].frequency = 2016000;
-		} else if (cpu == 4) {
-			c->table[i++].frequency = 2572800;
-			c->table[i++].frequency = 2649600;
-			c->table[i++].frequency = 2745600;
-		} else if (cpu == 7) {
-			c->table[i++].frequency = 2995200;
-		}
-	}
-#endif
 
 	c->table[i].frequency = CPUFREQ_TABLE_END;
 
