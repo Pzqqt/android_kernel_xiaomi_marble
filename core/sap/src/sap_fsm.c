@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3178,7 +3178,8 @@ static qdf_freq_t sap_get_safe_channel_freq(struct sap_context *sap_ctx)
 
 	freq = sap_ctx->freq_before_pre_cac;
 	if (!freq)
-		freq = sap_random_channel_sel(sap_ctx);
+		freq = wlansap_get_safe_channel_from_pcl_and_acs_range(
+								sap_ctx);
 
 	sap_debug("new selected freq %d as target chan as current freq unsafe %d",
 		  freq, sap_ctx->chan_freq);
@@ -3238,16 +3239,29 @@ sap_fsm_send_csa_restart_req(struct mac_context *mac_ctx,
 static void sap_fsm_handle_check_safe_channel(struct mac_context *mac_ctx,
 					      struct sap_context *sap_ctx)
 {
-	if (policy_mgr_is_safe_channel(mac_ctx->psoc, sap_ctx->chan_freq))
-		return;
+	qdf_freq_t target_chan_freq;
+	struct ch_params ch_params = {0};
+	QDF_STATUS status;
+	enum phy_ch_width target_bw = sap_ctx->ch_params.ch_width;
 
-	mac_ctx->sap.SapDfsInfo.target_chan_freq =
-					sap_get_safe_channel_freq(sap_ctx);
+	if (policy_mgr_is_sap_freq_allowed(mac_ctx->psoc, sap_ctx->chan_freq))
+		return;
 	/*
 	 * The selected channel is not safe channel. Hence,
 	 * change the sap channel to a safe channel.
 	 */
-	sap_fsm_send_csa_restart_req(mac_ctx, sap_ctx);
+	target_chan_freq = sap_get_safe_channel_freq(sap_ctx);
+	ch_params.ch_width = target_bw;
+	target_bw = wlansap_get_csa_chanwidth_from_phymode(
+			sap_ctx, target_chan_freq, &ch_params);
+	sap_debug("sap vdev %d change to safe ch freq %d bw %d from unsafe %d",
+		  sap_ctx->sessionId, target_chan_freq, target_bw,
+		  sap_ctx->chan_freq);
+	status = wlansap_set_channel_change_with_csa(
+			sap_ctx, target_chan_freq, target_bw, false);
+	if (QDF_IS_STATUS_ERROR(status))
+		sap_err("SAP set channel failed for freq: %d, bw: %d",
+			target_chan_freq, target_bw);
 }
 
 /**
