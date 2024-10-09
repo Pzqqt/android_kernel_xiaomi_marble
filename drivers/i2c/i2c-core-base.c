@@ -98,7 +98,7 @@ const void *i2c_get_match_data(const struct i2c_client *client)
 	const struct i2c_device_id *match;
 	const void *data;
 
-	data = device_get_match_data(&client->dev);
+	data = device_get_match_data((struct device *)&client->dev);
 	if (!data) {
 		match = i2c_match_id(driver->id_table, client);
 		if (!match)
