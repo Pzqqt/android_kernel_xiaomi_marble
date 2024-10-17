@@ -737,7 +737,10 @@ struct sk_buff {
 		struct list_head	list;
 	};
 
-	struct sock		*sk;
+	union {
+		struct sock		*sk;
+		int			ip_defrag_offset;
+	};
 
 	union {
 		ktime_t		tstamp;
