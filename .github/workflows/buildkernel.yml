@@ -1,0 +1,142 @@
+name: Build Marble Kernel (Android 12 GKI)
+
+on:
+  push:
+    branches: [ melt-3.7-2025/04-04 ]
+  pull_request:
+    branches: [ melt-3.7-2025/04-04 ]
+
+env:
+  KERNEL_VERSION: "5.10"
+  ANDROID_VERSION: "12"
+  ARCH: arm64
+  CLANG_VERSION: clang-r450784d
+  DEVICE_CODENAME: marble
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+
+    steps:
+    # 源码检出
+    - name: Checkout kernel source
+      uses: actions/checkout@v4
+      with:
+        repository: Guxin12/android_kernel_xiaomi_marble
+        ref: melt-3.7-2025/04-04
+        submodules: recursive
+        path: kernel
+
+    # 依赖安装
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential flex bison libssl-dev libelf-dev \
+          bc python3 git device-tree-compiler ncurses-dev \
+          lz4 zip unzip ccache
+
+    # 工具链缓存
+    - name: Cache setup
+      uses: actions/cache@v3
+      with:
+        path: |
+          ${{ env.CCACHE_DIR }}
+          toolchains
+        key: ${{ runner.os }}-${{ env.CLANG_VERSION }}-${{ hashFiles('kernel/Makefile') }}
+
+    # 工具链安装
+    - name: Setup toolchains
+      run: |
+        mkdir -p toolchains
+        
+        # 安装 Clang
+        if [ ! -d "toolchains/clang" ]; then
+          wget -qO- https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master/$CLANG_VERSION.tar.gz | tar -xz -C toolchains/
+          mv toolchains/* toolchains/clang
+        fi
+
+        # 安装 GCC
+        if [ ! -d "toolchains/gcc" ]; then
+          mkdir -p toolchains/gcc
+          wget -q https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/heads/master.tar.gz -O gcc.tar.gz
+          tar -xzf gcc.tar.gz -C toolchains/gcc/
+        fi
+
+    # 环境变量设置
+    - name: Setup environment
+      run: |
+        echo "CLANG_PATH=$(pwd)/toolchains/clang/bin" >> $GITHUB_ENV
+        echo "CROSS_COMPILE=$(pwd)/toolchains/gcc/bin/aarch64-linux-android-" >> $GITHUB_ENV
+        echo "PATH=$CLANG_PATH:$PATH" >> $GITHUB_ENV
+        echo "KBUILD_BUILD_USER=GuxinCI" >> $GITHUB_ENV
+        echo "KBUILD_BUILD_HOST=GitHubActions" >> $GITHUB_ENV
+
+    # 内核编译
+    - name: Build kernel
+      working-directory: ./kernel
+      run: |
+        make O=out clean
+        make O=out ARCH=$ARCH CC=clang \
+          CLANG_TRIPLE=aarch64-linux-gnu- \
+          CROSS_COMPILE=$CROSS_COMPILE \
+          LD=ld.lld \
+          AR=llvm-ar \
+          NM=llvm-nm \
+          OBJCOPY=llvm-objcopy \
+          OBJDUMP=llvm-objdump \
+          STRIP=llvm-strip \
+          vendor/gki_defconfig
+
+        make O=out ARCH=$ARCH CC=clang \
+          CLANG_TRIPLE=aarch64-linux-gnu- \
+          CROSS_COMPILE=$CROSS_COMPILE \
+          LD=ld.lld \
+          AR=llvm-ar \
+          NM=llvm-nm \
+          OBJCOPY=llvm-objcopy \
+          OBJDUMP=llvm-objdump \
+          STRIP=llvm-strip \
+          -j$(($(nproc) + 1)) \
+          CCACHE_CPP2=yes \
+          CCACHE_PREFIX=ccache
+
+    # AnyKernel3 打包
+    - name: Package with AnyKernel3
+      run: |
+        git clone https://github.com/osm0sis/AnyKernel3.git
+        cp kernel/out/arch/arm64/boot/Image.lz4 AnyKernel3/
+        cp kernel/out/arch/arm64/boot/dtbo.img AnyKernel3/
+        cp kernel/out/arch/arm64/boot/dtb.img AnyKernel3/
+        
+        # 自动生成版本号
+        BUILD_DATE=$(date +%Y%m%d-%H%M)
+        echo "build.date=$BUILD_DATE" >> AnyKernel3/ak3-template.sh
+        
+        # 修改设备名称
+        sed -i "s/device.name1=.*/device.name1=$DEVICE_CODENAME/" AnyKernel3/anykernel.sh
+        
+        # 打包
+        cd AnyKernel3
+        zip -r9 $DEVICE_CODENAME-kernel-$BUILD_DATE.zip * -x .git*
+
+    # 产物上传
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ env.DEVICE_CODENAME }}-kernel
+        path: AnyKernel3/*.zip
+
+    # 构建验证
+    - name: Verify artifacts
+      run: |
+        if [ ! -f AnyKernel3/$DEVICE_CODENAME-kernel-*.zip ]; then
+          echo "❌ Build failed: No zip package found!"
+          exit 1
+        fi
+        if [ $(stat -c%s AnyKernel3/Image.lz4) -lt 10000000 ]; then
+          echo "❌ Invalid kernel image detected!"
+          exit 1
+        fi
