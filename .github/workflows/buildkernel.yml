@@ -1,4 +1,4 @@
-name: Build Marble Kernel with Proton Clang
+name: Build Marble Kernel
 
 on:
   push:
@@ -33,8 +33,6 @@ jobs:
       with:
         repository: Guxin12/proton-clang
         path: ${{ env.CLANG_DIR }}
-        # 如果使用特定分支/标签可以添加：
-        # ref: master  # 或指定 tag/branch
 
     - name: Install dependencies
       run: |
@@ -50,28 +48,32 @@ jobs:
         echo "PATH=$CLANG_PATH:$PATH" >> $GITHUB_ENV
         echo "KBUILD_BUILD_VERSION=$(date +%Y%m%d-%H%M)" >> $GITHUB_ENV
         
-        # 验证 Clang 可用性
+        # 验证工具链
         ${{ env.CLANG_DIR }}/bin/clang --version
+        ${{ env.CLANG_DIR }}/bin/ld.lld --version
 
-    - name: Build kernel
+    - name: Generate config
       working-directory: ./kernel
       run: |
-        make O=out clean
-        
-        # 生成配置
-        make O=out ARCH=$ARCH CC=clang \
-          CLANG_TRIPLE=aarch64-linux-gnu- \
+        make ARCH=$ARCH O=out CC=clang \
           LD=ld.lld \
           AR=llvm-ar \
           NM=llvm-nm \
           OBJCOPY=llvm-objcopy \
           STRIP=llvm-strip \
           LLVM=1 \
-          vendor/gki_defconfig
+          marble_defconfig
 
-        # 开始编译
-        time make O=out ARCH=$ARCH CC=clang \
-          CLANG_TRIPLE=aarch64-linux-gnu- \
+        # 检查生成的配置文件
+        if [ ! -f out/.config ]; then
+          echo "❌ 配置文件生成失败！"
+          exit 1
+        fi
+
+    - name: Build kernel
+      working-directory: ./kernel
+      run: |
+        time make ARCH=$ARCH O=out CC=clang \
           LD=ld.lld \
           AR=llvm-ar \
           NM=llvm-nm \
@@ -87,13 +89,13 @@ jobs:
         git clone https://github.com/osm0sis/AnyKernel3.git
         cp kernel/out/arch/arm64/boot/{Image.lz4,dtbo.img,dtb.img} AnyKernel3/
         
-        # 修改 AnyKernel 信息
+        # 修改设备配置
         sed -i "s|device.name1=.*|device.name1=$DEVICE_CODENAME|" AnyKernel3/anykernel.sh
-        sed -i "s|kernel.string=.*|kernel.string=Proton-Clang-${{ env.KBUILD_BUILD_VERSION }}|" AnyKernel3/anykernel.sh
+        sed -i "s|kernel.string=.*|kernel.string=Marble-Custom-${{ env.KBUILD_BUILD_VERSION }}|" AnyKernel3/anykernel.sh
         
         # 打包
         cd AnyKernel3
-        zip -r9 $DEVICE_CODENAME-proton-${{ env.KBUILD_BUILD_VERSION }}.zip * -x .git*
+        zip -r9 $DEVICE_CODENAME-${{ env.KBUILD_BUILD_VERSION }}.zip * -x .git*
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
