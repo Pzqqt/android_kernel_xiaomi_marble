@@ -1,4 +1,4 @@
-name: Build Marble Kernel
+name: Build Marble Kernel (ARM64 Native)
 
 on:
   push:
@@ -10,13 +10,14 @@ env:
   KERNEL_VERSION: "5.10"
   ANDROID_VERSION: "12"
   ARCH: arm64
+  LLVM_VERSION: 19.1.7
   DEVICE_CODENAME: marble
   CCACHE_DIR: ${{ github.workspace }}/.ccache
-  CLANG_DIR: toolchains/proton-clang
+  LLVM_DIR: toolchains/llvm-19
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04-arm64  # 关键修改：使用 ARM64 架构运行器
     timeout-minutes: 120
 
     steps:
@@ -28,33 +29,34 @@ jobs:
         submodules: recursive
         path: kernel
 
-    - name: Checkout Proton Clang
-      uses: actions/checkout@v4
-      with:
-        repository: Guxin12/proton-clang
-        path: ${{ env.CLANG_DIR }}
-
-    - name: Install dependencies
+    - name: Install native dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
           build-essential flex bison libssl-dev libelf-dev \
           bc python3 git device-tree-compiler ncurses-dev \
-          lz4 zip unzip ccache libncurses5
+          lz4 zip unzip ccache xz-utils libtinfo5 \
+          clang-19 lld-19 llvm-19  # 直接安装系统级 LLVM
 
     - name: Setup environment
       run: |
-        echo "CLANG_PATH=${{ github.workspace }}/${{ env.CLANG_DIR }}/bin" >> $GITHUB_ENV
+        echo "CLANG_PATH=/usr/lib/llvm-19/bin" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=/usr/lib/llvm-19/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
         echo "PATH=$CLANG_PATH:$PATH" >> $GITHUB_ENV
+        echo "LLVM=1" >> $GITHUB_ENV
+        echo "LLVM_IAS=1" >> $GITHUB_ENV
         echo "KBUILD_BUILD_VERSION=$(date +%Y%m%d-%H%M)" >> $GITHUB_ENV
         
-        # 验证工具链
-        ${{ env.CLANG_DIR }}/bin/clang --version
-        ${{ env.CLANG_DIR }}/bin/ld.lld --version
+        # 验证本地工具链
+        clang --version
+        ld.lld --version
 
     - name: Generate config
       working-directory: ./kernel
       run: |
+        make O=out clean
+        
+        # 生成配置（使用原生ARM64工具链）
         make ARCH=$ARCH O=out CC=clang \
           LD=ld.lld \
           AR=llvm-ar \
@@ -62,17 +64,13 @@ jobs:
           OBJCOPY=llvm-objcopy \
           STRIP=llvm-strip \
           LLVM=1 \
+          LLVM_IAS=1 \
           marble_defconfig
-
-        # 检查生成的配置文件
-        if [ ! -f out/.config ]; then
-          echo "❌ 配置文件生成失败！"
-          exit 1
-        fi
 
     - name: Build kernel
       working-directory: ./kernel
       run: |
+        echo "🏗️ 开始原生编译..."
         time make ARCH=$ARCH O=out CC=clang \
           LD=ld.lld \
           AR=llvm-ar \
@@ -89,13 +87,13 @@ jobs:
         git clone https://github.com/osm0sis/AnyKernel3.git
         cp kernel/out/arch/arm64/boot/{Image.lz4,dtbo.img,dtb.img} AnyKernel3/
         
-        # 修改设备配置
+        # 修改设备信息
         sed -i "s|device.name1=.*|device.name1=$DEVICE_CODENAME|" AnyKernel3/anykernel.sh
-        sed -i "s|kernel.string=.*|kernel.string=Marble-Custom-${{ env.KBUILD_BUILD_VERSION }}|" AnyKernel3/anykernel.sh
+        sed -i "s|kernel.string=.*|kernel.string=Native-ARM64-${{ env.KBUILD_BUILD_VERSION }}|" AnyKernel3/anykernel.sh
         
         # 打包
         cd AnyKernel3
-        zip -r9 $DEVICE_CODENAME-${{ env.KBUILD_BUILD_VERSION }}.zip * -x .git*
+        zip -r9 $DEVICE_CODENAME-native-arm64-${{ env.KBUILD_BUILD_VERSION }}.zip * -x .git*
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
