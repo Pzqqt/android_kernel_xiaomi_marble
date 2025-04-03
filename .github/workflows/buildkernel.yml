@@ -1,4 +1,4 @@
-name: Build Marble Kernel
+name: Build Marble Kernel with LLVM 19
 
 on:
   push:
@@ -10,7 +10,7 @@ env:
   KERNEL_VERSION: "5.10"
   ANDROID_VERSION: "12"
   ARCH: arm64
-  CLANG_VERSION: r450784d  # 修正后的版本号
+  LLVM_VERSION: 19.1.7
   DEVICE_CODENAME: marble
   CCACHE_DIR: ${{ github.workspace }}/.ccache
 
@@ -34,7 +34,7 @@ jobs:
         sudo apt-get install -y \
           build-essential flex bison libssl-dev libelf-dev \
           bc python3 git device-tree-compiler ncurses-dev \
-          lz4 zip unzip ccache xxd wget
+          lz4 zip unzip ccache xz-utils
 
     - name: Cache setup
       uses: actions/cache@v3
@@ -42,84 +42,68 @@ jobs:
         path: |
           ${{ env.CCACHE_DIR }}
           toolchains
-        key: ${{ runner.os }}-${{ env.CERNEL_VERSION }}-${{ hashFiles('kernel/Makefile') }}
+        key: ${{ runner.os }}-llvm-${{ env.LLVM_VERSION }}-${{ hashFiles('kernel/Makefile') }}
 
-    - name: Setup toolchains (Fixed)
+    - name: Setup LLVM toolchain
       run: |
         mkdir -p toolchains
+        LLVM_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-$LLVM_VERSION/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-22.04.tar.xz"
         
-        # 修复 Clang 安装
-        if [ ! -d "toolchains/clang" ]; then
-          echo "⬇️ 下载 Clang $CLANG_VERSION..."
-          CLANG_URL="https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/android12-release/$CLANG_VERSION.tar.gz"
-          
-          # 尝试多个镜像源
-          for url in "$CLANG_URL" "https://mirror.ghproxy.com/$CLANG_URL"; do
-            if wget -q --tries=3 --show-progress -O clang.tar.gz "$url"; then
-              if tar -tzf clang.tar.gz >/dev/null; then
-                echo "✅ 校验通过：$url"
-                break
-              else
-                echo "❌ 压缩包损坏，尝试下一个镜像..."
-                rm -f clang.tar.gz
-              fi
-            fi
-          done
-
-          tar -xzf clang.tar.gz -C toolchains/
-          mv toolchains/* toolchains/clang
-          rm clang.tar.gz
-          echo "🛠️ Clang 安装完成"
+        echo "⬇️ 下载 LLVM $LLVM_VERSION..."
+        if ! wget -q --tries=3 --show-progress -O llvm.tar.xz "$LLVM_URL"; then
+          echo "❌ 下载失败，请检查版本号或网络连接"
+          exit 1
         fi
 
-        # 修复 GCC 安装
-        if [ ! -d "toolchains/gcc" ]; then
-          echo "⬇️ 下载 GCC 工具链..."
-          GCC_URLS=(
-            "https://mirrors.cloud.tencent.com/android-platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/master.tar.gz"
-            "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/heads/master.tar.gz"
-          )
-          
-          for url in "${GCC_URLS[@]}"; do
-            if wget -q --tries=3 --show-progress -O gcc.tar.gz "$url"; then
-              if tar -tzf gcc.tar.gz >/dev/null; then
-                echo "✅ 校验通过：$url"
-                break
-              else
-                echo "❌ 压缩包损坏，尝试下一个镜像..."
-                rm -f gcc.tar.gz
-              fi
-            fi
-          done
-
-          mkdir -p toolchains/gcc
-          tar -xzf gcc.tar.gz -C toolchains/gcc/
-          rm gcc.tar.gz
-          echo "🛠️ GCC 安装完成"
+        echo "🔍 验证压缩包..."
+        if ! tar -tf llvm.tar.xz >/dev/null; then
+          echo "❌ 压缩包损坏！"
+          exit 1
         fi
+
+        echo "📦 解压文件..."
+        tar -xJf llvm.tar.xz -C toolchains/
+        mv toolchains/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-22.04 toolchains/llvm
+        rm llvm.tar.xz
+
+        echo "✅ LLVM 安装完成"
+        ls -la toolchains/llvm/bin/clang
 
     - name: Setup environment
       run: |
-        echo "CLANG_PATH=$(pwd)/toolchains/clang/bin" >> $GITHUB_ENV
-        echo "CROSS_COMPILE=$(pwd)/toolchains/gcc/bin/aarch64-linux-android-" >> $GITHUB_ENV
-        echo "PATH=$CLANG_PATH:$PATH" >> $GITHUB_ENV
+        echo "CLANG_PATH=$(pwd)/toolchains/llvm/bin" >> $GITHUB_ENV
+        echo "PATH=$(pwd)/toolchains/llvm/bin:$PATH" >> $GITHUB_ENV
         echo "KBUILD_BUILD_VERSION=$(date +%Y%m%d-%H%M)" >> $GITHUB_ENV
 
     - name: Build kernel
       working-directory: ./kernel
       run: |
+        # 清理构建目录
         make O=out clean
+
+        # 生成配置
         make O=out ARCH=$ARCH CC=clang \
-          CLANG_TRIPLE=aarch64-linux-gnu- \
-          CROSS_COMPILE=$CROSS_COMPILE \
           LD=ld.lld \
+          AR=llvm-ar \
+          NM=llvm-nm \
+          OBJCOPY=llvm-objcopy \
+          OBJDUMP=llvm-objdump \
+          STRIP=llvm-strip \
+          LLVM=1 \
+          LLVM_IAS=1 \
           vendor/gki_defconfig
 
-        make O=out ARCH=$ARCH CC=clang \
-          CLANG_TRIPLE=aarch64-linux-gnu- \
-          CROSS_COMPILE=$CROSS_COMPILE \
+        # 开始编译
+        time make O=out ARCH=$ARCH CC=clang \
           LD=ld.lld \
-          -j$(($(nproc) + 1)) \
+          AR=llvm-ar \
+          NM=llvm-nm \
+          OBJCOPY=llvm-objcopy \
+          OBJDUMP=llvm-objdump \
+          STRIP=llvm-strip \
+          LLVM=1 \
+          LLVM_IAS=1 \
+          -j$(($(nproc) + 2)) \
           CCACHE_CPP2=yes
 
     - name: Package with AnyKernel3
@@ -127,15 +111,17 @@ jobs:
         git clone https://github.com/osm0sis/AnyKernel3.git
         cp kernel/out/arch/arm64/boot/{Image.lz4,dtbo.img,dtb.img} AnyKernel3/
         
+        # 修改 AnyKernel 配置
         sed -i "s|device.name1=.*|device.name1=$DEVICE_CODENAME|" AnyKernel3/anykernel.sh
-        sed -i "s|kernel.string=.*|kernel.string=Guxin-Build-${{ env.KBUILD_BUILD_VERSION }}|" AnyKernel3/anykernel.sh
+        sed -i "s|kernel.string=.*|kernel.string=LLVM-$LLVM_VERSION-${{ env.KBUILD_BUILD_VERSION }}|" AnyKernel3/anykernel.sh
         
+        # 打包
         cd AnyKernel3
-        zip -r9 $DEVICE_CODENAME-kernel-${{ env.KBUILD_BUILD_VERSION }}.zip * -x .git*
+        zip -r9 $DEVICE_CODENAME-llvm$LLVM_VERSION-${{ env.KBUILD_BUILD_VERSION }}.zip * -x .git*
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.DEVICE_CODENAME }}-kernel
         path: AnyKernel3/*.zip
-        retention-days: 3
+        retention-days: 7
