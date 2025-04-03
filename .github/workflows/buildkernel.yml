@@ -1,4 +1,4 @@
-name: Build Marble Kernel with LLVM 19
+name: Build Marble Kernel with Proton Clang
 
 on:
   push:
@@ -10,9 +10,9 @@ env:
   KERNEL_VERSION: "5.10"
   ANDROID_VERSION: "12"
   ARCH: arm64
-  LLVM_VERSION: 19.1.7
   DEVICE_CODENAME: marble
   CCACHE_DIR: ${{ github.workspace }}/.ccache
+  CLANG_DIR: toolchains/proton-clang
 
 jobs:
   build:
@@ -28,78 +28,54 @@ jobs:
         submodules: recursive
         path: kernel
 
+    - name: Checkout Proton Clang
+      uses: actions/checkout@v4
+      with:
+        repository: Guxin12/proton-clang
+        path: ${{ env.CLANG_DIR }}
+        # 如果使用特定分支/标签可以添加：
+        # ref: master  # 或指定 tag/branch
+
     - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
           build-essential flex bison libssl-dev libelf-dev \
           bc python3 git device-tree-compiler ncurses-dev \
-          lz4 zip unzip ccache xz-utils
-
-    - name: Cache setup
-      uses: actions/cache@v3
-      with:
-        path: |
-          ${{ env.CCACHE_DIR }}
-          toolchains
-        key: ${{ runner.os }}-llvm-${{ env.LLVM_VERSION }}-${{ hashFiles('kernel/Makefile') }}
-
-    - name: Setup LLVM toolchain
-      run: |
-        mkdir -p toolchains
-        LLVM_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-$LLVM_VERSION/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-22.04.tar.xz"
-        
-        echo "⬇️ 下载 LLVM $LLVM_VERSION..."
-        if ! wget -q --tries=3 --show-progress -O llvm.tar.xz "$LLVM_URL"; then
-          echo "❌ 下载失败，请检查版本号或网络连接"
-          exit 1
-        fi
-
-        echo "🔍 验证压缩包..."
-        if ! tar -tf llvm.tar.xz >/dev/null; then
-          echo "❌ 压缩包损坏！"
-          exit 1
-        fi
-
-        echo "📦 解压文件..."
-        tar -xJf llvm.tar.xz -C toolchains/
-        mv toolchains/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-22.04 toolchains/llvm
-        rm llvm.tar.xz
-
-        echo "✅ LLVM 安装完成"
-        ls -la toolchains/llvm/bin/clang
+          lz4 zip unzip ccache libncurses5
 
     - name: Setup environment
       run: |
-        echo "CLANG_PATH=$(pwd)/toolchains/llvm/bin" >> $GITHUB_ENV
-        echo "PATH=$(pwd)/toolchains/llvm/bin:$PATH" >> $GITHUB_ENV
+        echo "CLANG_PATH=${{ github.workspace }}/${{ env.CLANG_DIR }}/bin" >> $GITHUB_ENV
+        echo "PATH=$CLANG_PATH:$PATH" >> $GITHUB_ENV
         echo "KBUILD_BUILD_VERSION=$(date +%Y%m%d-%H%M)" >> $GITHUB_ENV
+        
+        # 验证 Clang 可用性
+        ${{ env.CLANG_DIR }}/bin/clang --version
 
     - name: Build kernel
       working-directory: ./kernel
       run: |
-        # 清理构建目录
         make O=out clean
-
+        
         # 生成配置
         make O=out ARCH=$ARCH CC=clang \
+          CLANG_TRIPLE=aarch64-linux-gnu- \
           LD=ld.lld \
           AR=llvm-ar \
           NM=llvm-nm \
           OBJCOPY=llvm-objcopy \
-          OBJDUMP=llvm-objdump \
           STRIP=llvm-strip \
           LLVM=1 \
-          LLVM_IAS=1 \
           vendor/gki_defconfig
 
         # 开始编译
         time make O=out ARCH=$ARCH CC=clang \
+          CLANG_TRIPLE=aarch64-linux-gnu- \
           LD=ld.lld \
           AR=llvm-ar \
           NM=llvm-nm \
           OBJCOPY=llvm-objcopy \
-          OBJDUMP=llvm-objdump \
           STRIP=llvm-strip \
           LLVM=1 \
           LLVM_IAS=1 \
@@ -111,13 +87,13 @@ jobs:
         git clone https://github.com/osm0sis/AnyKernel3.git
         cp kernel/out/arch/arm64/boot/{Image.lz4,dtbo.img,dtb.img} AnyKernel3/
         
-        # 修改 AnyKernel 配置
+        # 修改 AnyKernel 信息
         sed -i "s|device.name1=.*|device.name1=$DEVICE_CODENAME|" AnyKernel3/anykernel.sh
-        sed -i "s|kernel.string=.*|kernel.string=LLVM-$LLVM_VERSION-${{ env.KBUILD_BUILD_VERSION }}|" AnyKernel3/anykernel.sh
+        sed -i "s|kernel.string=.*|kernel.string=Proton-Clang-${{ env.KBUILD_BUILD_VERSION }}|" AnyKernel3/anykernel.sh
         
         # 打包
         cd AnyKernel3
-        zip -r9 $DEVICE_CODENAME-llvm$LLVM_VERSION-${{ env.KBUILD_BUILD_VERSION }}.zip * -x .git*
+        zip -r9 $DEVICE_CODENAME-proton-${{ env.KBUILD_BUILD_VERSION }}.zip * -x .git*
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
