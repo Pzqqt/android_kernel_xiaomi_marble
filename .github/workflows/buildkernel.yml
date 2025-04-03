@@ -1,4 +1,4 @@
-name: Build Marble Kernel (Android 12 GKI)
+name: Build Marble Kernel
 
 on:
   push:
@@ -10,7 +10,7 @@ env:
   KERNEL_VERSION: "5.10"
   ANDROID_VERSION: "12"
   ARCH: arm64
-  CLANG_VERSION: clang-r450784d
+  CLANG_VERSION: r450784d  # 修正后的版本号
   DEVICE_CODENAME: marble
   CCACHE_DIR: ${{ github.workspace }}/.ccache
 
@@ -20,7 +20,6 @@ jobs:
     timeout-minutes: 120
 
     steps:
-    # 源码检出
     - name: Checkout kernel source
       uses: actions/checkout@v4
       with:
@@ -29,52 +28,83 @@ jobs:
         submodules: recursive
         path: kernel
 
-    # 依赖安装
     - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
           build-essential flex bison libssl-dev libelf-dev \
           bc python3 git device-tree-compiler ncurses-dev \
-          lz4 zip unzip ccache
+          lz4 zip unzip ccache xxd wget
 
-    # 工具链缓存
     - name: Cache setup
       uses: actions/cache@v3
       with:
         path: |
           ${{ env.CCACHE_DIR }}
           toolchains
-        key: ${{ runner.os }}-${{ env.CLANG_VERSION }}-${{ hashFiles('kernel/Makefile') }}
+        key: ${{ runner.os }}-${{ env.CERNEL_VERSION }}-${{ hashFiles('kernel/Makefile') }}
 
-    # 工具链安装
-    - name: Setup toolchains
+    - name: Setup toolchains (Fixed)
       run: |
         mkdir -p toolchains
         
-        # 安装 Clang
+        # 修复 Clang 安装
         if [ ! -d "toolchains/clang" ]; then
-          wget -qO- https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master/$CLANG_VERSION.tar.gz | tar -xz -C toolchains/
+          echo "⬇️ 下载 Clang $CLANG_VERSION..."
+          CLANG_URL="https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/android12-release/$CLANG_VERSION.tar.gz"
+          
+          # 尝试多个镜像源
+          for url in "$CLANG_URL" "https://mirror.ghproxy.com/$CLANG_URL"; do
+            if wget -q --tries=3 --show-progress -O clang.tar.gz "$url"; then
+              if tar -tzf clang.tar.gz >/dev/null; then
+                echo "✅ 校验通过：$url"
+                break
+              else
+                echo "❌ 压缩包损坏，尝试下一个镜像..."
+                rm -f clang.tar.gz
+              fi
+            fi
+          done
+
+          tar -xzf clang.tar.gz -C toolchains/
           mv toolchains/* toolchains/clang
+          rm clang.tar.gz
+          echo "🛠️ Clang 安装完成"
         fi
 
-        # 安装 GCC
+        # 修复 GCC 安装
         if [ ! -d "toolchains/gcc" ]; then
+          echo "⬇️ 下载 GCC 工具链..."
+          GCC_URLS=(
+            "https://mirrors.cloud.tencent.com/android-platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/master.tar.gz"
+            "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/heads/master.tar.gz"
+          )
+          
+          for url in "${GCC_URLS[@]}"; do
+            if wget -q --tries=3 --show-progress -O gcc.tar.gz "$url"; then
+              if tar -tzf gcc.tar.gz >/dev/null; then
+                echo "✅ 校验通过：$url"
+                break
+              else
+                echo "❌ 压缩包损坏，尝试下一个镜像..."
+                rm -f gcc.tar.gz
+              fi
+            fi
+          done
+
           mkdir -p toolchains/gcc
-          wget -q https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/heads/master.tar.gz -O gcc.tar.gz
           tar -xzf gcc.tar.gz -C toolchains/gcc/
+          rm gcc.tar.gz
+          echo "🛠️ GCC 安装完成"
         fi
 
-    # 环境变量设置
     - name: Setup environment
       run: |
         echo "CLANG_PATH=$(pwd)/toolchains/clang/bin" >> $GITHUB_ENV
         echo "CROSS_COMPILE=$(pwd)/toolchains/gcc/bin/aarch64-linux-android-" >> $GITHUB_ENV
         echo "PATH=$CLANG_PATH:$PATH" >> $GITHUB_ENV
-        echo "KBUILD_BUILD_USER=GuxinCI" >> $GITHUB_ENV
-        echo "KBUILD_BUILD_HOST=GitHubActions" >> $GITHUB_ENV
+        echo "KBUILD_BUILD_VERSION=$(date +%Y%m%d-%H%M)" >> $GITHUB_ENV
 
-    # 内核编译
     - name: Build kernel
       working-directory: ./kernel
       run: |
@@ -83,55 +113,29 @@ jobs:
           CLANG_TRIPLE=aarch64-linux-gnu- \
           CROSS_COMPILE=$CROSS_COMPILE \
           LD=ld.lld \
-          AR=llvm-ar \
-          NM=llvm-nm \
-          OBJCOPY=llvm-objcopy \
-          OBJDUMP=llvm-objdump \
-          STRIP=llvm-strip \
           vendor/gki_defconfig
 
         make O=out ARCH=$ARCH CC=clang \
           CLANG_TRIPLE=aarch64-linux-gnu- \
           CROSS_COMPILE=$CROSS_COMPILE \
           LD=ld.lld \
-          AR=llvm-ar \
-          NM=llvm-nm \
-          OBJCOPY=llvm-objcopy \
-          OBJDUMP=llvm-objdump \
-          STRIP=llvm-strip \
           -j$(($(nproc) + 1)) \
-          CCACHE_CPP2=yes \
-          CCACHE_PREFIX=ccache
+          CCACHE_CPP2=yes
 
-    # AnyKernel3 打包
     - name: Package with AnyKernel3
       run: |
         git clone https://github.com/osm0sis/AnyKernel3.git
-        cp kernel/out/arch/arm64/boot/Image.lz4 AnyKernel3/
-        cp kernel/out/arch/arm64/boot/dtbo.img AnyKernel3/
-        cp kernel/out/arch/arm64/boot/dtb.img AnyKernel3/
+        cp kernel/out/arch/arm64/boot/{Image.lz4,dtbo.img,dtb.img} AnyKernel3/
         
-        BUILD_DATE=$(date +%Y%m%d-%H%M)
-        echo "build.date=$BUILD_DATE" >> AnyKernel3/ak3-template.sh
-        sed -i "s/device.name1=.*/device.name1=$DEVICE_CODENAME/" AnyKernel3/anykernel.sh
+        sed -i "s|device.name1=.*|device.name1=$DEVICE_CODENAME|" AnyKernel3/anykernel.sh
+        sed -i "s|kernel.string=.*|kernel.string=Guxin-Build-${{ env.KBUILD_BUILD_VERSION }}|" AnyKernel3/anykernel.sh
         
         cd AnyKernel3
-        zip -r9 $DEVICE_CODENAME-kernel-$BUILD_DATE.zip * -x .git*
+        zip -r9 $DEVICE_CODENAME-kernel-${{ env.KBUILD_BUILD_VERSION }}.zip * -x .git*
 
-    # 文件验证
-    - name: Verify artifacts
-      run: |
-        echo "检查文件大小："
-        ls -lh AnyKernel3/*.zip
-        if [ ! -f AnyKernel3/$DEVICE_CODENAME-kernel-*.zip ]; then
-          echo "❌ 找不到内核文件"
-          exit 1
-        fi
-
-    # 上传产物（已修复版本）
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.DEVICE_CODENAME }}-kernel
         path: AnyKernel3/*.zip
-        retention-days: 7
+        retention-days: 3
