@@ -63,6 +63,10 @@
 #include "braille.h"
 #include "internal.h"
 
+#ifdef CONFIG_SECURITY
+extern uint __read_mostly disable_audit_log;
+#endif
+
 int console_printk[4] = {
 	CONSOLE_LOGLEVEL_DEFAULT,	/* console_loglevel */
 	MESSAGE_LOGLEVEL_DEFAULT,	/* default_message_loglevel */
@@ -423,7 +427,7 @@ static u64 clear_seq;
 /* record buffer */
 #define LOG_ALIGN __alignof__(unsigned long)
 #define __LOG_BUF_LEN (1 << CONFIG_LOG_BUF_SHIFT)
-#define LOG_BUF_LEN_MAX (u32)(1 << 31)
+#define LOG_BUF_LEN_MAX ((u32)1 << 31)
 static char __log_buf[__LOG_BUF_LEN] __aligned(LOG_ALIGN);
 static char *log_buf = __log_buf;
 static u32 log_buf_len = __LOG_BUF_LEN;
@@ -710,8 +714,10 @@ static ssize_t devkmsg_write(struct kiocb *iocb, struct iov_iter *from)
 	if (!user || len > LOG_LINE_MAX)
 		return -EINVAL;
 
-	/* Ignore healthd and bpfloader kmsg */
-	if (!strcmp(current->comm, "health@2.1-serv") || !strcmp(current->comm, "bpfloader"))
+	/* Ignore healthd, bpfloader, and BpfMonitor kmsg */
+	if (!strcmp(current->comm, "health@2.1-serv") ||
+	    !strcmp(current->comm, "bpfloader") ||
+	    !strcmp(current->comm, "BpfMonitor"))
 		return ret;
 
 	/* Ignore when user logging is disabled. */
@@ -759,7 +765,17 @@ static ssize_t devkmsg_write(struct kiocb *iocb, struct iov_iter *from)
 		}
 	}
 
+	if (unlikely(strncmp(line, "healthd:", strlen("healthd:")) == 0))
+		goto skip_write;
+
+#ifdef CONFIG_SECURITY
+	if (disable_audit_log)
+		if (unlikely(strncmp(line, "SELinux: avc:", strlen("SELinux: avc:")) == 0))
+			goto skip_write;
+#endif
+
 	devkmsg_emit(facility, level, "%s", line);
+skip_write:
 	kfree(buf);
 	return ret;
 }
@@ -1998,8 +2014,7 @@ int vprintk_store(int facility, int level,
 	text_len = vscnprintf(text, sizeof(textbuf), fmt, args);
 
 	if (unlikely(strstr(text, "[mi_disp") != NULL) ||
-	    unlikely(strstr(text, "[drm") != NULL) ||
-	    unlikely(strncmp(text, "healthd:", strlen("healthd:")) == 0))
+	    unlikely(strstr(text, "[drm") != NULL))
 		return 0;
 
 	/* mark and strip a trailing newline */
