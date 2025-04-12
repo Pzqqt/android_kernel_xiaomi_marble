@@ -1,103 +1,232 @@
-name: Build Marble Kernel (ARM64 Native)
+name: GKI Kernel Build
+permissions:
+  contents: write
+  actions: write
 
 on:
-  push:
-    branches: [ melt-3.7-2025/04-04 ]
-  pull_request:
-    branches: [ melt-3.7-2025/04-04 ]
-
-env:
-  KERNEL_VERSION: "5.10"
-  ANDROID_VERSION: "12"
-  ARCH: arm64
-  LLVM_VERSION: 19.1.7
-  DEVICE_CODENAME: marble
-  CCACHE_DIR: ${{ github.workspace }}/.ccache
-  LLVM_DIR: toolchains/llvm-19
+  workflow_call:
+    inputs:
+      make_release:
+        required: true
+        type: boolean
+        default: true
+      android_version:
+        required: true
+        type: string
+      kernel_version:
+        required: true
+        type: string
+      sub_level:
+        required: true
+        type: string
+      os_patch_level:
+        required: true
+        type: string
+      kernelsu_variant:
+        required: true
+        type: string
+      kernelsu_branch:
+        required: true
+        type: string
+      kernelsu_branch_other:
+        required: false
+        type: string
+      revision:
+        required: false
+        type: string
 
 jobs:
-  build:
-    runs-on: ubuntu-22.04-arm64  # 关键修改：使用 ARM64 架构运行器
-    timeout-minutes: 120
+  build-kernel-kernelsu-susfs:
+    runs-on: ubuntu-22.04
+    env:
+      CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
+      CCACHE_NOHASHDIR: "true"
+      CCACHE_HARDLINK: "true"
 
     steps:
-    - name: Checkout kernel source
-      uses: actions/checkout@v4
-      with:
-        repository: Guxin12/android_kernel_xiaomi_marble
-        ref: melt-3.7-2025/04-04
-        submodules: recursive
-        path: kernel
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 8192
+          temp-reserve-mb: 2048
+          swap-size-mb: 8192
+          remove-dotnet: "true"
+          remove-android: "true"
+          remove-haskell: "true"
+          remove-codeql: "true"
 
-    - name: Install native dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          build-essential flex bison libssl-dev libelf-dev \
-          bc python3 git device-tree-compiler ncurses-dev \
-          lz4 zip unzip ccache xz-utils libtinfo5 \
-          clang-19 lld-19 llvm-19  # 直接安装系统级 LLVM
+      - name: Set CONFIG Environment Variable
+        run: |
+          CONFIG="${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.sub_level }}"
+          echo "CONFIG=$CONFIG" >> $GITHUB_ENV
+          echo "CONFIG set to: $CONFIG"
 
-    - name: Setup environment
-      run: |
-        echo "CLANG_PATH=/usr/lib/llvm-19/bin" >> $GITHUB_ENV
-        echo "LD_LIBRARY_PATH=/usr/lib/llvm-19/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-        echo "PATH=$CLANG_PATH:$PATH" >> $GITHUB_ENV
-        echo "LLVM=1" >> $GITHUB_ENV
-        echo "LLVM_IAS=1" >> $GITHUB_ENV
-        echo "KBUILD_BUILD_VERSION=$(date +%Y%m%d-%H%M)" >> $GITHUB_ENV
-        
-        # 验证本地工具链
-        clang --version
-        ld.lld --version
+      - name: Install ccache
+        run: sudo apt update && sudo apt install -y ccache
 
-    - name: Generate config
-      working-directory: ./kernel
-      run: |
-        make O=out clean
-        
-        # 生成配置（使用原生ARM64工具链）
-        make ARCH=$ARCH O=out CC=clang \
-          LD=ld.lld \
-          AR=llvm-ar \
-          NM=llvm-nm \
-          OBJCOPY=llvm-objcopy \
-          STRIP=llvm-strip \
-          LLVM=1 \
-          LLVM_IAS=1 \
-          marble_defconfig
+      - name: Set up ccache
+        run: |
+          mkdir -p ~/.cache/bazel
+          ccache --version
+          ccache --max-size=2G
+          ccache --set-config=compression=true
+          echo "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
+      
+      - name: Restore ccache from cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.sub_level }}-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.sub_level }}-ccache-
+      
+      - name: Cache toolchain
+        id: cache-toolchain
+        uses: actions/cache@v4
+        with:
+          path: |
+            kernel-build-tools
+            mkbootimg
+          key: toolchain-${{ runner.os }}-v1
 
-    - name: Build kernel
-      working-directory: ./kernel
-      run: |
-        echo "🏗️ 开始原生编译..."
-        time make ARCH=$ARCH O=out CC=clang \
-          LD=ld.lld \
-          AR=llvm-ar \
-          NM=llvm-nm \
-          OBJCOPY=llvm-objcopy \
-          STRIP=llvm-strip \
-          LLVM=1 \
-          LLVM_IAS=1 \
-          -j$(($(nproc) + 2)) \
-          CCACHE_CPP2=yes
+      - name: Download toolchain (if cache not found)
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        run: |
+          AOSP_MIRROR=https://android.googlesource.com
+          BRANCH=main-kernel-build-2024
+          git clone $AOSP_MIRROR/kernel/prebuilts/build-tools -b $BRANCH --depth 1 kernel-build-tools
+          git clone $AOSP_MIRROR/platform/system/tools/mkbootimg -b $BRANCH --depth 1 mkbootimg
 
-    - name: Package with AnyKernel3
-      run: |
-        git clone https://github.com/osm0sis/AnyKernel3.git
-        cp kernel/out/arch/arm64/boot/{Image.lz4,dtbo.img,dtb.img} AnyKernel3/
-        
-        # 修改设备信息
-        sed -i "s|device.name1=.*|device.name1=$DEVICE_CODENAME|" AnyKernel3/anykernel.sh
-        sed -i "s|kernel.string=.*|kernel.string=Native-ARM64-${{ env.KBUILD_BUILD_VERSION }}|" AnyKernel3/anykernel.sh
-        
-        # 打包
-        cd AnyKernel3
-        zip -r9 $DEVICE_CODENAME-native-arm64-${{ env.KBUILD_BUILD_VERSION }}.zip * -x .git*
+      - name: Set environment variables
+        run: |
+          echo "AVBTOOL=$GITHUB_WORKSPACE/kernel-build-tools/linux-x86/bin/avbtool" >> $GITHUB_ENV
+          echo "MKBOOTIMG=$GITHUB_WORKSPACE/mkbootimg/mkbootimg.py" >> $GITHUB_ENV
+          echo "UNPACK_BOOTIMG=$GITHUB_WORKSPACE/mkbootimg/unpack_bootimg.py" >> $GITHUB_ENV
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ env.DEVICE_CODENAME }}-kernel
-        path: AnyKernel3/*.zip
-        retention-days: 7
+      - name: Set boot sign key
+        env:
+          BOOT_SIGN_KEY: ${{ secrets.BOOT_SIGN_KEY }}
+        run: |
+          if [ ! -z "$BOOT_SIGN_KEY" ]; then
+            echo "$BOOT_SIGN_KEY" > ./kernel-build-tools/linux-x86/share/avb/testkey_rsa2048.pem
+            echo "BOOT_SIGN_KEY_PATH=$GITHUB_WORKSPACE/kernel-build-tools/linux-x86/share/avb/testkey_rsa2048.pem" >> $GITHUB_ENV
+          else
+            echo "BOOT_SIGN_KEY is not set. Exiting..."
+            exit 1
+          fi
+
+      - name: Install Repo
+        run: |
+          mkdir -p ./git-repo
+          curl https://storage.googleapis.com/git-repo-downloads/repo > ./git-repo/repo
+          chmod a+rx ./git-repo/repo
+          echo "REPO=$GITHUB_WORKSPACE/./git-repo/repo" >> $GITHUB_ENV
+
+      - name: Clone AnyKernel3 and Other Dependencies
+        run: |
+          echo "Cloning AnyKernel3 and other dependencies..."
+          SUSFS_BRANCH="gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}"
+          echo "Using branch for SUSFS: $SUSFS_BRANCH"
+          git clone https://github.com/WildPlusKernel/AnyKernel3.git -b "gki-2.0"
+          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "$SUSFS_BRANCH"
+          git clone https://github.com/WildPlusKernel/kernel_patches.git
+
+      - name: Clone Custom Kernel Source
+        run: |
+          echo "Cloning custom kernel source..."
+          mkdir -p "$CONFIG"
+          git clone https://github.com/Guxin12/android_kernel_xiaomi_marble -b melt-rebase "$CONFIG"
+
+      - name: Determine the branch for KernelSU
+        run: |
+          if [[ "${{ inputs.kernelsu_branch }}" == "Stable" ]]; then
+              echo "BRANCH=-" >> $GITHUB_ENV
+          elif [[ "${{ inputs.kernelsu_branch }}" == "Dev" && ( "${{ inputs.kernelsu_variant }}" == "Official" || "${{ inputs.kernelsu_variant }}" == "MKSU" ) ]]; then
+              echo "BRANCH=-s main" >> $GITHUB_ENV
+          elif [[ "${{ inputs.kernelsu_branch }}" == "Dev" && "${{ inputs.kernelsu_variant }}" == "Next" ]]; then
+              echo "BRANCH=-s next" >> $GITHUB_ENV
+          elif [[ "${{ inputs.kernelsu_branch }}" == "Other" && -n "${{ inputs.kernelsu_branch_other }}" ]]; then
+            echo "BRANCH=-s ${{ inputs.kernelsu_branch_other }}" >> $GITHUB_ENV
+          else
+            echo "Error: Custom branch not provided for 'Other'" >&2
+            exit 1
+          fi
+      
+      - name: Add KernelSU
+        run: |
+          cd "$CONFIG"
+          if [ "${{ inputs.kernelsu_variant }}" == "Official" ]; then
+            curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash $BRANCH
+          elif [ "${{ inputs.kernelsu_variant }}" == "Next" ]; then
+            curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash $BRANCH
+          elif [ "${{ inputs.kernelsu_variant }}" == "MKSU" ]; then
+            curl -LSs "https://raw.githubusercontent.com/5ec1cff/KernelSU/main/kernel/setup.sh" | bash $BRANCH
+          fi
+
+      - name: Apply SUSFS Patches
+        run: |
+          cd "$CONFIG"
+          cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch ./
+          cp ../susfs4ksu/kernel_patches/fs/* ./fs/
+          cp ../susfs4ksu/kernel_patches/include/linux/* ./include/linux/
+
+          case "${{ inputs.kernelsu_variant }}" in
+            "Official"|"MKSU")
+              cd ./KernelSU
+              cp ../../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./
+              patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
+              ;;
+            "Next")
+              cd ./KernelSU-Next
+              cp ../../kernel_patches/next/0001-kernel-patch-susfs-v1.5.5-to-KernelSU-Next-v1.0.5.patch ./
+              patch -p1 --forward < 0001-kernel-patch-susfs-v1.5.5-to-KernelSU-Next-v1.0.5.patch || true
+              ;;
+          esac
+
+          cd "$CONFIG"
+          patch -p1 < 50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch || true
+
+      - name: Apply Configuration Patches
+        run: |
+          cd "$CONFIG"
+          echo "CONFIG_KSU=y" >> ./arch/arm64/configs/marble_defconfig
+          echo "CONFIG_KSU_SUSFS=y" >> ./arch/arm64/configs/marble_defconfig
+          echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> ./arch/arm64/configs/marble_defconfig
+          echo "CONFIG_TMPFS_XATTR=y" >> ./arch/arm64/configs/marble_defconfig
+          echo "CONFIG_TCP_CONG_BBR=y" >> ./arch/arm64/configs/marble_defconfig
+          sed -i 's/-dirty//' ./scripts/setlocalversion
+          sed -E -i '/^CONFIG_LOCALVERSION=/ s/(.*)"$/\1-Wild+"/' ./arch/arm64/configs/marble_defconfig
+
+      - name: Build with retry
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 30
+          max_attempts: 3
+          retry_on: timeout
+          command: |
+            cd "$CONFIG"
+            make marble_defconfig
+            make -j$(nproc --all) CC="/usr/bin/ccache clang"
+            ccache --show-stats
+
+      # 后续的打包步骤保持原样...
+      - name: Create Bootimgs Folder and Copy Images
+        run: |
+          mkdir -p bootimgs
+          cp "$CONFIG"/arch/arm64/boot/Image ./bootimgs/
+          cp "$CONFIG"/arch/arm64/boot/Image.lz4 ./bootimgs/
+          gzip -n -k -f -9 ./bootimgs/Image > ./bootimgs/Image.gz
+
+      - name: Create ZIP Files
+        run: |
+          cd ./AnyKernel3
+          cp ../bootimgs/Image ./
+          zip -r "../kernel-${{ env.CONFIG }}.zip" ./*
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-build-${{ env.CONFIG }}
+          path: |
+            *.zip
+            bootimgs/*.img
