@@ -24,7 +24,7 @@ jobs:
           aosp-clang: true
           ksu: true
           ksu-version: main
-          android-version: 12
+          android-version: 15
           aosp-clang-version: r416183b
           disable-lto: true
           anykernel3: true
