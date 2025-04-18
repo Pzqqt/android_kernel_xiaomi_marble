@@ -886,6 +886,14 @@ static void damos_update_stat(struct damos *s,
 	if (sz_applied)
 		s->stat.nr_applied++;
 	s->stat.sz_applied += sz_applied;
+	if (s->action == DAMOS_PAGEOUT && sz_applied) {
+		if (sz_applied < 1024)
+			pr_info("%u bytes of memory reclaimed\n", sz_applied);
+		else if (sz_applied < 1024 * 1024)
+			pr_info("%u KB of memory reclaimed\n", sz_applied >> 10);
+		else
+			pr_info("%u MB of memory reclaimed\n", sz_applied >> 20);
+	}
 }
 
 static bool __damos_filter_out(struct damon_ctx *ctx, struct damon_target *t,
