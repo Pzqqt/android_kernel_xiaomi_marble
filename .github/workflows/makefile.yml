@@ -13,16 +13,20 @@ jobs:
     steps:
     - name: Check Makefile Syntax
       run: |
+        # 调试：显示工作区目录结构
+        echo "Workspace contents:"
+        ls -al $GITHUB_WORKSPACE
+        
         # 进入内核源码目录
         cd $GITHUB_WORKSPACE/melt-a12-5-10
         
-        # 检查是否有空变量定义
+        # 调试：显示内核源码目录内容
+        echo "Kernel source contents:"
+        ls -al
+        
+        # 检查 Makefile 语法
         grep -E '^[A-Za-z0-9_]+[[:space:]]*=[[:space:]]*$' Makefile
-        
-        # 验证 KBUILD_CFLAGS 是否包含栈帧阈值
         grep "KBUILD_CFLAGS" Makefile
-        
-        # 测试 make 命令是否解析正常
         make -n O=out ARCH=arm64 help
       shell: bash
     - name: Build Kernel
