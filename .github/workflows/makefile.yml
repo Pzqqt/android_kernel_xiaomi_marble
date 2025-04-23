@@ -12,7 +12,7 @@ jobs:
 
     steps:
     - name: Build Kernel
-      uses: dabao1955/kernel_build_action@main
+      uses: dabao1955/kernel_build_action@v1
       with:
           kernel-url: https://github.com/yihao0628/android_kernel_xiaomi_marble
           kernel-dir: melt-a12-5-10
@@ -27,3 +27,4 @@ jobs:
           aosp-clang-version: r416183b
           disable-lto: true
           anykernel3: true
+          extra-cmd: CONFIG_FRAME_WARN=70000
