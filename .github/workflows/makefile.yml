@@ -1,4 +1,3 @@
-# A simple action usage
 name: Build Kernel
 on:
   workflow_dispatch:
@@ -26,6 +25,6 @@ jobs:
           ksu-version: main
           android-version: 12
           aosp-clang-version: r416183b
-          disable-lto: true
+          disable-lto: false        # 关闭 LTO 禁用
+          build-args: LTO=thin      # 新增参数：启用 thin LTO
           anykernel3: true
-          LTO: thin
