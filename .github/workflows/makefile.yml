@@ -12,7 +12,7 @@ jobs:
 
     steps:
     - name: Build Kernel
-      uses: dabao1955/kernel_build_action@v1
+      uses: dabao1955/kernel_build_action@main
       with:
           kernel-url: https://github.com/yihao0628/android_kernel_xiaomi_marble
           kernel-dir: melt-a12-5-10
