@@ -4,47 +4,36 @@ on:
 
 jobs:
   Build-Kernel:
-    strategy:
-      fail-fast: true
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
     steps:
-    - name: Check Makefile Syntax
+    # 手动克隆代码到指定目录
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      with:
+        repository: yihao0628/android_kernel_xiaomi_marble
+        path: melt-a12-5-10  # 确保目录存在
+
+    # 调试目录结构
+    - name: Check Directory
       run: |
-        # 调试：显示工作区目录结构
-        echo "Workspace contents:"
+        echo "====== 工作区内容 ======"
         ls -al $GITHUB_WORKSPACE
         
-        # 进入内核源码目录
+        echo "====== melt-a12-5-10 内容 ======"
         cd $GITHUB_WORKSPACE/melt-a12-5-10
-        
-        # 调试：显示内核源码目录内容
-        echo "Kernel source contents:"
         ls -al
-        
-        # 检查 Makefile 语法
-        grep -E '^[A-Za-z0-9_]+[[:space:]]*=[[:space:]]*$' Makefile
-        grep "KBUILD_CFLAGS" Makefile
-        make -n O=out ARCH=arm64 help
-      shell: bash
+
+    # 构建内核
     - name: Build Kernel
       uses: dabao1955/kernel_build_action@main
       with:
           kernel-url: https://github.com/yihao0628/android_kernel_xiaomi_marble
-          kernel-dir: melt-a12-5-10
-          kernel-branch: melt-rebase
+          kernel-dir: melt-a12-5-10  # 使用已存在的目录
           config: marble_defconfig
           arch: arm64
           aosp-gcc: true
           aosp-clang: true
           ksu: true
-          ksu-version: main
           android-version: 12
           aosp-clang-version: r416183b
-          disable-lto: true
           anykernel3: true
-          extra-cmd: |
-            # 确保替换操作不会破坏变量语法
-            sed -i 's/^KBUILD_CFLAGS +=/KBUILD_CFLAGS += -Wframe-larger-than=18000/' $GITHUB_WORKSPACE/melt-a12-5-10/Makefile
