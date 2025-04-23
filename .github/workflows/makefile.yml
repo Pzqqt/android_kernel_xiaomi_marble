@@ -25,6 +25,6 @@ jobs:
           ksu-version: main
           android-version: 12
           aosp-clang-version: r416183b
-          disable-lto: false        # 关闭 LTO 禁用
-          build-args: "LTO=thin KBUILD_CFLAGS=-Wno-error=frame-larger-than"
+          disable-lto: true
+          build-args: "KBUILD_CFLAGS=-Wno-error=frame-larger-than"
           anykernel3: true
