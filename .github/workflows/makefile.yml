@@ -27,4 +27,4 @@ jobs:
           aosp-clang-version: r416183b
           disable-lto: true
           anykernel3: true
-          extra-cmd: CONFIG_FRAME_WARN=70000
+          extra-cmd: CONFIG_FRAME_WARN=80000
