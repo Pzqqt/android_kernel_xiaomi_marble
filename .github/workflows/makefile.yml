@@ -6,7 +6,7 @@ on:
 jobs:
   Build-Kernel:
     strategy:
-      fail-fast: false
+      fail-fast: true
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -28,3 +28,4 @@ jobs:
           aosp-clang-version: r416183b
           disable-lto: true
           anykernel3: true
+          LTO: thin
