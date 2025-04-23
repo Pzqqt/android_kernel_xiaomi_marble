@@ -11,6 +11,20 @@ jobs:
       contents: read
 
     steps:
+    - name: Check Makefile Syntax
+      run: |
+        # 进入内核源码目录
+        cd $GITHUB_WORKSPACE/melt-a12-5-10
+        
+        # 检查是否有空变量定义
+        grep -E '^[A-Za-z0-9_]+[[:space:]]*=[[:space:]]*$' Makefile
+        
+        # 验证 KBUILD_CFLAGS 是否包含栈帧阈值
+        grep "KBUILD_CFLAGS" Makefile
+        
+        # 测试 make 命令是否解析正常
+        make -n O=out ARCH=arm64 help
+      shell: bash
     - name: Build Kernel
       uses: dabao1955/kernel_build_action@main
       with:
@@ -28,6 +42,5 @@ jobs:
           disable-lto: true
           anykernel3: true
           extra-cmd: |
-            # 强制覆盖全局栈帧阈值
-            sed -i 's/^KBUILD_CFLAGS +=/& -Wframe-larger-than=17000/' $GITHUB_WORKSPACE/melt-a12-5-10/Makefile
-            sed -i 's/-Wframe-larger-than=1024//g' $GITHUB_WORKSPACE/melt-a12-5-10/lib/lz4/Makefile
+            # 确保替换操作不会破坏变量语法
+            sed -i 's/^KBUILD_CFLAGS +=/KBUILD_CFLAGS += -Wframe-larger-than=18000/' $GITHUB_WORKSPACE/melt-a12-5-10/Makefile
