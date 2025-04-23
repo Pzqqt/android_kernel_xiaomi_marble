@@ -7,37 +7,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     # 手动克隆代码到指定目录
-    - name: Checkout Code
-      uses: actions/checkout@v4
-      with:
-        repository: yihao0628/android_kernel_xiaomi_marble
-        path: melt-a12-5-10  # 确保目录存在
-
-    # 调试目录结构
-    - name: Check Directory
-      run: |
-        echo "====== 工作区内容 ======"
-        ls -al $GITHUB_WORKSPACE
-        
-        echo "====== melt-a12-5-10 内容 ======"
-        cd $GITHUB_WORKSPACE/melt-a12-5-10
-        ls -al
-    - name: Verify Makefile Flags
-      run: |
-        cd $GITHUB_WORKSPACE/melt-a12-5-10
-        grep "KBUILD_CFLAGS" Makefile
-
-    # # 构建内核
-    # - name: Build Kernel
-    #   uses: dabao1955/kernel_build_action@main
+    # - name: Checkout Code
+    #   uses: actions/checkout@v4
     #   with:
-    #       kernel-url: https://github.com/yihao0628/android_kernel_xiaomi_marble
-    #       kernel-dir: melt-a12-5-10  # 使用已存在的目录
-    #       config: marble_defconfig
-    #       arch: arm64
-    #       aosp-gcc: true
-    #       aosp-clang: true
-    #       ksu: true
-    #       android-version: 12
-    #       aosp-clang-version: r416183b
-    #       anykernel3: true
+    #     repository: yihao0628/android_kernel_xiaomi_marble
+    #     path: melt-a12-5-10  # 确保目录存在
+
+    # # 调试目录结构
+    # - name: Check Directory
+    #   run: |
+    #     echo "====== 工作区内容 ======"
+    #     ls -al $GITHUB_WORKSPACE
+        
+    #     echo "====== melt-a12-5-10 内容 ======"
+    #     cd $GITHUB_WORKSPACE/melt-a12-5-10
+    #     ls -al
+    # - name: Verify Makefile Flags
+    #   run: |
+    #     cd $GITHUB_WORKSPACE/melt-a12-5-10
+    #     grep "KBUILD_CFLAGS" Makefile
+
+    # 构建内核
+    - name: Build Kernel
+      uses: dabao1955/kernel_build_action@main
+      with:
+          kernel-url: https://github.com/yihao0628/android_kernel_xiaomi_marble
+          kernel-dir: melt-a12-5-10  # 使用已存在的目录
+          config: marble_defconfig
+          arch: arm64
+          aosp-gcc: true
+          aosp-clang: true
+          ksu: true
+          android-version: 12
+          aosp-clang-version: r416183b
+          anykernel3: true
