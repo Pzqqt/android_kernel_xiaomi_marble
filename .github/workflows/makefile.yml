@@ -26,5 +26,4 @@ jobs:
           android-version: 12
           aosp-clang-version: r416183b
           disable-lto: true
-          build-args: "KBUILD_CFLAGS=-Wno-error=frame-larger-than"
           anykernel3: true
