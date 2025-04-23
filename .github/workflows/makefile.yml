@@ -27,3 +27,7 @@ jobs:
           aosp-clang-version: r416183b
           disable-lto: true
           anykernel3: true
+          extra-cmd: |
+            # 强制覆盖全局栈帧阈值
+            sed -i 's/^KBUILD_CFLAGS +=/& -Wframe-larger-than=17000/' $GITHUB_WORKSPACE/melt-a12-5-10/Makefile
+            sed -i 's/-Wframe-larger-than=1024//g' $GITHUB_WORKSPACE/melt-a12-5-10/lib/lz4/Makefile
