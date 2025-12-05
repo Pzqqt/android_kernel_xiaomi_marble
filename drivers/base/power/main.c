@@ -1417,7 +1417,12 @@ static int __device_suspend_late(struct device *dev, pm_message_t state, bool as
 	TRACE_DEVICE(dev);
 	TRACE_SUSPEND(0);
 
-	__pm_runtime_disable(dev, false);
+	/*
+	 * After this point, any runtime PM operations targeting the device
+	 * will fail until the corresponding pm_runtime_enable() call in
+	 * device_resume_early().
+	 */
+	pm_runtime_disable(dev);
 
 	dpm_wait_for_subordinate(dev, async);
 
