@@ -1,0 +1,45 @@
+name: Build Kernel with SUSFS
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Build Environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git ccache automake flex lzop bison gperf build-essential zip curl zlib1g-dev g++-multilib libxml2-utils bzip2 libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools pngcrush fontconfig schedtool dpkg-dev liblz4-tool make optipng maven libssl-dev pwgen libswitch-perl policycoreutils minicom libxml-sax-base-perl libxml-simple-perl bc libc6-dev-i386 lib32ncurses5-dev libx11-dev lib32z-dev libgl1-mesa-dev xsltproc unzip device-tree-compiler python3
+
+      - name: Integrate KernelSU & SUSFS
+        run: |
+          # KernelSU Setup
+          curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
+          
+          # SUSFS Patch für Kernel 5.10
+          git clone https://gitlab.com/simonpunk/susfs4ksu.git
+          cp susfs4ksu/kernel/nanoid.c kernel/
+          cp susfs4ksu/kernel/nanoid.h kernel/
+          cp -r susfs4ksu/5.10/fs/* fs/
+          cp -r susfs4ksu/5.10/include/linux/* include/linux/
+
+      - name: Download Clang Toolchain
+        run: |
+          mkdir clang-aosp
+          wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master-kernel-build-2022/clang-r450784e.tar.gz
+          tar -C clang-aosp/ -zxvf clang-r450784e.tar.gz
+
+      - name: Build Kernel
+        run: |
+          export PATH=$(pwd)/clang-aosp/bin:$PATH
+          # marble_defconfig ist die Standard-Konfiguration für das Poco F5
+          make -j$(nproc --all) CC=clang O=out ARCH=arm64 CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-android- marble_defconfig
+          make -j$(nproc --all) CC=clang O=out ARCH=arm64 CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-android-
+
+      - name: Upload Kernel Image
+        uses: actions/upload-artifact@v4
+        with:
+          name: Melt-Kernel-SUSFS
+          path: out/arch/arm64/boot/Image
