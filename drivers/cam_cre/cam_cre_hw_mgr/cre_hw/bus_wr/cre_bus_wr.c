@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 #include <linux/delay.h>
 #include "cam_io_util.h"
@@ -15,12 +16,20 @@
 
 static struct cre_bus_wr *wr_info;
 
-#define update_cre_reg_set(cre_reg_buf, off, val) \
-	do {                                           \
-		cre_reg_buf->wr_reg_set[cre_reg_buf->num_wr_reg_set].offset = (off); \
-		cre_reg_buf->wr_reg_set[cre_reg_buf->num_wr_reg_set].value = (val); \
-		cre_reg_buf->num_wr_reg_set++; \
-	} while (0)
+static inline int cam_cre_add_wr_reg_set(struct cre_reg_buffer *b,
+					    uint32_t off, uint32_t val)
+{
+	if (b->num_wr_reg_set >= CAM_CRE_MAX_REG_SET) {
+		CAM_ERR(CAM_CRE, "wr_reg_set overflow: num=%u max=%u",
+			b->num_wr_reg_set, CAM_CRE_MAX_REG_SET);
+		return -ENOSPC;
+	}
+
+	b->wr_reg_set[b->num_wr_reg_set].offset = off;
+	b->wr_reg_set[b->num_wr_reg_set].value  = val;
+	b->num_wr_reg_set++;
+	return 0;
+}
 
 static int cam_cre_translate_write_format(struct plane_info p_info,
 	struct cam_cre_bus_wr_client_reg_val *wr_client_reg_val)
@@ -98,7 +107,7 @@ static int cam_cre_bus_wr_update(struct cam_cre_hw *cam_cre_hw_info,
 	int batch_idx, int io_idx,
 	struct cre_reg_buffer *cre_reg_buf)
 {
-	int rc, k, out_port_idx;
+	int rc = 0, k, out_port_idx;
 	uint32_t req_idx;
 	uint32_t val = 0;
 	uint32_t iova_base, iova_offset;
@@ -165,9 +174,11 @@ static int cam_cre_bus_wr_update(struct cam_cre_hw *cam_cre_hw_info,
 			wr_client_reg_val->mode_shift);
 		val |= wr_client_reg_val->client_en;
 
-		update_cre_reg_set(cre_reg_buf,
+		rc = cam_cre_add_wr_reg_set(cre_reg_buf,
 			wr_reg->offset + wr_reg_client->client_cfg,
 			val);
+		if (rc)
+			goto end;
 
 		/*
 		 * As CRE have 36 Bit addressing support Image Address
@@ -175,13 +186,17 @@ static int cam_cre_bus_wr_update(struct cam_cre_hw *cam_cre_hw_info,
 		 * and addr_config will have 8 bit byte offset.
 		 */
 		iova_base = CAM_36BIT_INTF_GET_IOVA_BASE(io_buf->p_info[k].iova_addr);
-		update_cre_reg_set(cre_reg_buf,
+		rc = cam_cre_add_wr_reg_set(cre_reg_buf,
 			wr_reg->offset + wr_reg_client->img_addr,
 			iova_base);
+		if (rc)
+			goto end;
 		iova_offset = CAM_36BIT_INTF_GET_IOVA_OFFSET(io_buf->p_info[k].iova_addr);
-		update_cre_reg_set(cre_reg_buf,
+		rc = cam_cre_add_wr_reg_set(cre_reg_buf,
 			wr_reg->offset + wr_reg_client->addr_cfg,
 			iova_offset);
+		if (rc)
+			goto end;
 
 		rc = cam_cre_translate_write_format(io_buf->p_info[k],
 				wr_client_reg_val);
@@ -194,14 +209,18 @@ static int cam_cre_bus_wr_update(struct cam_cre_hw *cam_cre_hw_info,
 		val |= (wr_client_reg_val->height &
 				wr_client_reg_val->height_mask) <<
 				wr_client_reg_val->height_shift;
-		update_cre_reg_set(cre_reg_buf,
+		rc = cam_cre_add_wr_reg_set(cre_reg_buf,
 			wr_reg->offset + wr_reg_client->img_cfg_0,
 			val);
+		if (rc)
+			goto end;
 
 		/* stride */
-		update_cre_reg_set(cre_reg_buf,
+		rc = cam_cre_add_wr_reg_set(cre_reg_buf,
 			wr_reg->offset + wr_reg_client->img_cfg_2,
 			wr_client_reg_val->stride);
+		if (rc)
+			goto end;
 
 		val = 0;
 		val |= ((wr_client_reg_val->format &
@@ -211,18 +230,24 @@ static int cam_cre_bus_wr_update(struct cam_cre_hw *cam_cre_hw_info,
 			wr_client_reg_val->alignment_mask) <<
 			wr_client_reg_val->alignment_shift);
 		/* pack cfg : Format and alignment */
-		update_cre_reg_set(cre_reg_buf,
+		rc = cam_cre_add_wr_reg_set(cre_reg_buf,
 			wr_reg->offset + wr_reg_client->packer_cfg,
 			val);
+		if (rc)
+			goto end;
 
 		/* Upadte debug status CFG*/
 		val = 0xFFFF;
-		update_cre_reg_set(cre_reg_buf,
+		rc = cam_cre_add_wr_reg_set(cre_reg_buf,
 			wr_reg->offset + wr_reg_client->debug_status_cfg,
 			val);
+		if (rc)
+			goto end;
 	}
 
-	return 0;
+
+end:
+	return rc;
 }
 
 static int cam_cre_bus_wr_prepare(struct cam_cre_hw *cam_cre_hw_info,

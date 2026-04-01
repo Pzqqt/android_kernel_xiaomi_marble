@@ -17,12 +17,20 @@
 
 static struct cre_bus_rd *bus_rd;
 
-#define update_cre_reg_set(cre_reg_buf, off, val) \
-	do {                                           \
-		cre_reg_buf->rd_reg_set[cre_reg_buf->num_rd_reg_set].offset = (off); \
-		cre_reg_buf->rd_reg_set[cre_reg_buf->num_rd_reg_set].value = (val); \
-		cre_reg_buf->num_rd_reg_set++; \
-	} while (0)
+static inline int cam_cre_add_rd_reg_set(struct cre_reg_buffer *b,
+					    uint32_t off, uint32_t val)
+{
+	if (b->num_rd_reg_set >= CAM_CRE_MAX_REG_SET) {
+		CAM_ERR(CAM_CRE, "rd_reg_set overflow: num=%u max=%u",
+			b->num_rd_reg_set, CAM_CRE_MAX_REG_SET);
+		return -ENOSPC;
+	}
+
+	b->rd_reg_set[b->num_rd_reg_set].offset = off;
+	b->rd_reg_set[b->num_rd_reg_set].value  = val;
+	b->num_rd_reg_set++;
+	return 0;
+}
 
 static int cam_cre_bus_rd_in_port_idx(uint32_t input_port_id)
 {
@@ -91,6 +99,7 @@ static int cam_cre_bus_rd_update(struct cam_cre_hw *cam_cre_hw_info,
 	int32_t ctx_id, struct cre_reg_buffer *cre_reg_buf, int batch_idx,
 	int io_idx, struct cam_cre_dev_prepare_req *prepare)
 {
+	int rc = 0;
 	int k, in_port_idx;
 	uint32_t req_idx, val;
 	uint32_t iova_base, iova_offset;
@@ -150,19 +159,25 @@ static int cam_cre_bus_rd_update(struct cam_cre_hw *cam_cre_hw_info,
 		rd_client_reg_val = &rd_reg_val->rd_clients[in_port_idx];
 
 		/* security cfg */
-		update_cre_reg_set(cre_reg_buf,
+		rc = cam_cre_add_rd_reg_set(cre_reg_buf,
 				rd_reg->offset + rd_reg->security_cfg,
 				ctx_data->cre_acquire.secure_mode & 0x1);
+		if (rc)
+			goto end;
 
 		/* enable client */
-		update_cre_reg_set(cre_reg_buf,
+		rc = cam_cre_add_rd_reg_set(cre_reg_buf,
 			rd_reg->offset + rd_reg_client->core_cfg,
 			1);
+		if (rc)
+			goto end;
 
 		/* ccif meta data */
-		update_cre_reg_set(cre_reg_buf,
+		rc = cam_cre_add_rd_reg_set(cre_reg_buf,
 			(rd_reg->offset + rd_reg_client->ccif_meta_data),
 			0);
+		if (rc)
+			goto end;
 		/*
 		 * As CRE have 36 Bit addressing support Image Address
 		 * register will have 28 bit MSB of 36 bit iova.
@@ -170,30 +185,40 @@ static int cam_cre_bus_rd_update(struct cam_cre_hw *cam_cre_hw_info,
 		 */
 		iova_base = CAM_36BIT_INTF_GET_IOVA_BASE(
 				io_buf->p_info[k].iova_addr);
-		update_cre_reg_set(cre_reg_buf,
+		rc = cam_cre_add_rd_reg_set(cre_reg_buf,
 			rd_reg->offset + rd_reg_client->img_addr,
 			iova_base);
+		if (rc)
+			goto end;
 		iova_offset = CAM_36BIT_INTF_GET_IOVA_OFFSET(
 				io_buf->p_info[k].iova_addr);
-		update_cre_reg_set(cre_reg_buf,
+		rc = cam_cre_add_rd_reg_set(cre_reg_buf,
 			rd_reg->offset + rd_reg_client->addr_cfg,
 			iova_offset);
+		if (rc)
+			goto end;
 
 		cam_cre_update_read_reg_val(io_buf->p_info[k],
 			rd_client_reg_val);
 
 		/* Buffer size */
-		update_cre_reg_set(cre_reg_buf,
+		rc = cam_cre_add_rd_reg_set(cre_reg_buf,
 			rd_reg->offset + rd_reg_client->rd_width,
 			rd_client_reg_val->img_width);
-		update_cre_reg_set(cre_reg_buf,
+		if (rc)
+			goto end;
+		rc = cam_cre_add_rd_reg_set(cre_reg_buf,
 			rd_reg->offset + rd_reg_client->rd_height,
 			rd_client_reg_val->img_height);
+		if (rc)
+			goto end;
 
 		/* stride */
-		update_cre_reg_set(cre_reg_buf,
+		rc = cam_cre_add_rd_reg_set(cre_reg_buf,
 			rd_reg->offset + rd_reg_client->rd_stride,
 			rd_client_reg_val->stride);
+		if (rc)
+			goto end;
 
 		val = 0;
 		val |= (rd_client_reg_val->format &
@@ -203,18 +228,24 @@ static int cam_cre_bus_rd_update(struct cam_cre_hw *cam_cre_hw_info,
 			rd_client_reg_val->alignment_mask) <<
 			rd_client_reg_val->alignment_shift;
 		/* unpacker cfg : format and alignment */
-		update_cre_reg_set(cre_reg_buf,
+		rc = cam_cre_add_rd_reg_set(cre_reg_buf,
 			rd_reg->offset + rd_reg_client->unpacker_cfg,
 			val);
+		if (rc)
+			goto end;
 
 		/* Enable Debug cfg */
 		val = 0xFFFF;
-		update_cre_reg_set(cre_reg_buf,
+		rc = cam_cre_add_rd_reg_set(cre_reg_buf,
 			rd_reg->offset + rd_reg_client->debug_status_cfg,
 			val);
+		if (rc)
+			goto end;
 	}
 
-	return 0;
+
+end:
+	return rc;
 }
 
 static int cam_cre_bus_rd_prepare(struct cam_cre_hw *cam_cre_hw_info,
@@ -269,9 +300,11 @@ static int cam_cre_bus_rd_prepare(struct cam_cre_hw *cam_cre_hw_info,
 		val = 0;
 		val |= rd_reg_val->go_cmd;
 		val |= rd_reg_val->static_prg & rd_reg_val->static_prg_mask;
-		update_cre_reg_set(cre_reg_buf,
+		rc = cam_cre_add_rd_reg_set(cre_reg_buf,
 			rd_reg->offset + rd_reg->input_if_cmd,
 			val);
+		if (rc)
+			goto end;
 	}
 	if (cre_reg_buf) {
 		for (i = 0; i < cre_reg_buf->num_rd_reg_set; i++) {
@@ -281,7 +314,7 @@ static int cam_cre_bus_rd_prepare(struct cam_cre_hw *cam_cre_hw_info,
 		}
 	}
 end:
-	return 0;
+	return rc;
 }
 
 static int cam_cre_bus_rd_acquire(struct cam_cre_hw *cam_cre_hw_info,
