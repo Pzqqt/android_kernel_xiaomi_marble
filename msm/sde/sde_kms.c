@@ -4578,10 +4578,18 @@ static int sde_kms_pd_enable(struct generic_pm_domain *genpd)
 	SDE_DEBUG("\n");
 
 	rc = pm_runtime_get_sync(sde_kms->dev->dev);
-	if (rc > 0)
-		rc = 0;
+	if (rc < 0) {
+		pm_runtime_put_noidle(sde_kms->dev->dev);
+		dev_err(sde_kms->dev->dev, "PM runtime resume failed: %d\n", rc);
+		SDE_EVT32(rc, genpd->device_count,
+			atomic_read(&sde_kms->dev->dev->power.usage_count),
+			pm_runtime_suspended(sde_kms->dev->dev));
+		return rc;
+	}
+	rc = (rc > 0) ? 0 : rc;
 
-	SDE_EVT32(rc, genpd->device_count);
+	SDE_EVT32(rc, genpd->device_count, atomic_read(&sde_kms->dev->dev->power.usage_count),
+		pm_runtime_suspended(sde_kms->dev->dev));
 
 	return rc;
 }
@@ -4594,7 +4602,8 @@ static int sde_kms_pd_disable(struct generic_pm_domain *genpd)
 
 	pm_runtime_put_sync(sde_kms->dev->dev);
 
-	SDE_EVT32(genpd->device_count);
+	SDE_EVT32(genpd->device_count, atomic_read(&sde_kms->dev->dev->power.usage_count),
+		pm_runtime_suspended(sde_kms->dev->dev));
 
 	return 0;
 }
