@@ -324,6 +324,12 @@ static uint32_t *cam_ope_bus_wr_update(struct ope_hw *ope_hw_info,
 			header_size = cdm_ops->cdm_get_cmd_header_size(
 				CAM_CDM_CMD_REG_RANDOM);
 			idx = io_port_cdm->num_s_cmd_bufs[l];
+			if (idx >= MAX_WR_CLIENTS) {
+				CAM_ERR(CAM_OPE,
+					"s_cdm_info overflow: plane %d stripe %d idx %u >= MAX_WR_CLIENTS %d",
+					k, l, idx, MAX_WR_CLIENTS);
+				return NULL;
+			}
 			io_port_cdm->s_cdm_info[l][idx].len =
 				sizeof(temp) * (count + header_size);
 			io_port_cdm->s_cdm_info[l][idx].offset =
