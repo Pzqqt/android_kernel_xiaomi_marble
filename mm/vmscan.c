@@ -133,6 +133,15 @@ struct scan_control {
 	/* The file pages on the current node are dangerously low */
 	unsigned int file_is_tiny:1;
 
+	/* The anonymous pages on the current node are below vm.anon_min_ratio */
+	unsigned int anon_below_min:1;
+
+	/* The clean file pages on the current node are below vm.clean_low_ratio */
+	unsigned int clean_below_low:1;
+
+	/* The clean file pages on the current node are below vm.clean_min_ratio */
+	unsigned int clean_below_min:1;
+
 	/* Allocation order */
 	s8 order;
 
@@ -178,6 +187,15 @@ struct scan_control {
 #else
 #define prefetchw_prev_lru_page(_page, _base, _field) do { } while (0)
 #endif
+
+unsigned int sysctl_workingset_protection __read_mostly = 1;
+u8 sysctl_anon_min_ratio  __read_mostly = CONFIG_ANON_MIN_RATIO;
+u8 sysctl_clean_low_ratio __read_mostly = CONFIG_CLEAN_LOW_RATIO;
+u8 sysctl_clean_min_ratio __read_mostly = CONFIG_CLEAN_MIN_RATIO;
+static u64 sysctl_anon_min_ratio_kb  __read_mostly = 0;
+static u64 sysctl_clean_low_ratio_kb __read_mostly = 0;
+static u64 sysctl_clean_min_ratio_kb __read_mostly = 0;
+static u64 workingset_protection_prev_totalram __read_mostly = 0;
 
 /*
  * From 0 .. 200.  Higher means more swappy.
@@ -1176,6 +1194,10 @@ static unsigned int shrink_page_list(struct list_head *page_list,
 
 		may_enter_fs = (sc->gfp_mask & __GFP_FS) ||
 			(PageSwapCache(page) && (sc->gfp_mask & __GFP_IO));
+
+		if (page_is_file_lru(page) ? sc->clean_below_min :
+				(sc->anon_below_min && !sc->clean_below_min))
+			goto keep_locked;
 
 		/*
 		 * The number of dirty pages determines if a node is marked
@@ -2321,6 +2343,91 @@ out:
 	return inactive * inactive_ratio < active;
 }
 
+static bool can_reclaim_anon_pages(struct mem_cgroup *memcg, int nid, struct scan_control *sc)
+{
+	if (sc->may_swap && mem_cgroup_get_nr_swap_pages(memcg) > 0)
+		return true;
+	return false;
+}
+
+static void prepare_workingset_protection(pg_data_t *pgdat, struct scan_control *sc)
+{
+	unsigned long node_mem_total;
+	struct sysinfo i;
+
+	if (!(sysctl_workingset_protection)) {
+		sc->anon_below_min = 0;
+		sc->clean_below_low = 0;
+		sc->clean_below_min = 0;
+		return;
+	}
+
+	if (likely(sysctl_anon_min_ratio  ||
+	           sysctl_clean_low_ratio ||
+		       sysctl_clean_min_ratio)) {
+#ifdef CONFIG_NUMA
+		si_meminfo_node(&i, pgdat->node_id);
+#else //CONFIG_NUMA
+		si_meminfo(&i);
+#endif //CONFIG_NUMA
+		node_mem_total = i.totalram;
+
+		if (unlikely(workingset_protection_prev_totalram != node_mem_total)) {
+			sysctl_anon_min_ratio_kb  =
+				node_mem_total * sysctl_anon_min_ratio  / 100;
+			sysctl_clean_low_ratio_kb =
+				node_mem_total * sysctl_clean_low_ratio / 100;
+			sysctl_clean_min_ratio_kb =
+				node_mem_total * sysctl_clean_min_ratio / 100;
+			workingset_protection_prev_totalram = node_mem_total;
+		}
+	}
+
+	/*
+	 * Check the number of anonymous pages to protect them from
+	 * reclaiming if their amount is below the specified.
+	 */
+	if (sysctl_anon_min_ratio) {
+		unsigned long reclaimable_anon;
+
+		reclaimable_anon =
+			node_page_state(pgdat, NR_ACTIVE_ANON) +
+			node_page_state(pgdat, NR_INACTIVE_ANON) +
+			node_page_state(pgdat, NR_ISOLATED_ANON);
+
+		sc->anon_below_min = reclaimable_anon < sysctl_anon_min_ratio_kb;
+	} else
+		sc->anon_below_min = 0;
+
+	/*
+	 * Check the number of clean file pages to protect them from
+	 * reclaiming if their amount is below the specified.
+	 */
+	if (sysctl_clean_low_ratio || sysctl_clean_min_ratio) {
+		unsigned long reclaimable_file, dirty, clean;
+
+		reclaimable_file =
+			node_page_state(pgdat, NR_ACTIVE_FILE) +
+			node_page_state(pgdat, NR_INACTIVE_FILE) +
+			node_page_state(pgdat, NR_ISOLATED_FILE);
+		dirty = node_page_state(pgdat, NR_FILE_DIRTY);
+		/*
+		 * node_page_state() sum can go out of sync since
+		 * all the values are not read at once.
+		 */
+		if (likely(reclaimable_file > dirty))
+			clean = reclaimable_file - dirty;
+		else
+			clean = 0;
+
+		sc->clean_below_low = clean < sysctl_clean_low_ratio_kb;
+		sc->clean_below_min = clean < sysctl_clean_min_ratio_kb;
+	} else {
+		sc->clean_below_low = 0;
+		sc->clean_below_min = 0;
+	}
+}
+
 enum scan_balance {
 	SCAN_EQUAL,
 	SCAN_FRACT,
@@ -2388,6 +2495,15 @@ static void get_scan_count(struct lruvec *lruvec, struct scan_control *sc,
 	}
 
 	trace_android_rvh_set_balance_anon_file_reclaim(&balance_anon_file_reclaim);
+
+	/*
+	 * Force-scan anon if clean file pages is under vm.clean_low_ratio
+	 * or vm.clean_min_ratio.
+	 */
+	if (sc->clean_below_low || sc->clean_below_min) {
+		scan_balance = SCAN_ANON;
+		goto out;
+	}
 
 	/*
 	 * If there is enough inactive page cache, we do not reclaim
@@ -2536,8 +2652,23 @@ out:
 			BUG();
 		}
 
+		if (file ? sc->clean_below_min : sc->anon_below_min)
+			scan = 0;
+
 		nr[lru] = scan;
 	}
+}
+
+int vm_workingset_protection_update_handler(struct ctl_table *table, int write,
+		void *buffer, size_t *lenp, loff_t *ppos)
+{
+	int ret = proc_dou8vec_minmax(table, write, buffer, lenp, ppos);
+	if (ret || !write)
+		return ret;
+
+	workingset_protection_prev_totalram = 0;
+
+	return 0;
 }
 
 static void shrink_lruvec(struct lruvec *lruvec, struct scan_control *sc)
@@ -2769,6 +2900,10 @@ static void shrink_node_memcgs(pg_data_t *pgdat, struct scan_control *sc)
 			memcg_memory_event(memcg, MEMCG_LOW);
 		}
 
+		if (sysctl_workingset_protection && sc->clean_below_min && 
+			!can_reclaim_anon_pages(memcg, pgdat->node_id, sc))
+			continue;
+
 		reclaimed = sc->nr_reclaimed;
 		scanned = sc->nr_scanned;
 
@@ -2889,6 +3024,8 @@ again:
 			!(sc->may_deactivate & DEACTIVATE_ANON) &&
 			anon >> sc->priority;
 	}
+
+	prepare_workingset_protection(pgdat, sc);
 
 	shrink_node_memcgs(pgdat, sc);
 
