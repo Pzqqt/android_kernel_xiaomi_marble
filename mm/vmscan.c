@@ -2652,6 +2652,11 @@ out:
 			BUG();
 		}
 
+		/*
+		 * Hard protection of the working set.
+		 * Don't reclaim anon/file pages when the amount is
+		 * below the watermark of the same type.
+		 */
 		if (file ? sc->clean_below_min : sc->anon_below_min)
 			scan = 0;
 
