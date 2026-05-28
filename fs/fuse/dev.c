@@ -1962,9 +1962,14 @@ static ssize_t fuse_dev_do_write(struct fuse_dev *fud,
 	if (!err && req->in.h.opcode == FUSE_CANONICAL_PATH) {
 		char *path = (char *)req->args->out_args[0].value;
 
-		path[req->args->out_args[0].size - 1] = 0;
-		req->out.h.error =
-			kern_path(path, 0, req->args->canonical_path);
+		if (req->args->out_args[0].size == 0) {
+			req->out.h.error = -EBADMSG;
+		} else {
+			/* NUL-terminate inside the page; size<=PATH_MAX by construction */
+			path[min_t(unsigned int, req->args->out_args[0].size, PATH_MAX) - 1] = 0;
+			req->out.h.error =
+				kern_path(path, 0, req->args->canonical_path);
+		}
 	}
 
 	spin_lock(&fpq->lock);
