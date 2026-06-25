@@ -143,3 +143,8 @@ type 'struct fscrypt_master_key' changed
   7 members ('struct list_head mk_decrypted_inodes' .. 'bool mk_ino_hash_key_initialized') changed
     offset changed by 64
 
+type 'struct usb_udc' changed
+  byte size changed from 936 to 944
+  member 'void(* gadget_release)(struct device*)' was added
+  4 members ('struct device dev' .. 'bool started') changed
+    offset changed by 64
