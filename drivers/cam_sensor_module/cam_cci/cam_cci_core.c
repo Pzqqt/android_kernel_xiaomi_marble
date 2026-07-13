@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include <linux/module.h>
 #include "cam_cci_core.h"
 #include "cam_cci_dev.h"
 #include "cam_req_mgr_workq.h"
+#include "cam_cci_api.h"
 #include "cam_common_util.h"
 
 static int32_t cam_cci_convert_type_to_num_bytes(
@@ -647,6 +648,12 @@ static int32_t cam_cci_set_clk_param(struct cci_device *cci_dev,
 	void __iomem *base = cci_dev->soc_info.reg_map[0].mem_base;
 	struct cam_cci_master_info *cci_master =
 		&cci_dev->cci_master_info[master];
+
+	if (master >= MASTER_MAX) {
+		CAM_ERR(CAM_CCI, "CCI%d Invalid I2C master: %d",
+			cci_dev->soc_info.index, master);
+		return -EINVAL;
+	}
 
 	if ((i2c_freq_mode >= I2C_MAX_MODES) || (i2c_freq_mode < 0)) {
 		CAM_ERR(CAM_CCI, "CCI%d_I2C_M%d invalid i2c_freq_mode = %d",
@@ -1992,6 +1999,33 @@ int32_t cam_cci_core_cfg(struct v4l2_subdev *sd,
 	mutex_unlock(&cci_dev->init_mutex);
 
 	cci_ctrl->status = rc;
+
+	return rc;
+}
+
+int32_t cam_cci_client_ops(struct v4l2_subdev *sd, unsigned int cmd,
+	struct cam_cci_ctrl *cci_ctrl)
+{
+	int32_t rc = 0;
+
+	if (!sd) {
+		CAM_ERR(CAM_CCI, "Invalid subdev pointer");
+		return -EINVAL;
+	}
+
+	if (!cci_ctrl) {
+		CAM_ERR(CAM_CCI, "Invalid cci_ctrl pointer");
+		return -EINVAL;
+	}
+
+	switch (cmd) {
+	case VIDIOC_MSM_CCI_CFG:
+		rc = cam_cci_core_cfg(sd, cci_ctrl);
+		break;
+	default:
+		CAM_ERR(CAM_CCI, "Invalid cmd: %u", cmd);
+		rc = -EINVAL;
+	}
 
 	return rc;
 }
