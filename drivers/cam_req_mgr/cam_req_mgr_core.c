@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include <linux/module.h>
@@ -2519,8 +2519,16 @@ error:
 static void __cam_req_mgr_free_link(struct cam_req_mgr_core_link *link)
 {
 	ptrdiff_t i;
+
+	/*
+	 * Acquire link->lock to synchronize with cam_req_mgr_cb_add_req()
+	 * and prevent TOCTOU race when freeing in_q
+	 */
+	mutex_lock(&link->lock);
 	kfree(link->req.in_q);
 	link->req.in_q = NULL;
+	mutex_unlock(&link->lock);
+
 	link->parent = NULL;
 	i = link - g_links;
 	CAM_DBG(CAM_CRM, "free link index %d", i);
@@ -3314,6 +3322,16 @@ static int cam_req_mgr_cb_add_req(struct cam_req_mgr_add_request *add_req)
 		link->state);
 
 	mutex_lock(&link->lock);
+
+	/*
+	 * UAF mitigation: Check if in_q was freed
+	 */
+	if (!link->req.in_q) {
+		CAM_ERR(CAM_CRM, "in_q freed for link %x", add_req->link_hdl);
+		mutex_unlock(&link->lock);
+		return -EINVAL;
+	}
+
 	/* Validate if req id is present in input queue */
 	idx = __cam_req_mgr_find_slot_for_req(link->req.in_q, add_req->req_id);
 	if (idx < 0) {
