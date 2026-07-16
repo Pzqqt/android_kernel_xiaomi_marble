@@ -231,7 +231,7 @@ static void delayed_put_task_struct(struct rcu_head *rhp)
 void put_task_struct_rcu_user(struct task_struct *task)
 {
 	if (refcount_dec_and_test(&task->rcu_users))
-		call_rcu(&task->rcu, delayed_put_task_struct);
+		call_rcu_hurry(&task->rcu, delayed_put_task_struct);
 }
 
 void release_task(struct task_struct *p)

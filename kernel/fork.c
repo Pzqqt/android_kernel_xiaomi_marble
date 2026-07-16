@@ -1963,7 +1963,7 @@ static void __delayed_free_task(struct rcu_head *rhp)
 static __always_inline void delayed_free_task(struct task_struct *tsk)
 {
 	if (IS_ENABLED(CONFIG_MEMCG))
-		call_rcu(&tsk->rcu, __delayed_free_task);
+		call_rcu_hurry(&tsk->rcu, __delayed_free_task);
 	else
 		free_task(tsk);
 }
