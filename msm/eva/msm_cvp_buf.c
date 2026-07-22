@@ -735,6 +735,9 @@ int msm_cvp_mark_user_persist(struct msm_cvp_inst *inst,
 	struct cvp_buf_type *buf;
 	int i, rc = 0;
 
+	dprintk(CVP_ERR, "%s: Unsupported request\n", __func__);
+	return -EINVAL;
+
 	if (!offset || !buf_num)
 		return 0;
 
