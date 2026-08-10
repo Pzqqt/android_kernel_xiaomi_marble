@@ -322,6 +322,13 @@ static inline void imp_smmu_round_to_page(uint64_t iova, uint64_t pa,
 	*size_p = roundup(size + pa - *pa_p, PAGE_SIZE);
 }
 
+/* true if [start, start + len) lies entirely within [base, base + size) */
+static inline bool imp_range_within(u64 base, u64 size, u64 start, u64 len)
+{
+	return start >= base && len <= size &&
+		(start - base) <= (size - len);
+}
+
 static void __map_smmu_info(struct device *dev,
 	struct imp_iova_addr *partition, int num_mapping,
 	struct ipa_mhi_mem_addr_info_type_v01 *map_info,
@@ -339,21 +346,42 @@ static void __map_smmu_info(struct device *dev,
 		return;
 	}
 
+	if (num_mapping < 0 ||
+		num_mapping > QMI_IPA_REMOTE_MHI_MEMORY_MAPPING_NUM_MAX_V01) {
+		IMP_ERR("invalid num_mapping %d\n", num_mapping);
+		return;
+	}
+
 	for (i = 0; i < num_mapping; i++) {
 		int prot = IOMMU_READ | IOMMU_WRITE;
 		u32 ipa_base = ipa3_ctx->ipa_wrapper_base +
 			ipa3_ctx->ctrl->ipa_reg_base_ofst;
 		u32 ipa_size = ipa3_ctx->ipa_wrapper_size;
 
+		if (map_info[i].size == 0) {
+			IMP_ERR("invalid mapping size 0 for entry %d\n", i);
+			continue;
+		}
+
 		imp_smmu_round_to_page(map_info[i].iova, map_info[i].pa,
 			map_info[i].size, &iova_p, &pa_p, &size_p);
 
-		if (map) {
-			/* boundary check */
-			WARN_ON(partition->base > iova_p ||
-				(partition->base + partition->size) <
-				(iova_p + size_p));
+		/*
+		 * Reject the mapping unless the iova lies fully within the
+		 * allowed partition and, for entries landing in the IPA
+		 * register aperture, the pa also lies fully within it.
+		 */
+		if (!imp_range_within(partition->base, partition->size,
+				iova_p, size_p) ||
+			(!imp_range_within(ipa_base, ipa_size,
+				pa_p, size_p))) {
+			IMP_ERR(
+				"rejecting oob mapping iova 0x%lx pa 0x%pa size %u\n",
+				iova_p, &pa_p, size_p);
+			continue;
+		}
 
+		if (map) {
 			/* for IPA uC MBOM we need to map with device type */
 			if (pa_p - ipa_base < ipa_size)
 				prot |= IOMMU_MMIO;
