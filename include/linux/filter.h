@@ -1304,9 +1304,14 @@ struct bpf_sysctl_kern {
 };
 
 #define BPF_SOCKOPT_KERN_BUF_SIZE	32
+/**
+ * ANDROID: Fix crc for ("bpf: Try to avoid kzalloc in cgroup/{s,g}etsockopt")
+ */
+#ifndef __GENKSYMS__
 struct bpf_sockopt_buf {
 	u8		data[BPF_SOCKOPT_KERN_BUF_SIZE];
 };
+#endif
 
 struct bpf_sockopt_kern {
 	struct sock	*sk;
