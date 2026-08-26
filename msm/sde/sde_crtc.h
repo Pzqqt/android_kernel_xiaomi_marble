@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -348,6 +348,7 @@ struct sde_frame_data {
  * @skip_blend_plane_h: skip blend plane height
  * @line_time_in_ns : current mode line time in nano sec is needed for QOS update
  * @frame_data      : Framedata data structure
+ * @frame_data_lock : spinlock to protect framedata allocation, free and access
  */
 struct sde_crtc {
 	struct drm_crtc base;
@@ -455,6 +456,7 @@ struct sde_crtc {
 	u32 line_time_in_ns;
 
 	struct sde_frame_data frame_data;
+	spinlock_t frame_data_lock;
 };
 
 enum sde_crtc_dirty_flags {
