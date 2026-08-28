@@ -65,8 +65,6 @@ struct asyncppp {
 
 	struct tasklet_struct tsk;
 
-	refcount_t	refcnt;
-	struct completion dead;
 	struct ppp_channel chan;	/* interface to generic ppp layer */
 	unsigned char	obuf[OBUFSIZE];
 };
@@ -116,38 +114,6 @@ static const struct ppp_channel_ops async_ops = {
  */
 
 /*
- * We have a potential race on dereferencing tty->disc_data,
- * because the tty layer provides no locking at all - thus one
- * cpu could be running ppp_asynctty_receive while another
- * calls ppp_asynctty_close, which zeroes tty->disc_data and
- * frees the memory that ppp_asynctty_receive is using.  The best
- * way to fix this is to use a rwlock in the tty struct, but for now
- * we use a single global rwlock for all ttys in ppp line discipline.
- *
- * FIXME: this is no longer true. The _close path for the ldisc is
- * now guaranteed to be sane.
- */
-static DEFINE_RWLOCK(disc_data_lock);
-
-static struct asyncppp *ap_get(struct tty_struct *tty)
-{
-	struct asyncppp *ap;
-
-	read_lock(&disc_data_lock);
-	ap = tty->disc_data;
-	if (ap != NULL)
-		refcount_inc(&ap->refcnt);
-	read_unlock(&disc_data_lock);
-	return ap;
-}
-
-static void ap_put(struct asyncppp *ap)
-{
-	if (refcount_dec_and_test(&ap->refcnt))
-		complete(&ap->dead);
-}
-
-/*
  * Called when a tty is put into PPP line discipline. Called in process
  * context.
  */
@@ -181,9 +147,6 @@ ppp_asynctty_open(struct tty_struct *tty)
 	skb_queue_head_init(&ap->rqueue);
 	tasklet_init(&ap->tsk, ppp_async_process, (unsigned long) ap);
 
-	refcount_set(&ap->refcnt, 1);
-	init_completion(&ap->dead);
-
 	ap->chan.private = ap;
 	ap->chan.ops = &async_ops;
 	ap->chan.mtu = PPP_MRU;
@@ -204,34 +167,18 @@ ppp_asynctty_open(struct tty_struct *tty)
 }
 
 /*
- * Called when the tty is put into another line discipline
- * or it hangs up.  We have to wait for any cpu currently
- * executing in any of the other ppp_asynctty_* routines to
- * finish before we can call ppp_unregister_channel and free
- * the asyncppp struct.  This routine must be called from
- * process context, not interrupt or softirq context.
+ * Called when the tty is put into another line discipline or it hangs up.
+ * This call is serialized against other ldisc functions.
  */
 static void
 ppp_asynctty_close(struct tty_struct *tty)
 {
-	struct asyncppp *ap;
+	struct asyncppp *ap = tty->disc_data;
 
-	write_lock_irq(&disc_data_lock);
-	ap = tty->disc_data;
-	tty->disc_data = NULL;
-	write_unlock_irq(&disc_data_lock);
 	if (!ap)
 		return;
 
-	/*
-	 * We have now ensured that nobody can start using ap from now
-	 * on, but we have to wait for all existing users to finish.
-	 * Note that ppp_unregister_channel ensures that no calls to
-	 * our channel ops (i.e. ppp_async_send/ioctl) are in progress
-	 * by the time it returns.
-	 */
-	if (!refcount_dec_and_test(&ap->refcnt))
-		wait_for_completion(&ap->dead);
+	tty->disc_data = NULL;
 	tasklet_kill(&ap->tsk);
 
 	ppp_unregister_channel(&ap->chan);
@@ -239,17 +186,6 @@ ppp_asynctty_close(struct tty_struct *tty)
 	skb_queue_purge(&ap->rqueue);
 	kfree_skb(ap->tpkt);
 	kfree(ap);
-}
-
-/*
- * Called on tty hangup in process context.
- *
- * Wait for I/O to driver to complete and unregister PPP channel.
- * This is already done by the close routine, so just call that.
- */
-static void ppp_asynctty_hangup(struct tty_struct *tty)
-{
-	ppp_asynctty_close(tty);
 }
 
 /*
@@ -284,7 +220,7 @@ static int
 ppp_asynctty_ioctl(struct tty_struct *tty, struct file *file,
 		   unsigned int cmd, unsigned long arg)
 {
-	struct asyncppp *ap = ap_get(tty);
+	struct asyncppp *ap = tty->disc_data;
 	int err, val;
 	int __user *p = (int __user *)arg;
 
@@ -325,7 +261,6 @@ ppp_asynctty_ioctl(struct tty_struct *tty, struct file *file,
 		err = tty_mode_ioctl(tty, file, cmd, arg);
 	}
 
-	ap_put(ap);
 	return err;
 }
 
@@ -341,7 +276,7 @@ static void
 ppp_asynctty_receive(struct tty_struct *tty, const unsigned char *buf,
 		  char *cflags, int count)
 {
-	struct asyncppp *ap = ap_get(tty);
+	struct asyncppp *ap = tty->disc_data;
 	unsigned long flags;
 
 	if (!ap)
@@ -351,21 +286,19 @@ ppp_asynctty_receive(struct tty_struct *tty, const unsigned char *buf,
 	spin_unlock_irqrestore(&ap->recv_lock, flags);
 	if (!skb_queue_empty(&ap->rqueue))
 		tasklet_schedule(&ap->tsk);
-	ap_put(ap);
 	tty_unthrottle(tty);
 }
 
 static void
 ppp_asynctty_wakeup(struct tty_struct *tty)
 {
-	struct asyncppp *ap = ap_get(tty);
+	struct asyncppp *ap = tty->disc_data;
 
 	clear_bit(TTY_DO_WRITE_WAKEUP, &tty->flags);
 	if (!ap)
 		return;
 	set_bit(XMIT_WAKEUP, &ap->xmit_flags);
 	tasklet_schedule(&ap->tsk);
-	ap_put(ap);
 }
 
 
@@ -375,7 +308,6 @@ static struct tty_ldisc_ops ppp_ldisc = {
 	.name	= "ppp",
 	.open	= ppp_asynctty_open,
 	.close	= ppp_asynctty_close,
-	.hangup	= ppp_asynctty_hangup,
 	.read	= ppp_asynctty_read,
 	.write	= ppp_asynctty_write,
 	.ioctl	= ppp_asynctty_ioctl,
