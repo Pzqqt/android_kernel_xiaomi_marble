@@ -463,6 +463,7 @@ struct ux500_msp_config {
 	enum msp_data_size data_size;
 	unsigned int def_elem_len;
 	unsigned int iodelay;
+	bool clock_provider;
 };
 
 struct ux500_msp_dma_params {
@@ -480,8 +481,11 @@ struct ux500_msp {
 	enum msp_state msp_state;
 	int def_elem_len;
 	unsigned int dir_busy;
+	unsigned int dir_running;
 	int loopback_enable;
 	unsigned int f_bitclk;
+	bool clock_provider;
+	struct ux500_msp_config config;
 };
 
 struct msp_i2s_platform_data;
