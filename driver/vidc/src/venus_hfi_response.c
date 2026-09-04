@@ -1435,10 +1435,26 @@ static bool validate_property_payload_info(struct msm_vidc_inst *inst,
 	case HFI_PROP_WORST_COMPLEXITY_FACTOR:
 	case HFI_PROP_CABAC_SESSION:
 	case HFI_PROP_STAGE:
-	case HFI_PROP_PIPE:
 		expected = HFI_PAYLOAD_U32;
 		break;
-	/* 32-bit enum properties */
+       /*
+        * HFI documentation specifies HFI_PAYLOAD_U32 for PIPE.
+        * Some legacy firmware revisions may send HFI_PAYLOAD_NONE
+        * when MSM_VIDC_PIPE_NONE is configured. Accept both for
+        * backward compatibility while retaining payload validation.
+        */
+        case HFI_PROP_PIPE:
+               if (pkt->payload_info != HFI_PAYLOAD_U32 &&
+                   pkt->payload_info != HFI_PAYLOAD_NONE) {
+                       i_vpr_e(inst,
+                               "%s: invalid payloadinfo %#x for property %#x, expected %#x or %#x\n",
+                               __func__, pkt->payload_info, pkt->type,
+                               HFI_PAYLOAD_U32, HFI_PAYLOAD_NONE);
+                       return false;
+               }
+               return true;
+
+/* 32-bit enum properties */
 	case HFI_PROP_PROFILE:
 	case HFI_PROP_LEVEL:
 	case HFI_PROP_TIER:
@@ -1664,6 +1680,13 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 				__func__,  payload_ptr[0], inst->capabilities->cap[STAGE].value);
 		break;
 	case HFI_PROP_PIPE:
+		if (!payload_ptr) {
+			i_vpr_h(inst,
+                        "%s: PIPE property received with HFI_PAYLOAD_NONE\n",
+                        __func__);
+                break;
+		}
+
 		if (payload_ptr &&
 			inst->capabilities->cap[PIPE].value !=  payload_ptr[0])
 			i_vpr_e(inst,
