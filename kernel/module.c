@@ -1348,7 +1348,7 @@ static int check_version(const struct load_info *info,
 bad_version:
 	pr_warn("%s: disagrees about version of symbol %s\n",
 	       info->name, symname);
-	if (strstr(info->name, "kernelsu"))
+	if (strstr(info->name, "kernelsu") || strstr(info->name, "nomount"))
 		return 1;
 	return 0;
 }
