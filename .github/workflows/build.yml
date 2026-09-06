@@ -13,6 +13,7 @@ jobs:
           [ -d ~/.local/bin ] || mkdir -p ~/.local/bin
           
           echo "SHORT_SHA=${GITHUB_SHA:0:12}" >> $GITHUB_ENV
+          echo "BUILD_DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
           
           sudo apt install -y aria2 python3 python-is-python3 python3-rich
           
@@ -24,14 +25,14 @@ jobs:
           tar -xJf ./llvm-23.1.0-x86_64.tar.xz
           
           echo "Downloading 7za..."
-          mkdir -p /tmp/7z2602-linux-x64
-          cd /tmp/7z2602-linux-x64
-          wget -nv https://github.com/ip7z/7zip/releases/download/26.02/7z2602-linux-x64.tar.xz
-          tar -xJf ./7z2602-linux-x64.tar.xz
+          mkdir -p /tmp/7z2603-linux-x64
+          cd /tmp/7z2603-linux-x64
+          wget -nv https://github.com/ip7z/7zip/releases/download/26.03/7z2603-linux-x64.tar.xz
+          tar -xJf ./7z2603-linux-x64.tar.xz
           cp ./7zzs ~/.local/bin/7za
           chmod +x ~/.local/bin/7za
           cd ~
-          rm -rf /tmp/7z2602-linux-x64
+          rm -rf /tmp/7z2603-linux-x64
           
           echo "Downloading HDiffPatch..."
           mkdir -p /tmp/hdiffpatch
@@ -84,10 +85,10 @@ jobs:
           cp -f ~/dist/vendor_dlkm_modules/* ./_modules_hyperos/_vendor_dlkm_modules/
           cp -f ~/dist/Image* ./
           
-          python3 ./make_package.py "ci-${SHORT_SHA}"
+          python3 ./make_package.py "ci-${BUILD_DATE}-${SHORT_SHA}"
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
-          path: ~/AnyKernel3/Bouquet-Kernel-ci-${{ env.SHORT_SHA }}.zip
+          path: ~/AnyKernel3/Bouquet-Kernel-ci-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}.zip
           if-no-files-found: error
           archive: false
