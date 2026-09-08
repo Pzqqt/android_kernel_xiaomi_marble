@@ -62,12 +62,51 @@ static int all_symbols;
 static int absolute_percpu;
 static int base_relative;
 
+/* A dynamic array of symbols, encoded by symbol index. */
+struct sym_arr {
+	unsigned int *sym_indexes;
+	unsigned int cnt, cap;
+};
+
 static int token_profit[0x10000];
+static struct sym_arr token_syms[0x10000];
 
 /* the table that holds the result of the compression */
 static unsigned char best_table[256][2];
 static unsigned char best_table_len[256];
 
+static unsigned int sym_arr_last(const struct sym_arr *arr)
+{
+	return arr->cnt ? arr->sym_indexes[arr->cnt - 1] : UINT_MAX;
+}
+
+static void sym_arr_maybe_expand(struct sym_arr *arr)
+{
+	if (arr->cap > arr->cnt)
+		return;
+
+	arr->cap = arr->cap ? arr->cap * 2 : 16;
+	arr->sym_indexes = realloc(arr->sym_indexes,
+				   arr->cap * sizeof(*arr->sym_indexes));
+	if (!arr->sym_indexes) {
+		fprintf(stderr, "out of memory\n");
+		exit(1);
+	}
+}
+
+static void sym_arr_add(struct sym_arr *arr, unsigned int sym_idx)
+{
+	sym_arr_maybe_expand(arr);
+	arr->sym_indexes[arr->cnt++] = sym_idx;
+}
+
+static void sym_arr_free(struct sym_arr *arr)
+{
+	free(arr->sym_indexes);
+	arr->sym_indexes = NULL;
+	arr->cnt = 0;
+	arr->cap = 0;
+}
 
 static void usage(void)
 {
@@ -539,6 +578,15 @@ static void write_src(void)
 	printf("\n");
 }
 
+static unsigned int token_index(unsigned char first, unsigned char second)
+{
+	return first + (second << 8);
+}
+
+static unsigned int sym_token_index(const unsigned char *symbol, int first_idx)
+{
+	return token_index(symbol[first_idx], symbol[first_idx + 1]);
+}
 
 /* table lookup compression functions */
 
@@ -548,7 +596,7 @@ static void learn_symbol(const unsigned char *symbol, int len)
 	int i;
 
 	for (i = 0; i < len - 1; i++)
-		token_profit[ symbol[i] + (symbol[i + 1] << 8) ]++;
+		token_profit[sym_token_index(symbol, i)]++;
 }
 
 /* decrease the count for all the possible tokens in a symbol */
@@ -557,16 +605,80 @@ static void forget_symbol(const unsigned char *symbol, int len)
 	int i;
 
 	for (i = 0; i < len - 1; i++)
-		token_profit[ symbol[i] + (symbol[i + 1] << 8) ]--;
+		token_profit[sym_token_index(symbol, i)]--;
 }
 
-/* do the initial token count */
+static void token_add_symbol(unsigned int token_idx, unsigned int sym_idx)
+{
+	struct sym_arr *arr = &token_syms[token_idx];
+
+	/* Symbol indexes kept in sorted order, check for duplicate. */
+	if (sym_arr_last(arr) == sym_idx)
+		return;
+
+	sym_arr_add(arr, sym_idx);
+}
+
+static void symbol_index_all_tokens(const unsigned char *symbol, int len,
+				    unsigned int sym_idx)
+{
+	int i;
+
+	for (i = 0; i < len - 1; i++) {
+		const unsigned int token_idx = sym_token_index(symbol, i);
+
+		token_add_symbol(token_idx, sym_idx);
+	}
+}
+
+/*
+ * The symbol just got compressed. The only parts of the symbol that changed
+ * meaningfully are those containing the newly assigned compressed char, so
+ * index those.
+ */
+static void symbol_index_new_tokens(const unsigned char *symbol, int len,
+				    unsigned int sym_idx, int compressed_chr)
+{
+	int i;
+
+	for (i = 0; i < len - 1; i++) {
+		const unsigned int token_idx = sym_token_index(symbol, i);
+
+		if (symbol[i] == compressed_chr ||
+		    symbol[i + 1] == compressed_chr)
+			token_add_symbol(token_idx, sym_idx);
+	}
+}
+
 static void build_initial_tok_table(void)
 {
 	unsigned int i;
 
 	for (i = 0; i < table_cnt; i++)
 		learn_symbol(table[i]->sym, table[i]->len);
+
+	/*
+	 * The initial occurrence counts tell us exactly how much memory should
+	 * be reserved for each token's symbol array.
+	 */
+	for (i = 0; i < ARRAY_SIZE(token_syms); i++) {
+		const int nr_syms = token_profit[i];
+
+		if (!nr_syms)
+			continue;
+
+		token_syms[i].cap = nr_syms;
+		token_syms[i].sym_indexes =
+			malloc(nr_syms * sizeof(unsigned int));
+		if (!token_syms[i].sym_indexes) {
+			fprintf(stderr, "out of memory\n");
+			exit(1);
+		}
+	}
+
+	/* For every symbol, index every token -> symbol it is present in. */
+	for (i = 0; i < table_cnt; i++)
+		symbol_index_all_tokens(table[i]->sym, table[i]->len, i);
 }
 
 static unsigned char *find_token(unsigned char *str, int len,
@@ -583,27 +695,30 @@ static unsigned char *find_token(unsigned char *str, int len,
 
 /* replace a given token in all the valid symbols. Use the sampled symbols
  * to update the counts */
-static void compress_symbols(const unsigned char *str, int idx)
+static void compress_symbols(const unsigned char *str, int compressed_chr)
 {
-	unsigned int i, len, size;
+	const unsigned int token_idx = sym_token_index(str, 0);
+	struct sym_arr *arr = &token_syms[token_idx];
+	unsigned int sym_idx, j, len, size;
 	unsigned char *p1, *p2;
 
-	for (i = 0; i < table_cnt; i++) {
+	/* Iterate through all symbols this token is found in and compress. */
+	for (j = 0; j < arr->cnt; j++) {
+		sym_idx = arr->sym_indexes[j];
 
-		len = table[i]->len;
-		p1 = table[i]->sym;
+		len = table[sym_idx]->len;
+		p1 = table[sym_idx]->sym;
 
-		/* find the token on the symbol */
 		p2 = find_token(p1, len, str);
 		if (!p2) continue;
 
 		/* decrease the counts for this symbol's tokens */
-		forget_symbol(table[i]->sym, len);
+		forget_symbol(table[sym_idx]->sym, len);
 
 		size = len;
 
 		do {
-			*p2 = idx;
+			*p2 = compressed_chr;
 			p2++;
 			size -= (p2 - p1);
 			memmove(p2, p2 + 1, size);
@@ -617,11 +732,14 @@ static void compress_symbols(const unsigned char *str, int idx)
 
 		} while (p2);
 
-		table[i]->len = len;
+		table[sym_idx]->len = len;
 
-		/* increase the counts for this symbol's new tokens */
-		learn_symbol(table[i]->sym, len);
+		learn_symbol(table[sym_idx]->sym, len);
+		symbol_index_new_tokens(table[sym_idx]->sym, len, sym_idx,
+					compressed_chr);
 	}
+
+	sym_arr_free(arr); /* No symbol contains this token any more. */
 }
 
 /* search the token with the maximum profit */
