@@ -21,8 +21,8 @@ jobs:
           
           echo "Downloading Slim LLVM..."
           cd ~/build_toolchain
-          aria2c https://mirrors.edge.kernel.org/pub/tools/llvm/files/llvm-23.1.0-x86_64.tar.xz
-          tar -xJf ./llvm-23.1.0-x86_64.tar.xz
+          aria2c https://mirrors.edge.kernel.org/pub/tools/llvm/files/llvm-23.1.1-x86_64.tar.xz
+          tar -xJf ./llvm-23.1.1-x86_64.tar.xz
           
           echo "Downloading 7za..."
           mkdir -p /tmp/7z2603-linux-x64
