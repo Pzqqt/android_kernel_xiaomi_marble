@@ -813,10 +813,10 @@ EXPORT_SYMBOL(of_graph_get_remote_port);
  *
  * Return: count of endpoint of this device node
  */
-unsigned int of_graph_get_endpoint_count(const struct device_node *np)
+int of_graph_get_endpoint_count(const struct device_node *np)
 {
 	struct device_node *endpoint;
-	unsigned int num = 0;
+	int num = 0;
 
 	for_each_endpoint_of_node(np, endpoint)
 		num++;
