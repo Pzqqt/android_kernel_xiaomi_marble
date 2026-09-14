@@ -69,7 +69,8 @@ static int ad_dpot_i2c_probe(struct i2c_client *client,
 
 static int ad_dpot_i2c_remove(struct i2c_client *client)
 {
-	return ad_dpot_remove(&client->dev);
+	ad_dpot_remove(&client->dev);
+	return 0;
 }
 
 static const struct i2c_device_id ad_dpot_id[] = {
@@ -105,6 +106,7 @@ MODULE_DEVICE_TABLE(i2c, ad_dpot_id);
 static struct i2c_driver ad_dpot_i2c_driver = {
 	.driver = {
 		.name	= "ad_dpot",
+		.dev_groups = ad_dpot_groups,
 	},
 	.probe		= ad_dpot_i2c_probe,
 	.remove		= ad_dpot_i2c_remove,
