@@ -24,7 +24,7 @@
 #include "blk-mq.h"
 #include "blk-mq-sched.h"
 
-#define ADIOS_VERSION "3.2.0"
+#define ADIOS_VERSION "3.3.0"
 
 /* Request Types:
  *
@@ -36,20 +36,7 @@
  * - Implementation: Placed in a dedicated, high-priority FIFO queue
  *   (`prio_queue[0]`) for immediate dispatch.
  *
- * Tier 1 (High Priority): I/O Barrier Guarantees
- * ---------------------------------------------------------------
- * - Target: Requests with the REQ_OP_FLUSH flag.
- * - Purpose: To enforce a strict I/O barrier. When a flush request is
- *   received, the scheduler stops processing new requests from its main
- *   queues until all preceding requests have been completed. This guarantees
- *   the order of operations required by filesystems for data integrity.
- * - Implementation: A state flag (ADIOS_STATE_BARRIER) halts
- *   insertion into the main deadline tree. The barrier request and all
- *   subsequent requests are held in a temporary `barrier_queue`. Once the
- *   main queues are drained, the barrier request and the subsequent requests
- *   are released from the pending queue back into the scheduler.
- *
- * Tier 2 (Medium Priority): Application Responsiveness
+ * Tier 1 (Medium Priority): Application Responsiveness
  * ----------------------------------------------------
  * - Target: Normal synchronous requests (e.g., from standard file reads).
  * - Purpose: To ensure correct application behavior for operations that
@@ -60,7 +47,7 @@
  *   within the deadline-sorted red-black tree, preventing out-of-order
  *   execution of dependent synchronous operations.
  *
- * Tier 3 (Normal Priority): Background Throughput
+ * Tier 2 (Normal Priority): Background Throughput
  * -----------------------------------------------
  * - Target: Asynchronous requests.
  * - Purpose: To maximize disk throughput for background tasks where latency
@@ -70,12 +57,30 @@
  *   on the predicted I/O latency, allowing for aggressive reordering to
  *   optimize I/O efficiency.
  *
+ * I/O barrier guarantees (REQ_PREFLUSH / REQ_FUA) are provided entirely by
+ * the block layer's flush state machine (block/blk-flush.c), which is the
+ * mechanism that replaced whole-queue barriers upstream in 2.6.37. No
+ * queue-wide barrier is implemented or needed here:
+ * - blk_insert_flush() always strips REQ_PREFLUSH (and REQ_FUA unless the
+ *   device supports it in hardware) before any request ever reaches this
+ *   elevator's ->insert_requests(), and always sets REQ_SYNC on it, so such
+ *   a request lands in Tier 1 (immediate deadline) like any other
+ *   synchronous request -- never delayed behind Tier 2 reordering.
+ * - The data portion of a request that needed an actual PREFLUSH is
+ *   resubmitted via BLK_MQ_INSERT_AT_HEAD once the flush completes, which
+ *   lands in Tier 0 here, ahead of everything else.
+ * - REQ_PREFLUSH/REQ_FUA and RQF_FLUSH_SEQ requests are already excluded
+ *   from bio/request merging by the generic block layer (rq_mergeable(),
+ *   blk_rq_merge_ok()) before this elevator's merge callbacks ever run.
+ * - The synthesized pure REQ_OP_FLUSH command itself always bypasses this
+ *   elevator entirely (blk_mq_insert_request() routes it straight to
+ *   hctx->dispatch), so it never needs to be recognized or handled here.
+ *
  * Dispatch Logic:
  * The scheduler always dispatches requests in strict priority order:
  * 1. prio_queue[0] (Tier 0)
- * 2. The deadline-sorted batch queue (which naturally prioritizes Tier 2
- *    over Tier 3 due to their calculated deadlines).
- * 3. Barrier-pending requests are handled only after the main queues are empty.
+ * 2. The deadline-sorted batch queue (which naturally prioritizes Tier 1
+ *    over Tier 2 due to their calculated deadlines).
  */
 
 // Global variable to control the latency
@@ -153,12 +158,10 @@ enum adios_state_flags {
 	ADIOS_STATE_DL_1      = 1U << 3,
 	ADIOS_STATE_BQ_PAGE_0 = 1U << 4,
 	ADIOS_STATE_BQ_PAGE_1 = 1U << 5,
-	ADIOS_STATE_BARRIER   = 1U << 6,
 };
 #define ADIOS_STATE_PQ 0
 #define ADIOS_STATE_DL 2
 #define ADIOS_STATE_BQ 4
-#define ADIOS_STATE_BP 6
 
 // Temporal granularity of the deadline tree node (dl_group)
 #define ADIOS_QUANTUM_SHIFT 20
@@ -260,8 +263,6 @@ struct adios_data {
 	u32 batch_count[ADIOS_BQ_PAGES][ADIOS_OPTYPES];
 	u8  bq_batch_order[ADIOS_BQ_PAGES];
 	spinlock_t bq_lock;
-	spinlock_t barrier_lock;
-	struct list_head barrier_queue;
 
 	struct lm_buckets *aggr_buckets;
 
@@ -868,9 +869,6 @@ static bool adios_bio_merge(struct request_queue *q, struct bio *bio,
 	struct request *free = NULL;
 	bool ret;
 
-	if (eval_adios_state(ad, ADIOS_STATE_BP))
-		return false;
-
 	if (!spin_trylock_irqsave(&ad->lock, flags))
 		return false;
 
@@ -926,7 +924,6 @@ static void insert_request_post_stability(struct blk_mq_hw_ctx *hctx,
 	struct adios_data *ad = q->elevator->elevator_data;
 	struct adios_rq_data *rd = get_rq_data(rq);
 	u8 optype = adios_optype(rq);
-	bool rq_is_flush;
 
 	rd->managed = true;
 	rd->block_size = blk_rq_bytes(rq);
@@ -938,23 +935,6 @@ static void insert_request_post_stability(struct blk_mq_hw_ctx *hctx,
 	/* Tier-0: at_head Requests */
 	if (at_head) {
 		insert_to_prio_queue(ad, rq, 0);
-		return;
-	}
-
-	/*
-	 * Strict Barrier Handling for REQ_OP_FLUSH:
-	 * If a flush request arrives, or if the scheduler is already in a
-	 * barrier-pending state, all subsequent requests are diverted to a
-	 * separate barrier_queue. This ensures that no new requests are processed
-	 * until all work preceding the barrier is complete.
-	 */
-	rq_is_flush = (rq->cmd_flags & REQ_OP_MASK) == REQ_OP_FLUSH;
-	if (eval_adios_state(ad, ADIOS_STATE_BP) || rq_is_flush) {
-		scoped_guard(spinlock_irqsave, &ad->barrier_lock) {
-			if (rq_is_flush)
-				set_adios_state(ad, ADIOS_STATE_BP, 0, true);
-			list_add_tail(&rq->queuelist, &ad->barrier_queue);
-		}
 		return;
 	}
 
@@ -1302,59 +1282,12 @@ static struct request *dispatch_from_pq(struct adios_data *ad) {
 	return rq;
 }
 
-static bool release_barrier_requests(struct adios_data *ad) {
-	u32 moved_count = 0;
-	LIST_HEAD(local_list);
-
-	scoped_guard(spinlock_irqsave, &ad->barrier_lock) {
-		if (!list_empty(&ad->barrier_queue)) {
-			struct request *trq, *next;
-			bool first_barrier_moved = false;
-
-			list_for_each_entry_safe(trq, next, &ad->barrier_queue, queuelist) {
-				if (!first_barrier_moved) {
-					list_del_init(&trq->queuelist);
-					insert_to_prio_queue(ad, trq, 1);
-					moved_count++;
-					first_barrier_moved = true;
-					continue;
-				}
-
-				if ((trq->cmd_flags & REQ_OP_MASK) == REQ_OP_FLUSH)
-					break;
-
-				list_move_tail(&trq->queuelist, &local_list);
-				moved_count++;
-			}
-
-			if (list_empty(&ad->barrier_queue))
-				set_adios_state(ad, ADIOS_STATE_BP, 0, false);
-		}
-	}
-
-	if (!moved_count)
-		return false;
-
-	if (!list_empty(&local_list)) {
-		struct request *trq, *next;
-
-		/* ad->lock is already held */
-		list_for_each_entry_safe(trq, next, &local_list, queuelist) {
-			list_del_init(&trq->queuelist);
-			if (merge_or_insert_to_dl_tree(ad, trq, ad->queue))
-				continue;
-		}
-	}
-
-	return true;
-}
 
 // Dispatch a request to the hardware queue
 static struct request *adios_dispatch_request(struct blk_mq_hw_ctx *hctx) {
 	struct adios_data *ad = hctx->queue->elevator->elevator_data;
 	struct request *rq;
 
-retry:
 	rq = dispatch_from_pq(ad);
 	if (rq)
 		goto found;
@@ -1362,19 +1295,6 @@ retry:
 	rq = dispatch_from_bq(ad);
 	if (rq)
 		goto found;
-
-	/*
-	 * If all active queues are empty, check if we need to process a barrier.
-	 * This is the trigger to release requests that were held in barrier_queue
-	 * due to a REQ_OP_FLUSH barrier.
-	 */
-	if (eval_adios_state(ad, ADIOS_STATE_BP)) {
-		bool barrier_released = false;
-		scoped_guard(spinlock_irqsave, &ad->lock)
-			barrier_released = release_barrier_requests(ad);
-		if (barrier_released)
-			goto retry;
-	}
 
 	return NULL;
 found:
@@ -1611,8 +1531,6 @@ static int adios_init_sched(struct request_queue *q, struct elevator_type *e) {
 	spin_lock_init(&ad->lock);
 	spin_lock_init(&ad->pq_lock);
 	spin_lock_init(&ad->bq_lock);
-	spin_lock_init(&ad->barrier_lock);
-	INIT_LIST_HEAD(&ad->barrier_queue);
 
 	timer_setup(&ad->update_timer, update_timer_callback, 0);
 
@@ -1653,7 +1571,6 @@ static void adios_exit_sched(struct elevator_queue *e) {
 
 	del_timer_sync(&ad->update_timer);
 
-	WARN_ON_ONCE(!list_empty(&ad->barrier_queue));
 	for (i = 0; i < 2; i++)
 		WARN_ON_ONCE(!list_empty(&ad->prio_queue[i]));
 
