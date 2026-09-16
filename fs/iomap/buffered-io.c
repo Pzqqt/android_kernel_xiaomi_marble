@@ -1434,7 +1434,7 @@ iomap_writepage_map(struct iomap_writepage_ctx *wpc,
 	if (!count)
 		end_page_writeback(page);
 done:
-	mapping_set_error(page->mapping, error);
+	mapping_set_error(inode->i_mapping, error);
 	return error;
 }
 
