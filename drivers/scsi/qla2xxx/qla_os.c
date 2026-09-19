@@ -2004,7 +2004,7 @@ skip_pio:
 		ha->msix_count = msix + 1;
 		/* Max queues are bounded by available msix vectors */
 		/* MB interrupt uses 1 vector */
-		ha->max_req_queues = ha->msix_count - 1;
+		ha->max_req_queues = qla_calc_queue_count(ha->msix_count);
 		ha->max_rsp_queues = ha->max_req_queues;
 		/* Queue pairs is the max value minus the base queue pair */
 		ha->max_qpairs = ha->max_rsp_queues - 1;
@@ -2090,10 +2090,10 @@ qla83xx_iospace_config(struct qla_hw_data *ha)
 		 */
 		if (ql2xmqsupport || ql2xnvmeenable) {
 			/* MB interrupt uses 1 vector */
-			ha->max_req_queues = ha->msix_count - 1;
+			ha->max_req_queues = qla_calc_queue_count(ha->msix_count);
 
 			/* ATIOQ needs 1 vector. That's 1 less QPair */
-			if (QLA_TGT_MODE_ENABLED())
+			if (QLA_TGT_MODE_ENABLED() && ha->max_req_queues > 1)
 				ha->max_req_queues--;
 
 			ha->max_rsp_queues = ha->max_req_queues;
@@ -3751,8 +3751,6 @@ qla2x00_remove_one(struct pci_dev *pdev)
 
 	qla2x00_dfs_remove(base_vha);
 
-	qla84xx_put_chip(base_vha);
-
 	/* Disable timer */
 	if (base_vha->timer_active)
 		qla2x00_stop_timer(base_vha);
@@ -3777,6 +3775,8 @@ qla2x00_remove_one(struct pci_dev *pdev)
 	qlt_remove_target_resources(ha);
 
 	scsi_remove_host(base_vha->host);
+
+	qla84xx_put_chip(base_vha);
 
 	qla2x00_free_device(base_vha);
 
@@ -6579,8 +6579,6 @@ qla2x00_disable_board_on_pci_error(struct work_struct *work)
 
 	qla2x00_dfs_remove(base_vha);
 
-	qla84xx_put_chip(base_vha);
-
 	if (base_vha->timer_active)
 		qla2x00_stop_timer(base_vha);
 
@@ -6597,6 +6595,8 @@ qla2x00_disable_board_on_pci_error(struct work_struct *work)
 	fc_remove_host(base_vha->host);
 
 	scsi_remove_host(base_vha->host);
+
+	qla84xx_put_chip(base_vha);
 
 	base_vha->flags.init_done = 0;
 	qla25xx_delete_queues(base_vha);
