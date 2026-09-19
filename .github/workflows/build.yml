@@ -4,10 +4,28 @@ on:
   push:
     branches: [bouquet_ci]
 
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      CCACHE_DIR: /home/runner/.ccache
     steps:
+      - name: Restore Slim LLVM
+        id: slim-llvm-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/build_toolchain/llvm-23.1.1-x86_64.tar.xz
+          key: llvm-23.1.1-x86_64
+      - name: Download Slim LLVM
+        if: steps.slim-llvm-cache.outputs.cache-hit != 'true'
+        run: |
+          sudo apt install -y aria2
+          
+          echo "Downloading Slim LLVM..."
+          mkdir -p ~/build_toolchain
+          cd ~/build_toolchain
+          aria2c https://mirrors.edge.kernel.org/pub/tools/llvm/files/llvm-23.1.1-x86_64.tar.xz
       - name: Prepare the environment
         run: |
           [ -d ~/.local/bin ] || mkdir -p ~/.local/bin
@@ -15,13 +33,9 @@ jobs:
           echo "SHORT_SHA=${GITHUB_SHA:0:12}" >> $GITHUB_ENV
           echo "BUILD_DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
           
-          sudo apt install -y aria2 python3 python-is-python3 python3-rich
+          sudo apt install -y ccache python3 python-is-python3 python3-rich
           
-          mkdir -p ~/build_toolchain
-          
-          echo "Downloading Slim LLVM..."
           cd ~/build_toolchain
-          aria2c https://mirrors.edge.kernel.org/pub/tools/llvm/files/llvm-23.1.1-x86_64.tar.xz
           tar -xJf ./llvm-23.1.1-x86_64.tar.xz
           
           echo "Downloading 7za..."
@@ -47,21 +61,31 @@ jobs:
           chmod +x ~/.local/bin/*
           
           mkdir -p ~/dist
+          
+          ccache --max-size=2G
+          ccache --zero-stats
       - name: Check out
         uses: actions/checkout@v7
         with:
           ref: "bouquet_ci"
+      - name: Restore ccache
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-bouquet-ci-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            ccache-bouquet-ci-${{ runner.os }}-
       - name: Build kernel Image & modules
         run: |
           cd $GITHUB_WORKSPACE
-          ./build_bouquet_ci.sh --noccache
+          ./build_bouquet_ci.sh
           cp -r ~/Bouquet_marble_out/* ~/dist/
       - name: Build kernel Image with KernelSU
         run: |
           cd ~
           git clone https://github.com/tiann/KernelSU.git
           cd $GITHUB_WORKSPACE
-          ./build_bouquet_ci.sh --noccache --noclean --ksu -- Image
+          ./build_bouquet_ci.sh --noclean --ksu -- Image
           cp ~/Bouquet_marble_out/Image_ksu* ~/dist/
       - name: Build kernel Image with KernelSU & susfs
         continue-on-error: true
@@ -69,8 +93,10 @@ jobs:
           cd ~
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android12-5.10 --depth=1
           cd $GITHUB_WORKSPACE
-          ./build_bouquet_ci.sh --noccache --susfs -- Image
+          ./build_bouquet_ci.sh --susfs -- Image
           cp ~/Bouquet_marble_out/Image_susfs* ~/dist/
+      - name: Show ccache stats
+        run: ccache --show-stats
       - name: Package AK3
         run: |
           cd ~
