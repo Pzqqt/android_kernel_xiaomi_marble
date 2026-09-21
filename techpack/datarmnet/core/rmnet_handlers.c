@@ -320,7 +320,7 @@ __rmnet_map_ingress_handler(struct sk_buff *skb,
 	/* Handle QMAPv5 packet */
 	if (qmap->next_hdr &&
 	    (port->data_format & (RMNET_FLAGS_INGRESS_COALESCE |
-				  RMNET_FLAGS_INGRESS_MAP_CKSUMV5_CLO))) {
+				  RMNET_FLAGS_INGRESS_MAP_CKSUMV5))) {
 		if (rmnet_map_process_next_hdr_packet(skb, &list, len))
 			goto free_skb;
 	} else {
@@ -372,7 +372,7 @@ rmnet_map_ingress_handler(struct sk_buff *skb,
 	}
 
 	if (port->data_format & (RMNET_FLAGS_INGRESS_COALESCE |
-				 RMNET_FLAGS_INGRESS_MAP_CKSUMV5_CLO)) {
+				 RMNET_FLAGS_INGRESS_MAP_CKSUMV5)) {
 		if (skb_is_nonlinear(skb)) {
 			rmnet_frag_ingress_handler(skb, port);
 			return;
