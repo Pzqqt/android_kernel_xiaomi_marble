@@ -603,6 +603,12 @@ static int msm_buffer_dpb_count(struct msm_vidc_inst *inst)
 	}
 
 	/* encoder dpb buffer count */
+	/* For all-intra encoding, DPB is not needed as there are no
+	 * reference frames. Skip DPB buffer allocation.
+	 */
+	if (is_encode_session(inst) && inst->capabilities->cap[ALL_INTRA].value)
+		return 0;
+
 	return msm_vidc_get_recon_buf_count(inst);
 }
 
