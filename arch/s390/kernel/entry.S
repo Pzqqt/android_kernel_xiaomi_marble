@@ -420,12 +420,15 @@ ENTRY(system_call)
 	# svc 0: system call number in %r1
 	llgfr	%r1,%r1				# clear high word in r1
 	sth	%r1,__PT_INT_CODE+2(%r11)
-	cghi	%r1,NR_syscalls
-	jnl	.Lsysc_nr_ok
+	lghi	%r0,NR_syscalls-1
+	clgr	%r1,%r0				# CC0/1 if r1 in bounds
+	slbgr	%r0,%r0				# mask = -1 in bounds, 0 out of bounds
+	ngr	%r1,%r0				# clamp r1
 	slag	%r8,%r1,3
 .Lsysc_nr_ok:
 	stg	%r2,__PT_ORIG_GPR2(%r11)
 	stg	%r7,STACK_FRAME_OVERHEAD(%r15)
+	xgr	%r1,%r1				# scrub r1, unclamped user value for svc 1-255
 	lg	%r9,0(%r8,%r10)			# get system call add.
 	TSTMSK	__TI_flags(%r12),_TIF_TRACE
 	jnz	.Lsysc_tracesys

@@ -26,10 +26,10 @@ devices explicitly. Please see :doc:`/i2c/instantiating-devices` for details.
 Sysfs entries
 -------------
 
-The following attributes are supported. Current maxim attribute
+The following attributes are supported. Current maximum attribute
 is read-write, all other attributes are read-only.
 
-in0_input		Measured voltage in microvolts.
+in0_input		Measured voltage in millivolts.
 
-curr1_input		Measured current in microamperes.
-curr1_max_alarm		Overcurrent alarm in microamperes.
+curr1_input		Measured current in milliamperes.
+curr1_max		Overcurrent shutdown threshold in milliamperes.

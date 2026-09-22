@@ -4247,10 +4247,10 @@ int vmw_execbuf_process(struct drm_file *file_priv,
 			fput(sync_file->file);
 			put_unused_fd(out_fence_fd);
 		} else {
+			struct seqno_waiter_rm_context *ctx;
 			/* Link the fence with the FD created earlier */
 			fd_install(out_fence_fd, sync_file->file);
-			struct seqno_waiter_rm_context *ctx =
-				kmalloc(sizeof(*ctx), GFP_KERNEL);
+			ctx = kmalloc(sizeof(*ctx), GFP_KERNEL);
 			ctx->dev_priv = dev_priv;
 			vmw_seqno_waiter_add(dev_priv);
 			if (dma_fence_add_callback(&fence->base, &ctx->base,

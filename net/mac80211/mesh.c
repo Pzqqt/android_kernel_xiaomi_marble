@@ -75,6 +75,9 @@ bool mesh_matches_local(struct ieee80211_sub_if_data *sdata,
 	 *   - MDA enabled
 	 * - Power management control on fc
 	 */
+	if (!ie->mesh_config)
+		return false;
+
 	if (!(ifmsh->mesh_id_len == ie->mesh_id_len &&
 	     memcmp(ifmsh->mesh_id, ie->mesh_id, ie->mesh_id_len) == 0 &&
 	     (ifmsh->mesh_pp_id == ie->mesh_config->meshconf_psel) &&
@@ -1433,6 +1436,9 @@ static void mesh_rx_csa_frame(struct ieee80211_sub_if_data *sdata,
 			       mgmt->bssid, NULL);
 
 	if (!mesh_matches_local(sdata, &elems))
+		return;
+
+	if (!elems.mesh_chansw_params_ie)
 		return;
 
 	ifmsh->chsw_ttl = elems.mesh_chansw_params_ie->mesh_ttl;

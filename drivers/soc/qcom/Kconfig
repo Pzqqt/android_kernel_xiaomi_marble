@@ -289,6 +289,19 @@ config PDR_INDICATION_NOTIF_TIMEOUT
 	  the start and end of notifications, before a warning
 	  is emitted.
 
+config QCOM_PDR_MONITOR
+	tristate "Qualcomm Protection Domain Restart Monitor"
+	depends on QCOM_PDR_HELPERS
+	depends on QCOM_SMEM
+	help
+	  This driver monitors Protection Domain (PD) state changes on
+	  Qualcomm SoCs and logs symbolized stack traces in case of PD down
+	  for debugging purposes. It provides visibility into PD events
+	  that may affect subsystem stability.
+
+	  Say Y here if you need to debug PD-related issues on Qualcomm
+	  platforms.
+
 config MSM_PIL
 	tristate "Peripheral image loader"
 	select FW_LOADER

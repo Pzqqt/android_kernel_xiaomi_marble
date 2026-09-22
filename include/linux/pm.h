@@ -610,6 +610,9 @@ struct dev_pm_info {
 	bool			no_pm_callbacks:1;	/* Owned by the PM core */
 	unsigned int		must_resume:1;	/* Owned by the PM core */
 	unsigned int		may_skip_resume:1;	/* Set by subsystems */
+#ifndef __GENKSYMS__
+	bool			async_in_progress:1;	/* Owned by the PM core */
+#endif
 #else
 	unsigned int		should_wakeup:1;
 #endif
