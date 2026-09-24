@@ -631,6 +631,7 @@ static int parse_xfer_event(struct mhi_controller *mhi_cntrl,
 		struct mhi_tre *dev_rp;
 		struct mhi_buf_info *buf_info;
 		u32 xfer_len;
+		size_t buf_len;
 
 		if (!is_valid_ring_ptr(tre_ring, ptr)) {
 			MHI_ERR("Event element points outside of the tre ring\n");
@@ -648,6 +649,28 @@ static int parse_xfer_event(struct mhi_controller *mhi_cntrl,
 		local_rp = (struct mhi_tre *)tre_ring->rp;
 		while (local_rp != dev_rp) {
 			buf_info = (struct mhi_buf_info *)buf_ring->rp;
+
+			/*
+			 * The buf_ring slot and tre_ring slot are populated in
+			 * lockstep by mhi_gen_tre(), which records the owning
+			 * TRE in buf_info->wp and marks the slot used. If the
+			 * device reports a completion whose walk reaches a slot
+			 * that is not currently queued (used == false) or whose
+			 * recorded TRE does not match the ring position being
+			 * consumed, the two rings have desynchronized - a
+			 * corrupted/malicious device could otherwise drive this
+			 * loop across already-consumed slots and replay stale
+			 * cb_buf pointers (double-free / UAF in the client
+			 * callback). Stop consuming in that case.
+			 */
+			if (unlikely(!buf_info->used || buf_info->wp != (void *)local_rp)) {
+				MHI_ERR("ring desync chan %d: used %d wp 0x%llx rp 0x%llx\n",
+					mhi_chan->chan, buf_info->used,
+					buf_info->wp ?
+						(u64)mhi_to_physical(tre_ring, buf_info->wp) : 0,
+					(u64)mhi_to_physical(tre_ring, local_rp));
+				break;
+			}
 			/* If it's the last TRE, get length from the event */
 			if (local_rp == ev_tre)
 				xfer_len = MHI_TRE_GET_EV_LEN(event);
@@ -663,6 +686,25 @@ static int parse_xfer_event(struct mhi_controller *mhi_cntrl,
 			/* truncate to buf len if xfer_len is larger */
 			result.bytes_xferd =
 				min_t(u32, xfer_len, buf_info->len);
+
+			/*
+			 * Capture the recycle length before releasing the slot;
+			 * the pre_alloc path below reuses it and result.buf_addr
+			 * rather than reading buf_info again.
+			 */
+			buf_len = buf_info->len;
+
+			/*
+			 * Defense-in-depth: the buffer pointer and length are
+			 * now captured, so release the slot by clearing its
+			 * live markers. A subsequent device-reported completion
+			 * that walks back into this already-consumed slot then
+			 * fails the used/wp desync check above instead of
+			 * replaying a stale cb_buf (double-free / UAF).
+			 */
+			buf_info->used = false;
+			buf_info->cb_buf = NULL;
+
 			mhi_del_ring_element(mhi_cntrl, buf_ring);
 			mhi_del_ring_element(mhi_cntrl, tre_ring);
 			local_rp = (struct mhi_tre *)tre_ring->rp;
@@ -683,12 +725,12 @@ static int parse_xfer_event(struct mhi_controller *mhi_cntrl,
 			if (mhi_chan->pre_alloc) {
 				if (mhi_queue_buf(mhi_chan->mhi_dev,
 						  mhi_chan->dir,
-						  buf_info->cb_buf,
-						  buf_info->len, MHI_EOT)) {
+						  result.buf_addr,
+						  buf_len, MHI_EOT)) {
 					MHI_ERR(
 						"Error recycling buffer for chan:%d\n",
 						mhi_chan->chan);
-					kfree(buf_info->cb_buf);
+					kfree(result.buf_addr);
 				}
 			}
 
@@ -712,8 +754,8 @@ static int parse_xfer_event(struct mhi_controller *mhi_cntrl,
 	}
 	case MHI_EV_CC_BAD_TRE:
 	default:
-		MHI_ERR("Unknown event 0x%x\n", ev_code);
-		panic("Unknown event 0x%x\n", ev_code);
+		MHI_ERR("Unknown TX event code 0x%x on chan %d, dropping\n",
+			ev_code, mhi_chan->chan);
 		break;
 	} /* switch(MHI_EV_READ_CODE(EV_TRB_CODE,event)) */
 
@@ -811,8 +853,11 @@ static void mhi_process_cmd_completion(struct mhi_controller *mhi_cntrl,
 
 	if (cmd_pkt != (struct mhi_tre *)mhi_ring->rp) {
 		mhi_tre = (struct mhi_tre *)mhi_ring->rp;
-		panic("Out of order cmd completion: 0x%llx. Expected: 0x%llx\n",
-			ptr, (u64)mhi_to_physical(mhi_ring, mhi_tre));
+		MHI_ERR("ooo cmd completion chan %d: 0x%llx exp 0x%llx type 0x%x; drop\n",
+			MHI_TRE_GET_CMD_CHID(cmd_pkt), ptr,
+			(u64)mhi_to_physical(mhi_ring, mhi_tre),
+			MHI_TRE_GET_CMD_TYPE(cmd_pkt));
+		return;
 	}
 
 	if (MHI_TRE_GET_CMD_TYPE(cmd_pkt) == MHI_CMD_SFR_CFG) {
@@ -1316,6 +1361,15 @@ int mhi_gen_tre(struct mhi_controller *mhi_cntrl, struct mhi_chan *mhi_chan,
 		}
 	}
 
+	/*
+	 * Publish the slot to the consume path only once it is fully
+	 * populated (including a successful DMA map above). @wp records the
+	 * owning TRE; together @wp and @used form the lockstep
+	 * parse_xfer_event() relies on to reject a device-reported completion
+	 * for a slot the host did not queue.
+	 */
+	buf_info->used = true;
+
 	eob = !!(flags & MHI_EOB);
 	eot = !!(flags & MHI_EOT);
 	chain = !!(flags & MHI_CHAIN);
@@ -1727,6 +1781,9 @@ static void mhi_reset_data_chan(struct mhi_controller *mhi_cntrl,
 
 		if (!buf_info->pre_mapped)
 			mhi_cntrl->unmap_single(mhi_cntrl, buf_info);
+
+		/* Release the slot so a later mhi_gen_tre() can reuse it. */
+		buf_info->used = false;
 
 		mhi_del_ring_element(mhi_cntrl, buf_ring);
 		mhi_del_ring_element(mhi_cntrl, tre_ring);
