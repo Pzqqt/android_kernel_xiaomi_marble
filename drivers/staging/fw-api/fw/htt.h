@@ -940,6 +940,11 @@ typedef enum {
     HTT_STATS_NPCA_TAG                              = 260, /* htt_stats_npca_tlv */
     HTT_STATS_SCHED_TXQ_TX_MODE_SIMPLIFIED_TAG      = 261, /* htt_stats_sched_txq_tx_mode_simplified_tlv */
     HTT_STATS_SCHED_TXQ_TX_MODE_WINNER_TAG          = 262, /* htt_stats_sched_txq_tx_mode_winner_tlv */
+    HTT_STATS_DFS_RADAR_HISTORY_TAG                 = 263, /* htt_stats_dfs_radar_history_tlv */
+    HTT_STATS_DFS_INI_TAG                           = 264, /* htt_stats_dfs_ini_tlv */
+    HTT_STATS_DFS_IPC_RING_TAG                      = 265, /* htt_stats_dfs_ipc_ring_tlv */
+    HTT_STATS_PHY_DPD_DEBUG_CHAIN_V1_TAG            = 266, /* htt_stats_phy_dpd_debug_chain_v1_tlv */
+    HTT_STATS_PHY_TPC_DEBUG_CHAIN_V1_TAG            = 267, /* htt_stats_phy_tpc_debug_chain_v1_tlv */
 
     HTT_STATS_MAX_TAG,
 } htt_stats_tlv_tag_t;
