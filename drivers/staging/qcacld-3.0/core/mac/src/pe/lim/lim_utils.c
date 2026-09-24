@@ -7639,13 +7639,17 @@ void lim_update_session_he_capable_chan_switch(struct mac_context *mac,
 }
 
 void lim_set_he_caps(struct mac_context *mac, struct pe_session *session,
-		     uint8_t *ie_start, uint32_t num_bytes)
+		     uint8_t *ie_start, uint32_t num_bytes, uint8_t band)
 {
 	const uint8_t *ie = NULL;
 	tDot11fIEhe_cap dot11_cap;
 	struct he_capability_info *he_cap;
+	bool is_band_2g = false;
 
-	populate_dot11f_he_caps(mac, session, &dot11_cap);
+	if (band == CDS_BAND_2GHZ)
+		is_band_2g = true;
+
+	populate_dot11f_he_caps_by_band(mac, is_band_2g, &dot11_cap);
 	lim_log_he_cap(mac, &dot11_cap);
 	ie = wlan_get_ext_ie_ptr_from_ext_id(HE_CAP_OUI_TYPE,
 			HE_CAP_OUI_SIZE, ie_start, num_bytes);
@@ -7841,7 +7845,8 @@ QDF_STATUS lim_send_he_caps_ie(struct mac_context *mac_ctx,
 	he_caps[0] = DOT11F_EID_HE_CAP;
 	he_caps[1] = SIR_MAC_HE_CAP_MIN_LEN;
 	qdf_mem_copy(&he_caps[2], HE_CAP_OUI_TYPE, HE_CAP_OUI_SIZE);
-	lim_set_he_caps(mac_ctx, session, he_caps, he_cap_total_len);
+	lim_set_he_caps(mac_ctx, session, he_caps, he_cap_total_len,
+			CDS_BAND_5GHZ);
 	he_cap = (struct he_capability_info *) (&he_caps[2 + HE_CAP_OUI_SIZE]);
 
 	nan_beamforming_supported =
@@ -7883,6 +7888,10 @@ QDF_STATUS lim_send_he_caps_ie(struct mac_context *mac_ctx,
 	if (QDF_IS_STATUS_ERROR(status_5g))
 		pe_err("Unable send HE Cap IE for 5GHZ band, status: %d",
 			status_5g);
+
+	lim_set_he_caps(mac_ctx, session, he_caps, he_cap_total_len,
+			CDS_BAND_2GHZ);
+	he_cap = (struct he_capability_info *)(&he_caps[2 + HE_CAP_OUI_SIZE]);
 
 	/*
 	 * For 5G band HE cap, set the beamformee STS <= 80Mhz to
@@ -8542,15 +8551,21 @@ void lim_log_eht_op(struct mac_context *mac, tDot11fIEeht_op *eht_ops,
 }
 
 void lim_set_eht_caps(struct mac_context *mac, struct pe_session *session,
-		      uint8_t *ie_start, uint32_t num_bytes)
+		      uint8_t *ie_start, uint32_t num_bytes, uint8_t band)
 {
 	const uint8_t *ie = NULL;
+	uint8_t offset = 0;
+	uint8_t offset_1 = 0;
 	tDot11fIEeht_cap dot11_cap;
 	tDot11fIEhe_cap dot11_he_cap;
 	struct wlan_eht_cap_info *eht_cap;
+	bool is_band_2g = false;
 
-	populate_dot11f_eht_caps(mac, session, &dot11_cap);
-	populate_dot11f_he_caps(mac, session, &dot11_he_cap);
+	if (band == CDS_BAND_2GHZ)
+		is_band_2g = true;
+
+	populate_dot11f_eht_caps_by_band(mac, is_band_2g, &dot11_cap);
+	populate_dot11f_he_caps_by_band(mac, is_band_2g, &dot11_he_cap);
 	lim_log_eht_cap(mac, &dot11_cap);
 
 	ie = wlan_get_ext_ie_ptr_from_ext_id(EHT_CAP_OUI_TYPE,

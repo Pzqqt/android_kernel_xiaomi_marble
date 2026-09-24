@@ -3155,7 +3155,8 @@ static
 QDF_STATUS sme_qos_create_tspec_ricie(struct mac_context *mac,
 				      struct sme_qos_wmmtspecinfo *tspec_info,
 				      uint8_t *ric_buffer, uint32_t *ric_length,
-				      uint8_t *ric_identifier)
+				      uint8_t *ric_identifier,
+				      uint32_t buffer_size)
 {
 	tDot11fIERICDataDesc *ric_ie;
 	uint32_t status;
@@ -3166,6 +3167,12 @@ QDF_STATUS sme_qos_create_tspec_ricie(struct mac_context *mac,
 			FL("RIC data is NULL, %pK, %pK, %pK"),
 			ric_buffer, ric_identifier, ric_length);
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (buffer_size < sizeof(tDot11fIERICDataDesc)) {
+		sme_err("Insufficient buffer size %d, need at least %zu",
+			buffer_size, sizeof(tDot11fIERICDataDesc));
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	ric_ie = qdf_mem_malloc(sizeof(*ric_ie));
@@ -3210,7 +3217,7 @@ QDF_STATUS sme_qos_create_tspec_ricie(struct mac_context *mac,
 	*ric_identifier = ric_ie->RICData.Identifier;
 
 	status = dot11f_pack_ie_ric_data_desc(mac, ric_ie, ric_buffer,
-					      sizeof(*ric_ie), ric_length);
+					      buffer_size, ric_length);
 	if (DOT11F_FAILED(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			"Packing of RIC Data of length %d failed with status %d",
@@ -3252,7 +3259,7 @@ QDF_STATUS sme_qos_create_tspec_ricie(struct mac_context *mac,
 	ric_ie->WMMTSPEC.access_policy = SME_QOS_ACCESS_POLICY_EDCA;
 
 	status = dot11f_pack_ie_ric_data_desc(mac, ric_ie, ric_buffer,
-					      sizeof(*ric_ie), ric_length);
+					      buffer_size, ric_length);
 	if (DOT11F_FAILED(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			"Packing of RIC Data of length %d failed with status %d",
@@ -5178,6 +5185,16 @@ static QDF_STATUS sme_qos_process_preauth_success_ind(struct mac_context *mac_ct
 				goto add_next_ric;
 
 			/*
+			 * Check if adding another TSPEC would exceed
+			 * buffer size.
+			 */
+			if (ric_offset >= MAX_FTIE_SIZE) {
+				sme_err("RIC offset %u exceeds or equals max FTIE size %u, skipping remaining TSPECs",
+					ric_offset, MAX_FTIE_SIZE);
+				break;
+			}
+
+			/*
 			 * If a tspec status is pending, take requested_QoSInfo
 			 * for RIC request, else use curr_QoSInfo for the
 			 * RIC request
@@ -5186,16 +5203,18 @@ static QDF_STATUS sme_qos_process_preauth_success_ind(struct mac_context *mac_ct
 				status = sme_qos_create_tspec_ricie(mac_ctx,
 					&ac_info->requested_QoSInfo[tspec_idx],
 					ric_ie + ric_offset, &ric_ielen,
-					&ac_info->ricIdentifier[tspec_idx]);
+					&ac_info->ricIdentifier[tspec_idx],
+					MAX_FTIE_SIZE - ric_offset);
 			} else {
 				status = sme_qos_create_tspec_ricie(mac_ctx,
 					&ac_info->curr_QoSInfo[tspec_idx],
 					ric_ie + ric_offset, &ric_ielen,
-					&ac_info->ricIdentifier[tspec_idx]);
+					&ac_info->ricIdentifier[tspec_idx],
+					MAX_FTIE_SIZE - ric_offset);
 			}
 add_next_ric:
 			ric_offset += ric_ielen;
-			mlme_priv->connect_info.ft_info.ric_ies_length = ric_ielen;
+			mlme_priv->connect_info.ft_info.ric_ies_length += ric_ielen;
 			tspec_mask_status >>= 1;
 			tspec_pending_status >>= 1;
 			tspec_idx++;
