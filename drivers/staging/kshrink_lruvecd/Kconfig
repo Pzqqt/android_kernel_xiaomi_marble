@@ -1,5 +1,6 @@
 config KSHRINK_LRUVECD
        tristate "Allow asynchronous shrink lruvec"
        default n
+       depends on !LRU_GEN
        help
          Asynchronous shrink lruvec optimization feature
