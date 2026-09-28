@@ -141,7 +141,7 @@ static struct kpp_alg ecdh_nist_p192 = {
 	.init = ecdh_nist_p192_init_tfm,
 	.base = {
 		.cra_name = "ecdh-nist-p192",
-		.cra_driver_name = "ecdh-generic",
+		.cra_driver_name = "ecdh-nist-p192-generic",
 		.cra_priority = 100,
 		.cra_module = THIS_MODULE,
 		.cra_ctxsize = sizeof(struct ecdh_ctx),
@@ -166,7 +166,7 @@ static struct kpp_alg ecdh_nist_p256 = {
 	.init = ecdh_nist_p256_init_tfm,
 	.base = {
 		.cra_name = "ecdh-nist-p256",
-		.cra_driver_name = "ecdh-generic",
+		.cra_driver_name = "ecdh-nist-p256-generic",
 		.cra_priority = 100,
 		.cra_module = THIS_MODULE,
 		.cra_ctxsize = sizeof(struct ecdh_ctx),
@@ -179,10 +179,20 @@ static int ecdh_init(void)
 {
 	int ret;
 
+	/* NIST p192 will fail to register in FIPS mode */
 	ret = crypto_register_kpp(&ecdh_nist_p192);
 	ecdh_nist_p192_registered = ret == 0;
 
-	return crypto_register_kpp(&ecdh_nist_p256);
+	ret = crypto_register_kpp(&ecdh_nist_p256);
+	if (ret)
+		goto nist_p256_error;
+
+	return 0;
+
+nist_p256_error:
+	if (ecdh_nist_p192_registered)
+		crypto_unregister_kpp(&ecdh_nist_p192);
+	return ret;
 }
 
 static void ecdh_exit(void)

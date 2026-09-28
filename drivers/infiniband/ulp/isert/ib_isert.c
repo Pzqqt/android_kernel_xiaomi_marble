@@ -58,6 +58,8 @@ static void isert_recv_done(struct ib_cq *cq, struct ib_wc *wc);
 static void isert_send_done(struct ib_cq *cq, struct ib_wc *wc);
 static void isert_login_recv_done(struct ib_cq *cq, struct ib_wc *wc);
 static void isert_login_send_done(struct ib_cq *cq, struct ib_wc *wc);
+static void isert_unmap_tx_desc(struct iser_tx_desc *tx_desc,
+				struct ib_device *ib_dev);
 
 static int isert_sg_tablesize_set(const char *val, const struct kernel_param *kp)
 {
@@ -499,6 +501,8 @@ isert_connect_release(struct isert_conn *isert_conn)
 
 	if (isert_conn->qp)
 		isert_destroy_qp(isert_conn);
+
+	isert_unmap_tx_desc(&isert_conn->login_tx_desc, device->ib_device);
 
 	if (isert_conn->login_desc)
 		isert_free_login_buf(isert_conn);
@@ -947,27 +951,16 @@ isert_put_login_tx(struct iscsi_conn *conn, struct iscsi_login *login,
 	}
 	if (!login->login_failed) {
 		if (login->login_complete) {
-			ret = isert_alloc_rx_descriptors(isert_conn);
-			if (ret)
-				return ret;
-
-			ret = isert_post_recvm(isert_conn,
-					       ISERT_QP_MAX_RECV_DTOS);
-			if (ret)
-				return ret;
-
-			/* Now we are in FULL_FEATURE phase */
-			mutex_lock(&isert_conn->mutex);
-			isert_conn->state = ISER_CONN_FULL_FEATURE;
-			mutex_unlock(&isert_conn->mutex);
-			goto post_send;
+			/* Posted and sent from isert_get_rx_pdu(). */
+			isert_conn->login_rsp_pending = true;
+			return 0;
 		}
 
 		ret = isert_login_post_recv(isert_conn);
 		if (ret)
 			return ret;
 	}
-post_send:
+
 	ret = isert_login_post_send(isert_conn, tx_desc);
 	if (ret)
 		return ret;
@@ -2618,7 +2611,29 @@ static void isert_free_conn(struct iscsi_conn *conn)
 
 static void isert_get_rx_pdu(struct iscsi_conn *conn)
 {
+	struct isert_conn *isert_conn = conn->context;
 	struct completion comp;
+
+	/* The login timeout timer can fail the login after isert_put_login_tx(). */
+	if (!isert_conn->login_rsp_pending)
+		return;
+
+	isert_conn->login_rsp_pending = false;
+
+	/* The session is registered by now; see isert_put_login_tx(). */
+	if (isert_alloc_rx_descriptors(isert_conn))
+		return;
+
+	if (isert_post_recvm(isert_conn, ISERT_QP_MAX_RECV_DTOS))
+		return;
+
+	/* Now we are in FULL_FEATURE phase */
+	mutex_lock(&isert_conn->mutex);
+	isert_conn->state = ISER_CONN_FULL_FEATURE;
+	mutex_unlock(&isert_conn->mutex);
+
+	if (isert_login_post_send(isert_conn, &isert_conn->login_tx_desc))
+		return;
 
 	init_completion(&comp);
 
