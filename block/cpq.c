@@ -801,6 +801,20 @@ static struct request *cpq_dispatch_request(struct blk_mq_hw_ctx *hctx)
 }
 
 /*
+ * 'depth' is a number in the range 1..INT_MAX representing a number of
+ * requests. Scale it with a factor (1 << bt->sb.shift) / q->nr_requests since
+ * 1..(1 << bt->sb.shift) is the range expected by sbitmap_get_shallow().
+ * Values larger than q->nr_requests have the same effect as q->nr_requests.
+ */
+static int to_word_depth(struct blk_mq_hw_ctx *hctx, unsigned int qdepth)
+{
+	struct sbitmap_queue *bt = hctx->sched_tags->bitmap_tags;
+	const unsigned int nrr = hctx->queue->nr_requests;
+
+	return ((qdepth << bt->sb.shift) + nrr - 1) / nrr;
+}
+
+/*
  * Called by __blk_mq_alloc_request(). The shallow_depth value set by this
  * function is used by __blk_mq_get_tag().
  */
@@ -816,7 +830,7 @@ static void cpq_limit_depth(unsigned int opf, struct blk_mq_alloc_data *data)
 	 * Throttle asynchronous requests and writes such that these requests
 	 * do not block the allocation of synchronous requests.
 	 */
-	data->shallow_depth = cpqd->async_depth;
+	data->shallow_depth = to_word_depth(data->hctx, cpqd->async_depth);
 }
 
 /* Called by blk_mq_update_nr_requests(). */
@@ -826,9 +840,9 @@ static void cpq_depth_updated(struct blk_mq_hw_ctx *hctx)
 	struct cpq_data *cpqd = q->elevator->elevator_data;
 	struct blk_mq_tags *tags = hctx->sched_tags;
 
-	cpqd->async_depth = max(1UL, 3 * q->nr_requests / 4);
+	cpqd->async_depth = q->nr_requests;
 
-	sbitmap_queue_min_shallow_depth(tags->bitmap_tags, cpqd->async_depth);
+	sbitmap_queue_min_shallow_depth(tags->bitmap_tags, 1);
 }
 
 /* Called by blk_mq_init_hctx() and blk_mq_init_sched(). */
