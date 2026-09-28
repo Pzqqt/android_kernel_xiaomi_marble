@@ -33,6 +33,8 @@ ssg-$(CONFIG_MQ_IOSCHED_SSG)	:= ssg-iosched.o
 ssg-$(CONFIG_MQ_IOSCHED_SSG_CGROUP)	+= ssg-cgroup.o
 obj-$(CONFIG_MQ_IOSCHED_SSG)	+= ssg.o
 
+obj-$(CONFIG_CPQ_IOSCHED)	+= cpq.o
+
 obj-$(CONFIG_BLK_CMDLINE_PARSER)	+= cmdline-parser.o
 obj-$(CONFIG_BLK_DEV_INTEGRITY) += bio-integrity.o blk-integrity.o
 obj-$(CONFIG_BLK_DEV_INTEGRITY_T10)	+= t10-pi.o
