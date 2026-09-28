@@ -1,0 +1,119 @@
+name: Build Kernel
+
+on:
+  push:
+    branches: [bouquet_ci]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      CCACHE_DIR: /home/runner/.ccache
+    steps:
+      - name: Restore Slim LLVM
+        id: slim-llvm-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/build_toolchain/llvm-23.1.1-x86_64.tar.xz
+          key: llvm-23.1.1-x86_64
+      - name: Download Slim LLVM
+        if: steps.slim-llvm-cache.outputs.cache-hit != 'true'
+        run: |
+          sudo apt install -y aria2
+          
+          echo "Downloading Slim LLVM..."
+          mkdir -p ~/build_toolchain
+          cd ~/build_toolchain
+          aria2c https://mirrors.edge.kernel.org/pub/tools/llvm/files/llvm-23.1.1-x86_64.tar.xz
+      - name: Prepare the environment
+        run: |
+          [ -d ~/.local/bin ] || mkdir -p ~/.local/bin
+          
+          echo "SHORT_SHA=${GITHUB_SHA:0:12}" >> $GITHUB_ENV
+          echo "BUILD_DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
+          
+          sudo apt install -y ccache python3 python-is-python3 python3-rich
+          
+          cd ~/build_toolchain
+          tar -xJf ./llvm-23.1.1-x86_64.tar.xz
+          
+          echo "Downloading 7za..."
+          mkdir -p /tmp/7z2603-linux-x64
+          cd /tmp/7z2603-linux-x64
+          wget -nv https://github.com/ip7z/7zip/releases/download/26.03/7z2603-linux-x64.tar.xz
+          tar -xJf ./7z2603-linux-x64.tar.xz
+          cp ./7zzs ~/.local/bin/7za
+          chmod +x ~/.local/bin/7za
+          cd ~
+          rm -rf /tmp/7z2603-linux-x64
+          
+          echo "Downloading HDiffPatch..."
+          mkdir -p /tmp/hdiffpatch
+          cd /tmp/hdiffpatch
+          wget -nv https://github.com/sisong/HDiffPatch/releases/download/v4.12.2/hdiffpatch_v4.12.2_bin_linux64.zip
+          7za x ./hdiffpatch_v4.12.2_bin_linux64.zip
+          cp ./linux64/hdiffz  ~/.local/bin/
+          cp ./linux64/hpatchz ~/.local/bin/
+          cd ~
+          rm -rf /tmp/hdiffpatch
+          
+          chmod +x ~/.local/bin/*
+          
+          mkdir -p ~/dist
+          
+          ccache --max-size=2G
+          ccache --zero-stats
+      - name: Check out
+        uses: actions/checkout@v7
+        with:
+          ref: "bouquet_ci"
+      - name: Restore ccache
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-bouquet-ci-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            ccache-bouquet-ci-${{ runner.os }}-
+      - name: Build kernel Image & modules
+        run: |
+          cd $GITHUB_WORKSPACE
+          ./build_bouquet.sh
+          cp -r ~/Bouquet_marble_out/* ~/dist/
+      - name: Build kernel Image with KernelSU
+        run: |
+          cd ~
+          git clone https://github.com/tiann/KernelSU.git
+          cd $GITHUB_WORKSPACE
+          ./build_bouquet.sh --noclean --ksu -- Image
+          cp ~/Bouquet_marble_out/Image_ksu* ~/dist/
+      - name: Build kernel Image with KernelSU & susfs
+        continue-on-error: true
+        run: |
+          cd ~
+          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android12-5.10 --depth=1
+          cd $GITHUB_WORKSPACE
+          ./build_bouquet.sh --susfs -- Image
+          cp ~/Bouquet_marble_out/Image_susfs* ~/dist/
+      - name: Show ccache stats
+        run: ccache --show-stats
+      - name: Package AK3
+        run: |
+          cd ~
+          git clone https://github.com/Pzqqt/AnyKernel3.git -b Marble-Bouquet --depth=1
+          cd AnyKernel3
+          
+          rm ./Image*
+          cp -f ~/dist/devicetree/ukee.dtb   ./_dtb/dtb
+          cp -f ~/dist/devicetree/dtbo.img   ./_dtb/dtbo.img
+          cp -f ~/dist/alt_kernel_modules/*  ./_modules_hyperos/_alt/
+          cp -f ~/dist/vendor_boot_modules/* ./_modules_hyperos/_vendor_boot_modules/
+          cp -f ~/dist/vendor_dlkm_modules/* ./_modules_hyperos/_vendor_dlkm_modules/
+          cp -f ~/dist/Image* ./
+          
+          python3 ./make_package.py "ci-${BUILD_DATE}-${SHORT_SHA}"
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          path: ~/AnyKernel3/Bouquet-Kernel-ci-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}.zip
+          if-no-files-found: error
+          archive: false
