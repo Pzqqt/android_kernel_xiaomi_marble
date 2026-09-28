@@ -17,11 +17,11 @@
 
 #include <trace/events/block.h>
 
-#include "../elevator.h"
-#include "../blk.h"
-#include "../blk-mq.h"
-#include "../blk-mq-debugfs.h"
-#include "../blk-mq-sched.h"
+#include "elevator.h"
+#include "blk.h"
+#include "blk-mq.h"
+#include "blk-mq-debugfs.h"
+#include "blk-mq-sched.h"
 
 static const int read_expire = HZ / 2;  /* max time before a read is submitted. */
 static const int write_expire = 5 * HZ; /* ditto for writes, these limits are SOFT! */
