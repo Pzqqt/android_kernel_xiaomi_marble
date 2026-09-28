@@ -1041,8 +1041,6 @@ static void cpq_insert_request(struct blk_mq_hw_ctx *hctx, struct request *rq,
 		return;
 	}
 
-	trace_block_rq_insert(hctx->queue, rq);
-
 	if (at_head) {
 		list_add(&rq->queuelist, &per_prio->dispatch);
 		rq->fifo_time = jiffies;
