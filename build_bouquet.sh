@@ -10,9 +10,9 @@ cd ${0%/*}
 KDIR=$(pwd)
 DEFCONFIG=marble_defconfig
 IMAGE=${KDIR}/out/arch/arm64/boot/Image
-OUTPUT_DIR=${KDIR}/../Bouquet_marble_release
-KERNELSU_REPO=${KDIR}/../KernelSU
-SUSFS_REPO=${KDIR}/../susfs4ksu
+OUTPUT_DIR=~/Bouquet_marble_out
+KERNELSU_REPO=~/KernelSU
+SUSFS_REPO=~/susfs4ksu
 DEVICETREE="arch/arm64/boot/dts/vendor/qcom"
 
 mkdir -p $OUTPUT_DIR
@@ -66,15 +66,21 @@ done
 
 ########## Preparation Phase ##########
 
-export KBUILD_BUILD_HOST="wsl2"
-export KBUILD_BUILD_USER="pzqqt"
-
 echo -e "${gre}Building kernel with Slim LLVM 23.1.1 $white"
 CLANG_PATH=~/build_toolchain/llvm-23.1.1-x86_64/bin
 
 export PATH=$(realpath $CLANG_PATH):$(realpath ${KDIR}/build-tools):${PATH}
 
-export LOCALVERSION=-v5.1
+if [ "$USER" == "runner" ]; then
+	export KBUILD_BUILD_HOST="ubuntu"
+	export KBUILD_BUILD_USER="github"
+	export LOCALVERSION=-$(git rev-parse --short HEAD)
+else
+	export KBUILD_BUILD_HOST="wsl2"
+	export KBUILD_BUILD_USER="pzqqt"
+	export LOCALVERSION=-v5.1
+fi
+
 $with_ksu && {
 	while true; do
 		kversion_ksu_suffix=$(cat /dev/urandom | tr -dc 'a-zA-Z' | head -c 3)
