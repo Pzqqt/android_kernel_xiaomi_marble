@@ -841,6 +841,23 @@ typedef  enum  {
      */
     WMI_SERVICE_CTAS_PLIM_INDICATION_SUPPORT = 518,
 
+    /*
+     * Indicates FW supports NAN in offload mode
+     * (supplicant-based NAN offload mode architecture).
+     */
+    WMI_SERVICE_NAN_OFFLOAD_MODE_SUPPORT = 519,
+
+    /* WMI_SERVICE_PDEV_SET_CUMAC_CHIP_CMD_SUPPORT:
+     * FW supports handling WMI_PDEV_SET_CUMAC_CHIP_CMDID.
+     * When this service bit is set in wmi_service_ready, the host can
+     * set WMI_RSRC_CFG_HOST_SERVICE_FLAG_CUMAC_CMD_SUPPORT in
+     * wmi_resource_config.host_service_flags to indicate it will send
+     * WMI_PDEV_SET_CUMAC_CHIP_CMDID to trigger wal_mlo_cumac_init().
+     * If the host does not set this flag, FW will call wal_mlo_cumac_init()
+     * from wal_mlo_soc_init() with the default chip id.
+     */
+    WMI_SERVICE_PDEV_SET_CUMAC_CHIP_CMD_SUPPORT = 520,
+
 
     WMI_MAX_EXT2_SERVICE
 

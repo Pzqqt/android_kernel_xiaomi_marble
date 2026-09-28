@@ -374,11 +374,11 @@ void hdd_disable_ns_offload(struct hdd_adapter *adapter,
  */
 void hdd_ipv6_notifier_work_queue(struct work_struct *work);
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 13, 0))
 /**
  * wlan_hdd_cfg80211_get_txpower() - cfg80211 get power handler function
  * @wiphy: Pointer to wiphy structure.
  * @wdev: Pointer to wireless_dev structure.
+ * @radio_idx: Radio index
  * @link_id: Link index
  * @dbm: dbm
  *
@@ -388,23 +388,18 @@ void hdd_ipv6_notifier_work_queue(struct work_struct *work);
  *
  * Return: 0 for success, error number on failure.
  */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 17, 0))
+int wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
+				  struct wireless_dev *wdev,
+				  int radio_idx,
+				  unsigned int link_id,
+				  int *dbm);
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 13, 0))
 int wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 				  struct wireless_dev *wdev,
 				  unsigned int link_id,
 				  int *dbm);
 #else
-/**
- * wlan_hdd_cfg80211_get_txpower() - cfg80211 get power handler function
- * @wiphy: Pointer to wiphy structure.
- * @wdev: Pointer to wireless_dev structure.
- * @dbm: dbm
- *
- * This is the cfg80211 get txpower handler function which invokes
- * the internal function @__wlan_hdd_cfg80211_get_txpower with
- * SSR protection.
- *
- * Return: 0 for success, error number on failure.
- */
 int wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 				  struct wireless_dev *wdev,
 				  int *dbm);
@@ -414,15 +409,24 @@ int wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
  * wlan_hdd_cfg80211_set_txpower() - set TX power
  * @wiphy: Pointer to wiphy
  * @wdev: Pointer to network device
+ * @radio_idx: Radio index
  * @type: TX power setting type
  * @dbm: TX power in dbm
  *
  * Return: 0 for success, non-zero for failure
  */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 17, 0))
+int wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
+				  struct wireless_dev *wdev,
+				  int radio_idx,
+				  enum nl80211_tx_power_setting type,
+				  int dbm);
+#else
 int wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 				  struct wireless_dev *wdev,
 				  enum nl80211_tx_power_setting type,
 				  int dbm);
+#endif
 
 /**
  * wlan_hdd_cfg80211_set_power_mgmt() - set cfg80211 power management config

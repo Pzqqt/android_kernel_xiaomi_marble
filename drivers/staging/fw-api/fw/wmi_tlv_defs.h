@@ -1656,6 +1656,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_avg_tx_power_region_per_antenna_chain,
     WMITLV_TAG_STRUC_wmi_plimit_table_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_tx_power_per_antenna_chain,
+    WMITLV_TAG_STRUC_wmi_athdiag_read_write_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_athdiag_read_write_event_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -2272,6 +2274,7 @@ typedef enum {
     OP(WMI_SET_MODIFY_TX_PLIM_CMDID) \
     OP(WMI_GET_AVG_TX_POWER_CMDID) \
     OP(WMI_GET_TX_POWER_CALLING_CMDID) \
+    OP(WMI_ATHDIAG_READ_WRITE_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2649,6 +2652,7 @@ typedef enum {
     OP(WMI_MODIFY_TX_PLIM_EVENTID) \
     OP(WMI_AVG_TX_POWER_EVENTID) \
     OP(WMI_PLIMIT_TABLE_EVENTID) \
+    OP(WMI_ATHDIAG_READ_WRITE_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -6665,6 +6669,15 @@ WMITLV_CREATE_PARAM_STRUC(WMI_RTT_PEER_MEAS_CANCEL_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_get_chan_hop_status_report_cmd_fixed_param, wmi_vdev_get_chan_hop_status_report_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_GET_CHAN_HOP_STATUS_REPORT_CMDID);
 
+/* Athdiag read/write command: fixed_param + optional write data TLV */
+#define WMITLV_TABLE_WMI_ATHDIAG_READ_WRITE_CMDID(id, op, buf, len) \
+    WMITLV_ELEM(id, op, buf, len, \
+        WMITLV_TAG_STRUC_wmi_athdiag_read_write_cmd_fixed_param, \
+        wmi_athdiag_read_write_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id, op, buf, len, \
+        WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_ATHDIAG_READ_WRITE_CMDID);
+
 
 
 /************************** TLV definitions of WMI events *******************************/
@@ -9145,6 +9158,15 @@ WMITLV_CREATE_PARAM_STRUC(WMI_RTT_PEER_MEAS_REPORT_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_chan_hop_status_report_event_fixed_param, wmi_vdev_chan_hop_status_report_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_vdev_chan_hop_slot_status, slot_status, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_CHAN_HOP_STATUS_REPORT_EVENTID);
+
+/* Athdiag read/write event: fixed_param + optional read data TLV */
+#define WMITLV_TABLE_WMI_ATHDIAG_READ_WRITE_EVENTID(id, op, buf, len) \
+    WMITLV_ELEM(id, op, buf, len, \
+        WMITLV_TAG_STRUC_wmi_athdiag_read_write_event_fixed_param, \
+        wmi_athdiag_read_write_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id, op, buf, len, \
+        WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_ATHDIAG_READ_WRITE_EVENTID);
 
 
 #ifdef __cplusplus

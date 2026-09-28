@@ -72,7 +72,11 @@ config MQ_IOSCHED_SSG_CGROUP
 	help
 	  Control Group for SamSung Generic IO scheduler.
 
-
+config CPQ_IOSCHED
+	tristate "cpq iosched"
+	default n
+	help
+	  Command Priority Queueing i/o scheduler
 
 endmenu
 

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include <linux/kernel.h>
@@ -164,6 +165,7 @@ static unsigned long get_task_unreclaimable_info(struct task_struct *task)
 	unsigned long size = 0;
 	int ret = 0;
 
+	rcu_read_lock();
 	for_each_thread(task, thread) {
 		/* task is already locked don't lock/unlock again. */
 		if (task != thread)
@@ -179,6 +181,7 @@ static unsigned long get_task_unreclaimable_info(struct task_struct *task)
 		if (ret)
 			break;
 	}
+	rcu_read_unlock();
 
 	return size >> PAGE_SHIFT;
 }
@@ -622,18 +625,21 @@ err:
 static const struct genl_ops sysstats_ops[] = {
 	{
 		.cmd		= SYSSTATS_TASK_CMD_GET,
-		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
+		.validate	= GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
+		.flags		= GENL_ADMIN_PERM,
 		.doit		= sysstats_task_user_cmd,
 		.dumpit		= sysstats_task_foreach,
 	},
 	{
 		.cmd		= SYSSTATS_MEMINFO_CMD_GET,
-		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
+		.validate	= GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
+		.flags		= GENL_ADMIN_PERM,
 		.doit		= sysstats_meminfo_user_cmd,
 	},
 	{
 		.cmd		= SYSSTATS_PIDS_CMD_GET,
 		.validate	= GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
+		.flags		= GENL_ADMIN_PERM,
 		.dumpit		= sysstats_all_pids_of_name,
 	}
 };

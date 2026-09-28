@@ -1099,11 +1099,6 @@ __lim_process_radio_measure_request(struct mac_context *mac, uint8_t *pRxPacketI
 	}
 	/* Save seq no of currently processing rrm report req frame */
 	mac->rrm.rrmPEContext.prev_rrm_report_seq_num = curr_seq_num;
-	lim_send_sme_mgmt_frame_ind(mac, pHdr->fc.subType, (uint8_t *)pHdr,
-				    frameLen + sizeof(tSirMacMgmtHdr), 0,
-				    WMA_GET_RX_FREQ(pRxPacketInfo), pe_session,
-				    WMA_GET_RX_RSSI_NORMALIZED(pRxPacketInfo),
-				    RXMGMT_FLAG_NONE);
 
 	frm = qdf_mem_malloc(sizeof(*frm));
 	if (!frm)

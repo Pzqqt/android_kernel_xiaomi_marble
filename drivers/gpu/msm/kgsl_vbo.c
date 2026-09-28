@@ -508,18 +508,24 @@ static void kgsl_sharedmem_bind_worker(struct work_struct *work)
 	int i;
 
 	for (i = 0; i < op->nr_ops; i++) {
-		if (op->ops[i].op == KGSL_GPUMEM_RANGE_OP_BIND)
+		if (op->ops[i].op == KGSL_GPUMEM_RANGE_OP_BIND) {
+			spin_lock(&op->ops[i].entry->priv->mem_lock);
+			if (op->ops[i].entry->pending_free) {
+				spin_unlock(&op->ops[i].entry->priv->mem_lock);
+				continue;
+			}
+			spin_unlock(&op->ops[i].entry->priv->mem_lock);
 			kgsl_memdesc_add_range(op->target,
 				op->ops[i].start,
 				op->ops[i].last,
 				op->ops[i].entry,
 				op->ops[i].child_offset);
-		else
+		} else {
 			kgsl_memdesc_remove_range(op->target,
 				op->ops[i].start,
 				op->ops[i].last,
 				op->ops[i].entry);
-
+		}
 	}
 
 	/* Wake up any threads waiting for the bind operation */

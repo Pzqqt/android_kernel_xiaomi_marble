@@ -264,6 +264,12 @@ QDF_STATUS wmi_stats_handler(void *buff, int32_t len,
 		curr_tlv_tag = WMITLV_GET_TLVTAG(WMITLV_GET_HDR(buf_ptr));
 		curr_tlv_len = WMITLV_GET_TLVLEN(WMITLV_GET_HDR(buf_ptr));
 
+		if (curr_tlv_len > len) {
+			wmi_debug("Invalid TLV len %d exceeds buf len %d",
+				  curr_tlv_len, len);
+			break;
+		}
+
 		wmi_debug("curr_tlv_len %d curr_tlv_tag %d rem_len %d",
 			  len, curr_tlv_len, curr_tlv_tag);
 		if (curr_tlv_len) {

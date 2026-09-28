@@ -311,8 +311,26 @@ size_t ZSTD_decodeSeqHeaders(ZSTD_DCtx* dctx, int* nbSeqPtr,
  */
 MEM_STATIC int ZSTD_cpuSupportsBmi2(void)
 {
-    ZSTD_cpuid_t cpuid = ZSTD_cpuid();
-    return ZSTD_cpuid_bmi1(cpuid) && ZSTD_cpuid_bmi2(cpuid);
+#if DYNAMIC_BMI2
+    /*
+     * The answer cannot change over the life of the kernel, so probe
+     * once.  Racing probes compute the same value, so the unsynchronized
+     * access is benign; the annotations are there to keep it that way.
+     */
+    static int supported = -1;
+    int s = READ_ONCE(supported);
+
+    if (s < 0) {
+        ZSTD_cpuid_t const cpuid = ZSTD_cpuid();
+
+        s = ZSTD_cpuid_bmi1(cpuid) && ZSTD_cpuid_bmi2(cpuid);
+        WRITE_ONCE(supported, s);
+    }
+    return s;
+#else
+    /* Nothing looks at the flag in this configuration. */
+    return 0;
+#endif
 }
 
 #endif   /* ZSTD_CCOMMON_H_MODULE */

@@ -1738,11 +1738,65 @@ static void extable_mismatch_handler(const char* modname, struct elf_info *elf,
 	}
 }
 
+/*
+ * mismatch_cache[section index] ->
+ *   0 - uncached.
+ *  -1 - no mismatch.
+ *  >0 - mismatch index + 1.
+ */
+static int *mismatch_cache;
+
+static void init_mismatch_cache(unsigned int num_sections)
+{
+	mismatch_cache = NOFAIL(calloc(num_sections, sizeof(*mismatch_cache)));
+}
+
+static void reset_mismatch_cache(unsigned int num_sections)
+{
+	memset(mismatch_cache, 0, num_sections * sizeof(*mismatch_cache));
+}
+
+static void free_mismatch_cache(void)
+{
+	free(mismatch_cache);
+	mismatch_cache = NULL;
+}
+
+static const struct sectioncheck
+*cache_mismatch(unsigned int secndx, const struct sectioncheck *mismatch)
+{
+	if (!mismatch) {
+		mismatch_cache[secndx] = -1;
+		return NULL;
+	}
+
+	mismatch_cache[secndx] = (mismatch - sectioncheck) + 1;
+	return mismatch;
+}
+
+static const struct sectioncheck *get_section_mismatch(const char *fromsec,
+		const struct elf_info *elf, unsigned int secndx)
+{
+	int cached;
+
+	if (secndx >= elf->num_sections)
+		return section_mismatch(fromsec, sec_name(elf, secndx));
+
+	cached = mismatch_cache[secndx];
+	if (cached < 0)
+		return NULL;
+	if (cached > 0)
+		return &sectioncheck[cached - 1];
+
+	return cache_mismatch(secndx,
+			      section_mismatch(fromsec, sec_name(elf, secndx)));
+}
+
 static void check_section_mismatch(const char *modname, struct elf_info *elf,
 				   Elf_Rela *r, Elf_Sym *sym, const char *fromsec)
 {
-	const char *tosec = sec_name(elf, get_secindex(elf, sym));
-	const struct sectioncheck *mismatch = section_mismatch(fromsec, tosec);
+	const unsigned int to_secndx = get_secindex(elf, sym);
+	const struct sectioncheck *mismatch = get_section_mismatch(fromsec, elf, to_secndx);
 
 	if (mismatch) {
 		if (mismatch->handler)
@@ -1984,15 +2038,25 @@ static void check_sec_ref(struct module *mod, const char *modname,
 	int i;
 	Elf_Shdr *sechdrs = elf->sechdrs;
 
+	init_mismatch_cache(elf->num_sections);
+
 	/* Walk through all sections */
 	for (i = 0; i < elf->num_sections; i++) {
 		check_section(modname, elf, &elf->sechdrs[i]);
 		/* We want to process only relocation sections and not .init */
-		if (sechdrs[i].sh_type == SHT_RELA)
-			section_rela(modname, elf, &elf->sechdrs[i]);
-		else if (sechdrs[i].sh_type == SHT_REL)
-			section_rel(modname, elf, &elf->sechdrs[i]);
+		if (sechdrs[i].sh_type == SHT_RELA ||
+		    sechdrs[i].sh_type == SHT_REL) {
+			/* Reset cache per-section. */
+			reset_mismatch_cache(elf->num_sections);
+
+			if (sechdrs[i].sh_type == SHT_RELA)
+				section_rela(modname, elf, &elf->sechdrs[i]);
+			else if (sechdrs[i].sh_type == SHT_REL)
+				section_rel(modname, elf, &elf->sechdrs[i]);
+		}
 	}
+
+	free_mismatch_cache();
 }
 
 static char *remove_dot(char *s)

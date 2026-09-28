@@ -178,7 +178,7 @@ void dst_release(struct dst_entry *dst)
 					     __func__, dst, newrefcnt);
 		if (!newrefcnt){
 			dst_count_dec(dst);
-			call_rcu_flush(&dst->rcu_head, dst_destroy_rcu);
+			call_rcu_hurry(&dst->rcu_head, dst_destroy_rcu);
 		}
 	}
 }

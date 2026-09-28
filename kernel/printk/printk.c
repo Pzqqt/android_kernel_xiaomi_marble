@@ -765,12 +765,12 @@ static ssize_t devkmsg_write(struct kiocb *iocb, struct iov_iter *from)
 		}
 	}
 
-	if (unlikely(strncmp(line, "healthd:", strlen("healthd:")) == 0))
+	if (strncmp(line, "healthd:", strlen("healthd:")) == 0)
 		goto skip_write;
 
 #ifdef CONFIG_SECURITY
 	if (disable_audit_log)
-		if (unlikely(strncmp(line, "SELinux: avc:", strlen("SELinux: avc:")) == 0))
+		if (strncmp(line, "SELinux: avc:", strlen("SELinux: avc:")) == 0)
 			goto skip_write;
 #endif
 

@@ -64,7 +64,9 @@ typedef enum {
 /* WMI_CONTROL_SVC_WMAC3,4: WMI service for MACs 3 and 4 (where applicable) */
 #define WMI_CONTROL_SVC_WMAC3  MAKE_SERVICE_ID(WMI_SERVICE_GROUP,9)
 #define WMI_CONTROL_SVC_WMAC4  MAKE_SERVICE_ID(WMI_SERVICE_GROUP,10)
-#define WMI_MAX_SERVICES  11
+/* SMD high prio service - common for all macs */
+#define WMI_CONTROL_SMD_SVC  MAKE_SERVICE_ID(WMI_SERVICE_GROUP,11)
+#define WMI_MAX_SERVICES  12
 
 #define NMI_CONTROL_SVC   MAKE_SERVICE_ID(NMI_SERVICE_GROUP,0)
 #define NMI_DATA_SVC      MAKE_SERVICE_ID(NMI_SERVICE_GROUP,1)
@@ -97,6 +99,13 @@ typedef enum {
  * H2T channel to transfer MSDU/MPDU queue info from host to target
  */
 #define HTT_DATA4_MSG_SVC MAKE_SERVICE_ID(HTT_SERVICE_GROUP,3)
+
+/* H2T - Telemetry channel */
+#define HTT_TELEMETRY_SVC MAKE_SERVICE_ID(HTT_SERVICE_GROUP,4)
+/* T2H - Telemetry channel 1 */
+#define HTT_TELEMETRY1_SVC MAKE_SERVICE_ID(HTT_SERVICE_GROUP,5)
+/* T2H - Telemetry channel 2 */
+#define HTT_TELEMETRY2_SVC MAKE_SERVICE_ID(HTT_SERVICE_GROUP,6)
 
 /* raw stream service (i.e. flash, tcmd, calibration apps) */
 #define HTC_RAW_STREAMS_SVC MAKE_SERVICE_ID(HTC_TEST_GROUP,0)

@@ -222,19 +222,11 @@ static void md4_final_ascii(struct md4_ctx *mctx, char *out, unsigned int len)
 		 mctx->hash[0], mctx->hash[1], mctx->hash[2], mctx->hash[3]);
 }
 
-static inline void add_char(unsigned char c, struct md4_ctx *md)
-{
-	md4_update(md, &c, 1);
-}
-
-static int parse_string(const char *file, unsigned long len,
-			struct md4_ctx *md)
+static int parse_string(const char *file, unsigned long len)
 {
 	unsigned long i;
 
-	add_char(file[0], md);
 	for (i = 1; i < len; i++) {
-		add_char(file[i], md);
 		if (file[i] == '"' && file[i-1] != '\\')
 			break;
 	}
@@ -253,15 +245,44 @@ static int parse_comment(const char *file, unsigned long len)
 }
 
 /* FIXME: Handle .s files differently (eg. # starts comments) --RR */
+static bool stop_char[256];
+
+static void init_stop_chars(void)
+{
+	static bool done;
+	int chr;
+
+	if (done)
+		return;
+
+	for (chr = 0; chr < 256; chr++)
+		if (chr == '\\' || chr == '"' || chr == '/' || isspace(chr))
+			stop_char[chr] = true;
+
+	done = true;
+}
+
 static int parse_file(const char *fname, struct md4_ctx *md)
 {
+	unsigned long i, len, n = 0;
+	unsigned char *buf;
 	char *file;
-	unsigned long i, len;
 
 	file = read_text_file(fname);
 	len = strlen(file);
+	if (!len)
+		goto out_file;
+	init_stop_chars();
+	buf = NOFAIL(malloc(len)); /* File output buffer. */
 
 	for (i = 0; i < len; i++) {
+		const unsigned char chr = file[i];
+
+		if (!stop_char[chr]) {
+			buf[n++] = file[i];
+			continue;
+		}
+
 		/* Collapse and ignore \ and CR. */
 		if (file[i] == '\\' && (i+1 < len) && file[i+1] == '\n') {
 			i++;
@@ -274,7 +295,14 @@ static int parse_file(const char *fname, struct md4_ctx *md)
 
 		/* Handle strings as whole units */
 		if (file[i] == '"') {
-			i += parse_string(file+i, len - i, md);
+			unsigned long slen = parse_string(file+i, len - i);
+
+			/* Closing quote is included if there is one. */
+			if (slen < len - i)
+				slen++;
+			memcpy(buf + n, file + i, slen);
+			n += slen;
+			i += slen - 1;
 			continue;
 		}
 
@@ -284,11 +312,15 @@ static int parse_file(const char *fname, struct md4_ctx *md)
 			continue;
 		}
 
-		add_char(file[i], md);
+		buf[n++] = file[i];
 	}
+	md4_update(md, buf, n);
+	free(buf);
+out_file:
 	free(file);
 	return 1;
 }
+
 /* Check whether the file is a static library or not */
 static int is_static_library(const char *objfile)
 {

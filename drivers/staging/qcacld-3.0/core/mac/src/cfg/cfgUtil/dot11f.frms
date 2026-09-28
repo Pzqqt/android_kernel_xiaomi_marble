@@ -1453,7 +1453,7 @@ IE RSN (EID_RSN)                          // 7.3.2.25
     OPTIONAL RSN_Cap[2];
     // Finally, the IE may contain zero or more PMKIDs:
     OPTIONAL pmkid_count, 2;
-    pmkid[16][0..4] COUNTIS pmkid_count;
+    pmkid[16][0..11] COUNTIS pmkid_count;
     OPTIONAL gp_mgmt_cipher_suite[4];
 }
 

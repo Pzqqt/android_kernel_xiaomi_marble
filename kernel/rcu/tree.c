@@ -3039,7 +3039,7 @@ __call_rcu_common(struct rcu_head *head, rcu_callback_t func, bool lazy_in)
 
 #ifdef CONFIG_RCU_LAZY
 /**
- * call_rcu_flush() - Queue RCU callback for invocation after grace period, and
+ * call_rcu_hurry() - Queue RCU callback for invocation after grace period, and
  * flush all lazy callbacks (including the new one) to the main ->cblist while
  * doing so.
  *
@@ -3058,18 +3058,18 @@ __call_rcu_common(struct rcu_head *head, rcu_callback_t func, bool lazy_in)
  * reuses call_rcu()'s logic. Refer to call_rcu() for more details about memory
  * ordering and other functionality.
  */
-void call_rcu_flush(struct rcu_head *head, rcu_callback_t func)
+void call_rcu_hurry(struct rcu_head *head, rcu_callback_t func)
 {
 	return __call_rcu_common(head, func, false);
 }
-EXPORT_SYMBOL_GPL(call_rcu_flush);
+EXPORT_SYMBOL_GPL(call_rcu_hurry);
 #endif
 
 /**
  * call_rcu() - Queue an RCU callback for invocation after a grace period.
  * By default the callbacks are 'lazy' and are kept hidden from the main
  * ->cblist to prevent starting of grace periods too soon.
- * If you desire grace periods to start very soon, use call_rcu_flush().
+ * If you desire grace periods to start very soon, use call_rcu_hurry().
  *
  * @head: structure to be used for queueing the RCU updates.
  * @func: actual callback function to be invoked after the grace period
@@ -3782,7 +3782,7 @@ void synchronize_rcu(void)
 	if (rcu_gp_is_expedited())
 		synchronize_rcu_expedited();
 	else
-		wait_rcu_gp(call_rcu_flush);
+		wait_rcu_gp(call_rcu_hurry);
 }
 EXPORT_SYMBOL_GPL(synchronize_rcu);
 
