@@ -167,6 +167,7 @@ fi
 
 # vendor_boot 和 vendor_dlkm 共有且都需要替换的内核模块
 both_need_modules='
+block/cpq.ko
 crypto/lzo-rle.ko
 crypto/lzo.ko
 drivers/block/zram/zram.ko
