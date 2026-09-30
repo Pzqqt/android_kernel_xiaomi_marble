@@ -5753,8 +5753,17 @@ again:
 
 	prepare_scan_count(pgdat, sc);
 
+	if (lru_gen_enabled() && !mem_cgroup_disabled() &&
+	    sc->target_mem_cgroup && !mem_cgroup_is_root(sc->target_mem_cgroup)) {
+		shrink_slab(sc->gfp_mask, pgdat->node_id, root_mem_cgroup,
+			    sc->priority);
+		if (sc->nr_reclaimed >= sc->nr_to_reclaim)
+			goto skip_memcgs;
+	}
+
 	shrink_node_memcgs(pgdat, sc);
 
+skip_memcgs:
 	if (reclaim_state) {
 		sc->nr_reclaimed += reclaim_state->reclaimed_slab;
 		reclaim_state->reclaimed_slab = 0;
