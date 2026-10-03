@@ -581,11 +581,11 @@ static bool __mptcp_move_skbs_from_subflow(struct mptcp_sock *msk,
 			if (unlikely(map_remaining < len))
 				mptcp_dss_corruption(msk, ssk);
 		} else {
-			if (unlikely(!fin))
-				mptcp_dss_corruption(msk, ssk);
-
 			sk_eat_skb(ssk, skb);
 			done = true;
+
+			if (unlikely(!fin))
+				mptcp_dss_corruption(msk, ssk);
 		}
 
 		WRITE_ONCE(tp->copied_seq, seq);
@@ -1381,7 +1381,7 @@ restart:
 	}
 
 	mptcp_set_timeout(sk, ssk);
-	if (copied) {
+	if (copied && mss_now) {
 		tcp_push(ssk, msg->msg_flags, mss_now, tcp_sk(ssk)->nonagle,
 			 size_goal);
 
@@ -1891,7 +1891,7 @@ static void mptcp_worker(struct work_struct *work)
 		if (!mptcp_ext_cache_refill(msk))
 			break;
 	}
-	if (copied) {
+	if (copied && mss_now) {
 		tcp_push(ssk, msg.msg_flags, mss_now, tcp_sk(ssk)->nonagle,
 			 size_goal);
 		WRITE_ONCE(msk->allow_infinite_fallback, false);
