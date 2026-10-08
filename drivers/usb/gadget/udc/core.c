@@ -21,6 +21,12 @@
 
 #include "trace.h"
 
+/*
+ * ANDROID: Global lock used instead of a per-gadget lock to maintain KABI
+ * compatibility. Serializes state changes during gadget teardown.
+ */
+static DEFINE_SPINLOCK(android_udc_state_lock);
+
 /**
  * struct usb_udc - describes one usb device controller
  * @driver: the gadget driver pointer. For use by the class code
@@ -31,6 +37,8 @@
  * @vbus: for udcs who care about vbus status, this value is real vbus status;
  * for udcs who do not care about vbus status, this value is always true
  * @started: the UDC's started state. True if the UDC had started.
+ * @teardown: True if the device is undergoing teardown, used to prevent
+ * new work from being scheduled during cleanup.
  *
  * This represents the internal data structure which is used by the UDC-class
  * to hold information about udc driver and gadget together.
@@ -43,6 +51,7 @@ struct usb_udc {
 	struct list_head		list;
 	bool				vbus;
 	bool				started;
+	bool				teardown;
 };
 
 static struct class *udc_class;
@@ -1042,13 +1051,15 @@ static void usb_gadget_state_work(struct work_struct *work)
 void usb_gadget_set_state(struct usb_gadget *gadget,
 		enum usb_device_state state)
 {
+	struct usb_udc *udc;
 	unsigned long flags;
 
-	spin_lock_irqsave(&gadget->state_lock, flags);
+	spin_lock_irqsave(&android_udc_state_lock, flags);
 	gadget->state = state;
-	if (!gadget->teardown)
+	udc = gadget->udc;
+	if (udc && !udc->teardown)
 		schedule_work(&gadget->work);
-	spin_unlock_irqrestore(&gadget->state_lock, flags);
+	spin_unlock_irqrestore(&android_udc_state_lock, flags);
 }
 EXPORT_SYMBOL_GPL(usb_gadget_set_state);
 
@@ -1294,8 +1305,6 @@ void usb_initialize_gadget(struct device *parent, struct usb_gadget *gadget,
 		void (*release)(struct device *dev))
 {
 	dev_set_name(&gadget->dev, "gadget");
-	spin_lock_init(&gadget->state_lock);
-	gadget->teardown = false;
 	INIT_WORK(&gadget->work, usb_gadget_state_work);
 	gadget->dev.parent = parent;
 
@@ -1513,9 +1522,9 @@ void usb_del_gadget(struct usb_gadget *gadget)
 	 * Set the teardown flag before flushing the work to prevent new work
 	 * from being scheduled while we are cleaning up.
 	 */
-	spin_lock_irqsave(&gadget->state_lock, flags);
-	gadget->teardown = true;
-	spin_unlock_irqrestore(&gadget->state_lock, flags);
+	spin_lock_irqsave(&android_udc_state_lock, flags);
+	udc->teardown = true;
+	spin_unlock_irqrestore(&android_udc_state_lock, flags);
 	flush_work(&gadget->work);
 	device_unregister(&udc->dev);
 	device_del(&gadget->dev);

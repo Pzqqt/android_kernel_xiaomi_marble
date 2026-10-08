@@ -148,3 +148,6 @@ type 'struct usb_udc' changed
   member 'void(* gadget_release)(struct device*)' was added
   4 members ('struct device dev' .. 'bool started') changed
     offset changed by 64
+
+type 'struct usb_udc' changed
+  member 'bool teardown' was added
