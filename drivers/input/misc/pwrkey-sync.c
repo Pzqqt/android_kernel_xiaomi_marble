@@ -98,6 +98,12 @@ static int pwrkey_sync_input_connect(struct input_handler *handler,
 	struct input_handle *handle;
 	int error;
 
+#ifdef CONFIG_INPUT_PWRKEY_SYNC_DEVNAME
+	if (strcmp(dev->name, CONFIG_INPUT_PWRKEY_SYNC_DEVNAME_STR)) {
+		return -ENODEV;
+	}
+#endif
+
 	handle = kzalloc(sizeof(struct input_handle), GFP_KERNEL);
 	if (!handle)
 		return -ENOMEM;
