@@ -927,6 +927,16 @@ config INPUT_PWRKEY_SYNC_PANIC
 	  backtrace and currently blocked tasks to the kernel log before
 	  triggering a kernel panic.
 
+config INPUT_PWRKEY_SYNC_DEVNAME
+	bool "Listen only to the specified input device"
+	help
+	  Listen only to the specified input device; otherwise, attempt to
+	  listen to all eligible input devices.
+
+config INPUT_PWRKEY_SYNC_DEVNAME_STR
+	string "Specify the name of the power button input device"
+	depends on INPUT_PWRKEY_SYNC_DEVNAME
+
 if INPUT_PWRKEY_SYNC_PANIC
 
 config INPUT_PWRKEY_SYNC_PANIC_DELAY
