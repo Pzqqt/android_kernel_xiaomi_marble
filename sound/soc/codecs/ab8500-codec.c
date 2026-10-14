@@ -2103,26 +2103,26 @@ static int ab8500_codec_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 			BIT(AB8500_DIGIFCONF3_IF0MASTER);
 	val = 0;
 
-	switch (fmt & SND_SOC_DAIFMT_CLOCK_PROVIDER_MASK) {
-	case SND_SOC_DAIFMT_CBP_CFP:
+	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBM_CFM: /* codec clk & FRM master */
 		dev_dbg(dai->component->dev,
-			"%s: IF0 Master-mode: AB8500 provider.\n", __func__);
+			"%s: IF0 Master-mode: AB8500 master.\n", __func__);
 		val |= BIT(AB8500_DIGIFCONF3_IF0MASTER);
 		break;
-	case SND_SOC_DAIFMT_CBC_CFC:
+	case SND_SOC_DAIFMT_CBS_CFS: /* codec clk & FRM slave */
 		dev_dbg(dai->component->dev,
-			"%s: IF0 Master-mode: AB8500 consumer.\n", __func__);
+			"%s: IF0 Master-mode: AB8500 slave.\n", __func__);
 		break;
-	case SND_SOC_DAIFMT_CBC_CFP:
-	case SND_SOC_DAIFMT_CBP_CFC:
+	case SND_SOC_DAIFMT_CBS_CFM: /* codec clk slave & FRM master */
+	case SND_SOC_DAIFMT_CBM_CFS: /* codec clk master & frame slave */
 		dev_err(dai->component->dev,
-			"%s: ERROR: The device is either a provider or a consumer.\n",
+			"%s: ERROR: The device is either a master or a slave.\n",
 			__func__);
 		fallthrough;
 	default:
 		dev_err(dai->component->dev,
-			"%s: ERROR: Unsupporter clocking mask 0x%x\n",
-			__func__, fmt & SND_SOC_DAIFMT_CLOCK_PROVIDER_MASK);
+			"%s: ERROR: Unsupporter master mask 0x%x\n",
+			__func__, fmt & SND_SOC_DAIFMT_MASTER_MASK);
 		return -EINVAL;
 	}
 
