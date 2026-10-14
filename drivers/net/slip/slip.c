@@ -915,10 +915,9 @@ static void slip_close(struct tty_struct *tty)
 	/* sl_uninit() has dropped the slip_devs[] entry by now */
 }
 
-static int slip_hangup(struct tty_struct *tty)
+static void slip_hangup(struct tty_struct *tty)
 {
 	slip_close(tty);
-	return 0;
 }
  /************************************************************************
   *			STANDARD SLIP ENCAPSULATION		  	 *
