@@ -1926,18 +1926,18 @@ enum ab8500_filter {
 static int ab8500_audio_init_audioblock(struct snd_soc_component *component)
 {
 	int status;
-	u8 mask = AB8500_STW4500CTRL3_CLK32KOUT2DIS |
-		  AB8500_STW4500CTRL3_RESETAUDN;
 
 	dev_dbg(component->dev, "%s: Enter.\n", __func__);
 
-	/* Reset the audio registers and disable the unused 32 kHz output. */
-	status = ab8500_sysctrl_write(AB8500_STW4500CTRL3, mask,
-				      AB8500_STW4500CTRL3_CLK32KOUT2DIS);
+	/* Reset audio-registers and disable 32kHz-clock output 2 */
+	status = ab8500_sysctrl_write(AB8500_STW4500CTRL3,
+				AB8500_STW4500CTRL3_CLK32KOUT2DIS |
+					AB8500_STW4500CTRL3_RESETAUDN,
+				AB8500_STW4500CTRL3_RESETAUDN);
 	if (status < 0)
 		return status;
 
-	return ab8500_sysctrl_write(AB8500_STW4500CTRL3, mask, mask);
+	return 0;
 }
 
 static int ab8500_audio_setup_mics(struct snd_soc_component *component,
@@ -2470,13 +2470,6 @@ static int ab8500_codec_probe(struct snd_soc_component *component)
 
 	ab8500_codec_of_probe(dev, np, &codec_pdata);
 
-	status = ab8500_audio_init_audioblock(component);
-	if (status < 0) {
-		dev_err(dev, "%s: failed to init audio-block (%d)!\n",
-			__func__, status);
-		return status;
-	}
-
 	status = ab8500_audio_setup_mics(component, &codec_pdata.amics);
 	if (status < 0) {
 		pr_err("%s: Failed to setup mics (%d)!\n", __func__, status);
@@ -2485,6 +2478,13 @@ static int ab8500_codec_probe(struct snd_soc_component *component)
 	status = ab8500_audio_set_ear_cmv(component, codec_pdata.ear_cmv);
 	if (status < 0) {
 		pr_err("%s: Failed to set earpiece CM-voltage (%d)!\n",
+			__func__, status);
+		return status;
+	}
+
+	status = ab8500_audio_init_audioblock(component);
+	if (status < 0) {
+		dev_err(dev, "%s: failed to init audio-block (%d)!\n",
 			__func__, status);
 		return status;
 	}
