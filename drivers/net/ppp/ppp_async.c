@@ -247,9 +247,10 @@ ppp_asynctty_close(struct tty_struct *tty)
  * Wait for I/O to driver to complete and unregister PPP channel.
  * This is already done by the close routine, so just call that.
  */
-static void ppp_asynctty_hangup(struct tty_struct *tty)
+static int ppp_asynctty_hangup(struct tty_struct *tty)
 {
 	ppp_asynctty_close(tty);
+	return 0;
 }
 
 /*
