@@ -1381,10 +1381,11 @@ static int pn533_poll_dep(struct nfc_dev *nfc_dev)
 
 	dev_dbg(dev->dev, "%s", __func__);
 
-	if (!dev->gb) {
-		dev->gb = nfc_get_local_general_bytes(nfc_dev, &dev->gb_len);
-
-		if (!dev->gb || !dev->gb_len) {
+	if (!dev->gb_len) {
+		nfc_get_local_general_bytes(nfc_dev, dev->gb,
+					    sizeof(dev->gb),
+					    &dev->gb_len);
+		if (!dev->gb_len) {
 			dev->poll_dep = 0;
 			queue_work(dev->wq, &dev->rf_work);
 		}
@@ -1688,8 +1689,9 @@ static int pn533_start_poll(struct nfc_dev *nfc_dev,
 	}
 
 	if (tm_protocols) {
-		dev->gb = nfc_get_local_general_bytes(nfc_dev, &dev->gb_len);
-		if (dev->gb == NULL)
+		nfc_get_local_general_bytes(nfc_dev, dev->gb,
+					    sizeof(dev->gb), &dev->gb_len);
+		if (dev->gb_len == 0)
 			tm_protocols = 0;
 	}
 
