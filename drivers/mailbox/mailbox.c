@@ -110,10 +110,8 @@ static void tx_tick(struct mbox_chan *chan, int r)
 	if (chan->cl->tx_done)
 		chan->cl->tx_done(chan->cl, mssg, r);
 
-	if (r != -ETIME && chan->cl->tx_block) {
-		chan->tx_status = r;
+	if (r != -ETIME && chan->cl->tx_block)
 		complete(&chan->tx_complete);
-	}
 }
 
 static enum hrtimer_restart txdone_hrtimer(struct hrtimer *hrtimer)
@@ -277,8 +275,6 @@ int mbox_send_message(struct mbox_chan *chan, void *mssg)
 		if (ret == 0) {
 			t = -ETIME;
 			tx_tick(chan, t);
-		} else if (chan->tx_status < 0) {
-			t = chan->tx_status;
 		}
 	}
 
