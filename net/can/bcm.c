@@ -567,12 +567,6 @@ static void bcm_rx_update_and_send(struct bcm_op *op,
 	if (hrtimer_active(&op->thrtimer))
 		return;
 
-	/* bcm_remove_op() may have cancelled thrtimer concurrently with this
-	 * RCU-protected handler; do not rearm it. Mirrors bcm_rx_starttimer().
-	 */
-	if (op->flags & RX_NO_AUTOTIMER)
-		return;
-
 	/* first reception with enabled throttling mode */
 	if (!op->kt_lastmsg)
 		goto rx_changed_settime;
