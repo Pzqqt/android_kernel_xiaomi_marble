@@ -78,7 +78,7 @@ if [ "$USER" == "runner" ]; then
 else
 	export KBUILD_BUILD_HOST="wsl2"
 	export KBUILD_BUILD_USER="pzqqt"
-	export LOCALVERSION=-v5.1
+	export LOCALVERSION=-v5.2
 fi
 
 $with_ksu && {
