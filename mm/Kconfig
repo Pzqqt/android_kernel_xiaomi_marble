@@ -924,4 +924,7 @@ config LRU_GEN_STATS
 
 source "mm/damon/Kconfig"
 
+config KMAP_LOCAL
+	bool
+
 endmenu
