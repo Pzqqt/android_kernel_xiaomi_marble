@@ -1545,6 +1545,9 @@ static bool atl1c_clean_tx_irq(struct atl1c_adapter *adapter,
 
 	AT_READ_REGW(&adapter->hw, reg, &hw_next_to_clean);
 
+	if (unlikely(hw_next_to_clean >= tpd_ring->count))
+		hw_next_to_clean = next_to_clean;
+
 	while (next_to_clean != hw_next_to_clean) {
 		buffer_info = &tpd_ring->buffer_info[next_to_clean];
 		if (buffer_info->skb) {
