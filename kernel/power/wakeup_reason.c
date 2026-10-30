@@ -350,11 +350,17 @@ static ssize_t last_suspend_time_show(struct kobject *kobj,
 	/* sleep_time = total_time - suspend_resume_time */
 	sleep_time = timespec64_sub(total_time, suspend_resume_time);
 
+	/* Prevent negative durations caused by mismatched clock interval races. */
+	if (suspend_resume_time.tv_sec < 0)
+		suspend_resume_time = ns_to_timespec64(0);
+	if (sleep_time.tv_sec < 0)
+		sleep_time = ns_to_timespec64(0);
+
 	/* Export suspend_resume_time and sleep_time in pair here. */
-	return sprintf(buf, "%llu.%09lu %llu.%09lu\n",
-		       (unsigned long long)suspend_resume_time.tv_sec,
+	return sprintf(buf, "%lld.%09ld %lld.%09ld\n",
+		       (long long)suspend_resume_time.tv_sec,
 		       suspend_resume_time.tv_nsec,
-		       (unsigned long long)sleep_time.tv_sec,
+		       (long long)sleep_time.tv_sec,
 		       sleep_time.tv_nsec);
 }
 

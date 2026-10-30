@@ -2367,6 +2367,8 @@ static int hid_device_probe(struct device *dev)
 				ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT);
 		}
 		if (ret) {
+			if (hdev->io_started)
+				hid_device_io_stop(hdev);
 			hid_close_report(hdev);
 			hdev->driver = NULL;
 		}

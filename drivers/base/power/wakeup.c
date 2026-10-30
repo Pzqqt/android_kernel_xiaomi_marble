@@ -948,11 +948,11 @@ EXPORT_SYMBOL_GPL(pm_wakeup_dev_event);
 void pm_get_active_wakeup_sources(char *pending_wakeup_source, size_t max)
 {
 	struct wakeup_source *ws, *last_active_ws = NULL;
-	int len = 0;
+	int srcuidx, len = 0;
 	bool active = false;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(ws, &wakeup_sources, entry) {
+	srcuidx = srcu_read_lock(&wakeup_srcu);
+	list_for_each_entry_rcu_locked(ws, &wakeup_sources, entry) {
 		if (ws->active && len < max) {
 			if (!active)
 				len += scnprintf(pending_wakeup_source, max,
@@ -972,7 +972,7 @@ void pm_get_active_wakeup_sources(char *pending_wakeup_source, size_t max)
 				"Last active Wakeup Source: %s",
 				last_active_ws->name);
 	}
-	rcu_read_unlock();
+	srcu_read_unlock(&wakeup_srcu, srcuidx);
 }
 EXPORT_SYMBOL_GPL(pm_get_active_wakeup_sources);
 
