@@ -2081,7 +2081,7 @@ static int device_requires_stable_pages(struct dm_target *ti,
 {
 	struct request_queue *q = bdev_get_queue(dev->bdev);
 
-	return q && blk_queue_stable_writes(q);
+	return ti->needs_stable_writes || (q && blk_queue_stable_writes(q));
 }
 
 void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,

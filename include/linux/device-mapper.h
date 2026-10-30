@@ -350,6 +350,11 @@ struct dm_target {
 	bool discards_supported:1;
 
 	/*
+	 * Set if this target requires stable data during writeback.
+	 */
+	bool needs_stable_writes:1;
+
+	/*
 	 * Set if we need to limit the number of in-flight bios when swapping.
 	 */
 	bool limit_swap_bios:1;

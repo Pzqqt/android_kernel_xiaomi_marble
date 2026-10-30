@@ -439,7 +439,7 @@ static u32 parse_csr_fw_dmc(struct intel_csr *csr,
 	}
 
 	/* Cache the dmc header info. */
-	if (mmio_count > mmio_count_max) {
+	if (!mmio_count || mmio_count > mmio_count_max) {
 		DRM_ERROR("DMC firmware has wrong mmio count %u\n", mmio_count);
 		return 0;
 	}
@@ -454,12 +454,21 @@ static u32 parse_csr_fw_dmc(struct intel_csr *csr,
 		csr->mmioaddr[i] = _MMIO(mmioaddr[i]);
 		csr->mmiodata[i] = mmiodata[i];
 	}
-	csr->mmio_count = mmio_count;
 
 	rem_size -= header_len_bytes;
 
 	/* fw_size is in dwords, so multiplied by 4 to convert into bytes. */
-	payload_size = dmc_header->fw_size * 4;
+	if (check_mul_overflow(dmc_header->fw_size, 4u, &payload_size)) {
+		DRM_ERROR("DMC fw_size too large (%u dwords)\n",
+			  dmc_header->fw_size);
+		return 0;
+	}
+
+	if (!payload_size) {
+		DRM_ERROR("DMC firmware has empty payload\n");
+		return 0;
+	}
+
 	if (rem_size < payload_size)
 		goto error_truncated;
 
@@ -467,13 +476,15 @@ static u32 parse_csr_fw_dmc(struct intel_csr *csr,
 		DRM_ERROR("DMC FW too big (%u bytes)\n", payload_size);
 		return 0;
 	}
-	csr->dmc_fw_size = dmc_header->fw_size;
 
 	csr->dmc_payload = kmalloc(payload_size, GFP_KERNEL);
 	if (!csr->dmc_payload) {
 		DRM_ERROR("Memory allocation failed for dmc payload\n");
 		return 0;
 	}
+
+	csr->mmio_count = mmio_count;
+	csr->dmc_fw_size = dmc_header->fw_size;
 
 	payload = (u8 *)(dmc_header) + header_len_bytes;
 	memcpy(csr->dmc_payload, payload, payload_size);

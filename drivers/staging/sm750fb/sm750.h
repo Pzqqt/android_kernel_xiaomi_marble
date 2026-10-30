@@ -69,7 +69,7 @@ struct lynx_accel {
 			   u32, u32, u32, u32);
 
 	int (*de_imageblit)(struct lynx_accel *, const char *,
-			    u32, u32, u32, u32,
+			    u32, u32, u32,
 			    u32, u32, u32, u32,
 			    u32, u32, u32, u32);
 

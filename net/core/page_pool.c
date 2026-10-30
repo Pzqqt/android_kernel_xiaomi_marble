@@ -185,6 +185,12 @@ static struct page *__page_pool_alloc_pages_slow(struct page_pool *pool,
 	gfp_t gfp = _gfp;
 	dma_addr_t dma;
 
+	/* Unconditionally set NOWARN if allocating from NAPI.
+	 * Drivers forget to set it, and OOM reports on packet Rx are useless.
+	 */
+	if ((gfp & GFP_ATOMIC) == GFP_ATOMIC)
+		gfp |= __GFP_NOWARN;
+
 	/* We could always set __GFP_COMP, and avoid this branch, as
 	 * prep_new_page() can handle order-0 with __GFP_COMP.
 	 */

@@ -139,7 +139,7 @@ int usb_wwan_get_serial_info(struct tty_struct *tty,
 
 	ss->line            = port->minor;
 	ss->port            = port->port_number;
-	ss->baud_base       = tty_get_baud_rate(port->port.tty);
+	ss->baud_base       = tty_get_baud_rate(tty);
 	ss->close_delay	    = jiffies_to_msecs(port->port.close_delay) / 10;
 	ss->closing_wait    = port->port.closing_wait == ASYNC_CLOSING_WAIT_NONE ?
 				 ASYNC_CLOSING_WAIT_NONE :
@@ -160,8 +160,7 @@ int usb_wwan_set_serial_info(struct tty_struct *tty,
 			ASYNC_CLOSING_WAIT_NONE :
 			msecs_to_jiffies(ss->closing_wait * 10);
 
-	mutex_lock(&port->port.mutex);
-
+	/* core holds the port mutex */
 	if (!capable(CAP_SYS_ADMIN)) {
 		if ((close_delay != port->port.close_delay) ||
 		    (closing_wait != port->port.closing_wait))
@@ -173,7 +172,6 @@ int usb_wwan_set_serial_info(struct tty_struct *tty,
 		port->port.closing_wait = closing_wait;
 	}
 
-	mutex_unlock(&port->port.mutex);
 	return retval;
 }
 EXPORT_SYMBOL(usb_wwan_set_serial_info);
