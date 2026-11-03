@@ -3222,8 +3222,8 @@ int wma_unified_debug_print_event_handler(void *handle, uint8_t *datap,
 	}
 	data = param_buf->data;
 	datalen = param_buf->num_data;
-	if (datalen > WMI_SVC_MSG_MAX_SIZE) {
-		wma_err("Received data len %d exceeds max value %d",
+	if (datalen <= 0 || datalen > WMI_SVC_MSG_MAX_SIZE) {
+		wma_err("Invalid data len %d, valid range (1-%d)",
 			datalen, WMI_SVC_MSG_MAX_SIZE);
 		return QDF_STATUS_E_FAILURE;
 	}
