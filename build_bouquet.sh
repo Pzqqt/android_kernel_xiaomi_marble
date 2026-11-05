@@ -66,8 +66,8 @@ done
 
 ########## Preparation Phase ##########
 
-echo -e "${gre}Building kernel with Slim LLVM 23.1.4 $white"
-CLANG_PATH=~/build_toolchain/llvm-23.1.4-x86_64/bin
+echo -e "${gre}Building kernel with Slim LLVM 23.1.5 $white"
+CLANG_PATH=~/build_toolchain/llvm-23.1.5-x86_64/bin
 
 export PATH=$(realpath $CLANG_PATH):$(realpath ${KDIR}/build-tools):${PATH}
 
