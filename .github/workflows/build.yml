@@ -14,8 +14,8 @@ jobs:
         id: slim-llvm-cache
         uses: actions/cache@v6
         with:
-          path: ~/build_toolchain/llvm-23.1.4-x86_64.tar.xz
-          key: llvm-23.1.4-x86_64
+          path: ~/build_toolchain/llvm-23.1.5-x86_64.tar.xz
+          key: llvm-23.1.5-x86_64
       - name: Download Slim LLVM
         if: steps.slim-llvm-cache.outputs.cache-hit != 'true'
         run: |
@@ -24,7 +24,7 @@ jobs:
           echo "Downloading Slim LLVM..."
           mkdir -p ~/build_toolchain
           cd ~/build_toolchain
-          aria2c https://mirrors.edge.kernel.org/pub/tools/llvm/files/llvm-23.1.4-x86_64.tar.xz
+          aria2c https://mirrors.edge.kernel.org/pub/tools/llvm/files/llvm-23.1.5-x86_64.tar.xz
       - name: Prepare the environment
         run: |
           [ -d ~/.local/bin ] || mkdir -p ~/.local/bin
@@ -35,7 +35,7 @@ jobs:
           sudo apt install -y ccache python3 python-is-python3 python3-rich
           
           cd ~/build_toolchain
-          tar -xJf ./llvm-23.1.4-x86_64.tar.xz
+          tar -xJf ./llvm-23.1.5-x86_64.tar.xz
           
           echo "Downloading 7za..."
           mkdir -p /tmp/7z2603-linux-x64
