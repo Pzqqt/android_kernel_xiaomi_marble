@@ -496,6 +496,7 @@ endmenu
 config COMPAT
 	bool
 	depends on SPARC64
+	depends on !LD_IS_LLD
 	default y
 	select COMPAT_BINFMT_ELF if BINFMT_ELF
 	select HAVE_UID16

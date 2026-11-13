@@ -3357,8 +3357,6 @@ void br_multicast_dev_del(struct net_bridge *br)
 
 	br_multicast_gc(&deleted_head);
 	cancel_work_sync(&br->mcast_gc_work);
-
-	rcu_barrier();
 }
 
 int br_multicast_set_router(struct net_bridge *br, unsigned long val)

@@ -258,7 +258,8 @@ v4l2_h264_build_b_ref_lists(const struct v4l2_h264_reflist_builder *builder,
 	       v4l2_h264_b1_ref_list_cmp, NULL, builder);
 
 	if (builder->num_valid > 1 &&
-	    !memcmp(b1_reflist, b0_reflist, builder->num_valid))
+	    !memcmp(b1_reflist, b0_reflist,
+			sizeof(b1_reflist[0]) * builder->num_valid))
 		swap(b1_reflist[0], b1_reflist[1]);
 }
 EXPORT_SYMBOL_GPL(v4l2_h264_build_b_ref_lists);
