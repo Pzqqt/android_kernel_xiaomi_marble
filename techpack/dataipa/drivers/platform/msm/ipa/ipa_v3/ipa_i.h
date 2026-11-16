@@ -1653,10 +1653,12 @@ struct ipa3_active_clients {
 	int bus_vote_idx;
 };
 
+#ifndef CONFIG_DISABLE_IPA_WAKELOCKS
 struct ipa3_wakelock_ref_cnt {
 	spinlock_t spinlock;
 	int cnt;
 };
+#endif
 
 struct ipa3_tag_completion {
 	struct completion comp;
@@ -2427,8 +2429,10 @@ struct ipa3_context {
 	bool gsi_ch20_wa;
 	bool s1_bypass_arr[IPA_SMMU_CB_MAX];
 	u32 wdi_map_cnt;
+#ifndef CONFIG_DISABLE_IPA_WAKELOCKS
 	struct wakeup_source *w_lock;
 	struct ipa3_wakelock_ref_cnt wakelock_ref_cnt;
+#endif
 	/* RMNET_IOCTL_INGRESS_FORMAT_AGG_DATA */
 	bool ipa_client_apps_wan_cons_agg_gro;
 	/* M-release support to know client pipes */
