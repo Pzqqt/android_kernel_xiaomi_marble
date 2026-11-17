@@ -1232,7 +1232,8 @@ static int __init usb_serial_init(void)
 	usb_serial_tty_driver->type = TTY_DRIVER_TYPE_SERIAL;
 	usb_serial_tty_driver->subtype = SERIAL_TYPE_NORMAL;
 	usb_serial_tty_driver->flags = TTY_DRIVER_REAL_RAW |
-						TTY_DRIVER_DYNAMIC_DEV;
+				      TTY_DRIVER_DYNAMIC_DEV |
+				      TTY_DRIVER_RESET_SAVED_TERMIOS;
 	usb_serial_tty_driver->init_termios = tty_std_termios;
 	usb_serial_tty_driver->init_termios.c_cflag = B9600 | CS8 | CREAD
 							| HUPCL | CLOCAL;
