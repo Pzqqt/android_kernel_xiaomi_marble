@@ -463,6 +463,13 @@ struct dp_rx_desc *dp_get_rx_desc_from_cookie(struct dp_soc *soc,
 		return NULL;
 
 	rx_desc_pool = &pool[pool_id];
+
+	if (qdf_unlikely(!rx_desc_pool->desc_pages.cacheable_pages ||
+			 page_id >= rx_desc_pool->desc_pages.num_pages ||
+			 offset >= rx_desc_pool->desc_pages
+				   .num_element_per_page))
+		return NULL;
+
 	rx_desc_elem = (union dp_rx_desc_list_elem_t *)
 		(rx_desc_pool->desc_pages.cacheable_pages[page_id] +
 		rx_desc_pool->elem_size * offset);
@@ -485,6 +492,13 @@ struct dp_rx_desc *dp_get_rx_mon_status_desc_from_cookie(struct dp_soc *soc,
 		return NULL;
 
 	rx_desc_pool = &pool[pool_id];
+
+	if (qdf_unlikely(!rx_desc_pool->desc_pages.cacheable_pages ||
+			 page_id >= rx_desc_pool->desc_pages.num_pages ||
+			 offset >= rx_desc_pool->desc_pages
+				   .num_element_per_page))
+		return NULL;
+
 	rx_desc_elem = (union dp_rx_desc_list_elem_t *)
 		(rx_desc_pool->desc_pages.cacheable_pages[page_id] +
 		rx_desc_pool->elem_size * offset);

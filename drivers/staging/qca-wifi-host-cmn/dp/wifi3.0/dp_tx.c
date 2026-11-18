@@ -4673,8 +4673,7 @@ more_data:
 							       tx_comp_hal_desc,
 							       &tx_desc);
 		if (!tx_desc) {
-			dp_err("unable to retrieve tx_desc!");
-			QDF_BUG(0);
+			dp_err_rl("invalid tx comp cookie, dropping entry");
 			continue;
 		}
 		tx_desc->buffer_src = buffer_src;

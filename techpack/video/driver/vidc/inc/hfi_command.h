@@ -79,6 +79,7 @@ enum hfi_packet_payload_info {
 	HFI_PAYLOAD_U32_ARRAY = 0x0000000b,
 	HFI_PAYLOAD_S32_ARRAY = 0x0000000c,
 	HFI_PAYLOAD_64_PACKED = 0x0000000d,
+	HFI_PAYLOAD_U64_ARRAY = 0x0000000e,
 };
 
 enum hfi_packet_port_type {

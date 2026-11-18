@@ -19185,24 +19185,30 @@
         <return type-id='48b5725f'/>
       </function-type>
       <pointer-type-def type-id='9f5ca0a3' size-in-bits='64' id='1ee0b597'/>
-      <class-decl name='usb_udc' size-in-bits='7488' is-struct='yes' visibility='default' filepath='drivers/usb/gadget/udc/core.c' line='37' column='1' id='1ee0d0f0'>
+      <class-decl name='usb_udc' size-in-bits='7552' is-struct='yes' visibility='default' filepath='drivers/usb/gadget/udc/core.c' line='46' column='1' id='1ee0d0f0'>
         <data-member access='public' layout-offset-in-bits='0'>
-          <var-decl name='driver' type-id='9762ede1' visibility='default' filepath='drivers/usb/gadget/udc/core.c' line='38' column='1'/>
+          <var-decl name='driver' type-id='9762ede1' visibility='default' filepath='drivers/usb/gadget/udc/core.c' line='47' column='1'/>
         </data-member>
         <data-member access='public' layout-offset-in-bits='64'>
-          <var-decl name='gadget' type-id='49a58c0c' visibility='default' filepath='drivers/usb/gadget/udc/core.c' line='39' column='1'/>
+          <var-decl name='gadget' type-id='49a58c0c' visibility='default' filepath='drivers/usb/gadget/udc/core.c' line='48' column='1'/>
         </data-member>
         <data-member access='public' layout-offset-in-bits='128'>
-          <var-decl name='dev' type-id='66e487eb' visibility='default' filepath='drivers/usb/gadget/udc/core.c' line='40' column='1'/>
+          <var-decl name='gadget_release' type-id='dd787f72' visibility='default' filepath='drivers/usb/gadget/udc/core.c' line='49' column='1'/>
         </data-member>
-        <data-member access='public' layout-offset-in-bits='7296'>
-          <var-decl name='list' type-id='72f469ec' visibility='default' filepath='drivers/usb/gadget/udc/core.c' line='41' column='1'/>
+        <data-member access='public' layout-offset-in-bits='192'>
+          <var-decl name='dev' type-id='66e487eb' visibility='default' filepath='drivers/usb/gadget/udc/core.c' line='50' column='1'/>
         </data-member>
-        <data-member access='public' layout-offset-in-bits='7424'>
-          <var-decl name='vbus' type-id='b50a4934' visibility='default' filepath='drivers/usb/gadget/udc/core.c' line='42' column='1'/>
+        <data-member access='public' layout-offset-in-bits='7360'>
+          <var-decl name='list' type-id='72f469ec' visibility='default' filepath='drivers/usb/gadget/udc/core.c' line='51' column='1'/>
         </data-member>
-        <data-member access='public' layout-offset-in-bits='7432'>
-          <var-decl name='started' type-id='b50a4934' visibility='default' filepath='drivers/usb/gadget/udc/core.c' line='43' column='1'/>
+        <data-member access='public' layout-offset-in-bits='7488'>
+          <var-decl name='vbus' type-id='b50a4934' visibility='default' filepath='drivers/usb/gadget/udc/core.c' line='52' column='1'/>
+        </data-member>
+        <data-member access='public' layout-offset-in-bits='7496'>
+          <var-decl name='started' type-id='b50a4934' visibility='default' filepath='drivers/usb/gadget/udc/core.c' line='53' column='1'/>
+        </data-member>
+        <data-member access='public' layout-offset-in-bits='7504'>
+          <var-decl name='teardown' type-id='b50a4934' visibility='default' filepath='drivers/usb/gadget/udc/core.c' line='54' column='1'/>
         </data-member>
       </class-decl>
       <pointer-type-def type-id='8e3bf7d2' size-in-bits='64' id='1ee1b664'/>

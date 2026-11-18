@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include "cam_cci_dev.h"
@@ -39,7 +40,7 @@ static long cam_cci_subdev_ioctl(struct v4l2_subdev *sd,
 
 	switch (cmd) {
 	case VIDIOC_MSM_CCI_CFG:
-		rc = cam_cci_core_cfg(sd, arg);
+		rc = -EOPNOTSUPP;
 		break;
 	case VIDIOC_CAM_CONTROL:
 		break;

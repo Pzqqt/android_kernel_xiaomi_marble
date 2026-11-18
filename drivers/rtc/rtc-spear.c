@@ -360,6 +360,12 @@ static int spear_rtc_probe(struct platform_device *pdev)
 	if (irq < 0)
 		return irq;
 
+	config->ioaddr = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(config->ioaddr))
+		return PTR_ERR(config->ioaddr);
+
+	spin_lock_init(&config->lock);
+
 	status = devm_request_irq(&pdev->dev, irq, spear_rtc_irq, 0, pdev->name,
 			config);
 	if (status) {
@@ -367,10 +373,6 @@ static int spear_rtc_probe(struct platform_device *pdev)
 				irq);
 		return status;
 	}
-
-	config->ioaddr = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(config->ioaddr))
-		return PTR_ERR(config->ioaddr);
 
 	config->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(config->clk))
@@ -380,7 +382,6 @@ static int spear_rtc_probe(struct platform_device *pdev)
 	if (status < 0)
 		return status;
 
-	spin_lock_init(&config->lock);
 	platform_set_drvdata(pdev, config);
 
 	config->rtc = devm_rtc_device_register(&pdev->dev, pdev->name,

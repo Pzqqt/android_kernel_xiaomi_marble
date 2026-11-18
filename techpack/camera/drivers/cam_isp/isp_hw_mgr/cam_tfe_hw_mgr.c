@@ -276,7 +276,7 @@ static int cam_tfe_hw_mgr_convert_rdi_out_res_id_to_in_res(int res_id)
 	else if (res_id == CAM_ISP_TFE_OUT_RES_RDI_1)
 		return CAM_ISP_HW_TFE_IN_RDI1;
 	else if (res_id == CAM_ISP_TFE_OUT_RES_RDI_2)
-		return CAM_ISP_HW_TFE_IN_RDI1;
+		return CAM_ISP_HW_TFE_IN_RDI2;
 
 	return CAM_ISP_HW_TFE_IN_MAX;
 }

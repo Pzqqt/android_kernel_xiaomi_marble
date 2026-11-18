@@ -1581,7 +1581,7 @@ static void rndis_ipa_xmit_error(struct sk_buff *skb)
 	delay_jiffies = msecs_to_jiffies(
 		rndis_ipa_ctx->error_msec_sleep_time + rand_dealy_msec);
 
-	retval = schedule_delayed_work(
+	retval = queue_delayed_work(system_power_efficient_wq,
 		&rndis_ipa_ctx->xmit_error_delayed_work, delay_jiffies);
 	if (!retval) {
 		RNDIS_IPA_ERROR("fail to schedule delayed work\n");
