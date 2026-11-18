@@ -1510,12 +1510,16 @@ nfsd4_copy(struct svc_rqst *rqstp, struct nfsd4_compound_state *cstate,
 		}
 		status = nfsd4_setup_inter_ssc(rqstp, cstate, copy,
 				&copy->ss_mnt);
-		if (status)
-			return nfserr_offload_denied;
+		if (status) {
+			if (copy->nf_dst)
+				nfsd_file_put(copy->nf_dst);
+			status = nfserr_offload_denied;
+			goto out;
+		}
 	} else {
 		status = nfsd4_setup_intra_ssc(rqstp, cstate, copy);
 		if (status)
-			return status;
+			goto out;
 	}
 
 	copy->cp_clp = cstate->clp;

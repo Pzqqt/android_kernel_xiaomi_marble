@@ -1276,15 +1276,6 @@ int begin_new_exec(struct linux_binprm * bprm)
 		goto out;
 
 	/*
-	 * This must be done here to ensure that POSIX CPU timers which were
-	 * armed on the current task are dequeued from me::posix_cputimers.
-	 * Otherwise in case of a TID switch the deletion of the related POSIX
-	 * timer would not remove an enqueued timer because the TID lookup
-	 * of the old TID fails.
-	 */
-	posixtimer_exec(me);
-
-	/*
 	 * We have to apply CLOEXEC before we change whether the process is
 	 * dumpable (in setup_new_exec) to avoid a race with a process in userspace
 	 * trying to access the should-be-closed file descriptors of a process
@@ -1297,6 +1288,15 @@ int begin_new_exec(struct linux_binprm * bprm)
 	 * the FD table.
 	 */
 	do_close_on_exec(me->files);
+
+	/*
+	 * This must be done here to ensure that POSIX CPU timers which were
+	 * armed on the current task are dequeued from me::posix_cputimers.
+	 * Otherwise in case of a TID switch the deletion of the related POSIX
+	 * timer would not remove an enqueued timer because the TID lookup
+	 * of the old TID fails.
+	 */
+	posixtimer_exec(me);
 
 	/*
 	 * Must be called _before_ exec_mmap() as bprm->mm is
