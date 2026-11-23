@@ -2042,6 +2042,8 @@ nfsd4_decode_setxattr(struct nfsd4_compoundargs *argp,
 		    &setxattr->setxa_buf, size);
 	}
 
+	if (status)
+		return status;
 	DECODE_TAIL;
 }
 
