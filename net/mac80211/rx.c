@@ -2174,6 +2174,7 @@ ieee80211_reassemble_add(struct ieee80211_fragment_cache *cache,
 	entry->rx_queue = rx_queue;
 	entry->last_frag = frag;
 	entry->check_sequential_pn = false;
+	entry->is_protected = false;
 	entry->extra_len = 0;
 
 	return entry;
@@ -3101,12 +3102,13 @@ ieee80211_rx_h_ctrl(struct ieee80211_rx_data *rx, struct sk_buff_head *frames)
 		event.u.ba.ssn = start_seq_num;
 		event.u.ba.sta = &rx->sta->sta;
 
+		spin_lock(&tid_agg_rx->reorder_lock);
+
 		/* reset session timer */
-		if (tid_agg_rx->timeout)
+		if (tid_agg_rx->timeout && !tid_agg_rx->removed)
 			mod_timer(&tid_agg_rx->session_timer,
 				  TU_TO_EXP_TIME(tid_agg_rx->timeout));
 
-		spin_lock(&tid_agg_rx->reorder_lock);
 		/* release stored frames up to start of BAR */
 		ieee80211_release_reorder_frames(rx->sdata, tid_agg_rx,
 						 start_seq_num, frames);
