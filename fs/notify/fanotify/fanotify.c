@@ -495,12 +495,15 @@ static struct fanotify_event *fanotify_alloc_name_event(struct inode *id,
 	unsigned int child_fh_len = fanotify_encode_fh_len(child);
 	unsigned int size;
 
+	if (file_name && WARN_ON_ONCE(file_name->len >= PATH_MAX))
+		return NULL;
+
 	size = sizeof(*fne) + FANOTIFY_FH_HDR_LEN + dir_fh_len;
 	if (child_fh_len)
 		size += FANOTIFY_FH_HDR_LEN + child_fh_len;
 	if (file_name)
 		size += file_name->len + 1;
-	fne = kmalloc(size, gfp);
+	fne = kvmalloc(size, gfp);
 	if (!fne)
 		return NULL;
 
@@ -772,7 +775,7 @@ static void fanotify_free_fid_event(struct fanotify_event *event)
 
 static void fanotify_free_name_event(struct fanotify_event *event)
 {
-	kfree(FANOTIFY_NE(event));
+	kvfree(FANOTIFY_NE(event));
 }
 
 static void fanotify_free_event(struct fsnotify_event *fsn_event)
