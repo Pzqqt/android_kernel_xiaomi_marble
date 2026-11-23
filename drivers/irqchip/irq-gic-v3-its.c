@@ -5616,13 +5616,9 @@ static int __init gic_acpi_parse_madt_its(union acpi_subtable_headers *header,
 	}
 
 	err = its_probe_one(its);
-	if (err)
-		goto probe_err;
+	if (!err)
+		return 0;
 
-	return 0;
-
-probe_err:
-	its_node_destroy(its);
 node_err:
 	iort_deregister_domain_token(its_entry->translation_id);
 dom_err:
