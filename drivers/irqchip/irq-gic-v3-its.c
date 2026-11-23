@@ -46,8 +46,6 @@
 #define RDIST_FLAGS_PROPBASE_NEEDS_FLUSHING	(1 << 0)
 #define RDIST_FLAGS_RD_TABLES_PREALLOCATED	(1 << 1)
 
-#define RD_LOCAL_LPI_ENABLED                    BIT(0)
-
 static u32 lpi_id_bits;
 
 /*
@@ -3083,7 +3081,7 @@ static void its_cpu_init_lpis(void)
 	phys_addr_t paddr;
 	u64 val, tmp;
 
-	if (gic_data_rdist()->flags & RD_LOCAL_LPI_ENABLED)
+	if (gic_data_rdist()->lpi_enabled)
 		return;
 
 	val = readl_relaxed(rbase + GICR_CTLR);
@@ -3197,7 +3195,7 @@ static void its_cpu_init_lpis(void)
 	/* Make sure the GIC has seen the above */
 	dsb(sy);
 out:
-	gic_data_rdist()->flags |= RD_LOCAL_LPI_ENABLED;
+	gic_data_rdist()->lpi_enabled = true;
 	pr_info("GICv3: CPU%d: using %s LPI pending table @%pa\n",
 		smp_processor_id(),
 		gic_data_rdist()->pend_page ? "allocated" : "reserved",
@@ -5178,7 +5176,7 @@ static int redist_disable_lpis(void)
 	 *
 	 * If running with preallocated tables, there is nothing to do.
 	 */
-	if ((gic_data_rdist()->flags & RD_LOCAL_LPI_ENABLED) ||
+	if (gic_data_rdist()->lpi_enabled ||
 	    (gic_rdists->flags & RDIST_FLAGS_RD_TABLES_PREALLOCATED))
 		return 0;
 
