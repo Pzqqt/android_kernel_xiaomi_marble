@@ -2460,7 +2460,7 @@ static int find_log_rec(struct ntfs_log *log, u64 lsn, struct lcb *lcb)
 	 * Check that the length field isn't greater than the total
 	 * available space the log file.
 	 */
-	if (check_add_overflow(len, log->record_header_len, &rec_len))
+	if (check_add_overflow(len, (u32)log->record_header_len, &rec_len))
 		return -EINVAL;
 	if (rec_len >= log->total_avail)
 		return -EINVAL;
