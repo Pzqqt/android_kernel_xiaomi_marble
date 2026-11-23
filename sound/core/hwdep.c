@@ -211,19 +211,14 @@ static int snd_hwdep_dsp_load(struct snd_hwdep *hw,
 		return -ENXIO;
 	if (info->index >= 32)
 		return -EINVAL;
-	mutex_lock(&hw->dsp_mutex);
 	/* check whether the dsp was already loaded */
-	if (hw->dsp_loaded & (1u << info->index)) {
-		err = -EBUSY;
-		goto unlock;
-	}
+	if (hw->dsp_loaded & (1u << info->index))
+		return -EBUSY;
 	err = hw->ops.dsp_load(hw, info);
 	if (err < 0)
-		goto unlock;
+		return err;
 	hw->dsp_loaded |= (1u << info->index);
-unlock:
-	mutex_unlock(&hw->dsp_mutex);
-	return err;
+	return 0;
 }
 
 static int snd_hwdep_dsp_load_user(struct snd_hwdep *hw,
@@ -381,7 +376,6 @@ int snd_hwdep_new(struct snd_card *card, char *id, int device,
 
 	init_waitqueue_head(&hwdep->open_wait);
 	mutex_init(&hwdep->open_mutex);
-	mutex_init(&hwdep->dsp_mutex);
 	hwdep->card = card;
 	hwdep->device = device;
 	if (id)
