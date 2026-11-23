@@ -1199,6 +1199,106 @@ static inline void reclaim_free_desc(struct q_inval *qi)
 	}
 }
 
+static const char *qi_type_string(u8 type)
+{
+	switch (type) {
+	case QI_CC_TYPE:
+		return "Context-cache Invalidation";
+	case QI_IOTLB_TYPE:
+		return "IOTLB Invalidation";
+	case QI_DIOTLB_TYPE:
+		return "Device-TLB Invalidation";
+	case QI_IEC_TYPE:
+		return "Interrupt Entry Cache Invalidation";
+	case QI_IWD_TYPE:
+		return "Invalidation Wait";
+	case QI_EIOTLB_TYPE:
+		return "PASID-based IOTLB Invalidation";
+	case QI_PC_TYPE:
+		return "PASID-cache Invalidation";
+	case QI_DEIOTLB_TYPE:
+		return "PASID-based Device-TLB Invalidation";
+	case QI_PGRP_RESP_TYPE:
+		return "Page Group Response";
+	default:
+		return "UNKNOWN";
+	}
+}
+
+static void qi_dump_fault(struct intel_iommu *iommu, u32 fault)
+{
+	unsigned int head = dmar_readl(iommu->reg + DMAR_IQH_REG);
+	u64 iqe_err = dmar_readq(iommu->reg + DMAR_IQER_REG);
+	struct qi_desc *desc = iommu->qi->desc + head;
+
+	if (fault & DMA_FSTS_IQE)
+		pr_err("VT-d detected Invalidation Queue Error: Reason %llx",
+		       DMAR_IQER_REG_IQEI(iqe_err));
+	if (fault & DMA_FSTS_ITE)
+		pr_err("VT-d detected Invalidation Time-out Error: SID %llx",
+		       DMAR_IQER_REG_ITESID(iqe_err));
+	if (fault & DMA_FSTS_ICE)
+		pr_err("VT-d detected Invalidation Completion Error: SID %llx",
+		       DMAR_IQER_REG_ICESID(iqe_err));
+
+	pr_err("QI HEAD: %s qw0 = 0x%llx, qw1 = 0x%llx\n",
+	       qi_type_string(desc->qw0 & 0xf),
+	       (unsigned long long)desc->qw0,
+	       (unsigned long long)desc->qw1);
+
+	head = ((head >> qi_shift(iommu)) + QI_LENGTH - 1) % QI_LENGTH;
+	head <<= qi_shift(iommu);
+	desc = iommu->qi->desc + head;
+
+	pr_err("QI PRIOR: %s qw0 = 0x%llx, qw1 = 0x%llx\n",
+	       qi_type_string(desc->qw0 & 0xf),
+	       (unsigned long long)desc->qw0,
+	       (unsigned long long)desc->qw1);
+}
+
+static int qi_drain_remaining_descs(struct intel_iommu *iommu, int head,
+				    int wait_index)
+{
+	struct q_inval *qi = iommu->qi;
+	int shift = qi_shift(iommu);
+	struct qi_desc wait_desc = {};
+	struct qi_desc nop_desc = {};
+	cycles_t start;
+
+	nop_desc.qw0 = QI_IWD_FENCE | QI_IWD_TYPE;
+
+	wait_desc.qw0 = QI_IWD_STATUS_DATA(QI_DONE) | QI_IWD_PRQ_DRAIN |
+			QI_IWD_STATUS_WRITE | QI_IWD_FENCE | QI_IWD_TYPE;
+	wait_desc.qw1 = virt_to_phys(&qi->desc_status[wait_index]);
+
+	while (head != wait_index) {
+		memcpy(qi->desc + (head << shift), &nop_desc, 1 << shift);
+		head = (head + 1) % QI_LENGTH;
+	}
+
+	WRITE_ONCE(qi->desc_status[wait_index], QI_IN_USE);
+	memcpy(qi->desc + (wait_index << shift), &wait_desc, 1 << shift);
+
+	/*
+	 * Order the descriptor rewrites before the writel() that restarts
+	 * the fetch engine.
+	 */
+	wmb();
+
+	writel(DMA_FSTS_IQE, iommu->reg + DMAR_FSTS_REG);
+
+	start = get_cycles();
+	while (READ_ONCE(qi->desc_status[wait_index]) != QI_DONE) {
+		if (DMAR_OPERATION_TIMEOUT < (get_cycles() - start)) {
+			pr_err("Timeout draining invalidation queue after IQE\n");
+			return -ETIMEDOUT;
+		}
+		cpu_relax();
+	}
+
+	return 0;
+}
+
 static int qi_check_fault(struct intel_iommu *iommu, int index, int wait_index)
 {
 	u32 fault;
@@ -1210,6 +1310,8 @@ static int qi_check_fault(struct intel_iommu *iommu, int index, int wait_index)
 		return -EAGAIN;
 
 	fault = readl(iommu->reg + DMAR_FSTS_REG);
+	if (fault & (DMA_FSTS_IQE | DMA_FSTS_ITE | DMA_FSTS_ICE))
+		qi_dump_fault(iommu, fault);
 
 	/*
 	 * If IQE happens, the head points to the descriptor associated
@@ -1217,21 +1319,26 @@ static int qi_check_fault(struct intel_iommu *iommu, int index, int wait_index)
 	 * is cleared.
 	 */
 	if (fault & DMA_FSTS_IQE) {
-		head = readl(iommu->reg + DMAR_IQH_REG);
-		if ((head >> shift) == index) {
-			struct qi_desc *desc = qi->desc + head;
+		int head_idx, ret;
 
-			/*
-			 * desc->qw2 and desc->qw3 are either reserved or
-			 * used by software as private data. We won't print
-			 * out these two qw's for security consideration.
-			 */
-			pr_err("VT-d detected invalid descriptor: qw0 = %llx, qw1 = %llx\n",
-			       (unsigned long long)desc->qw0,
-			       (unsigned long long)desc->qw1);
-			memcpy(desc, qi->desc + (wait_index << shift),
-			       1 << shift);
-			writel(DMA_FSTS_IQE, iommu->reg + DMAR_FSTS_REG);
+		head = readl(iommu->reg + DMAR_IQH_REG);
+		head_idx = (head >> shift) % QI_LENGTH;
+
+		/*
+		 * The faulting descriptor can be anywhere within the current
+		 * submission's range [index, wait_index]. Since the queue is
+		 * circular, this submission may wrap around QI_LENGTH
+		 * (index > wait_index in that case), so check both the
+		 * non-wrapped and wrapped cases of the range.
+		 */
+		if (index <= wait_index ?
+		    (head_idx >= index && head_idx <= wait_index) :
+		    (head_idx >= index || head_idx <= wait_index)) {
+			ret = qi_drain_remaining_descs(iommu, head_idx, wait_index);
+			if (ret)
+				return ret;
+
+			pr_info("Invalidation Queue Error (IQE) cleared\n");
 			return -EINVAL;
 		}
 	}
@@ -1247,6 +1354,7 @@ static int qi_check_fault(struct intel_iommu *iommu, int index, int wait_index)
 		tail = ((tail >> shift) - 1 + QI_LENGTH) % QI_LENGTH;
 
 		writel(DMA_FSTS_ITE, iommu->reg + DMAR_FSTS_REG);
+		pr_info("Invalidation Time-out Error (ITE) cleared\n");
 
 		do {
 			if (qi->desc_status[head] == QI_IN_USE)
@@ -1258,8 +1366,10 @@ static int qi_check_fault(struct intel_iommu *iommu, int index, int wait_index)
 			return -EAGAIN;
 	}
 
-	if (fault & DMA_FSTS_ICE)
+	if (fault & DMA_FSTS_ICE) {
 		writel(DMA_FSTS_ICE, iommu->reg + DMAR_FSTS_REG);
+		pr_info("Invalidation Completion Error (ICE) cleared\n");
+	}
 
 	return 0;
 }
