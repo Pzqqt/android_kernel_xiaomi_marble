@@ -2713,7 +2713,7 @@ update_inode:
 		int err;
 
 		err = f2fs_get_node_info(sbi, F2FS_I(inode)->i_xattr_nid,
-								&ni);
+								&ni, false);
 		if (err) {
 			f2fs_put_page(ipage, 1);
 			return err;
