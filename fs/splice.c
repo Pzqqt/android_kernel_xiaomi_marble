@@ -30,7 +30,9 @@
 #include <linux/export.h>
 #include <linux/syscalls.h>
 #include <linux/uio.h>
+#ifndef __GENKSYMS__
 #include <linux/fsnotify.h>
+#endif
 #include <linux/security.h>
 #include <linux/gfp.h>
 #include <linux/socket.h>
