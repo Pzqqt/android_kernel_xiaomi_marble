@@ -1120,8 +1120,8 @@ static int snd_pcm_status_user32(struct snd_pcm_substream *substream,
 		.audio_tstamp_data = status64.audio_tstamp_data,
 		.audio_tstamp_sec = status64.audio_tstamp_sec,
 		.audio_tstamp_nsec = status64.audio_tstamp_nsec,
-		.driver_tstamp_sec = status64.audio_tstamp_sec,
-		.driver_tstamp_nsec = status64.audio_tstamp_nsec,
+		.driver_tstamp_sec = status64.driver_tstamp_sec,
+		.driver_tstamp_nsec = status64.driver_tstamp_nsec,
 		.audio_tstamp_accuracy = status64.audio_tstamp_accuracy,
 	};
 
@@ -2706,17 +2706,13 @@ static int snd_pcm_hw_constraints_complete(struct snd_pcm_substream *substream)
 	return 0;
 }
 
-static void pcm_release_private(struct snd_pcm_substream *substream)
-{
-	if (snd_pcm_stream_linked(substream))
-		snd_pcm_unlink(substream);
-}
-
 void snd_pcm_release_substream(struct snd_pcm_substream *substream)
 {
 	substream->ref_count--;
 	if (substream->ref_count > 0)
 		return;
+
+	snd_pcm_unlink(substream);
 
 	snd_pcm_drop(substream);
 	if (substream->hw_opened) {
@@ -2794,8 +2790,6 @@ static int snd_pcm_open_file(struct file *file,
 		return -ENOMEM;
 	}
 	pcm_file->substream = substream;
-	if (substream->ref_count == 1)
-		substream->pcm_release = pcm_release_private;
 	file->private_data = pcm_file;
 
 	return 0;
