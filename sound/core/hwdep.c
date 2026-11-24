@@ -23,6 +23,7 @@ MODULE_LICENSE("GPL");
 
 static LIST_HEAD(snd_hwdep_devices);
 static DEFINE_MUTEX(register_mutex);
+static DEFINE_MUTEX(dsp_mutex);
 
 static int snd_hwdep_dev_free(struct snd_device *device);
 static int snd_hwdep_dev_register(struct snd_device *device);
@@ -211,14 +212,19 @@ static int snd_hwdep_dsp_load(struct snd_hwdep *hw,
 		return -ENXIO;
 	if (info->index >= 32)
 		return -EINVAL;
+	mutex_lock(&dsp_mutex);
 	/* check whether the dsp was already loaded */
-	if (hw->dsp_loaded & (1u << info->index))
-		return -EBUSY;
+	if (hw->dsp_loaded & (1u << info->index)) {
+		err = -EBUSY;
+		goto unlock;
+	}
 	err = hw->ops.dsp_load(hw, info);
 	if (err < 0)
-		return err;
+		goto unlock;
 	hw->dsp_loaded |= (1u << info->index);
-	return 0;
+unlock:
+	mutex_unlock(&dsp_mutex);
+	return err;
 }
 
 static int snd_hwdep_dsp_load_user(struct snd_hwdep *hw,

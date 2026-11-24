@@ -1392,6 +1392,9 @@ int svc_addsock(struct svc_serv *serv, const int fd, char *name_return,
 	err = -EISCONN;
 	if (so->state > SS_UNCONNECTED)
 		goto out;
+	err = -EBUSY;
+	if (so->sk->sk_user_data)
+		goto out;
 	err = -ENOENT;
 	if (!try_module_get(THIS_MODULE))
 		goto out;

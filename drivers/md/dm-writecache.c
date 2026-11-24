@@ -874,8 +874,6 @@ static void writecache_discard(struct dm_writecache *wc, sector_t start, sector_
 				}
 				discarded_something = true;
 			}
-			if (!writecache_entry_is_committed(wc, e))
-				wc->uncommitted_blocks--;
 			writecache_free_entry(wc, e);
 		}
 
@@ -1456,10 +1454,13 @@ bio_copy:
 		} while (bio->bi_iter.bi_size);
 
 		if (unlikely(bio->bi_opf & REQ_FUA ||
-			     wc->uncommitted_blocks >= wc->autocommit_blocks))
+			     wc->uncommitted_blocks >= wc->autocommit_blocks)) {
 			writecache_flush(wc);
-		else
+			if (writecache_has_error(wc))
+				bio->bi_status = BLK_STS_IOERR;
+		} else {
 			writecache_schedule_autocommit(wc);
+		}
 		goto unlock_submit;
 	}
 
@@ -2335,6 +2336,11 @@ invalid_optional:
 	}
 
 	if (WC_MODE_PMEM(wc)) {
+		if (!wc->ssd_dev->dax_dev) {
+			r = -EOPNOTSUPP;
+			ti->error = "Cache device is not a DAX device";
+			goto bad;
+		}
 		if (!dax_synchronous(wc->ssd_dev->dax_dev)) {
 			r = -EOPNOTSUPP;
 			ti->error = "Asynchronous persistent memory not supported as pmem cache";

@@ -53,6 +53,10 @@ class Conf:
         # Override 'srctree' environment to make the test as the top directory
         extra_env['srctree'] = self._test_dir
 
+        # Clear KCONFIG_DEFCONFIG_LIST to keep unit tests from being affected
+        # by the user's environment.
+        extra_env['KCONFIG_DEFCONFIG_LIST'] = ''
+
         # Run Kconfig in a temporary directory.
         # This directory is automatically removed when done.
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -205,7 +209,8 @@ class Conf:
         dot_config: .config file for input
         returncode: exit status of the Kconfig executable
         """
-        return self._run_conf('--savedefconfig', out_file='defconfig')
+        return self._run_conf('--savedefconfig={}'.format(out_file),
+                              dot_config=dot_config, out_file='defconfig')
 
     def listnewconfig(self, dot_config=None):
         """Run listnewconfig.
@@ -283,6 +288,12 @@ class Conf:
         returncode: True if result matches the expected data, False otherwise
         """
         return self._matches('stderr', expected)
+
+
+@pytest.fixture(autouse=True)
+def clear_werror(monkeypatch):
+    # extra_env can set strict mode, but cannot remove an inherited flag.
+    monkeypatch.delenv('KCONFIG_WERROR', raising=False)
 
 
 @pytest.fixture(scope="module")

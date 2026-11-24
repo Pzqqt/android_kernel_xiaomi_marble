@@ -455,7 +455,18 @@ out:
 }
 #endif
 
+/*
+ * filemap_fault() reads a page that it did not find in the page cache. All
+ * pages of a live ring are there, so the ring was truncated under the fault.
+ */
+static int aio_readpage(struct file *file, struct page *page)
+{
+	unlock_page(page);
+	return -EIO;
+}
+
 static const struct address_space_operations aio_ctx_aops = {
+	.readpage	= aio_readpage,
 	.set_page_dirty = __set_page_dirty_no_writeback,
 #if IS_ENABLED(CONFIG_MIGRATION)
 	.migratepage	= aio_migratepage,
@@ -1777,7 +1788,12 @@ static int aio_poll_wake(struct wait_queue_entry *wait, unsigned mode, int sync,
 		list_del_init(&req->wait.entry);
 		list_del(&iocb->ki_list);
 		iocb->ki_res.res = mangle_poll(mask);
-		if (iocb->ki_eventfd && eventfd_signal_count()) {
+		/*
+		 * We hold an arbitrary provider waitqueue lock here.  Signaling a
+		 * result eventfd can feed back through epoll and try to take the same
+		 * lock again.  Defer all eventfd-backed poll completions.
+		 */
+		if (iocb->ki_eventfd) {
 			iocb = NULL;
 			INIT_WORK(&req->work, aio_poll_put_work);
 			schedule_work(&req->work);
