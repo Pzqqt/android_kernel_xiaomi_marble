@@ -31,6 +31,7 @@
 #endif
 #include <linux/regulator/machine.h>
 #include <linux/clk.h>
+#include <linux/string.h>
 
 
 struct fixed_voltage_data {
@@ -167,6 +168,9 @@ static int reg_fixed_voltage_probe(struct platform_device *pdev)
 	struct regulator_config cfg = { };
 	enum gpiod_flags gflags;
 	int ret;
+
+	if (!pdev->dev.of_node && strcmp(pdev->name, "reg-fixed-voltage"))
+		return -ENODEV;
 
 	drvdata = devm_kzalloc(&pdev->dev, sizeof(struct fixed_voltage_data),
 			       GFP_KERNEL);

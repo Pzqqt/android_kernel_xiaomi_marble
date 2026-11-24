@@ -30,8 +30,9 @@
 
 #include "internal.h"
 
-static pud_t *get_old_pud(struct mm_struct *mm, unsigned long addr)
+static pud_t *get_old_pud(struct vm_area_struct *vma, unsigned long addr)
 {
+	struct mm_struct *mm = vma->vm_mm;
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
@@ -45,18 +46,19 @@ static pud_t *get_old_pud(struct mm_struct *mm, unsigned long addr)
 		return NULL;
 
 	pud = pud_offset(p4d, addr);
+	split_huge_pud(vma, pud, addr);
 	if (pud_none_or_clear_bad(pud))
 		return NULL;
 
 	return pud;
 }
 
-static pmd_t *get_old_pmd(struct mm_struct *mm, unsigned long addr)
+static pmd_t *get_old_pmd(struct vm_area_struct *vma, unsigned long addr)
 {
 	pud_t *pud;
 	pmd_t *pmd;
 
-	pud = get_old_pud(mm, addr);
+	pud = get_old_pud(vma, addr);
 	if (!pud)
 		return NULL;
 
@@ -500,7 +502,7 @@ unsigned long move_page_tables(struct vm_area_struct *vma,
 		if (IS_ENABLED(CONFIG_HAVE_MOVE_PUD) && extent == PUD_SIZE) {
 			pud_t *old_pud, *new_pud;
 
-			old_pud = get_old_pud(vma->vm_mm, old_addr);
+			old_pud = get_old_pud(vma, old_addr);
 			if (!old_pud)
 				continue;
 			new_pud = alloc_new_pud(vma->vm_mm, vma, new_addr);
@@ -512,7 +514,7 @@ unsigned long move_page_tables(struct vm_area_struct *vma,
 		}
 
 		extent = get_extent(NORMAL_PMD, old_addr, old_end, new_addr);
-		old_pmd = get_old_pmd(vma->vm_mm, old_addr);
+		old_pmd = get_old_pmd(vma, old_addr);
 		if (!old_pmd)
 			continue;
 		new_pmd = alloc_new_pmd(vma->vm_mm, vma, new_addr);

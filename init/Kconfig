@@ -1,13 +1,4 @@
 # SPDX-License-Identifier: GPL-2.0-only
-config DEFCONFIG_LIST
-	string
-	depends on !UML
-	option defconfig_list
-	default "/lib/modules/$(shell,uname -r)/.config"
-	default "/etc/kernel-config"
-	default "/boot/config-$(shell,uname -r)"
-	default "arch/$(SRCARCH)/configs/$(KBUILD_DEFCONFIG)"
-
 config CC_VERSION_TEXT
 	string
 	default "$(CC_VERSION_TEXT)"
@@ -770,8 +761,8 @@ config LOG_CPU_MAX_BUF_SHIFT
 	int "CPU kernel log buffer size contribution (13 => 8 KB, 17 => 128KB)"
 	depends on SMP
 	range 0 21
-	default 12 if !BASE_SMALL
-	default 0 if BASE_SMALL
+	default 0 if BASE_SMALL != 0
+	default 12
 	depends on PRINTK
 	help
 	  This option allows to increase the default ring buffer size

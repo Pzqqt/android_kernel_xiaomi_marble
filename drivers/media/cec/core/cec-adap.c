@@ -1554,7 +1554,6 @@ void __cec_s_phys_addr(struct cec_adapter *adap, u16 phys_addr, bool block)
 	if (phys_addr == CEC_PHYS_ADDR_INVALID ||
 	    adap->phys_addr != CEC_PHYS_ADDR_INVALID) {
 		adap->phys_addr = CEC_PHYS_ADDR_INVALID;
-		cec_post_state_event(adap);
 		cec_adap_unconfigure(adap);
 		/* Disabling monitor all mode should always succeed */
 		if (adap->monitor_all_cnt)

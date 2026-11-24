@@ -352,12 +352,15 @@ static int loopback_check_format(struct loopback_cable *cable, int stream)
 		check = runtime->format != cruntime->format ||
 			runtime->rate != cruntime->rate ||
 			runtime->channels != cruntime->channels;
-		if (!check)
-			goto unlock;
-		if (stream == SNDRV_PCM_STREAM_CAPTURE) {
+		/*
+		 * Matching params also go on to the update below, so that
+		 * the setup controls follow a playback that joins an open
+		 * capture.
+		 */
+		if (check && stream == SNDRV_PCM_STREAM_CAPTURE) {
 			err = -EIO;
 			goto unlock;
-		} else if (snd_pcm_running(dpcm_capt->substream)) {
+		} else if (check && snd_pcm_running(dpcm_capt->substream)) {
 			/* close must not free the peer runtime below */
 			atomic_inc(&cable->stop_count);
 			stop_capture = true;
@@ -961,6 +964,11 @@ static int rule_format(struct snd_pcm_hw_params *params,
 
 	snd_mask_none(&m);
 	mutex_lock(&dpcm->loopback->cable_lock);
+	if (dpcm->substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
+	    get_notify(dpcm)) {
+		mutex_unlock(&dpcm->loopback->cable_lock);
+		return 0;
+	}
 	m.bits[0] = (u_int32_t)cable->hw.formats;
 	m.bits[1] = (u_int32_t)(cable->hw.formats >> 32);
 	mutex_unlock(&dpcm->loopback->cable_lock);
@@ -975,6 +983,11 @@ static int rule_rate(struct snd_pcm_hw_params *params,
 	struct snd_interval t;
 
 	mutex_lock(&dpcm->loopback->cable_lock);
+	if (dpcm->substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
+	    get_notify(dpcm)) {
+		mutex_unlock(&dpcm->loopback->cable_lock);
+		return 0;
+	}
 	t.min = cable->hw.rate_min;
 	t.max = cable->hw.rate_max;
 	mutex_unlock(&dpcm->loopback->cable_lock);
@@ -991,6 +1004,11 @@ static int rule_channels(struct snd_pcm_hw_params *params,
 	struct snd_interval t;
 
 	mutex_lock(&dpcm->loopback->cable_lock);
+	if (dpcm->substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
+	    get_notify(dpcm)) {
+		mutex_unlock(&dpcm->loopback->cable_lock);
+		return 0;
+	}
 	t.min = cable->hw.channels_min;
 	t.max = cable->hw.channels_max;
 	mutex_unlock(&dpcm->loopback->cable_lock);
@@ -1007,6 +1025,11 @@ static int rule_period_bytes(struct snd_pcm_hw_params *params,
 	struct snd_interval t;
 
 	mutex_lock(&dpcm->loopback->cable_lock);
+	if (dpcm->substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
+	    get_notify(dpcm)) {
+		mutex_unlock(&dpcm->loopback->cable_lock);
+		return 0;
+	}
 	t.min = cable->hw.period_bytes_min;
 	t.max = cable->hw.period_bytes_max;
 	mutex_unlock(&dpcm->loopback->cable_lock);
